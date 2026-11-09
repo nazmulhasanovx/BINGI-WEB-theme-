@@ -9,6 +9,7 @@ import { Logo } from "./Logo";
 import { Sheet } from "@/components/ui/Sheet";
 import { useBooking } from "@/components/booking/BookingProvider";
 import type { NavItem } from "./nav";
+import { LangToggle, useT } from "@/lib/i18n";
 
 export function SiteHeader({
   nav,
@@ -27,6 +28,7 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
   const { openSearch } = useBooking();
+  const t = useT();
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
@@ -60,7 +62,7 @@ export function SiteHeader({
                       isActive(n.href) ? "text-ink" : "text-muted hover:text-ink",
                     )}
                   >
-                    {n.label}
+                    {t(n.label)}
                     {isActive(n.href) && <span className="absolute inset-x-4 -bottom-[13px] h-[2px] rounded-full bg-brand" />}
                   </Link>
                 </li>
@@ -73,7 +75,7 @@ export function SiteHeader({
               href={`${base}/my-trip`}
               className="hidden h-11 items-center gap-2 rounded-full border border-brand-ring px-4 text-[15px] font-semibold text-action hover:bg-brand-soft sm:flex"
             >
-              <User className="size-[18px]" /> My Trip
+              <User className="size-[18px]" /> {t("My Trip")}
             </Link>
             <Link href={`${base}/my-trip`} aria-label="My Trip" className="grid size-11 place-items-center rounded-full border border-line sm:hidden">
               <User className="size-5" />
@@ -85,7 +87,7 @@ export function SiteHeader({
         </div>
       </header>
 
-      <Sheet open={menu} onClose={() => setMenu(false)} title="Menu" side="right">
+      <Sheet open={menu} onClose={() => setMenu(false)} title={t("Menu")} side="right">
         <nav aria-label="Mobile">
           <ul className="space-y-1">
             {nav.map((n) => (
@@ -98,7 +100,7 @@ export function SiteHeader({
                     isActive(n.href) ? "bg-brand-soft text-action" : "hover:bg-canvas",
                   )}
                 >
-                  {n.label}
+                  {t(n.label)}
                   <ArrowRight className="size-4 opacity-50" />
                 </Link>
               </li>
@@ -112,9 +114,12 @@ export function SiteHeader({
           }}
           className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-action font-semibold text-on-action"
         >
-          <CalendarDays className="size-5" /> Book your stay
+          <CalendarDays className="size-5" /> {t("Book your stay")}
         </button>
-        <div className="mt-6 space-y-2 border-t border-line pt-5 text-[15px]">
+        <div className="mt-5 flex items-center justify-between rounded-2xl bg-canvas px-4 py-3 text-[15px] font-semibold">
+          {t("Language")} <LangToggle />
+        </div>
+        <div className="mt-4 space-y-2 border-t border-line pt-5 text-[15px]">
           <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="flex h-11 items-center gap-3 rounded-xl px-2 hover:bg-canvas">
             <Phone className="size-5 text-muted" /> {phone}
           </a>

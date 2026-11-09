@@ -5,11 +5,13 @@ import { CalendarDays, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { shortDate, useBooking } from "./BookingProvider";
 import { DateField, GuestIcon, GuestSteppers, guestLabel } from "./SearchFields";
+import { useT } from "@/lib/i18n";
 
 /** Tablet + desktop: inline floating bar. Phone: one pill that opens the bottom sheet. */
 export function SearchBar() {
   const { search, submit, openSearch } = useBooking();
   const [guestsOpen, setGuestsOpen] = useState(false);
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export function SearchBar() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold">
-            {search.checkIn ? `${shortDate(search.checkIn)} – ${shortDate(search.checkOut)}` : "Add your dates"}
+            {search.checkIn ? `${shortDate(search.checkIn)} – ${shortDate(search.checkOut)}` : t("Add your dates")}
           </span>
           <span className="block truncate text-sm text-muted">{guestLabel(search.adults, search.children)}</span>
         </span>
@@ -58,7 +60,7 @@ export function SearchBar() {
           <button type="button" onClick={() => setGuestsOpen((v) => !v)} aria-expanded={guestsOpen} className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-canvas">
             <GuestIcon />
             <span className="min-w-0 flex-1">
-              <span className="block text-xs font-semibold text-muted">Guests</span>
+              <span className="block text-xs font-semibold text-muted">{t("Guests")}</span>
               <span className="block truncate text-[15px] font-semibold">{guestLabel(search.adults, search.children)}</span>
             </span>
             <ChevronDown className="size-4 text-muted" />
@@ -71,7 +73,7 @@ export function SearchBar() {
         </div>
         <div className="flex items-center p-1 md:border-t md:border-line lg:border-t-0">
           <Button type="submit" size="lg" className="w-full lg:w-auto">
-            <Search className="size-5" /> Check rooms
+            <Search className="size-5" /> {t("Check rooms")}
           </Button>
         </div>
       </form>

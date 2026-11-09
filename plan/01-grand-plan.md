@@ -45,11 +45,15 @@ System: Policies · 404 · Site paused
 ## Build phases (each: build → test → fix → show)
 | Phase | Scope | Status |
 |---|---|---|
-| B0 | Next.js, theme engine, 10 colour themes, contrast guard, demo data, Theme Lab | Done (this branch) |
-| B1 | Shell (top bar, header, mobile menu, footer, sticky Book bar) + Home | Done (this branch) |
-| B2 | Rooms + Room detail + availability search sheet | Next |
-| B3 | Stay cart + Checkout + Confirmation | |
-| B4 | Dining + Experiences + Offers | |
-| B5 | Explore + Events + Policies + 404 / paused | |
-| B6 | Sign in + My Trip | |
-| B7 | বাংলা/English, a11y, Lighthouse, device QA, dev handoff | |
+| B0 | Next.js, theme engine, 10 colour themes, contrast guard, demo data, Theme Lab | Done |
+| B1 | Shell (top bar, header, mobile menu, footer, sticky Book bar) + Home | Done |
+| B2 | Rooms + Room detail + availability search sheet | Done |
+| B3 | Stay cart + Checkout + Confirmation | Done |
+| B4 | Dining + Experiences + Offers | Done |
+| B5 | Explore + Events + Policies + 404 / paused | Done |
+| B6 | Sign in + My Trip | Done |
+| B7 | বাংলা/English, a11y, Lighthouse, device QA, dev handoff | Done |
+
+Status: **Designed + built as a front-end preview with demo data.** Not connected to HMS yet — see `technology/handoff-frontend.md` and `technology/handoff-backend.md`.
+QA: 13 routes × 6 widths (360/390/834/1024/1280/1440) — no horizontal overflow, no runtime errors; full booking flow tested on phone and desktop.
+Lighthouse (home, mobile): Performance 89 · Accessibility 100 · Best practices 100 · SEO 100.

@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useBooking } from "@/components/booking/BookingProvider";
+import { useT } from "@/lib/i18n";
 
 /** Phone + small tablet: sticky "from ৳X · Book" bar, appears after the hero. */
 export function MobileBookBar({ fromLabel }: { fromLabel: string }) {
   const { openSearch } = useBooking();
+  const t = useT();
   const [show, setShow] = useState(false);
   const pathname = usePathname();
   // pages with their own bottom action bar
@@ -32,13 +34,13 @@ export function MobileBookBar({ fromLabel }: { fromLabel: string }) {
     >
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted">Rooms from</p>
+          <p className="text-xs text-muted">{t("Rooms from")}</p>
           <p className="truncate text-lg font-bold">
-            {fromLabel} <span className="text-sm font-medium text-muted">/ night</span>
+            {fromLabel} <span className="text-sm font-medium text-muted">{t("/ night")}</span>
           </p>
         </div>
         <button onClick={openSearch} tabIndex={show ? 0 : -1} className="h-12 rounded-full bg-action px-7 font-semibold text-on-action active:scale-[0.98]">
-          Book
+          {t("Book")}
         </button>
       </div>
     </div>

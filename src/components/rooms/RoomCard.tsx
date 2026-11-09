@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BedDouble, Ruler, Users } from "lucide-react";
 import type { RoomCategory } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
+import { T } from "@/lib/i18n";
 
 const kindLabel: Record<RoomCategory["kind"], string> = { room: "Room", suite: "Suite", villa: "Villa", cottage: "Cottage" };
 
@@ -37,12 +38,12 @@ export function RoomCard({ room, href, layout = "auto" }: { room: RoomCategory; 
         </ul>
         <div className="mt-auto flex items-end justify-between gap-3 pt-4">
           <p>
-            <span className="block text-xs text-muted">from</span>
+            <span className="block text-xs text-muted"><T>from</T></span>
             <span className="text-xl font-bold tabular-nums">{formatMoney(room.fromPrice)}</span>
-            <span className="text-sm text-muted"> / night</span>
+            <span className="text-sm text-muted"> <T>/ night</T></span>
           </p>
           <span className="inline-flex h-10 items-center rounded-full bg-brand-soft px-4 text-sm font-semibold text-action transition-colors group-hover:bg-action group-hover:text-on-action">
-            Select
+            <T>Select</T>
           </span>
         </div>
       </div>

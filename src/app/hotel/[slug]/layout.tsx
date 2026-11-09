@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { MobileBookBar } from "@/components/site/MobileBookBar";
 import { buildNav } from "@/components/site/nav";
 import { SitePaused } from "@/components/site/SitePaused";
+import { LangSync } from "@/lib/i18n";
 
 export function generateStaticParams() {
   return listHotelSlugs().map((slug) => ({ slug }));
@@ -53,6 +54,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:shadow-float">
           Skip to content
         </a>
+        <LangSync />
         <TopBar hotel={hotel} />
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />
         <main id="main">{props.children}</main>

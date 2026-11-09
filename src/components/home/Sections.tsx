@@ -6,6 +6,7 @@ import { formatMoney, showRating, visibleOffers } from "@/lib/data";
 import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { ButtonLink } from "@/components/ui/Button";
+import { T } from "@/lib/i18n";
 
 /* ---------- 1. Real facts instead of a generic trust strip ---------- */
 export function FactsStrip({ hotel }: { hotel: Hotel }) {
@@ -28,7 +29,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
               <f.icon className="size-5" />
             </span>
             <span className="min-w-0">
-              <span className="block whitespace-nowrap text-[14px] font-semibold leading-tight md:whitespace-normal md:text-[15px]">{f.title}</span>
+              <span className="block whitespace-nowrap text-[14px] font-semibold leading-tight md:whitespace-normal md:text-[15px]"><T>{f.title}</T></span>
               <span className="mt-0.5 block whitespace-nowrap text-[12px] text-muted md:whitespace-normal md:text-[13px]">{f.sub}</span>
             </span>
           </li>
@@ -88,8 +89,8 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
                   <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {outlet.location}</span>
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2.5 md:mt-auto md:pt-5">
-                  <ButtonLink href={`${base}/dining`}>View menu</ButtonLink>
-                  {outlet.tableRequest && <ButtonLink href={`${base}/dining#table`} variant="outline">Request a table</ButtonLink>}
+                  <ButtonLink href={`${base}/dining`}><T>View menu</T></ButtonLink>
+                  {outlet.tableRequest && <ButtonLink href={`${base}/dining#table`} variant="outline"><T>Request a table</T></ButtonLink>}
                 </div>
               </div>
             </article>
@@ -116,7 +117,7 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
               ))}
             </ul>
             <Link href={`${base}/experiences`} className="m-1 mt-0 flex h-12 items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold text-action hover:bg-brand-soft">
-              All experiences <ArrowRight className="size-4" />
+              <T>All experiences</T> <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
@@ -164,7 +165,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
       <Container>
         <div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-10">
           <div>
-            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Guest reviews</p>
+            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action"><T>Guest reviews</T></p>
             <p className="mt-2 flex items-baseline gap-2">
               <span className="font-heading text-5xl font-bold">{hotel.reviewScore}</span>
               <span className="text-lg text-muted">/ 5</span>
@@ -201,7 +202,7 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
       <Container>
         <div className="overflow-hidden rounded-[32px] border border-line bg-surface shadow-card lg:grid lg:grid-cols-[1fr_1.1fr]">
           <div className="p-6 md:p-10">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Find us</p>
+            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action"><T>Find us</T></p>
             <h2 className="mt-2 text-2xl font-bold md:text-[32px]">{hotel.area}</h2>
             <p className="mt-3 flex gap-2 text-[15px] text-muted"><MapPin className="mt-0.5 size-[18px] shrink-0" /> {hotel.address}</p>
             <dl className="mt-6 grid grid-cols-2 gap-3 text-[14px]">
@@ -209,8 +210,8 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
               <div className="rounded-2xl bg-canvas p-3.5"><dt className="text-muted">Check-out</dt><dd className="mt-0.5 font-semibold">{hotel.checkOut}</dd></div>
             </dl>
             <div className="mt-6 grid gap-2.5 sm:flex sm:flex-wrap">
-              <ButtonLink href={maps} variant="primary"><Navigation className="size-4" /> Get directions</ButtonLink>
-              <ButtonLink href={tel} variant="outline"><Phone className="size-4" /> Call</ButtonLink>
+              <ButtonLink href={maps} variant="primary"><Navigation className="size-4" /> <T>Get directions</T></ButtonLink>
+              <ButtonLink href={tel} variant="outline"><Phone className="size-4" /> <T>Call</T></ButtonLink>
               {hotel.whatsapp && (
                 <ButtonLink href={`https://wa.me/${hotel.whatsapp.replace(/\D/g, "")}`} variant="outline"><MessageCircle className="size-4" /> WhatsApp</ButtonLink>
               )}

@@ -79,10 +79,10 @@ function mix(hex: string, withHex: string, amount: number): string {
   return rgbToHex([0, 1, 2].map((i) => a[i] * amount + b[i] * (1 - amount)) as RGB);
 }
 
-/** Darken until white text reaches 4.5:1 (WCAG AA normal text). */
+/** Darken until white text reaches 5.2:1 — keeps ≥4.5:1 (WCAG AA) also as text on the tinted surfaces (brand-soft, canvas). */
 function ensureAA(hex: string): string {
   let out = hex;
-  for (let i = 0; i < 40 && contrast(out, "#FFFFFF") < 4.5; i++) out = shiftLightness(out, -0.015);
+  for (let i = 0; i < 40 && contrast(out, "#FFFFFF") < 5.2; i++) out = shiftLightness(out, -0.015);
   return out;
 }
 

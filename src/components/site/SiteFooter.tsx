@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import type { NavItem } from "./nav";
 import { Logo } from "./Logo";
+import { T } from "@/lib/i18n";
 
 const icons = {
   facebook: <path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7H17l.5-4h-4V8.8c0-.5.3-.8.5-.8Z" />,
@@ -40,17 +41,17 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
           </div>
         </div>
         <nav aria-label="Footer">
-          <p className="text-sm font-semibold">Visit</p>
-          <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-[15px] text-muted md:grid-cols-1">
+          <p className="text-sm font-semibold"><T>Visit</T></p>
+          <ul className="mt-3 grid grid-cols-2 gap-x-6 text-[15px] text-muted md:grid-cols-1 md:gap-y-1.5">
             {links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="hover:text-ink">{l.label}</Link>
+                <Link href={l.href} className="inline-block py-1.5 hover:text-ink md:py-0.5"><T>{l.label}</T></Link>
               </li>
             ))}
           </ul>
         </nav>
         <div>
-          <p className="text-sm font-semibold">Contact</p>
+          <p className="text-sm font-semibold"><T>Contact</T></p>
           <ul className="mt-3 space-y-3 text-[15px] text-muted">
             <li className="flex gap-3"><MapPin className="mt-0.5 size-[18px] shrink-0" /> {hotel.address}</li>
             <li><a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex gap-3 hover:text-ink"><Phone className="size-[18px] shrink-0" /> {hotel.phone}</a></li>
@@ -61,7 +62,7 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 px-4 py-5 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {hotel.name}</span>
-          <span>Website & booking by <span className="font-semibold text-ink">BinGi</span></span>
+          <span><T>Website & booking by</T> <span className="font-semibold text-ink">BinGi</span></span>
         </div>
       </div>
     </footer>

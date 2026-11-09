@@ -3,6 +3,7 @@
 import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useBooking } from "./BookingProvider";
+import { T } from "@/lib/i18n";
 
 /** Tablet/desktop with an inline search bar on the page → focus it. Otherwise open the sheet. */
 export function OpenSearchButton({ label = "Book your stay" }: { label?: string }) {
@@ -22,7 +23,7 @@ export function OpenSearchButton({ label = "Book your stay" }: { label?: string 
   };
   return (
     <Button size="lg" onClick={go}>
-      <CalendarDays className="size-5" /> {label}
+      <CalendarDays className="size-5" /> <T>{label}</T>
     </Button>
   );
 }

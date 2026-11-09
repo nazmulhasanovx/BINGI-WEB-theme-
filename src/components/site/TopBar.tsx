@@ -1,5 +1,6 @@
 import { MapPin, Phone, Star } from "lucide-react";
 import type { Hotel } from "@/lib/types";
+import { LangToggle } from "@/lib/i18n";
 
 /** Desktop only: small info line above the header. */
 export function TopBar({ hotel }: { hotel: Hotel }) {
@@ -22,9 +23,12 @@ export function TopBar({ hotel }: { hotel: Hotel }) {
             <span key={h} className="before:mr-3 before:text-line before:content-['|']">{h}</span>
           ))}
         </span>
-        <a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1.5 hover:text-ink">
-          <Phone className="size-3.5" /> {hotel.phone}
-        </a>
+        <span className="flex items-center gap-3">
+          <a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1.5 hover:text-ink">
+            <Phone className="size-3.5" /> {hotel.phone}
+          </a>
+          <LangToggle />
+        </span>
       </div>
     </div>
   );

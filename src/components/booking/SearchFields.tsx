@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { CalendarDays, Minus, Plus, Users } from "lucide-react";
 import clsx from "clsx";
 import { shortDate, toISO, useBooking } from "./BookingProvider";
+import { useT } from "@/lib/i18n";
 
 const noop = () => () => {};
 
@@ -12,14 +13,15 @@ export function DateField({ which, compact }: { which: "checkIn" | "checkOut"; c
   const today = useSyncExternalStore(noop, () => toISO(new Date()), () => "");
   const value = search[which];
   const min = (which === "checkIn" ? today : search.checkIn || today) || undefined;
-  const label = which === "checkIn" ? "Check-in" : "Check-out";
+  const t = useT();
+  const label = t(which === "checkIn" ? "Check-in" : "Check-out");
   return (
     <label className={clsx("group relative flex min-w-0 cursor-pointer items-center gap-3 rounded-2xl", compact ? "px-3 py-2.5" : "px-4 py-3", "hover:bg-canvas focus-within:bg-canvas")}>
       <CalendarDays className="size-5 shrink-0 text-muted" />
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-semibold text-muted">{label}</span>
-        <span className={clsx("block truncate text-[15px] font-semibold", value ? "text-ink" : "text-muted/70")}>
-          {value ? shortDate(value) : "Add date"}
+        <span className={clsx("block truncate text-[15px] font-semibold", value ? "text-ink" : "text-muted")}>
+          {value ? shortDate(value) : t("Add date")}
         </span>
       </span>
       {/* native picker: best on iOS/Android; invisible, covers the whole field */}
@@ -41,11 +43,12 @@ export function DateField({ which, compact }: { which: "checkIn" | "checkOut"; c
 }
 
 function Stepper({ label, hint, value, min, max, onChange }: { label: string; hint: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between py-3">
       <div>
-        <p className="font-semibold">{label}</p>
-        <p className="text-sm text-muted">{hint}</p>
+        <p className="font-semibold">{t(label)}</p>
+        <p className="text-sm text-muted">{t(hint)}</p>
       </div>
       <div className="flex items-center gap-3">
         <button type="button" aria-label={`Fewer ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-11 place-items-center rounded-full border border-line text-ink disabled:opacity-30 hover:border-brand-ring">

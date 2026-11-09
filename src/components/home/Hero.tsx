@@ -4,6 +4,7 @@ import type { Hotel } from "@/lib/types";
 import { ButtonLink } from "@/components/ui/Button";
 import { SearchBar } from "@/components/booking/SearchBar";
 import { OpenSearchButton } from "@/components/booking/OpenSearchButton";
+import { T } from "@/lib/i18n";
 
 export function Hero({ hotel }: { hotel: Hotel }) {
   const base = `/hotel/${hotel.slug}`;
@@ -27,7 +28,7 @@ export function Hero({ hotel }: { hotel: Hotel }) {
               <div className="mt-7 hidden gap-3 md:flex">
                 <OpenSearchButton />
                 <ButtonLink href={`${base}/explore`} variant="white" size="lg">
-                  Explore the resort <ArrowRight className="size-4" />
+                  <T>Explore the resort</T> <ArrowRight className="size-4" />
                 </ButtonLink>
               </div>
             </div>
