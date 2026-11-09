@@ -79,7 +79,7 @@ export function ThemePreview({ slug, defaultTheme, defaultHeading, master: hotel
         <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold">
           <Palette className="size-4 opacity-80" /> <span className="hidden sm:inline">Theme</span>
         </span>
-        <div className="flex shrink-0 items-center gap-1.5" role="radiogroup" aria-label="Colour theme">
+        <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Colour theme">
           {THEMES.map((th, i) => (
             <button
               key={th.id}
@@ -88,14 +88,14 @@ export function ThemePreview({ slug, defaultTheme, defaultHeading, master: hotel
               title={`${i + 1}. ${th.name} ${th.brand}`}
               aria-label={th.name}
               onClick={() => write(KEY, th.id)}
-              className={clsx("grid size-7 place-items-center rounded-full transition-transform hover:scale-110", active === th.id && "ring-2 ring-white ring-offset-2 ring-offset-ink")}
+              className={clsx("grid size-6 place-items-center rounded-full transition-transform hover:scale-110", active === th.id && "ring-2 ring-white ring-offset-2 ring-offset-ink")}
               style={{ background: th.brand }}
             >
               {active === th.id && <Check className="size-3.5 text-white" strokeWidth={3} />}
             </button>
           ))}
         </div>
-        <span className="shrink-0 text-[13px] text-white/70">
+        <span className="hidden shrink-0 text-[13px] text-white/70 2xl:inline">
           <b className="text-white">{t.name}</b> <code className="ml-1 text-white/60">{t.brand}</code>
         </span>
         <div className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Heading font">
@@ -171,7 +171,7 @@ function LayoutSwitch({ master }: { master: MasterTheme }) {
     <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Layout">
       {MASTERS.map((m) =>
         m.demo ? (
-          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={`${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-3", m.id === master ? "bg-white text-ink" : "text-white/80 hover:text-white")}>
+          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={`${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-2.5", m.id === master ? "bg-white text-ink" : "text-white/80 hover:text-white")}>
             {m.name}
           </Link>
         ) : (

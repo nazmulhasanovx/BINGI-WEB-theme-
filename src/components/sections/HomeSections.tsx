@@ -20,7 +20,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
     showRating(hotel) && { icon: Star, title: `${hotel.reviewScore} / 5 guest rating`, sub: `${hotel.reviewCount} verified reviews` },
     { icon: Clock, title: `Check-in ${hotel.checkIn}`, sub: `Check-out ${hotel.checkOut}` },
     freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: cancelHours ? `Up to ${cancelHours} hours before arrival` : "See policy" },
-    payAtHotel && { icon: Wallet, title: "Pay at the hotel", sub: "No prepayment needed" },
+    payAtHotel && { icon: Wallet, title: "Pay on arrival", sub: "No prepayment needed" },
   ].filter(Boolean) as { icon: typeof Star; title: string; sub: string }[];
 
   return (

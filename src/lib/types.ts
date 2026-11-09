@@ -1,7 +1,7 @@
 import type { ThemeId } from "./theme";
 
-export type MasterTheme = "nest" | "city" | "grand";
-export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "other";
+export type MasterTheme = "nest" | "city" | "grand" | "cottage" | "villa" | "flat" | "escape" | "bunk";
+export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "cottage" | "villa" | "other";
 
 export type Money = number; // in hotel currency units (BDT)
 
@@ -9,7 +9,11 @@ export interface RoomCategory {
   id: string;
   slug: string;
   name: string;
-  kind: "room" | "suite" | "villa" | "cottage";
+  kind: "room" | "suite" | "villa" | "cottage" | "apartment" | "dorm";
+  /** Villas / apartments: bedrooms in the unit. Dorms: beds per room (price is per bed). */
+  bedrooms?: number;
+  /** Extra spec lines shown by VILLA / FLAT (e.g. "Private pool", "Full kitchen"). */
+  specs?: string[];
   short: string;
   description: string;
   fromPrice: Money; // per night, before tax
@@ -136,6 +140,10 @@ export interface Hotel {
   propertyType: PropertyType;
   /** Guest houses / homes: the person guests deal with (HMS → Property → Host). Initials only, no photo needed. */
   host?: { name: string; role: string; since: string; note: string; languages: string[] };
+  /** Property-specific questions (HMS → Website → Pages & Content). Themes show only what is filled in. */
+  faq?: { q: string; a: string }[];
+  /** Extra house rules beyond the policies (quiet hours, parties, lockers…). */
+  houseRules?: { title: string; text: string }[];
   flags: { packages: boolean; events: boolean };
   plan: "starter" | "business" | "ultra" | "enterprise";
   status: "live" | "paused"; // paused = hotel turned the website off in HMS → Online controls

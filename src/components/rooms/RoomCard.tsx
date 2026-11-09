@@ -5,7 +5,7 @@ import type { RoomCategory } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
 import { T } from "@/lib/i18n";
 
-const kindLabel: Record<RoomCategory["kind"], string> = { room: "Room", suite: "Suite", villa: "Villa", cottage: "Cottage" };
+const kindLabel: Record<RoomCategory["kind"], string> = { room: "Room", suite: "Suite", villa: "Villa", cottage: "Cottage", apartment: "Apartment", dorm: "Dorm bed" };
 
 /** Whole card opens the room page; one CTA. Vertical on phone, horizontal from lg in wide layouts. */
 export function RoomCard({ room, href, layout = "auto" }: { room: RoomCategory; href: string; layout?: "auto" | "vertical" }) {
@@ -39,7 +39,7 @@ export function RoomCard({ room, href, layout = "auto" }: { room: RoomCategory; 
           <p>
             <span className="block text-xs text-muted"><T>from</T></span>
             <span className="text-xl font-bold tabular-nums">{formatMoney(room.fromPrice)}</span>
-            <span className="text-sm text-muted"> <T>/ night</T></span>
+            <span className="text-sm text-muted"> <T>{room.kind === "dorm" ? "/ bed / night" : "/ night"}</T></span>
           </p>
           <span className="inline-flex h-10 items-center rounded-full bg-brand-soft px-4 text-sm font-semibold text-action transition-colors group-hover:bg-action group-hover:text-on-action">
             <T>Select</T>

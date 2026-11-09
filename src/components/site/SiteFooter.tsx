@@ -74,7 +74,7 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
           </div>
 
           <div className="hidden md:block"><Col title="Stay" links={stay} /></div>
-          <div className="hidden md:block"><Col title="Hotel" links={hotelLinks} /></div>
+          <div className="hidden md:block"><Col title="About" links={hotelLinks} /></div>
 
           {/* contact */}
           <div className="col-span-2 lg:col-span-1">
