@@ -258,6 +258,12 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const page = WM_PAGES.find((p) => p.id === id);
     return [{ label: "Website Management", href: "/hms/website/overview" }, { label: page?.label ?? "Overview" }];
   }
+  if (path.startsWith("/hms/staff/")) {
+    const seg = path.split("/")[3];
+    const names: Record<string, string> = { people: "People", attendance: "Attendance", schedule: "Schedule", leave: "Leave", payroll: "Payroll & Benefits", hiring: "Hiring", operations: "Team Operations", settings: "Reports & Settings" };
+    const sub = path.split("/")[4];
+    return [{ label: "Staff", href: "/hms/staff" }, { label: names[seg] ?? "Overview", href: sub ? `/hms/staff/${seg}` : undefined }, ...(sub ? [{ label: decodeURIComponent(sub) }] : [])];
+  }
   const item = ALL_ITEMS.find((i) => i.href === path);
   return [{ label: item?.label ?? "Dashboard" }];
 }
