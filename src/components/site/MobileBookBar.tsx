@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useBooking } from "@/components/booking/BookingProvider";
 
@@ -8,6 +9,9 @@ import { useBooking } from "@/components/booking/BookingProvider";
 export function MobileBookBar({ fromLabel }: { fromLabel: string }) {
   const { openSearch } = useBooking();
   const [show, setShow] = useState(false);
+  const pathname = usePathname();
+  // pages with their own bottom action bar
+  const hidden = /\/(rooms\/[^/]+|stay|checkout|confirmation|my-trip|events)(\/|$)/.test(pathname);
 
   useEffect(() => {
     const on = () => setShow(window.scrollY > 360);
@@ -15,6 +19,8 @@ export function MobileBookBar({ fromLabel }: { fromLabel: string }) {
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
+
+  if (hidden) return null;
 
   return (
     <div

@@ -6,7 +6,6 @@ import { ButtonLink } from "@/components/ui/Button";
 // Preview-only stand-in for pages that are scheduled in later build phases.
 // Each real page replaces this as its phase lands.
 const PHASES: Record<string, { title: string; phase: string; photo?: string }> = {
-  rooms: { title: "Rooms & suites", phase: "B2", photo: "/demo/azure-bay/room-premier-ocean.jpg" },
   dining: { title: "Dining", phase: "B4", photo: "/demo/azure-bay/dining-hero.jpg" },
   experiences: { title: "Experiences", phase: "B4", photo: "/demo/azure-bay/exp-island.jpg" },
   offers: { title: "Offers", phase: "B4", photo: "/demo/azure-bay/offer-escape.jpg" },
