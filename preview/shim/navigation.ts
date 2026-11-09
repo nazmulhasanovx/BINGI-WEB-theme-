@@ -25,3 +25,8 @@ export function useParams<T = Record<string, string>>(): T {
   const p = split(useRoute()).path.split("/");
   return { slug: p[2] ?? "" } as T;
 }
+
+export function redirect(path: string): never {
+  location.replace(`#${path}`);
+  throw new NotFoundError("redirect");
+}

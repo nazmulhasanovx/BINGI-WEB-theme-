@@ -26,6 +26,12 @@ import Explore from "@/app/hotel/[slug]/explore/page";
 import Events from "@/app/hotel/[slug]/events/page";
 import Policies from "@/app/hotel/[slug]/policies/page";
 import MyTrip from "@/app/hotel/[slug]/my-trip/page";
+import HmsLayout from "@/app/hms/layout";
+import HmsHome from "@/app/hms/page";
+import HmsModule from "@/app/hms/[module]/page";
+import HmsWebsite from "@/app/hms/website/[page]/page";
+
+(window as unknown as { __BINGI_SPA__: boolean }).__BINGI_SPA__ = true;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Comp = (p: any) => ReactNode | Promise<ReactNode>;
@@ -39,6 +45,20 @@ async function resolve(route: string): Promise<ReactNode> {
   const seg = path.split("/").filter(Boolean);
   if (seg.length === 0) return await (Index as Comp)({});
   if (seg[0] === "theme-lab") return await (ThemeLab as Comp)({});
+  if (seg[0] === "hms") {
+    let page: ReactNode;
+    try {
+      if (seg[1] === "website") {
+        if (!seg[2]) { location.replace("#/hms/website/overview"); return null; }
+        page = await (HmsWebsite as Comp)({ params: Promise.resolve({ page: seg[2] }) });
+      } else if (seg[1]) page = await (HmsModule as Comp)({ params: Promise.resolve({ module: seg[1] }) });
+      else page = await (HmsHome as Comp)({});
+    } catch (e) {
+      if (!(e instanceof NotFoundError)) throw e;
+      return <RootNotFound />;
+    }
+    return await (HmsLayout as Comp)({ children: page });
+  }
   if (seg[0] !== "hotel" || !seg[1]) return <RootNotFound />;
   const slug = seg[1];
   const sub = seg.slice(2);
