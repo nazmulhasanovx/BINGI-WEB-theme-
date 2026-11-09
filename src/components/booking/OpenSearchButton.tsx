@@ -10,13 +10,9 @@ export function OpenSearchButton({ label = "Book your stay" }: { label?: string 
   const { openSearch } = useBooking();
   const go = () => {
     const bar = document.getElementById("stay-search");
-    const input = bar?.querySelector("input");
-    if (bar && input && bar.offsetParent !== null) {
-      bar.scrollIntoView({ behavior: "smooth", block: "center" });
-      input.focus({ preventScroll: true });
-      try {
-        (input as HTMLInputElement).showPicker?.();
-      } catch {}
+    const first = bar?.querySelector("button");
+    if (bar && first && bar.offsetParent !== null) {
+      first.click(); // opens the price calendar under the bar
       return;
     }
     openSearch();

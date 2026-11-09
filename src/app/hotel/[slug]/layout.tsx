@@ -48,11 +48,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
   return (
     <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
       <SmoothScroll>
-      <BookingProvider
-        slug={hotel.slug}
-        maxAdults={Math.max(...hotel.rooms.map((r) => r.maxAdults)) * 2}
-        maxChildren={Math.max(...hotel.rooms.map((r) => r.maxChildren)) * 2}
-      >
+      <BookingProvider hotel={hotel}>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:shadow-float">
           Skip to content
         </a>

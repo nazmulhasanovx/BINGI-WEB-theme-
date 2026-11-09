@@ -60,6 +60,8 @@ const BN: Record<string, string> = {
   "Prices and free rooms update after you pick dates.": "তারিখ দিলে খালি রুম আর দাম দেখাবে।",
   "Website & booking by": "ওয়েবসাইট ও বুকিং:",
   Language: "ভাষা",
+  Stay: "থাকা",
+  Hotel: "হোটেল",
 };
 
 const listeners = new Set<() => void>();

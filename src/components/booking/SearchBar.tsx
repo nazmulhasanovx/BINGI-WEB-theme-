@@ -4,15 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { shortDate, useBooking } from "./BookingProvider";
-import { DateField, GuestIcon, GuestSteppers, guestLabel } from "./SearchFields";
+import { DateTrigger, GuestIcon, GuestSteppers, guestLabel } from "./SearchFields";
+import { Calendar } from "./Calendar";
+import { AnimatePresence, motion } from "framer-motion";
 import { useT } from "@/lib/i18n";
 
 /** Tablet + desktop: inline floating bar. Phone: one pill that opens the bottom sheet. */
 export function SearchBar() {
-  const { search, submit, openSearch } = useBooking();
+  const { search, setSearch, submit, openSearch, priceFor } = useBooking();
+  const [cal, setCal] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [guestsOpen, setGuestsOpen] = useState(false);
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!cal) return;
+    const close = (e: MouseEvent) => formRef.current && !formRef.current.contains(e.target as Node) && setCal(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setCal(false);
+    document.addEventListener("mousedown", close);
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [cal]);
 
   useEffect(() => {
     if (!guestsOpen) return;
@@ -45,19 +61,42 @@ export function SearchBar() {
       {/* tablet + desktop */}
       <form
         id="stay-search"
+        ref={formRef}
         aria-label="Check availability"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
-        className="hidden rounded-[28px] border border-line bg-surface p-2 shadow-float md:grid md:grid-cols-[1fr_1fr] md:gap-1 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center"
+        className="relative hidden rounded-[28px] border border-line bg-surface p-2 shadow-float md:grid md:grid-cols-[1fr_1fr] md:gap-1 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center"
       >
-        <DateField which="checkIn" />
+        <DateTrigger which="checkIn" active={cal && !search.checkIn} onOpen={() => { setGuestsOpen(false); setCal(true); }} />
         <div className="lg:border-l lg:border-line">
-          <DateField which="checkOut" />
+          <DateTrigger which="checkOut" active={cal && !!search.checkIn && !search.checkOut} onOpen={() => { setGuestsOpen(false); setCal(true); }} />
         </div>
+        <AnimatePresence>
+          {cal && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              data-lenis-prevent
+              className="absolute left-0 right-0 top-[calc(100%+10px)] z-40 rounded-[28px] border border-line bg-surface p-4 shadow-float md:p-6"
+            >
+              <Calendar
+                value={{ checkIn: search.checkIn, checkOut: search.checkOut }}
+                onChange={(r) => {
+                  setSearch(r);
+                  if (r.checkIn && r.checkOut) setTimeout(() => setCal(false), 250);
+                }}
+                priceFor={priceFor}
+                onDone={() => setCal(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div ref={ref} className="relative md:border-t md:border-line lg:border-l lg:border-t-0">
-          <button type="button" onClick={() => setGuestsOpen((v) => !v)} aria-expanded={guestsOpen} className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-canvas">
+          <button type="button" onClick={() => { setCal(false); setGuestsOpen((v) => !v); }} aria-expanded={guestsOpen} className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-canvas">
             <GuestIcon />
             <span className="min-w-0 flex-1">
               <span className="block text-xs font-semibold text-muted">{t("Guests")}</span>

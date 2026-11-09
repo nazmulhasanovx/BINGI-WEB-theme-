@@ -1,44 +1,29 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { CalendarDays, Minus, Plus, Users } from "lucide-react";
 import clsx from "clsx";
-import { shortDate, toISO, useBooking } from "./BookingProvider";
+import { shortDate, useBooking } from "./BookingProvider";
 import { useT } from "@/lib/i18n";
 
-const noop = () => () => {};
-
-export function DateField({ which, compact }: { which: "checkIn" | "checkOut"; compact?: boolean }) {
-  const { search, setSearch } = useBooking();
-  const today = useSyncExternalStore(noop, () => toISO(new Date()), () => "");
-  const value = search[which];
-  const min = (which === "checkIn" ? today : search.checkIn || today) || undefined;
+/** Check-in / check-out display cell. Opens the price calendar. */
+export function DateTrigger({ which, compact, onOpen, active }: { which: "checkIn" | "checkOut"; compact?: boolean; onOpen: () => void; active?: boolean }) {
+  const { search } = useBooking();
   const t = useT();
+  const value = search[which];
   const label = t(which === "checkIn" ? "Check-in" : "Check-out");
   return (
-    <label className={clsx("group relative flex min-w-0 cursor-pointer items-center gap-3 rounded-2xl", compact ? "px-3 py-2.5" : "px-4 py-3", "hover:bg-canvas focus-within:bg-canvas")}>
-      <CalendarDays className="size-5 shrink-0 text-muted" />
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${label}: ${value ? shortDate(value) : t("Add date")}`}
+      className={clsx("flex w-full min-w-0 items-center gap-3 rounded-2xl text-left transition-colors", compact ? "px-3 py-2.5" : "px-4 py-3", active ? "bg-brand-soft" : "hover:bg-canvas")}
+    >
+      <CalendarDays className={clsx("size-5 shrink-0", active ? "text-action" : "text-muted")} />
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-semibold text-muted">{label}</span>
-        <span className={clsx("block truncate text-[15px] font-semibold", value ? "text-ink" : "text-muted")}>
-          {value ? shortDate(value) : t("Add date")}
-        </span>
+        <span className={clsx("block truncate text-[15px] font-semibold", value ? "text-ink" : "text-muted")}>{value ? shortDate(value) : t("Add date")}</span>
       </span>
-      {/* native picker: best on iOS/Android; invisible, covers the whole field */}
-      <input
-        type="date"
-        aria-label={label}
-        min={min}
-        value={value}
-        onClick={(e) => {
-          try {
-            e.currentTarget.showPicker?.();
-          } catch {}
-        }}
-        onChange={(e) => setSearch({ [which]: e.target.value })}
-        className="absolute inset-0 size-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:size-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-      />
-    </label>
+    </button>
   );
 }
 

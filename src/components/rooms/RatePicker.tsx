@@ -7,10 +7,12 @@ import clsx from "clsx";
 import { Check, ShieldCheck } from "lucide-react";
 import type { Hotel, RoomCategory } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
-import { dateList, fits, quote, ratePlans, unitsLeft, type RatePlanId } from "@/lib/pricing";
+import { dateList, fits, nightlyRate, quote, ratePlans, unitsLeft, type RatePlanId } from "@/lib/pricing";
 import { useGuestState } from "@/lib/store";
 import { useBooking } from "@/components/booking/BookingProvider";
-import { DateField, GuestSteppers } from "@/components/booking/SearchFields";
+import { DateTrigger, GuestSteppers } from "@/components/booking/SearchFields";
+import { Calendar } from "@/components/booking/Calendar";
+import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
 
 /** Sticky card on desktop, inline on phone + a sticky bottom CTA. */
@@ -21,6 +23,8 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
   const { setStay } = useGuestState(hotel.slug);
   const plans = ratePlans(hotel);
   const [plan, setPlan] = useState<RatePlanId>(plans[0].id);
+  const [cal, setCal] = useState(false);
+  const roomPrice = (iso: string) => (unitsLeft(room, [iso]) > 0 ? nightlyRate(room, iso) : null);
 
   const pIn = params.get("in") ?? "";
   const pOut = params.get("out") ?? "";
@@ -52,8 +56,8 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
           from <span className="text-2xl font-bold text-ink">{formatMoney(room.fromPrice)}</span> / night
         </p>
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl border border-line p-1">
-          <DateField which="checkIn" compact />
-          <DateField which="checkOut" compact />
+          <DateTrigger which="checkIn" compact onOpen={() => setCal(true)} />
+          <DateTrigger which="checkOut" compact onOpen={() => setCal(true)} />
         </div>
         <details className="group mt-2 rounded-2xl border border-line px-4 [&_summary::-webkit-details-marker]:hidden">
           <summary className="flex h-12 cursor-pointer list-none items-center justify-between text-[15px] font-semibold">
@@ -114,6 +118,18 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
         </p>
       </div>
 
+      <Sheet open={cal} onClose={() => setCal(false)} title={`Dates · ${room.name}`}>
+        <Calendar
+          value={{ checkIn: search.checkIn, checkOut: search.checkOut }}
+          onChange={(r) => {
+            setSearch(r);
+            if (r.checkIn && r.checkOut) setTimeout(() => setCal(false), 300);
+          }}
+          priceFor={roomPrice}
+          onDone={() => setCal(false)}
+        />
+      </Sheet>
+
       {/* phone sticky CTA */}
       <div className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 pt-3 backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
@@ -133,7 +149,7 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
           {canBook ? (
             <Button size="lg" onClick={reserve}>Reserve</Button>
           ) : (
-            <Button size="lg" variant="outline" onClick={() => document.getElementById("rates")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+            <Button size="lg" variant="outline" onClick={() => setCal(true)}>
               {dates.length ? "Change" : "Add dates"}
             </Button>
           )}
