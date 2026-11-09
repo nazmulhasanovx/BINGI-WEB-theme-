@@ -20,6 +20,8 @@ const KINDS: { id: "all" | RoomCategory["kind"]; label: string }[] = [
   { id: "suite", label: "Suites" },
   { id: "villa", label: "Villas" },
   { id: "cottage", label: "Cottages" },
+  { id: "apartment", label: "Apartments" },
+  { id: "dorm", label: "Dorm beds" },
 ];
 
 export function RoomsResults({ hotel }: { hotel: Hotel }) {

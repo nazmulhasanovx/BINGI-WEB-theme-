@@ -186,7 +186,7 @@ function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
         )}
       </button>
       {open && (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-[260px] rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">
+        <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[min(70vh,560px)] w-[260px] overflow-y-auto rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">
           <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-hms-muted">Demo properties</p>
           {PROPERTIES.map((p) => (
             <button

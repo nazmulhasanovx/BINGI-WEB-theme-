@@ -5,8 +5,13 @@ import type { Hotel } from "@/lib/types";
 import { azureBay } from "@/data/azure-bay";
 import { seaPearl } from "@/data/sea-pearl";
 import { teaValley } from "@/data/tea-valley";
+import { mistwood } from "@/data/mistwood";
+import { shalbon } from "@/data/shalbon";
+import { lakeview } from "@/data/lakeview";
+import { coralCove } from "@/data/coral-cove";
+import { waveBunk } from "@/data/wave-bunk";
 
-export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley];
+export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley, mistwood, shalbon, lakeview, coralCove, waveBunk];
 const KEY = "hms-property";
 const listeners = new Set<() => void>();
 const sub = (l: () => void) => (listeners.add(l), () => void listeners.delete(l));

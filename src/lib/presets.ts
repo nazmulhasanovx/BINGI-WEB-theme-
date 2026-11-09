@@ -17,6 +17,8 @@ export const PRESETS: Record<PropertyType, Preset> = {
   home: { place: "home", placeTitle: "Home", unitsLabel: "The home", sections: { host: true, singlePage: true } },
   "serviced-apartment": { place: "apartments", placeTitle: "Serviced apartments", unitsLabel: "Apartments", sections: { longStay: true } },
   hostel: { place: "hostel", placeTitle: "Hostel", unitsLabel: "Beds & dorms", sections: { bedPricing: true } },
+  cottage: { place: "cottages", placeTitle: "Cottages", unitsLabel: "Cottages", sections: { host: true } },
+  villa: { place: "villas", placeTitle: "Villas", unitsLabel: "Villas", sections: { villaDetails: true } },
   other: { place: "property", placeTitle: "Property", unitsLabel: "Places to stay", sections: {} },
 };
 

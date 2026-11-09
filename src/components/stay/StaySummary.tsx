@@ -66,7 +66,7 @@ export function PriceLines({ q, dueNow, paidLabel = "Pay now" }: { q: Quote; due
             <dd className="tabular-nums">{formatMoney(dueNow)}</dd>
           </div>
           <div className="flex justify-between text-[13px] text-ink/80">
-            <dt>Balance at the hotel</dt>
+            <dt>Balance on arrival</dt>
             <dd className="tabular-nums">{formatMoney(balance ?? 0)}</dd>
           </div>
         </div>

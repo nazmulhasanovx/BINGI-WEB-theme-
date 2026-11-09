@@ -2,9 +2,14 @@
 import { azureBay, azureBayPaused } from "@/data/azure-bay";
 import { seaPearl } from "@/data/sea-pearl";
 import { teaValley } from "@/data/tea-valley";
+import { mistwood } from "@/data/mistwood";
+import { shalbon } from "@/data/shalbon";
+import { lakeview } from "@/data/lakeview";
+import { coralCove } from "@/data/coral-cove";
+import { waveBunk } from "@/data/wave-bunk";
 import type { Hotel } from "./types";
 
-const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [azureBayPaused.slug]: azureBayPaused };
+const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [mistwood.slug]: mistwood, [shalbon.slug]: shalbon, [lakeview.slug]: lakeview, [coralCove.slug]: coralCove, [waveBunk.slug]: waveBunk, [azureBayPaused.slug]: azureBayPaused };
 
 export async function getHotel(slug: string): Promise<Hotel | null> {
   return HOTELS[slug] ?? null;
@@ -22,10 +27,10 @@ export function formatMoney(v: number, currency = "BDT"): string {
 
 /** Plan → which master layout and modules the website may show. */
 export const PLAN_RULES = {
-  starter: { masters: ["nest"], restaurant: false, events: false },
-  business: { masters: ["nest", "city"], restaurant: false, events: false },
-  ultra: { masters: ["nest", "city", "grand"], restaurant: true, events: true },
-  enterprise: { masters: ["nest", "city", "grand"], restaurant: true, events: true },
+  starter: { masters: ["nest", "cottage", "bunk"], restaurant: false, events: false },
+  business: { masters: ["nest", "cottage", "bunk", "city", "villa", "flat", "escape"], restaurant: false, events: false },
+  ultra: { masters: ["nest", "cottage", "bunk", "city", "villa", "flat", "escape", "grand"], restaurant: true, events: true },
+  enterprise: { masters: ["nest", "cottage", "bunk", "city", "villa", "flat", "escape", "grand"], restaurant: true, events: true },
 } as const;
 
 /** Pages shown = allowed by the plan AND have data. Empty sections disappear from the nav automatically. */

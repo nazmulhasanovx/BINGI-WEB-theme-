@@ -28,13 +28,13 @@ function paymentOptions(methods: PaymentMethod[]): Option[] {
   const out: Option[] = [];
   for (const m of methods) {
     if (m.kind === "pay-at-property")
-      out.push({ id: "pay-at-property", title: "Pay at the hotel", sub: "Cash or card on arrival.", dueNow: () => 0, needsRef: false });
+      out.push({ id: "pay-at-property", title: "Pay on arrival", sub: "Cash or card when you check in.", dueNow: () => 0, needsRef: false });
     if (m.kind === "advance" && mfs)
-      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${mfs.provider}`, sub: "Rest at the hotel.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs });
+      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${mfs.provider}`, sub: "Rest on arrival.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs });
     if (m.kind === "mfs-manual")
       out.push({ id: "mfs-manual", title: `Pay in full with ${m.provider}`, sub: `Send Money to ${m.number}.`, dueNow: (t) => t, needsRef: true, mfs: { provider: m.provider, number: m.number } });
     if (m.kind === "card-online" && m.gatewayApproved)
-      out.push({ id: "card-online", title: "Card / online", sub: "Secure payment through the hotel's gateway.", dueNow: (t) => t, needsRef: false });
+      out.push({ id: "card-online", title: "Card / online", sub: "Secure online payment.", dueNow: (t) => t, needsRef: false });
   }
   return out;
 }
@@ -122,7 +122,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
                 ) : (
                   <PhoneOtp onVerified={setPhone} />
                 )}
-                {tried && !phone && <p className="mt-1.5 text-sm text-red-700">Verify your mobile number — the hotel sends your confirmation here.</p>}
+                {tried && !phone && <p className="mt-1.5 text-sm text-red-700">Verify your mobile number — your confirmation is sent here.</p>}
               </div>
               <label className="block">
                 <span className="text-sm font-semibold">Email <span className="font-normal text-muted">(optional)</span></span>
@@ -137,7 +137,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
               </label>
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold">Special request <span className="font-normal text-muted">(optional)</span></span>
-                <textarea className="mt-1.5 w-full rounded-2xl border border-line bg-surface p-4 text-[16px] outline-none focus:border-action" rows={3} maxLength={500} value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Anything the hotel should know" />
+                <textarea className="mt-1.5 w-full rounded-2xl border border-line bg-surface p-4 text-[16px] outline-none focus:border-action" rows={3} maxLength={500} value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Anything we should know" />
               </label>
             </div>
           </Section>
@@ -170,11 +170,11 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
             <p className="text-[15px] text-muted">{hotel.policies.cancellation}</p>
             <label className="mt-4 flex cursor-pointer items-start gap-3">
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-[var(--action)]" />
-              <span className="text-[15px]">I agree to the hotel’s <a href={`${base}/policies`} className="font-semibold text-action underline underline-offset-2">booking policies</a>.</span>
+              <span className="text-[15px]">I agree to the <a href={`${base}/policies`} className="font-semibold text-action underline underline-offset-2">booking policies</a>.</span>
             </label>
             {tried && !agree && <p className="mt-1.5 text-sm text-red-700">Please accept the policies to continue.</p>}
             <Button size="lg" className="mt-5 hidden w-full md:flex" onClick={confirm}>
-              <Lock className="size-4" /> {dueNow ? `Book · pay ${formatMoney(dueNow)} now` : "Book now · pay at the hotel"}
+              <Lock className="size-4" /> {dueNow ? `Book · pay ${formatMoney(dueNow)} now` : "Book now · pay on arrival"}
             </Button>
           </Section>
         </div>
@@ -194,7 +194,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
       <div className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-4 pt-3 shadow-[0_-8px_24px_-18px_rgb(22_24_29/0.35)] md:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted">{dueNow ? "Pay now" : "Pay at the hotel"}</p>
+            <p className="text-xs text-muted">{dueNow ? "Pay now" : "Pay on arrival"}</p>
             <p className="text-lg font-bold tabular-nums">{formatMoney(dueNow || q.total)}</p>
           </div>
           <Button size="lg" onClick={confirm}>Book now</Button>

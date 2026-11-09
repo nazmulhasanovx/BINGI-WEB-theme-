@@ -11,14 +11,14 @@ import { PriceLines, StayHeader, paidLabelFor } from "./StaySummary";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const BOOKING_STATUS: Record<GuestBooking["bookingStatus"], { label: string; cls: string }> = {
-  pending: { label: "Waiting for hotel confirmation", cls: "bg-amber-50 text-amber-800" },
+  pending: { label: "Waiting for confirmation", cls: "bg-amber-50 text-amber-800" },
   confirmed: { label: "Confirmed", cls: "bg-emerald-50 text-emerald-800" },
   cancelled: { label: "Cancelled", cls: "bg-line text-muted" },
 };
 export const PAYMENT_STATUS: Record<GuestBooking["paymentStatus"], { label: string; cls: string }> = {
   unpaid: { label: "Unpaid", cls: "bg-line text-muted" },
-  "pay-at-hotel": { label: "Pay at the hotel", cls: "bg-sky-50 text-sky-800" },
-  "advance-submitted": { label: "Payment sent · hotel checking", cls: "bg-amber-50 text-amber-800" },
+  "pay-at-hotel": { label: "Pay on arrival", cls: "bg-sky-50 text-sky-800" },
+  "advance-submitted": { label: "Payment sent · being checked", cls: "bg-amber-50 text-amber-800" },
   paid: { label: "Paid", cls: "bg-emerald-50 text-emerald-800" },
 };
 
