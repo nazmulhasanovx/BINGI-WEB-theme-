@@ -10,6 +10,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/theme";
 import type { MasterTheme } from "@/lib/types";
 import { MASTERS } from "@/themes/registry";
+import { useIsPreview, useSiteView } from "@/lib/site";
 
 /**
  * Theme switcher bar for designers/developers (top of every hotel page).
@@ -38,14 +39,20 @@ const write = (k: string, v: string) => {
   listeners.forEach((l) => l());
 };
 
-export function ThemePreview({ defaultTheme, defaultHeading, master }: { defaultTheme: ThemeId; defaultHeading: "sans" | "serif"; master: MasterTheme }) {
+export function ThemePreview({ slug, defaultTheme, defaultHeading, master: hotelMaster }: { slug: string; defaultTheme: ThemeId; defaultHeading: "sans" | "serif"; master: MasterTheme }) {
+  // The site record (HMS → Website Management) sets the real colour/font/layout; this bar only overrides it for designers.
+  const doc = useSiteView(slug);
+  const preview = useIsPreview();
+  const master = doc?.master ?? hotelMaster;
   const { KEY, HKEY } = keysFor(master);
   const params = useSearchParams();
   const q = params.get("theme");
   const stored = useSyncExternalStore(sub, () => read(KEY), () => "");
   const storedH = useSyncExternalStore(sub, () => read(HKEY), () => "");
-  const active: ThemeId = isThemeId(q) ? q : isThemeId(stored) ? stored : defaultTheme;
-  const heading = storedH === "serif" || storedH === "sans" ? storedH : defaultHeading;
+  const baseTheme = doc?.palette ?? defaultTheme;
+  const baseHeading = doc?.heading ?? defaultHeading;
+  const active: ThemeId = preview ? baseTheme : isThemeId(q) ? q : isThemeId(stored) ? stored : baseTheme;
+  const heading = preview ? baseHeading : storedH === "serif" || storedH === "sans" ? storedH : baseHeading;
 
   useEffect(() => {
     if (isThemeId(q) && q !== read(KEY)) write(KEY, q);
@@ -59,7 +66,7 @@ export function ThemePreview({ defaultTheme, defaultHeading, master }: { default
     el.dataset.heading = heading;
   }, [active, heading]);
 
-  if (process.env.NEXT_PUBLIC_THEME_SWITCHER === "off") return null;
+  if (process.env.NEXT_PUBLIC_THEME_SWITCHER === "off" || preview) return null;
 
   const t = themeById(active);
   return (

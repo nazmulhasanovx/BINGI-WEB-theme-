@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useSiteView } from "@/lib/site";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -36,11 +37,13 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
     setSearch({ checkIn: urlIn, checkOut: urlOut, adults: urlAdults, children: urlChildren });
   }, [urlIn, urlOut, urlAdults, urlChildren, setSearch]);
 
+  const siteDoc = useSiteView(hotel.slug);
   const dates = useMemo(() => dateList(urlIn, urlOut), [urlIn, urlOut]);
   const hasDates = dates.length > 0;
   const kinds = KINDS.filter((k) => k.id === "all" || hotel.rooms.some((r) => r.kind === k.id));
 
   const list = hotel.rooms
+    .filter((r) => siteDoc?.rooms[r.id]?.visible !== false)
     .filter((r) => kind === "all" || r.kind === kind)
     .map((r) => {
       const left = unitsLeft(r, dates);

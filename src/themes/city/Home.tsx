@@ -8,7 +8,10 @@ import { SearchBar } from "@/components/booking/SearchBar";
 import { HeroIn, PhotoIn, Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { Container, MobileMore } from "@/components/ui/Section";
 import { QuickLinks, Reviews } from "@/components/sections/HomeSections";
+import { SiteVisible } from "@/components/site-draft/Draft";
 import { T } from "@/lib/i18n";
+import { DraftSections, DraftText } from "@/components/site-draft/Draft";
+import type { ReactNode } from "react";
 
 const ICONS: Record<string, typeof Waves> = { waves: Waves, presentation: Presentation, dumbbell: Dumbbell, wifi: Wifi, car: Car, concierge: ConciergeBell };
 
@@ -20,26 +23,32 @@ export function CityHome({ hotel }: { hotel: Hotel }) {
   const preset = presetFor(hotel.propertyType);
   return (
     <>
-      <CityHero hotel={hotel} />
-      <QuickLinks hotel={hotel} />
-      <FactStrip hotel={hotel} />
-      <CityRooms hotel={hotel} />
-      <WorkAndStay hotel={hotel} meetings={preset.sections.meetings} />
-      <Nearby hotel={hotel} />
-      <CityOffers hotel={hotel} />
-      <Reviews hotel={hotel} />
+      <DraftSections
+        slug={hotel.slug}
+        master="city"
+        items={[
+          { id: "hero", node: <CityHero hotel={hotel} /> },
+          { id: "quick-links", node: <QuickLinks hotel={hotel} /> },
+          { id: "facts", node: <FactStrip hotel={hotel} /> },
+          { id: "rooms", node: <CityRooms hotel={hotel} /> },
+          { id: "work-stay", node: <WorkAndStay hotel={hotel} meetings={preset.sections.meetings} /> },
+          { id: "location", node: <Nearby hotel={hotel} /> },
+          { id: "offers", node: <CityOffers hotel={hotel} /> },
+          { id: "reviews", node: <Reviews hotel={hotel} /> },
+        ]}
+      />
       <div className="h-12 md:h-24" />
     </>
   );
 }
 
 /** Section title used across CITY: small label + large headline + optional link. */
-function Head({ label, title, href, link }: { label: string; title: string; href?: string; link?: string }) {
+function Head({ label, title, href, link }: { label: string; title: ReactNode; href?: string; link?: string }) {
   return (
     <div className="mb-5 flex items-end justify-between gap-6 md:mb-10">
       <div>
         <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted md:text-[13px]"><T>{label}</T></p>
-        <h2 className="mt-1.5 text-[24px] font-semibold leading-tight tracking-[-0.01em] md:mt-2 md:text-[40px]"><T>{title}</T></h2>
+        <h2 className="mt-1.5 text-[24px] font-semibold leading-tight tracking-[-0.01em] md:mt-2 md:text-[40px]">{typeof title === "string" ? <T>{title}</T> : title}</h2>
       </div>
       {href && link && (
         <Link href={href} className="group hidden shrink-0 items-center gap-1.5 border-b border-ink/20 pb-0.5 text-[15px] font-semibold transition-colors hover:border-ink sm:flex">
@@ -69,11 +78,11 @@ function CityHero({ hotel }: { hotel: Hotel }) {
               {hotel.area} · {hotel.city}
             </p>
             <h1 className="mt-2 text-[30px] font-semibold leading-[1.08] tracking-[-0.02em] md:mt-4 md:text-[54px] md:leading-[1.03] lg:text-[66px]">
-              {hotel.tagline}
+              <DraftText slug={hotel.slug} k="hero.title" fallback={hotel.tagline} />
             </h1>
           </div>
           <div className="md:pb-2">
-            <p className="hidden max-w-[400px] text-[17px] leading-relaxed text-muted md:block">{hotel.intro}</p>
+            <p className="hidden max-w-[400px] text-[17px] leading-relaxed text-muted md:block"><DraftText slug={hotel.slug} k="hero.intro" fallback={hotel.intro} /></p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px] md:mt-6 md:text-[15px]">
               {showRating(hotel) && (
                 <span className="flex items-center gap-1.5">
@@ -139,12 +148,12 @@ function CityRooms({ hotel }: { hotel: Hotel }) {
     <section className="mt-12 md:mt-28">
       <Container>
         <Reveal>
-          <Head label={presetFor(hotel.propertyType).unitsLabel} title="Choose your room" href={`${base}/rooms`} link="All rooms" />
+          <Head label={presetFor(hotel.propertyType).unitsLabel} title={<DraftText slug={hotel.slug} k="rooms.title" fallback="Choose your room" />} href={`${base}/rooms`} link="All rooms" />
         </Reveal>
       </Container>
       <RevealGroup className="no-scrollbar flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-1 sm:px-6 md:mx-auto md:grid md:max-w-[1240px] md:grid-cols-2 md:gap-6 md:overflow-visible lg:grid-cols-4">
         {hotel.rooms.map((r) => (
-          <RevealItem key={r.id} className="w-[78%] max-w-[320px] shrink-0 snap-start md:w-auto md:max-w-none">
+          <SiteVisible key={r.id} slug={hotel.slug} kind="rooms" id={r.id}><RevealItem className="w-[78%] max-w-[320px] shrink-0 snap-start md:w-auto md:max-w-none">
             <Link href={`${base}/rooms/${r.slug}`} className="group block">
               <div className="relative aspect-[5/4] overflow-hidden rounded-[16px] bg-line md:aspect-[4/5]">
                 <Image src={r.photos[0]} alt={r.name} fill sizes="(max-width: 768px) 78vw, 300px" className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
@@ -162,7 +171,7 @@ function CityRooms({ hotel }: { hotel: Hotel }) {
                 <ArrowUpRight className="size-[18px] text-muted transition-colors group-hover:text-action" />
               </p>
             </Link>
-          </RevealItem>
+          </RevealItem></SiteVisible>
         ))}
       </RevealGroup>
       <Container>
@@ -260,7 +269,7 @@ function CityOffers({ hotel }: { hotel: Hotel }) {
         </Reveal>
         <RevealGroup className="grid gap-8 md:grid-cols-2 md:gap-6">
           {offers.map((o) => (
-            <RevealItem key={o.id}>
+            <SiteVisible key={o.id} slug={hotel.slug} kind="offers" id={o.id}><RevealItem>
               <Link href={`${base}/offers`} className="group block">
                 {o.photo && (
                   <div className="relative aspect-[16/9] overflow-hidden rounded-[16px]">
@@ -275,7 +284,7 @@ function CityOffers({ hotel }: { hotel: Hotel }) {
                   <p className="shrink-0 text-[20px] font-semibold text-action md:text-[22px]">{o.value}</p>
                 </div>
               </Link>
-            </RevealItem>
+            </RevealItem></SiteVisible>
           ))}
         </RevealGroup>
       </Container>

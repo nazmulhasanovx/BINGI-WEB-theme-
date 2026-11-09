@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getHotel, listHotelSlugs } from "@/lib/data";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { ThemePreview } from "@/components/theme/ThemePreview";
+import { PreviewBridge } from "@/components/site-draft/Draft";
 import { BookingProvider } from "@/components/booking/BookingProvider";
 import { TopBar } from "@/components/site/TopBar";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -52,8 +53,9 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
           Skip to content
         </a>
         <LangSync />
-        <Suspense fallback={<div className="h-12 bg-ink" />}>
-          <ThemePreview defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} master={hotel.theme.master} />
+        <PreviewBridge />
+        <Suspense fallback={null}>
+          <ThemePreview slug={hotel.slug} defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} master={hotel.theme.master} />
         </Suspense>
         <TopBar hotel={hotel} />
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />

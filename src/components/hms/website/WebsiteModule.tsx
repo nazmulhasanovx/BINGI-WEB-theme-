@@ -1,0 +1,164 @@
+"use client";
+import { hrefFor } from "@/lib/href";
+import Link from "next/link";
+import clsx from "clsx";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { ExternalLink, Laptop, Monitor, Smartphone, Tablet, X } from "lucide-react";
+import { useProperty } from "../property";
+import { useSite } from "@/lib/site";
+import { MANIFESTS, type ThemeManifest } from "@/themes/manifest";
+import type { Hotel } from "@/lib/types";
+import { WM_PAGES } from "./pages";
+import { Btn } from "./ui";
+import { PAGE_COMPONENTS } from "./registry";
+
+type WM = { hotel: Hotel; site: ReturnType<typeof useSite>; manifest: ThemeManifest; openPreview: (sectionId?: string) => void; siteUrl: string };
+const Ctx = createContext<WM | null>(null);
+export const useWM = () => useContext(Ctx)!;
+
+export function WebsiteModule({ page }: { page: string }) {
+  const hotel = useProperty();
+  const site = useSite(hotel);
+  const manifest = MANIFESTS[site.draft.master];
+  const [preview, setPreview] = useState<{ open: boolean; section?: string }>({ open: false });
+  const siteUrl = `/hotel/${hotel.slug}`;
+  const Page = PAGE_COMPONENTS[page] ?? PAGE_COMPONENTS.overview;
+  return (
+    <Ctx.Provider value={{ hotel, site, manifest, openPreview: (section) => setPreview({ open: true, section }), siteUrl }}>
+      <div className="flex h-full min-h-0">
+        <InnerNav active={page} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <PublishBar />
+          <main className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-[1240px] px-6 py-7 lg:px-8">
+              <Page />
+            </div>
+          </main>
+        </div>
+      </div>
+      {preview.open && <DevicePreview section={preview.section} onClose={() => setPreview({ open: false })} />}
+    </Ctx.Provider>
+  );
+}
+
+function InnerNav({ active }: { active: string }) {
+  return (
+    <aside className="hidden w-[200px] shrink-0 border-r border-hms-line bg-hms-nav px-2.5 py-4 lg:block" aria-label="Website Management">
+      {WM_PAGES.map((p) => {
+        const Icon = p.icon;
+        const on = p.id === active;
+        return (
+          <Link
+            key={p.id}
+            href={`/hms/website/${p.id}`}
+            aria-current={on ? "page" : undefined}
+            className={clsx("mb-0.5 flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}
+          >
+            <Icon className="size-[18px] shrink-0" strokeWidth={on ? 2.2 : 1.8} />
+            {p.label}
+          </Link>
+        );
+      })}
+    </aside>
+  );
+}
+
+/** One slim bar on every page: live status, address, unpublished changes, Preview, Publish. */
+function PublishBar() {
+  const { site, siteUrl, openPreview } = useWM();
+  const n = site.changes.length;
+  return (
+    <div className="flex shrink-0 items-center gap-3 border-b border-hms-line bg-white px-6 py-2.5 lg:px-8">
+      <span className="size-2 rounded-full bg-green-500" aria-hidden />
+      <a href={hrefFor(siteUrl)} target="_blank" rel="noopener" className="flex min-w-0 items-center gap-1 truncate text-[14px] font-medium hover:text-hms-blue">
+        bingi.app{siteUrl} <ExternalLink className="size-3.5 shrink-0 text-hms-muted" />
+      </a>
+      <div className="ml-auto flex items-center gap-2">
+        {n > 0 && <span className="hidden text-[13px] text-hms-amber sm:inline">{n} change{n > 1 ? "s" : ""} not published</span>}
+        <Btn variant="outline" onClick={() => openPreview()} className="h-8 px-3.5 text-[13px]">Preview</Btn>
+        {n > 0 && <Link href="/hms/website/publish" className="inline-flex h-8 items-center rounded-full bg-hms-coral px-3.5 text-[13px] font-medium text-white hover:bg-[#c93030]">Publish</Link>}
+      </div>
+    </div>
+  );
+}
+
+const DEVICES = [
+  { id: "desktop", label: "Desktop", w: 1440, icon: Monitor },
+  { id: "laptop", label: "Laptop", w: 1024, icon: Laptop },
+  { id: "tablet", label: "Tablet", w: 834, icon: Tablet },
+  { id: "phone", label: "Phone", w: 390, icon: Smartphone },
+] as const;
+
+export function DevicePreview({ section, onClose }: { section?: string; onClose: () => void }) {
+  const { hotel } = useWM();
+  const [device, setDevice] = useState<(typeof DEVICES)[number]["id"]>("desktop");
+  const d = DEVICES.find((x) => x.id === device)!;
+  const box = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const fit = () => box.current && setScale(Math.min(1, (box.current.clientWidth - 48) / d.w));
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [d.w]);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onClose]);
+  return (
+    <div className="hms-app fixed inset-0 z-[80] flex flex-col bg-[#eef0f4]" role="dialog" aria-label="Preview">
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
+        <p className="text-[15px] font-semibold">Preview · draft</p>
+        <span className="hidden text-[13px] text-hms-muted sm:inline">Only you see this</span>
+        <div className="mx-auto flex rounded-full border border-hms-line bg-hms-hover p-0.5">
+          {DEVICES.map((x) => (
+            <button key={x.id} onClick={() => setDevice(x.id)} className={clsx("flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium", device === x.id ? "bg-white shadow-sm" : "text-hms-muted")}>
+              <x.icon className="size-4" /> <span className="hidden md:inline">{x.label}</span>
+            </button>
+          ))}
+        </div>
+        <Btn variant="outline" onClick={onClose} className="h-8 px-3"><X className="size-4" /> Close</Btn>
+      </div>
+      <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-6">
+        <div style={{ width: d.w * scale, height: "100%" }} className="relative">
+          <div style={{ width: d.w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className={clsx("overflow-hidden bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]", device === "phone" ? "rounded-[36px] border-[10px] border-[#1d1f24]" : "rounded-xl")}>
+            <PreviewFrame slug={hotel.slug} section={section} title={`${hotel.name} draft preview`} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The real site, rendering the draft (?preview=draft). Updates live as the draft changes. */
+export function PreviewFrame({ slug, section, title }: { slug: string; section?: string; title: string }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    if (!section) return;
+    const send = () => ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin);
+    const t = setTimeout(send, 600);
+    return () => clearTimeout(t);
+  }, [section]);
+  return <iframe ref={ref} title={title} src={hrefFor(`/hotel/${slug}?preview=draft`)} className="size-full border-0" onLoad={() => section && ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin)} />;
+}
+
+/** Fits a full-width site (e.g. 1440) into whatever column it sits in, scaled down. */
+export function ScaledSite({ slug, section, width, height, title }: { slug: string; section?: string; width: number; height: number; title: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.4);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [width]);
+  return (
+    <div ref={ref} className="relative overflow-hidden rounded-2xl border border-hms-line bg-white" style={{ height }}>
+      <div className="absolute left-0 top-0 origin-top-left" style={{ width, height: height / scale, transform: `scale(${scale})` }}>
+        <PreviewFrame slug={slug} section={section} title={title} />
+      </div>
+    </div>
+  );
+}

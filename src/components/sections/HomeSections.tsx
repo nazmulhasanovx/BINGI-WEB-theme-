@@ -7,6 +7,7 @@ import { availablePages, formatMoney, showRating, visibleOffers } from "@/lib/da
 import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { ButtonLink } from "@/components/ui/Button";
+import { SiteVisible } from "@/components/site-draft/Draft";
 import { T } from "@/lib/i18n";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 
@@ -78,9 +79,9 @@ export function FeaturedStays({ hotel }: { hotel: Hotel }) {
       {/* phone: swipe row; tablet: 2-up; desktop: 3-up */}
       <RevealGroup className="no-scrollbar flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:px-6 md:mx-auto md:grid md:max-w-[1240px] md:grid-cols-2 md:gap-5 md:overflow-visible lg:grid-cols-3">
         {list.map((r) => (
-          <RevealItem key={r.id} className="w-[82%] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none">
+          <SiteVisible key={r.id} slug={hotel.slug} kind="rooms" id={r.id}><RevealItem className="w-[82%] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none">
             <RoomCard room={r} href={`${base}/rooms/${r.slug}`} layout="vertical" />
-          </RevealItem>
+          </RevealItem></SiteVisible>
         ))}
       </RevealGroup>
       <Container>
@@ -168,7 +169,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
         </Reveal>
         <RevealGroup className="grid gap-4 md:grid-cols-2 md:gap-5">
           {offers.map((o) => (
-            <RevealItem key={o.id}>
+            <SiteVisible key={o.id} slug={hotel.slug} kind="offers" id={o.id}><RevealItem>
             <Link href={`${base}/offers`} className="group flex overflow-hidden rounded-3xl border border-line bg-surface shadow-card transition-shadow hover:shadow-float">
               {o.photo && (
                 <span className="relative w-[38%] shrink-0 sm:w-[42%]">
@@ -181,7 +182,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
                 <span className="mt-1 text-[14px] text-muted">{o.short}</span>
               </span>
             </Link>
-            </RevealItem>
+            </RevealItem></SiteVisible>
           ))}
         </RevealGroup>
       </Container>
@@ -206,7 +207,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
           </div>
           <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
             {hotel.reviews.map((r) => (
-              <figure key={r.id} className="flex w-[82%] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-line bg-surface p-5 md:w-auto md:max-w-none">
+              <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}><figure className="flex w-[82%] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-line bg-surface p-5 md:w-auto md:max-w-none">
                 <Quote className="size-6 text-brand" />
                 <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed">{r.text}</blockquote>
                 <figcaption className="mt-4 flex items-center justify-between text-[13px]">
@@ -216,7 +217,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
                   </span>
                   <span className="flex items-center gap-1 font-semibold"><Star className="size-4 fill-brand text-brand" /> {r.score}</span>
                 </figcaption>
-              </figure>
+              </figure></SiteVisible>
             ))}
           </div>
         </Reveal>
