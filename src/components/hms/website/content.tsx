@@ -57,7 +57,7 @@ export function MediaPage() {
   };
   return (
     <>
-      <PageHead title="Media Library" desc="Every photo the website can use. Room and service photos come from HMS; upload others here." actions={<><input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => upload(e.target.files)} /><Btn onClick={() => input.current?.click()} disabled={busy}><Upload className="size-4" /> {busy ? "Uploading…" : "Upload photos"}</Btn></>} />
+      <PageHead title="Photos" desc="Upload once, use anywhere on the site." actions={<><input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => upload(e.target.files)} /><Btn onClick={() => input.current?.click()} disabled={busy}><Upload className="size-4" /> {busy ? "Uploading…" : "Upload photos"}</Btn></>} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <Segmented value={filter} onChange={setFilter} options={[{ v: "all", label: `All (${site.rec.media.length})` }, { v: "hms", label: "From HMS" }, { v: "uploaded", label: "Uploaded" }]} />
         
@@ -76,7 +76,6 @@ export function MediaPage() {
               <button key={m.id} onClick={() => setSel(m)} className="group overflow-hidden rounded-xl border border-hms-line bg-white text-left">
                 <span className="relative block aspect-[4/3]">
                   <Image src={m.src} alt={m.alt} fill sizes="240px" className="object-cover transition-transform group-hover:scale-[1.03]" unoptimized={m.uploaded} />
-                  {!m.alt && <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-medium text-hms-amber">No alt text</span>}
                 </span>
                 <span className="block px-2.5 py-2">
                   <span className="block truncate text-[12px] font-medium">{m.name}</span>
@@ -137,7 +136,7 @@ export function RoomsPage() {
   const set = (id: string, k: "visible" | "featured", v: boolean) => site.edit((x) => { const r = x.rooms[id] ?? { visible: true, featured: false }; r[k] = v; if (k === "visible" && !v) r.featured = false; x.rooms[id] = r; });
   return (
     <>
-      <PageHead title="Rooms & Booking" desc="Which room types show on the website. Names, rates and availability are edited in Rooms." actions={<SourceLink href="/hms/rooms" label="Open Rooms" />} />
+      <PageHead title="Rooms" desc="Choose which rooms guests see." actions={<SourceLink href="/hms/rooms" label="Edit rooms & rates" />} />
       <Card pad={false}>
         <div className="grid grid-cols-[1fr_110px_90px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-hms-muted">
           <span>Room type</span><span>Rate / night</span><span>Units</span><span>Visible</span><span>Featured</span>
@@ -176,7 +175,7 @@ export function ServicesPage() {
   const diningOk = planAllows(hotel.plan, "ultra");
   return (
     <>
-      <PageHead title="Services & Dining" desc="What guests can see and add to a booking. Prices are edited in their HMS module." />
+      <PageHead title="Services & Dining" desc="Extras guests can see and add." />
       <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ v: "services", label: `Other Services (${hotel.services.length})` }, { v: "dining", label: `Meals & Dining (${hotel.outlets.length})` }]} /></div>
       {tab === "services" ? (
         <Card pad={false} title="Other Services" action={<SourceLink href="/hms/other-services" label="Edit in Other Services" />}>
@@ -217,7 +216,7 @@ export function OffersPage() {
   const set = (id: string, k: "visible" | "featured", v: boolean) => site.edit((x) => { const o = x.offers[id] ?? { visible: true, featured: false }; o[k] = v; if (k === "visible" && !v) o.featured = false; x.offers[id] = o; });
   return (
     <>
-      <PageHead title="Offers & Promotions" desc="Offers and codes are created in Discounts. Here you choose how the website shows them." actions={<SourceLink href="/hms/discounts" label="Open Discounts" />} />
+      <PageHead title="Offers" desc="Direct-booking deals and promo codes." actions={<SourceLink href="/hms/discounts" label="Create in Discounts" />} />
       <div className="mb-4"><Segmented value={f} onChange={setF} options={[{ v: "all", label: "All" }, { v: "active", label: "Active" }, { v: "expired", label: "Expired" }]} /></div>
       <Card pad={false} className="mb-5">
         <div className="grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-hms-muted"><span>Offer</span><span>Status</span><span>Visible</span><span>Featured</span></div>
@@ -245,97 +244,116 @@ export function OffersPage() {
   );
 }
 
-/* ================= Reviews & Gallery ================= */
+/* ================= Reviews ================= */
 export function ReviewsPage() {
   const { hotel, site } = useWM();
   const d = site.draft;
-  const [tab, setTab] = useState<"reviews" | "gallery">("reviews");
-  const [pick, setPick] = useState(false);
   const shown = hotel.reviews.filter((r) => !d.hiddenReviews.includes(r.id));
-  const move = (i: number, dir: -1 | 1) => site.edit((x) => { const g = [...x.gallery]; const j = i + dir; if (j < 0 || j >= g.length) return; [g[i], g[j]] = [g[j], g[i]]; x.gallery = g; });
   return (
     <>
-      <PageHead title="Reviews & Gallery" desc="Choose which guest reviews and photos the website shows." />
-      <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ v: "reviews", label: `Reviews (${hotel.reviews.length})` }, { v: "gallery", label: `Gallery (${d.gallery.length})` }]} /></div>
-      {tab === "reviews" ? (
-        <>
-          <p className="mb-4 flex items-center gap-2 text-[14px]"><Star className="size-4 fill-hms-amber text-hms-amber" /> <b>{hotel.reviewScore ?? "—"}</b> <span className="text-hms-muted">· {hotel.reviewCount} reviews</span></p>
-          <Card pad={false}>
-            {hotel.reviews.map((r) => (
-              <div key={r.id} className="flex items-start gap-4 border-b border-hms-line px-5 py-4 last:border-b-0">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-hms-hover text-[13px] font-semibold">{r.name.split(" ").map((p) => p[0]).join("")}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-medium">{r.name} <span className="font-normal text-hms-muted">· {r.from} · {r.stayed}</span> <span className="ml-1 text-hms-amber">★ {r.score}</span></p>
-                  <p className="mt-1 text-[14px] text-hms-muted">{r.text}</p>
-                </div>
-                <Toggle label={`Show review by ${r.name}`} on={!d.hiddenReviews.includes(r.id)} onChange={(v) => site.edit((x) => { x.hiddenReviews = v ? x.hiddenReviews.filter((id) => id !== r.id) : [...x.hiddenReviews, r.id]; })} />
-              </div>
-            ))}
-          </Card>
-          <p className="mt-3 text-[13px] text-hms-muted">{shown.length} of {hotel.reviews.length} shown</p>
-        </>
-      ) : (
-        <>
-          <NotWired what="Gallery choices" />
-          <div className="mb-3 flex justify-end"><Btn onClick={() => setPick(true)}><ImagePlus className="size-4" /> Add photo</Btn></div>
-          {d.gallery.length === 0 ? (
-            <Card><Empty icon={<Images className="size-6" />} title="Gallery is empty" desc="Add photos from the Media Library." action={<Btn onClick={() => setPick(true)}>Add photo</Btn>} /></Card>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {d.gallery.map((src, i) => (
-                <div key={src + i} className="overflow-hidden rounded-xl border border-hms-line bg-white">
-                  <div className="relative aspect-[4/3]"><Image src={src} alt="" fill sizes="280px" className="object-cover" unoptimized={src.startsWith("data:")} /><span className="absolute left-2 top-2 grid size-6 place-items-center rounded-full bg-white/95 text-[12px] font-semibold">{i + 1}</span></div>
-                  <div className="flex items-center justify-between px-2 py-1.5">
-                    <div className="flex">
-                      <button aria-label="Move left" onClick={() => move(i, -1)} disabled={i === 0} className="grid size-8 place-items-center rounded-lg hover:bg-hms-hover disabled:opacity-30"><ArrowLeft className="size-4" /></button>
-                      <button aria-label="Move right" onClick={() => move(i, 1)} disabled={i === d.gallery.length - 1} className="grid size-8 place-items-center rounded-lg hover:bg-hms-hover disabled:opacity-30"><ArrowRight className="size-4" /></button>
-                    </div>
-                    <button aria-label="Remove from gallery" onClick={() => site.edit((x) => { x.gallery = x.gallery.filter((_, k) => k !== i); })} className="grid size-8 place-items-center rounded-lg text-hms-red hover:bg-red-50"><Trash2 className="size-4" /></button>
-                  </div>
-                </div>
-              ))}
+      <PageHead title="Reviews" desc="Pick the reviews guests see." actions={<SourceLink href="/hms/guest-reviews" label="All reviews" />} />
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-[32px] font-semibold leading-none">{hotel.reviewScore ?? "—"}</span>
+        <span className="text-[14px] text-hms-muted"><Star className="mb-0.5 inline size-4 fill-hms-amber text-hms-amber" /> {hotel.reviewCount} reviews · {shown.length} shown on the site</span>
+      </div>
+      <Card pad={false}>
+        {hotel.reviews.length === 0 && <Empty icon={<Star className="size-6" />} title="No reviews yet" desc="Reviews from guests appear here after their stay." />}
+        {hotel.reviews.map((r) => (
+          <div key={r.id} className="flex items-start gap-4 border-b border-hms-line px-5 py-4 last:border-b-0">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-hms-hover text-[13px] font-semibold">{r.name.split(" ").map((p) => p[0]).join("")}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-medium">{r.name} <span className="ml-1 text-hms-amber">★ {r.score}</span> <span className="font-normal text-hms-muted">· {r.stayed}</span></p>
+              <p className="mt-1 text-[14px] text-hms-muted">{r.text}</p>
             </div>
-          )}
-          {pick && <MediaPicker onClose={() => setPick(false)} onPick={(src) => site.edit((x) => { if (!x.gallery.includes(src)) x.gallery.push(src); })} />}
-        </>
-      )}
+            <Toggle label={`Show review by ${r.name}`} on={!d.hiddenReviews.includes(r.id)} onChange={(v) => site.edit((x) => { x.hiddenReviews = v ? x.hiddenReviews.filter((id) => id !== r.id) : [...x.hiddenReviews, r.id]; })} />
+          </div>
+        ))}
+      </Card>
     </>
   );
 }
 
-/* ================= Property Info ================= */
+/* ================= Photos: gallery + library ================= */
+export function PhotosPage() {
+  const { site } = useWM();
+  const d = site.draft;
+  const [pick, setPick] = useState(false);
+  const move = (i: number, dir: -1 | 1) => site.edit((x) => { const g = [...x.gallery]; const j = i + dir; if (j < 0 || j >= g.length) return; [g[i], g[j]] = [g[j], g[i]]; x.gallery = g; });
+  return (
+    <>
+      <MediaPage />
+      <div className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <div><h2 className="text-[17px] font-semibold">Gallery</h2><p className="text-[13px] text-hms-muted">Photos in the site gallery, in this order</p></div>
+          <Btn variant="outline" onClick={() => setPick(true)}><ImagePlus className="size-4" /> Add</Btn>
+        </div>
+        <NotWired />
+        {d.gallery.length === 0 ? (
+          <Card><Empty icon={<Images className="size-6" />} title="Gallery is empty" desc="Add photos from your library." action={<Btn onClick={() => setPick(true)}>Add photo</Btn>} /></Card>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {d.gallery.map((src, i) => (
+              <div key={src + i} className="group relative overflow-hidden rounded-xl">
+                <div className="relative aspect-[4/3]"><Image src={src} alt="" fill sizes="240px" className="object-cover" unoptimized={src.startsWith("data:")} /></div>
+                <span className="absolute left-2 top-2 grid size-6 place-items-center rounded-full bg-white/95 text-[12px] font-semibold">{i + 1}</span>
+                <div className="absolute inset-x-2 bottom-2 flex justify-between opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                  <span className="flex rounded-full bg-white/95 shadow">
+                    <button aria-label="Move left" onClick={() => move(i, -1)} disabled={i === 0} className="grid size-8 place-items-center rounded-full disabled:opacity-30"><ArrowLeft className="size-4" /></button>
+                    <button aria-label="Move right" onClick={() => move(i, 1)} disabled={i === d.gallery.length - 1} className="grid size-8 place-items-center rounded-full disabled:opacity-30"><ArrowRight className="size-4" /></button>
+                  </span>
+                  <button aria-label="Remove from gallery" onClick={() => site.edit((x) => { x.gallery = x.gallery.filter((_, k) => k !== i); })} className="grid size-8 place-items-center rounded-full bg-white/95 text-hms-red shadow"><Trash2 className="size-4" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {pick && <MediaPicker onClose={() => setPick(false)} onPick={(src) => site.edit((x) => { if (!x.gallery.includes(src)) x.gallery.push(src); })} />}
+    </>
+  );
+}
+
+/* ================= Contact & Policies ================= */
 export function InfoPage() {
   const { hotel, site } = useWM();
   const d = site.draft;
   const set = (k: keyof typeof d.info, v: string) => site.edit((x) => { x.info[k] = v; });
+  const policy = (k: "cancellation" | "children" | "pets", label: string) => {
+    const key = `policy.${k}`;
+    return (
+      <Field key={k} label={label}>
+        <TextArea value={d.text[key] ?? ""} placeholder={hotel.policies[k]} onChange={(e) => site.edit((x) => { if (e.target.value) x.text[key] = e.target.value; else delete x.text[key]; })} className="min-h-[72px]" />
+      </Field>
+    );
+  };
   return (
     <>
-      <PageHead title="Property Info" desc="About, contact and location for the website footer, Contact and Getting here sections." />
-      <NotWired what="Property info edits" />
+      <PageHead title="Contact & Policies" desc="Shown in the header, footer and Policies page." />
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="About">
-          <Field label="About the property" count={`${d.info.about.length}/400`}><TextArea value={d.info.about} maxLength={400} onChange={(e) => set("about", e.target.value)} className="min-h-[140px]" /></Field>
-        </Card>
         <Card title="Contact">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Phone"><Input value={d.info.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
             <Field label="WhatsApp"><Input value={d.info.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="+8801…" /></Field>
             <Field label="Email"><Input type="email" value={d.info.email} onChange={(e) => set("email", e.target.value)} /></Field>
-            <Field label="Facebook page"><Input value={d.info.facebook === "#" ? "" : d.info.facebook} onChange={(e) => set("facebook", e.target.value)} placeholder="facebook.com/yourhotel" /></Field>
+            <Field label="Address"><Input value={d.info.address} onChange={(e) => set("address", e.target.value)} /></Field>
+          </div>
+          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.info.address)}`} target="_blank" rel="noopener" className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-hms-blue"><MapPin className="size-4" /> Check on Google Maps</a>
+        </Card>
+        <Card title="Policies">
+          <div className="space-y-4">
+            {policy("cancellation", "Cancellation")}
+            {policy("children", "Children & extra beds")}
+            {policy("pets", "Pets")}
           </div>
         </Card>
-        <Card title="Location">
-          <Field label="Address"><Input value={d.info.address} onChange={(e) => set("address", e.target.value)} /></Field>
-          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.info.address)}`} target="_blank" rel="noopener" className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-hms-blue"><MapPin className="size-4" /> Check on Google Maps</a>
-        </Card>
-        <Card title="Nearby" desc="Travel times shown in Location / Getting here." action={<Badge>From HMS property profile</Badge>}>
+        <Card title="Nearby" action={<span className="text-[12px] text-hms-muted">From property profile</span>}>
           {hotel.nearby?.length ? (
-            <ul className="divide-y divide-hms-line">{hotel.nearby.map((n) => <li key={n.name} className="flex justify-between py-2 text-[14px]"><span>{n.name}</span><span className="text-hms-muted">{n.time} {n.mode}</span></li>)}</ul>
+            <ul className="divide-y divide-hms-line">{hotel.nearby.map((n) => <li key={n.name} className="flex justify-between py-2.5 text-[14px]"><span>{n.name}</span><span className="text-hms-muted">{n.time} {n.mode}</span></li>)}</ul>
           ) : <p className="text-[14px] text-hms-muted">No nearby places yet.</p>}
         </Card>
         {hotel.host && (
-          <Card title="Host" desc="Shown on guest house and home websites." className="lg:col-span-2">
-            <div className="flex items-center gap-4"><span className="grid size-12 place-items-center rounded-full bg-hms-coral-soft font-semibold text-hms-red">{hotel.host.name.split(" ").map((p) => p[0]).join("")}</span><div><p className="text-[14px] font-medium">{hotel.host.name} · hosting since {hotel.host.since}</p><p className="text-[13px] text-hms-muted">“{hotel.host.note}”</p></div></div>
+          <Card title="Host">
+            <div className="flex items-center gap-4"><span className="grid size-12 place-items-center rounded-full bg-hms-coral-soft font-semibold text-hms-red">{hotel.host.name.split(" ").map((p) => p[0]).join("")}</span><div><p className="text-[14px] font-medium">{hotel.host.name}</p><p className="text-[13px] text-hms-muted">Since {hotel.host.since} · {hotel.host.languages.join(", ")}</p></div></div>
           </Card>
         )}
       </div>

@@ -27,6 +27,8 @@ export function SiteHeader({
 }) {
   // Menu items the hotel turned off in Website Management › Pages & Navigation.
   const doc = useSiteView(base.split("/").pop() ?? "");
+  if (doc?.info.phone) phone = doc.info.phone;
+  if (doc) whatsapp = doc.info.whatsapp || undefined;
   nav = doc ? nav.filter((n) => doc.pages[n.href === base ? "home" : (n.href.split("/").pop() ?? "")]?.menu !== false) : nav;
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);

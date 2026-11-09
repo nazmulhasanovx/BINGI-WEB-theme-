@@ -13,6 +13,7 @@ import { MASTER_LIST, PLAN_LABEL, planAllows, sectionsFor, type SectionDef } fro
 import { presetFor } from "@/lib/presets";
 import { slotText } from "@/lib/site";
 import { useWM, PreviewFrame, ScaledSite } from "./WebsiteModule";
+import { MediaPicker } from "./content";
 import { Badge, Btn, Card, Field, Input, PageHead, PlanLock, Row, Segmented, SourceLink, TextArea, Toggle, fmtDate } from "./ui";
 
 const SOURCE_LINK: Record<string, { href: string; label: string }> = {
@@ -256,7 +257,7 @@ export function SectionsPage() {
 
   return (
     <>
-      <PageHead title="Content & Sections" desc={<>Homepage of the <b className="font-semibold text-hms-ink">{manifest.name}</b> theme. Order, show or hide sections and edit their words. Room, offer and review data comes from HMS.</>} />
+      <PageHead title="Homepage" desc={<>Sections of the <b className="font-semibold text-hms-ink">{manifest.name}</b> theme.</>} />
       <div className="grid gap-5 xl:grid-cols-[440px_1fr]">
         <div className="space-y-2">
           {ordered.map((s, i) => {
@@ -346,50 +347,78 @@ function SectionEditor({ s }: { s: SectionDef & { available: boolean } }) {
   );
 }
 
-/* ================= Pages & Navigation ================= */
+/* ================= Pages & Menu ================= */
 export function PagesPage() {
   const { hotel, site, manifest } = useWM();
   const d = site.draft;
+  const [open, setOpen] = useState<string | null>(null);
   const has = { dining: hotel.outlets.length > 0, events: hotel.flags.events, experiences: hotel.services.some((s) => s.photo), offers: hotel.offers.length > 0 };
-  const rows = manifest.pages.map((p) => {
-    const planOk = planAllows(hotel.plan, p.minPlan);
-    const dataOk = !p.needs || has[p.needs];
-    return { ...p, planOk, dataOk };
-  });
-  const menu = rows.filter((p) => p.planOk && p.dataOk && d.pages[p.id]?.menu !== false && p.id !== "my-trip");
-  const set = (id: string, k: "menu" | "footer", v: boolean) => site.edit((x) => { x.pages[id] = { ...(x.pages[id] ?? { menu: true, footer: true }), [k]: v }; });
+  const rows = manifest.pages.map((p) => ({ ...p, planOk: planAllows(hotel.plan, p.minPlan), dataOk: !p.needs || has[p.needs] }));
+  const menu = rows.filter((p) => p.planOk && p.dataOk && d.pages[p.id]?.menu !== false && p.id !== "my-trip" && p.id !== "policies");
+  const setMenu = (id: string, v: boolean) => site.edit((x) => { x.pages[id] = { ...(x.pages[id] ?? { menu: true, footer: true }), menu: v }; });
   return (
     <>
-      <PageHead title="Pages & Navigation" desc={`Pages of the ${manifest.name} theme and what shows in the menu. System pages can't be removed.`} />
-      <Card title="Your menu" className="mb-5">
-        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-hms-line px-4 py-3">
-          <span className="mr-4 font-semibold">{hotel.logoText}</span>
-          {menu.map((p) => <span key={p.id} className="rounded-full px-3 py-1 text-[14px] hover:bg-hms-hover">{p.name}</span>)}
-          <span className="ml-auto rounded-full bg-hms-coral px-3 py-1 text-[13px] font-medium text-white">Book now</span>
-        </div>
-      </Card>
-      <Card pad={false} title="Pages">
-        <div className="grid grid-cols-[1fr_90px_70px_70px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-hms-muted">
-          <span>Page</span><span>Type</span><span>Menu</span><span>Footer</span>
-        </div>
+      <PageHead title="Pages & Menu" desc="Every page of your site, its banner and title." />
+      <div className="mb-6 flex flex-wrap items-center gap-1 rounded-2xl border border-hms-line bg-white px-4 py-3">
+        <span className="mr-4 font-semibold">{hotel.logoText}</span>
+        {menu.map((p) => <span key={p.id} className="rounded-full px-3 py-1 text-[14px] text-hms-muted">{p.name}</span>)}
+        <span className="ml-auto rounded-full bg-hms-coral px-3 py-1 text-[13px] font-medium text-white">Book now</span>
+      </div>
+      <Card pad={false}>
         {rows.map((p) => {
           const off = !p.planOk || !p.dataOk;
+          const editable = p.id !== "home" && p.id !== "my-trip" && !off;
+          const isOpen = open === p.id;
           return (
-            <div key={p.id} className="grid grid-cols-[1fr_90px_70px_70px] items-center gap-4 border-b border-hms-line px-5 py-3 last:border-b-0">
-              <div className="min-w-0">
-                <p className={clsx("text-[14px] font-medium", off && "text-hms-muted")}>{p.name} {p.system && <Lock className="inline size-3 text-hms-muted" />}</p>
-                <p className="font-mono text-[12px] text-hms-muted">/hotel/{hotel.slug}{p.path === "/" ? "" : p.path}</p>
-                {!p.planOk && <p className="mt-0.5 text-[12px] text-hms-amber">{PLAN_LABEL[p.minPlan!]} plan</p>}
-                {p.planOk && !p.dataOk && <p className="mt-0.5 text-[12px] text-hms-amber">No content yet</p>}
+            <div key={p.id} className="border-b border-hms-line last:border-b-0">
+              <div className="flex items-center gap-4 px-5 py-3">
+                <span className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-hms-hover">
+                  {(d.pagePhotos[p.id] || (p.id === "home" && hotel.heroPhoto)) && <Image src={d.pagePhotos[p.id] || hotel.heroPhoto} alt="" fill sizes="44px" className="object-cover" unoptimized={(d.pagePhotos[p.id] ?? "").startsWith("data:")} />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className={clsx("text-[15px] font-medium", off && "text-hms-muted")}>{slotText(d, `page.${p.id}.title`, p.name)}</p>
+                  <p className="text-[12px] text-hms-muted">{!p.planOk ? `${PLAN_LABEL[p.minPlan!]} plan` : !p.dataOk ? "No content yet" : p.id === "home" ? "Edit in Homepage" : `/${p.id === "home" ? "" : p.id}`}</p>
+                </div>
+                {!p.planOk && <PlanLock plan={PLAN_LABEL[p.minPlan!]} />}
+                {p.id !== "home" && p.id !== "my-trip" && p.id !== "policies" && (
+                  <label className="flex items-center gap-2 text-[13px] text-hms-muted">In menu <Toggle label={`${p.name} in menu`} on={!off && d.pages[p.id]?.menu !== false} disabled={off} onChange={(v) => setMenu(p.id, v)} /></label>
+                )}
+                {editable ? (
+                  <Btn variant="ghost" className="h-8 px-3 text-[13px]" onClick={() => setOpen(isOpen ? null : p.id)}>{isOpen ? "Done" : "Edit"}</Btn>
+                ) : p.id === "home" ? (
+                  <Link href="/hms/website/homepage" className="px-3 text-[13px] font-medium text-hms-blue">Edit</Link>
+                ) : <span className="w-[52px]" />}
               </div>
-              <Badge tone={p.system ? "gray" : "blue"}>{p.system ? "System" : "Content"}</Badge>
-              <Toggle label={`${p.name} in menu`} on={!off && d.pages[p.id]?.menu !== false && p.id !== "my-trip"} disabled={off || p.id === "home" || p.id === "my-trip"} onChange={(v) => set(p.id, "menu", v)} />
-              <Toggle label={`${p.name} in footer`} on={!off && d.pages[p.id]?.footer !== false} disabled={off} onChange={(v) => set(p.id, "footer", v)} />
+              {isOpen && <PageEditor id={p.id} name={p.name} />}
             </div>
           );
         })}
       </Card>
     </>
+  );
+}
+
+function PageEditor({ id, name }: { id: string; name: string }) {
+  const { site } = useWM();
+  const d = site.draft;
+  const [pick, setPick] = useState(false);
+  const text = (k: string, v: string) => site.edit((x) => { if (v) x.text[k] = v; else delete x.text[k]; });
+  const photo = d.pagePhotos[id];
+  return (
+    <div className="grid gap-5 border-t border-hms-line bg-hms-nav px-5 py-5 md:grid-cols-[220px_1fr]">
+      <div>
+        <p className="mb-1.5 text-[14px] font-medium">Banner</p>
+        <button onClick={() => setPick(true)} className="relative block aspect-[16/9] w-full overflow-hidden rounded-xl border border-dashed border-hms-line bg-white">
+          {photo ? <Image src={photo} alt="" fill sizes="220px" className="object-cover" unoptimized={photo.startsWith("data:")} /> : <span className="grid h-full place-items-center text-[13px] text-hms-muted">Choose photo</span>}
+        </button>
+        {photo && <button onClick={() => site.edit((x) => { delete x.pagePhotos[id]; })} className="mt-1.5 text-[12px] text-hms-muted hover:text-hms-red">Remove</button>}
+      </div>
+      <div className="space-y-4">
+        <Field label="Title"><Input value={d.text[`page.${id}.title`] ?? ""} placeholder={name} maxLength={50} onChange={(e) => text(`page.${id}.title`, e.target.value)} /></Field>
+        <Field label="Short intro (optional)"><Input value={d.text[`page.${id}.intro`] ?? ""} placeholder="One line under the title" maxLength={120} onChange={(e) => text(`page.${id}.intro`, e.target.value)} /></Field>
+      </div>
+      {pick && <MediaPicker onClose={() => setPick(false)} onPick={(src) => site.edit((x) => { x.pagePhotos[id] = src; })} />}
+    </div>
   );
 }
 

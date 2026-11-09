@@ -16,7 +16,7 @@ export default async function OffersPage(props: PageProps<"/hotel/[slug]/offers"
   const offers = visibleOffers(hotel);
   return (
     <>
-      <PageHero title="Offers" photo={hotel.pagePhotos.offers} />
+      <PageHero slug={hotel.slug} pageId="offers" title="Offers" photo={hotel.pagePhotos.offers} />
       <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 md:py-12">
         <p className="mb-6 flex items-start gap-3 rounded-2xl bg-brand-soft p-4 text-[14px]">
           <Sparkles className="mt-0.5 size-5 shrink-0 text-action" />

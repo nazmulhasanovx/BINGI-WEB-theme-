@@ -20,7 +20,7 @@ export function BookingPage() {
   const bkash = hotel.payments.find((p) => p.kind === "mfs-manual") as { provider?: string; number?: string } | undefined;
   return (
     <>
-      <PageHead title="Booking Engine" desc="How guests book and pay on your website. Payment accounts live in Payments; rules in Settings › Booking Policies." actions={<SourceLink href="/hms/payments" label="Payments" />} />
+      <PageHead title="Booking Engine" desc="How guests book and pay." actions={<SourceLink href="/hms/payments" label="Payments" />} />
       <NotWired what="Booking engine settings" />
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="How guests can pay" desc="Only methods you turn on here appear at checkout.">
@@ -63,7 +63,7 @@ export function InquiriesPage() {
   const counts = { new: site.rec.inquiries.filter((x) => x.status === "new").length };
   return (
     <>
-      <PageHead title="Inquiries" desc="Messages from your website's contact and enquiry forms. Reply in Chat." actions={<SourceLink href="/hms/chat" label="Open Chat" />} />
+      <PageHead title="Inquiries" desc="Questions sent from your website." actions={<SourceLink href="/hms/chat" label="Open Chat" />} />
       <div className="mb-4"><Segmented value={f} onChange={setF} options={[{ v: "all", label: "All" }, { v: "new", label: `New (${counts.new})` }, { v: "replied", label: "Replied" }, { v: "closed", label: "Closed" }]} /></div>
       {list.length === 0 ? (
         <Card><Empty icon={<Inbox className="size-6" />} title="Nothing here" desc="When a guest sends a question from your website, it shows here and in Chat." /></Card>
@@ -105,7 +105,7 @@ export function SeoPage() {
   const title = s.titleTemplate.replace("{{page}}", "Home");
   return (
     <>
-      <PageHead title="SEO & Sharing" desc="How your website looks on Google and when shared on Facebook or WhatsApp." />
+      <PageHead title="Google & Sharing" desc="How your site looks in search and on social." />
       <NotWired what="SEO settings" />
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <div className="space-y-5">
@@ -170,7 +170,7 @@ export function DomainPage() {
   const at = dm.status === "none" ? -1 : steps.findIndex((s) => s.id === dm.status);
   return (
     <>
-      <PageHead title="Domain & Access" desc="Your free BinGi address works now. Connect your own domain when you have one." />
+      <PageHead title="Domain" desc="Your website address." />
       <Card title="Free address" className="mb-5" action={<Badge tone="green">Live</Badge>}>
         <div className="flex flex-wrap items-center gap-3">
           <span className="font-mono text-[15px]">{free}</span>
@@ -223,7 +223,7 @@ export function LanguagesPage() {
   const done = fields.filter((f) => d.text[`bn:${f.key}`]).length;
   return (
     <>
-      <PageHead title="Languages" desc="Guests switch between English and বাংলা on the website. Buttons and menus are translated for you; your own words need a Bangla version. Bangla text you type here already shows on the site; the on/off and default switches are saved for the API." />
+      <PageHead title="Languages" desc="English and বাংলা for guests." />
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex items-center gap-3"><Toggle label="Bangla on the website" on={d.languages.bn} onChange={(v) => site.edit((x) => { x.languages.bn = v; if (!v) x.languages.defaultLang = "en"; })} /><span className="text-[14px] font-medium">বাংলা on the website</span></div>
@@ -258,7 +258,7 @@ export function OnlinePage() {
   ];
   return (
     <>
-      <PageHead title="Online Controls" desc="Pause or resume new online requests. In production these apply immediately — no publish needed." />
+      <PageHead title="Online On/Off" desc="Pause new bookings or orders anytime." />
       <NotWired what="Channel switches" />
       <p className="mb-4 text-[13px] text-hms-muted">Pausing stops new requests only. Existing bookings stay.</p>
       <Card pad={false}>

@@ -46,10 +46,10 @@ export function OverviewSimple() {
   const { hotel, site, manifest, openPreview, siteUrl } = useWM();
   const d = site.draft;
   const todo = [
-    { label: "Add a search description", ok: d.seo.description.length >= 50, href: "settings" },
-    { label: "Show at least one room with a photo", ok: hotel.rooms.some((r) => d.rooms[r.id]?.visible !== false && r.photos.length > 0), href: "content" },
-    { label: "Add phone and address", ok: !!d.info.phone && !!d.info.address, href: "settings" },
-    { label: "Write the headline in বাংলা", ok: !d.languages.bn || !!d.text["bn:hero.title"], href: "settings" },
+    { label: "Add a search description", ok: d.seo.description.length >= 50, href: "seo" },
+    { label: "Show at least one room with a photo", ok: hotel.rooms.some((r) => d.rooms[r.id]?.visible !== false && r.photos.length > 0), href: "rooms" },
+    { label: "Add phone and address", ok: !!d.info.phone && !!d.info.address, href: "info" },
+    { label: "Write the headline in বাংলা", ok: !d.languages.bn || !!d.text["bn:hero.title"], href: "languages" },
   ].filter((x) => !x.ok);
   const newMsgs = site.rec.inquiries.filter((q) => q.status === "new").length;
   return (
@@ -76,6 +76,8 @@ export function OverviewSimple() {
         </div>
       </Card>
 
+      <Tiles />
+
       <div className="mt-5 grid gap-5 md:grid-cols-2">
         <Card title={todo.length ? `${todo.length} thing${todo.length > 1 ? "s" : ""} to finish` : "Everything is ready"}>
           {todo.length ? (
@@ -88,15 +90,45 @@ export function OverviewSimple() {
             <p className="flex items-center gap-2 text-[14px] text-hms-green"><Check className="size-4" /> Your website has everything it needs.</p>
           )}
         </Card>
-        <Card title="Messages from the website">
-          <Link href="/hms/chat" className="flex items-center gap-3 text-[14px] hover:text-hms-coral">
+        <Card title="Inquiries">
+          <Link href="/hms/website/inquiries" className="flex items-center gap-3 text-[14px] hover:text-hms-coral">
             <span className="grid size-10 place-items-center rounded-xl bg-hms-coral-soft text-hms-coral"><MessageSquare className="size-5" /></span>
-            <span className="flex-1">{newMsgs ? <><b>{newMsgs} new</b> — reply in Chat</> : "No new messages"}</span>
+            <span className="flex-1">{newMsgs ? <><b>{newMsgs} new</b> inquir{newMsgs > 1 ? "ies" : "y"}</> : "No new inquiries"}</span>
             <ArrowRight className="size-4 text-hms-muted" />
           </Link>
         </Card>
       </div>
     </>
+  );
+}
+
+function Tiles() {
+  const { hotel, site, manifest } = useWM();
+  const d = site.draft;
+  const st = d.sections[manifest.id];
+  const rooms = hotel.rooms.filter((r) => d.rooms[r.id]?.visible !== false).length;
+  const offers = hotel.offers.filter((o) => d.offers[o.id]?.visible !== false && (o.kind === "discount" || hotel.flags.packages)).length;
+  const reviews = hotel.reviews.length - d.hiddenReviews.length;
+  const pay = [d.booking.payAtHotel && "Pay at hotel", d.booking.bkash && "bKash", d.booking.advance && `${d.booking.advancePercent}% advance`].filter(Boolean).join(" · ");
+  const tiles = [
+    { href: "design", label: "Theme & Style", value: `${manifest.name} · ${themeById(d.palette).name}` },
+    { href: "homepage", label: "Homepage", value: `${st.order.length - st.hidden.length} sections shown` },
+    { href: "rooms", label: "Rooms", value: `${rooms} of ${hotel.rooms.length} shown` },
+    { href: "offers", label: "Offers", value: offers ? `${offers} live` : "None" },
+    { href: "reviews", label: "Reviews", value: `${reviews} shown` },
+    { href: "booking", label: "Booking", value: pay || "No payment method" },
+    { href: "domain", label: "Domain", value: site.rec.domain.custom || "bingi.app address" },
+    { href: "online", label: "Online", value: site.rec.online.booking ? "Taking bookings" : "Bookings paused" },
+  ];
+  return (
+    <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      {tiles.map((t) => (
+        <Link key={t.href} href={`/hms/website/${t.href}`} className="group rounded-2xl border border-hms-line bg-white px-4 py-3.5 transition-shadow hover:shadow-[0_6px_20px_-12px_rgb(0_0_0/0.25)]">
+          <span className="flex items-center justify-between text-[13px] text-hms-muted">{t.label}<ArrowRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" /></span>
+          <span className="mt-1 block truncate text-[15px] font-semibold">{t.value}</span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -107,7 +139,7 @@ export function DesignSimple() {
   const live = site.rec.published?.master;
   return (
     <>
-      <Title>Design</Title>
+      <Title>Theme & Style</Title>
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           <section>

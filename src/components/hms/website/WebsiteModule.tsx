@@ -42,23 +42,29 @@ export function WebsiteModule({ page }: { page: string }) {
 }
 
 function InnerNav({ active }: { active: string }) {
+  const groups = [...new Set(WM_PAGES.map((p) => p.group))];
   return (
-    <aside className="hidden w-[200px] shrink-0 border-r border-hms-line bg-hms-nav px-2.5 py-4 lg:block" aria-label="Website Management">
-      {WM_PAGES.map((p) => {
-        const Icon = p.icon;
-        const on = p.id === active;
-        return (
-          <Link
-            key={p.id}
-            href={`/hms/website/${p.id}`}
-            aria-current={on ? "page" : undefined}
-            className={clsx("mb-0.5 flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}
-          >
-            <Icon className="size-[18px] shrink-0" strokeWidth={on ? 2.2 : 1.8} />
-            {p.label}
-          </Link>
-        );
-      })}
+    <aside className="no-scrollbar hidden w-[212px] shrink-0 overflow-y-auto border-r border-hms-line bg-hms-nav px-2.5 py-3 lg:block" aria-label="Website Management">
+      {groups.map((g) => (
+        <div key={g || "top"} className={g && g !== "Publish" ? "mt-4" : g === "Publish" ? "mt-4 border-t border-hms-line pt-3" : ""}>
+          {g && g !== "Publish" && <p className="px-3 pb-1 text-[12px] font-medium text-hms-muted">{g}</p>}
+          {WM_PAGES.filter((p) => p.group === g).map((p) => {
+            const Icon = p.icon;
+            const on = p.id === active;
+            return (
+              <Link
+                key={p.id}
+                href={`/hms/website/${p.id}`}
+                aria-current={on ? "page" : undefined}
+                className={clsx("mb-px flex h-9 items-center gap-3 rounded-xl px-3 text-[14px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}
+              >
+                <Icon className="size-[17px] shrink-0" strokeWidth={on ? 2.2 : 1.8} />
+                {p.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </aside>
   );
 }

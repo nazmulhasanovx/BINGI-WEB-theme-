@@ -21,6 +21,7 @@ export type SiteDoc = {
   services: Record<string, { visible: boolean }>;
   hiddenReviews: string[];
   gallery: string[];
+  pagePhotos: Record<string, string>; // banner photo per inner page
   info: { about: string; phone: string; whatsapp: string; email: string; address: string; facebook: string; instagram: string };
   booking: { payAtHotel: boolean; bkash: boolean; advance: boolean; advancePercent: number; extras: boolean; promo: boolean; guestAccount: "optional" | "required"; note: string };
   seo: { titleTemplate: string; description: string; shareImage: string; noindex: boolean };
@@ -65,6 +66,7 @@ export function defaultDoc(h: Hotel): SiteDoc {
     services: Object.fromEntries(h.services.map((s) => [s.id, { visible: true }])),
     hiddenReviews: [],
     gallery: h.gallery,
+    pagePhotos: Object.fromEntries(Object.entries(h.pagePhotos).filter(([, v]) => !!v)) as Record<string, string>,
     info: { about: h.intro, phone: h.phone, whatsapp: h.whatsapp ?? "", email: h.email, address: h.address, facebook: h.social.facebook ?? "", instagram: h.social.instagram ?? "" },
     booking: {
       payAtHotel: h.payments.some((p) => p.kind === "pay-at-property"),
@@ -210,6 +212,7 @@ const LABELS: Record<keyof SiteDoc, string> = {
   services: "Services on the website",
   hiddenReviews: "Reviews shown",
   gallery: "Gallery",
+  pagePhotos: "Page banners",
   info: "Property info",
   booking: "Booking engine",
   seo: "SEO & sharing",

@@ -16,7 +16,7 @@ export default async function DiningPage(props: PageProps<"/hotel/[slug]/dining"
   if (!hotel || !availablePages(hotel).dining) notFound();
   return (
     <>
-      <PageHero title="Dining" photo={hotel.pagePhotos.dining} />
+      <PageHero slug={hotel.slug} pageId="dining" title="Dining" photo={hotel.pagePhotos.dining} />
       <div className="mx-auto max-w-[1240px] space-y-14 px-4 py-10 sm:px-6 md:py-14">
         <section className="grid gap-4 md:gap-5 lg:grid-cols-2">
           {hotel.outlets.map((o, i) => (
