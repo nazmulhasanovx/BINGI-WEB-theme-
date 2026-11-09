@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  /* neutrals (same for every colour theme) */
+  --ink: #16181d;
+  --muted: #5e6470;
+  --canvas: #fafaf9;
+  --surface: #ffffff;
+  --line: #ecebe8;
+  /* brand family — overwritten per hotel by ThemeScope */
+  --brand: #f0503f;
+  --action: #c8382a;
+  --action-hover: #ad2f23;
+  --action-pressed: #93271d;
+  --on-action: #ffffff;
+  --brand-soft: #fef3f2;
+  --brand-soft-2: #fde7e4;
+  --brand-ring: #f9b9b2;
+
+  --font-heading: var(--font-sans-stack);
+  --font-sans-stack: "Plus Jakarta Sans Variable", "Hind Siliguri", system-ui, sans-serif;
+  --font-serif-stack: "Fraunces Variable", Georgia, serif;
+  --header-h: 72px;
+}
+
+@media (max-width: 767px) {
+  :root { --header-h: 58px; }
+}
+
+[data-heading="serif"] {
+  --font-heading: var(--font-serif-stack);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-pressed: var(--action-pressed);
+  --color-on-action: var(--on-action);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-2: var(--brand-soft-2);
+  --color-brand-ring: var(--brand-ring);
+  --font-sans: var(--font-sans-stack);
+  --font-heading: var(--font-heading);
+  --shadow-card: 0 1px 2px rgb(22 24 29 / 0.04), 0 8px 24px -12px rgb(22 24 29 / 0.12);
+  --shadow-float: 0 2px 6px rgb(22 24 29 / 0.06), 0 24px 48px -20px rgb(22 24 29 / 0.25);
+  --breakpoint-xs: 400px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Lenis smooth scroll */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans-stack);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+.pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .invoice-print, .invoice-print * { visibility: visible; }
+  .invoice-print { position: absolute; inset: 0; padding: 24px; }
+  .no-print { display: none !important; }
+}
+
+/* page transition */
+@keyframes page-in {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+.page-in { animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
