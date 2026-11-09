@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftRight, CalendarDays, Check, ChevronDown, Clock, Eye, GraduationCap, Layers, Megaphone, Plus, UserRound, Wallet, FileText, LogOut } from "lucide-react";
 import { TODAY, addDays, emp, fmt, money, useHrm, type Employee, type OpsReq, type ServiceReq } from "@/lib/hrm/store";
 import { decideLeave, decideRequest } from "@/lib/hrm/actions";
-import { StaffFrame, useToast } from "./Frame";
+import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Area, Btn, Card, Chip, Drawer, Empty, Field, Input, Menu, Pager, Person, Select, Table, useQuery } from "./ui";
 
 type Item = { id: string; kind: "Leave" | OpsReq["kind"]; date: string; to?: string; detail: string; emp: string; requested: string; approver: string; status: "pending" | "approved" | "rejected" };
@@ -19,22 +19,24 @@ export function OperationsPage() {
   const tab: OTab = tabState ?? (qt === "off" || qt === "srv" || qt === "perf" || qt === "comm" ? qt : "app");
   const [q, setQ] = useState("");
   const [nr, setNr] = useState(false);
+  const [fd, setFd] = useState("all");
+  const { st } = useHrm();
   const action = tab === "app" ? <Btn kind="primary" onClick={() => setNr(true)}><Plus className="size-[18px]" /> New request</Btn> : undefined;
   return (
-    <StaffFrame tab="operations" search={q} onSearch={setQ} action={action}>
+    <StaffFrame tab="operations" search={q} onSearch={setQ} action={action} activeFilters={fd !== "all" ? 1 : 0} onClearFilters={() => setFd("all")} filters={tab === "comm" ? undefined : <FilterSelect label="Department" value={fd} onChange={setFd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} />}>
       <Card>
         <h2 className="text-[24px] font-semibold">Team Operations</h2>
         <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
           {([["app", "Approvals"], ["srv", "Services"], ["perf", "Performance & training"], ["comm", "Communication"], ["off", "Offboarding"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
         <div className="mt-4">
-          {tab === "app" && <Approvals q={q} />}
-          {tab === "srv" && <Services q={q} />}
-          {tab === "perf" && <Performance q={q} />}
+          {tab === "app" && <Approvals q={q} dept={fd} />}
+          {tab === "srv" && <Services q={q} dept={fd} />}
+          {tab === "perf" && <Performance q={q} dept={fd} />}
           {tab === "comm" && <Communication />}
-          {tab === "off" && <Offboarding q={q} />}
+          {tab === "off" && <Offboarding q={q} dept={fd} />}
         </div>
       </Card>
       {nr && <NewRequest onClose={() => setNr(false)} />}
@@ -54,7 +56,7 @@ function Dd({ icon: Icon, value, onChange, children, label }: { icon: typeof Lay
   return <label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white pl-4 pr-10 text-[15.5px]"><Icon className="size-[18px]" /><select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="appearance-none bg-transparent outline-none">{children}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>;
 }
 
-function Approvals({ q }: { q: string }) {
+function Approvals({ q, dept }: { q: string; dept: string }) {
   const { st, update } = useHrm();
   const items = useItems();
   const [type, setType] = useState("all");
@@ -63,7 +65,7 @@ function Approvals({ q }: { q: string }) {
   const [page, setPage] = useState(1);
   const [rev, setRev] = useState<string | null>(null);
   const approvers = [...new Set(items.map((i) => i.approver))];
-  const list = items.filter((i) => (type === "all" || i.kind === type) && (appr === "all" || i.approver === appr) && (status === "all" || i.status === status) && (!q || `${emp(st, i.emp)?.name} ${i.emp} ${i.id} ${emp(st, i.emp)?.dept}`.toLowerCase().includes(q.toLowerCase())));
+  const list = items.filter((i) => (dept === "all" || emp(st, i.emp)?.dept === dept) && (type === "all" || i.kind === type) && (appr === "all" || i.approver === appr) && (status === "all" || i.status === status) && (!q || `${emp(st, i.emp)?.name} ${i.emp} ${i.id} ${emp(st, i.emp)?.dept}`.toLowerCase().includes(q.toLowerCase())));
   const pages = Math.max(1, Math.ceil(list.length / PER));
   const p = Math.min(page, pages);
   const decide = (i: Item, ok: boolean) => update((s) => {
@@ -167,11 +169,11 @@ function NewRequest({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Services({ q }: { q: string }) {
+function Services({ q, dept }: { q: string; dept: string }) {
   const { st, update } = useHrm();
   const active = st.employees.filter((e) => e.status === "active");
   const [f, setF] = useState({ emp: active[0]?.id ?? "", kind: "Salary certificate" as ServiceReq["kind"] });
-  const list = st.services.filter((s) => !q || `${emp(st, s.emp)?.name} ${s.emp} ${s.kind}`.toLowerCase().includes(q.toLowerCase()));
+  const list = st.services.filter((s) => (dept === "all" || emp(st, s.emp)?.dept === dept) && !!(!q || `${emp(st, s.emp)?.name} ${s.emp} ${s.kind}`.toLowerCase().includes(q.toLowerCase())));
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
       <div>{list.length === 0 ? <Empty icon={<FileText className="size-6" />} title="No service requests" /> : (
@@ -184,20 +186,20 @@ function Services({ q }: { q: string }) {
           <Field label="Staff"><Select value={f.emp} onChange={(e) => setF({ ...f, emp: e.target.value })}>{active.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</Select></Field>
           <Field label="Document"><Select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as ServiceReq["kind"] })}><option>Salary certificate</option><option>ID card</option><option>Experience letter</option></Select></Field>
           <Btn kind="primary" className="w-full" onClick={() => update((s) => { s.services.unshift({ id: `SRV-${s.services.length + 1}`, emp: f.emp, kind: f.kind, date: TODAY, status: "open" }); }, `${f.kind} requested for ${emp(st, f.emp)?.name}`)}>Add request</Btn>
-          <p className="text-[13px] text-[#6b7180]">Tracks the request. Document templates/printing are planned.</p>
+          <p className="text-[13px] text-[#6b7180]">Document printing is planned.</p>
         </div>
       </Card>
     </div>
   );
 }
 
-function Performance({ q }: { q: string }) {
+function Performance({ q, dept }: { q: string; dept: string }) {
   const { st, update } = useHrm();
   const toast = useToast();
   const router = useRouter();
   const [plan, setPlan] = useState(false);
   const [f, setF] = useState({ name: "", date: addDays(TODAY, 7), dept: "all" });
-  const list = st.employees.filter((e) => e.status === "active" && (!q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase())));
+  const list = st.employees.filter((e) => e.status === "active" && (dept === "all" || e.dept === dept) && (!q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase())));
   const who = st.employees.filter((e) => e.status === "active" && (f.dept === "all" || e.dept === f.dept));
   return (
     <>
@@ -242,11 +244,11 @@ function Communication() {
 }
 
 const CLEAR: [string, string][] = [["assets", "Assets returned"], ["dues", "Final dues settled"], ["access", "System access removed"]];
-function Offboarding({ q }: { q: string }) {
+function Offboarding({ q, dept }: { q: string; dept: string }) {
   const { st, update } = useHrm();
   const toast = useToast();
   const [start, setStart] = useState(false);
-  const list = st.employees.filter((e) => e.exit && (!q || `${e.name} ${e.id}`.toLowerCase().includes(q.toLowerCase())));
+  const list = st.employees.filter((e) => e.exit && (dept === "all" || e.dept === dept) && (!q || `${e.name} ${e.id}`.toLowerCase().includes(q.toLowerCase())));
   return (
     <>
       <div className="mb-3 flex justify-end"><Btn onClick={() => setStart(true)}><LogOut className="size-[18px]" /> Start offboarding</Btn></div>

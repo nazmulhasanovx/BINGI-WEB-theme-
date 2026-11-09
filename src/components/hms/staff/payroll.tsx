@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, Coins, ExternalLink, FileText, Gift, Hourglass, History, Plus, Printer, Trash2, Wallet } from "lucide-react";
 import { TODAY, emp, fmt, gross, lineNet, money, monthLabel, payStatus, runPayStatus, runTotals, useHrm, type PayLine, type Payment, type PayrollRun } from "@/lib/hrm/store";
 import { prepareRun, recordPayment } from "@/lib/hrm/actions";
-import { DateBox, StaffFrame, useToast } from "./Frame";
+import { DateBox, FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Input, Menu, Person, Select, Table, useQuery, type Tone } from "./ui";
 
 const PS_TONE = (s: string): Tone => (s === "Paid" ? "green" : s === "Unpaid" ? "red" : "amber");
@@ -24,15 +24,16 @@ export function PayrollPage() {
   const [openRun, setOpenRun] = useState<string | null>(st.runs[0]?.id ?? null);
   const [prep, setPrep] = useState(false);
   const runs = st.runs.filter((r) => r.month === month || month === "all");
-  const nameOk = (id: string) => !q || `${emp(st, id)?.name} ${id}`.toLowerCase().includes(q.toLowerCase());
+  const [fp, setFp] = useState("all");
+  const nameOk = (id: string, l?: PayLine) => (fp === "all" || (!!l && payStatus(l) === fp)) && (!q || `${emp(st, id)?.name} ${id}`.toLowerCase().includes(q.toLowerCase()));
   return (
-    <StaffFrame tab="payroll" search={q} onSearch={setQ} searchPlaceholder="Search" action={<Btn kind="primary" onClick={() => setPrep(true)}><ArrowRight className="size-[18px]" /> Prepare payroll</Btn>}
+    <StaffFrame tab="payroll" search={q} onSearch={setQ} searchPlaceholder="Search staff" activeFilters={fp !== "all" ? 1 : 0} onClearFilters={() => setFp("all")} filters={tab === "runs" ? <FilterSelect label="Payment status" value={fp} onChange={setFp} options={["Paid", "Partially paid", "Unpaid"].map((x) => ({ v: x, label: x }))} /> : undefined} action={<Btn kind="primary" onClick={() => setPrep(true)}><ArrowRight className="size-[18px]" /> Prepare payroll</Btn>}
       right={tab === "runs" ? <DateBox type="month" value={month === "all" ? latest : month} onChange={setMonth} label={month === "all" ? "All months" : monthLabel(month)} /> : undefined}>
       <Card>
         <h2 className="text-[24px] font-semibold">Payroll &amp; Benefits</h2>
         <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
           {([["runs", "Payroll runs"], ["struct", "Salary structures"], ["adj", "Advances & adjustments"], ["ben", "Benefits"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
         {tab === "runs" && (
@@ -54,7 +55,7 @@ export function PayrollPage() {
                   {open && (
                     <div className="mt-2">
                       <Table cols={[{ label: "Employee", w: "24%" }, { label: "Gross (BDT)", align: "right" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Due (BDT)", align: "right" }, { label: "Payment status", align: "center" }, { label: "Actions", w: "170px" }]}>
-                        {r.lines.filter((l) => nameOk(l.emp)).map((l) => (
+                        {r.lines.filter((l) => nameOk(l.emp, l)).map((l) => (
                           <tr key={l.emp}>
                             <td><Person name={emp(st, l.emp)?.name ?? l.emp} id="" /></td>
                             <td className="text-right">{money(l.gross)}</td>
@@ -100,7 +101,7 @@ function PrepareDrawer({ onClose, onDone, update }: { onClose: () => void; onDon
           <div className="flex justify-between py-1 font-semibold"><span>Estimated gross</span><span>BDT {money(total)}</span></div>
         </div>
       )}
-      <p className="text-[13.5px] text-[#6b7180]">Built from each person’s salary structure plus bonuses, advances and deductions for that month. You can review every line before approving.</p>
+      <p className="text-[13.5px] text-[#6b7180]">Built from salary structures plus this month’s adjustments. You review every line before approving.</p>
     </Drawer>
   );
 }
@@ -145,7 +146,7 @@ function Adjustments() {
                 <td className="text-right">{a.kind === "Bonus" ? "+" : "−"}{money(a.amount)}</td>
                 <td>{monthLabel(a.month)}{locked(a.month) && <span className="block text-[13px] text-[#6b7180]">In prepared run</span>}</td>
                 <td>{a.note}</td>
-                <td>{!locked(a.month) && <button onClick={() => update((s) => { s.adjustments = s.adjustments.filter((x) => x.id !== a.id); }, `${a.kind} removed for ${emp(st, a.emp)?.name}`)} aria-label="Remove" className="grid size-9 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#d0342c]"><Trash2 className="size-4" /></button>}</td>
+                <td>{!locked(a.month) && <button onClick={() => update((s) => { s.adjustments = s.adjustments.filter((x) => x.id !== a.id); }, `${a.kind} removed for ${emp(st, a.emp)?.name}`)} aria-label="Remove" className="grid size-9 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#c33029]"><Trash2 className="size-4" /></button>}</td>
               </tr>
             ))}
           </Table>
@@ -173,7 +174,7 @@ function Benefits() {
       <ul className="grid content-start gap-3 sm:grid-cols-2">
         {st.benefits.map((b) => (
           <li key={b.name} className="rounded-xl border border-[#eceef2] p-4">
-            <div className="flex items-start justify-between gap-2"><Gift className="size-5 text-[#e0352b]" /><button onClick={() => update((s) => { s.benefits = s.benefits.filter((x) => x.name !== b.name); }, `Benefit removed: ${b.name}`)} aria-label={`Remove ${b.name}`} className="text-[#8a8f9c] hover:text-[#d0342c]"><Trash2 className="size-4" /></button></div>
+            <div className="flex items-start justify-between gap-2"><Gift className="size-5 text-[#c72f26]" /><button onClick={() => update((s) => { s.benefits = s.benefits.filter((x) => x.name !== b.name); }, `Benefit removed: ${b.name}`)} aria-label={`Remove ${b.name}`} className="text-[#8a8f9c] hover:text-[#c33029]"><Trash2 className="size-4" /></button></div>
             <p className="mt-2 text-[16px] font-semibold">{b.name}</p>
             <p className="text-[14.5px] text-[#4b5160]">{b.detail}</p>
             <p className="mt-2 text-[13.5px] text-[#6b7180]">{b.who}</p>
@@ -198,6 +199,7 @@ export function PayrollRunPage({ id }: { id: string }) {
   const { st, update } = useHrm();
   const toast = useToast();
   const [q, setQ] = useState("");
+  const [fp, setFp] = useState("all");
   const qEmp = useQuery("emp");
   const qPay = useQuery("pay");
   const [slipState, setSlip] = useState<string | null | undefined>(undefined);
@@ -206,9 +208,9 @@ export function PayrollRunPage({ id }: { id: string }) {
   const pay = payState === undefined ? qPay : payState;
   const [hist, setHist] = useState(false);
   const r = st.runs.find((x) => x.id === id);
-  if (!r) return <StaffFrame tab="payroll" hideSearch><Card><Empty icon={<Coins className="size-6" />} title="Payroll run not found" action={<Link href="/hms/staff/payroll" className="font-medium text-[#e0352b]">Back to Payroll</Link>} /></Card></StaffFrame>;
+  if (!r) return <StaffFrame tab="payroll" hideSearch><Card><Empty icon={<Coins className="size-6" />} title="Payroll run not found" action={<Link href="/hms/staff/payroll" className="font-medium text-[#c72f26]">Back to Payroll</Link>} /></Card></StaffFrame>;
   const t = runTotals(r);
-  const lines = r.lines.filter((l) => !q || `${emp(st, l.emp)?.name} ${l.emp} ${emp(st, l.emp)?.dept}`.toLowerCase().includes(q.toLowerCase()));
+  const lines = r.lines.filter((l) => (fp === "all" || payStatus(l) === fp) && (!q || `${emp(st, l.emp)?.name} ${l.emp} ${emp(st, l.emp)?.dept}`.toLowerCase().includes(q.toLowerCase())));
   const advance = (step: 2 | 3 | 4, status: PayrollRun["status"], msg: string) => { update((s) => { const x = s.runs.find((y) => y.id === id)!; x.step = step; x.status = status; }, `${monthLabel(r.month)} payroll: ${msg}`); toast(msg); };
   const action =
     r.step === 1 ? <Btn kind="primary" onClick={() => advance(2, "draft", "Sent for review")}>Send for review</Btn>
@@ -216,7 +218,7 @@ export function PayrollRunPage({ id }: { id: string }) {
     : r.step === 3 ? <Btn kind="primary" onClick={() => advance(4, "approved", "Payroll approved")}>Approve payroll</Btn>
     : <Btn kind="primary" disabled={t.due <= 0} onClick={() => setPay(r.lines.find((l) => lineNet(l) > l.paid)?.emp ?? null)}>Record payment</Btn>;
   return (
-    <StaffFrame tab="payroll" search={q} onSearch={setQ} action={action}>
+    <StaffFrame tab="payroll" search={q} onSearch={setQ} action={action} activeFilters={fp !== "all" ? 1 : 0} onClearFilters={() => setFp("all")} filters={<FilterSelect label="Payment status" value={fp} onChange={setFp} options={["Paid", "Partially paid", "Unpaid"].map((x) => ({ v: x, label: x }))} />}>
       <Card>
         <Link href="/hms/staff/payroll" className="inline-flex items-center gap-4 text-[16px]"><span className="grid size-10 place-items-center rounded-xl border border-[#dfe2e8]"><ArrowLeft className="size-5" /></span> Back to Payroll</Link>
         <div className="mt-5 flex flex-wrap items-center gap-4">
@@ -232,7 +234,7 @@ export function PayrollRunPage({ id }: { id: string }) {
             return (
               <li key={s} className="relative flex flex-col items-center gap-2">
                 {i > 0 && <span className={clsx("absolute right-1/2 top-[21px] h-0.5 w-full", n <= r.step ? "bg-[#f08b84]" : "bg-[#e6e8ee]")} />}
-                <span className={clsx("relative z-10 grid size-11 place-items-center rounded-full text-[17px] font-semibold", done ? "bg-[#e9564d] text-white" : cur ? "border-2 border-[#e63b31] bg-white text-[#e0352b]" : "border-2 border-[#d6d9e0] bg-white text-[#8a8f9c]")}>{done ? <Check className="size-5" /> : n}</span>
+                <span className={clsx("relative z-10 grid size-11 place-items-center rounded-full text-[17px] font-semibold", done ? "bg-[#e9564d] text-white" : cur ? "border-2 border-[#e63b31] bg-white text-[#c72f26]" : "border-2 border-[#d6d9e0] bg-white text-[#8a8f9c]")}>{done ? <Check className="size-5" /> : n}</span>
                 <span className={clsx("text-[17px]", cur && "font-semibold")}>{s}</span>
               </li>
             );
@@ -336,7 +338,7 @@ function PayDrawer({ run, empId, onClose }: { run: PayrollRun; empId: string; on
       {run.status !== "approved" && <p className="rounded-xl bg-[#fff6e5] px-4 py-3 text-[14.5px] text-[#8a5a00]">Approve the payroll first.</p>}
       <Field label="Employee"><Select value={who} onChange={(e) => { setWho(e.target.value); const x = run.lines.find((y) => y.emp === e.target.value)!; setAmount(lineNet(x) - x.paid); }}>{(unpaid.some((x) => x.emp === who) ? unpaid : [l!, ...unpaid]).map((x) => <option key={x.emp} value={x.emp}>{emp(st, x.emp)?.name} · due {money(lineNet(x) - x.paid)}</option>)}</Select></Field>
       <Field label={`Amount (BDT) · due ${money(due)}`}><Input type="number" min={1} max={due} value={amount || ""} onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))} /></Field>
-      {amount > due && <p className="text-[14px] text-[#d0342c]">More than the amount due.</p>}
+      {amount > due && <p className="text-[14px] text-[#c33029]">More than the amount due.</p>}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Method"><Select value={method} onChange={(e) => setMethod(e.target.value as Payment["method"])}><option>Cash</option><option>Bank</option><option>bKash</option></Select></Field>
         <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>

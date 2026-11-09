@@ -152,9 +152,10 @@ function seed(): HrmState {
     const row = pattern[e.id] ?? week.map((_, d) => ((d + i) % 7 === 6 ? "Off" : (d + i) % 3 === 0 ? "Evening" : "Morning") as Shift);
     cells[e.id] = Object.fromEntries(week.map((d, k) => [d, row[k]]));
   });
+  cells.EMP020["2026-11-04"] = "Morning"; // on duty today (matches attendance)
 
   return {
-    v: 1,
+    v: 2,
     employees,
     attendance,
     roster: { week: week[0], status: "draft", cells, openShifts: [{ date: "2026-11-05", shift: "Evening", dept: "Front Office" }] },
@@ -168,6 +169,7 @@ function seed(): HrmState {
     requests: [
       { id: "REQ-1003", kind: "Attendance correction", emp: "EMP001", date: "2026-11-02", details: "Checkout time: 16:05", status: "pending", requested: TODAY, approver: "Hotel Manager" },
       { id: "REQ-1004", kind: "Overtime", emp: "EMP005", date: "2026-11-03", details: "1 hour", status: "pending", requested: TODAY, approver: "Hotel Manager" },
+      { id: "REQ-1006", kind: "Overtime", emp: "EMP018", date: "2026-11-03", details: "2 hours", status: "pending", requested: TODAY, approver: "Hotel Manager" },
       { id: "REQ-1005", kind: "Shift swap", emp: "EMP004", date: "2026-11-06", details: "06 Nov 2026 ↔ 07 Nov 2026", status: "pending", requested: TODAY, approver: "Hotel Manager" },
     ],
     runs: [

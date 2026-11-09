@@ -3,10 +3,10 @@ import clsx from "clsx";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Copy, Info, Layers, Pencil, UserPlus } from "lucide-react";
 import { SHIFT_TIME, addDays, dayName, emp, fmt, fmtShort, useHrm, weekDays, type Shift } from "@/lib/hrm/store";
-import { StaffFrame, useToast } from "./Frame";
+import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Person, Select } from "./ui";
 
-const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#eef0f4]", Leave: "bg-[#fde8e7] text-[#d0342c]" };
+const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#eef0f4]", Leave: "bg-[#fde8e7] text-[#c33029]" };
 const EDITABLE: Shift[] = ["Morning", "Evening", "Night", "Off"];
 
 export function SchedulePage() {
@@ -18,7 +18,8 @@ export function SchedulePage() {
   const [tpl, setTpl] = useState(false);
   const [assign, setAssign] = useState<number | null>(null);
   const days = weekDays(week);
-  const staff = st.employees.filter((e) => e.status === "active" && (!q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase())));
+  const [fd, setFd] = useState("all");
+  const staff = st.employees.filter((e) => e.status === "active" && (fd === "all" || e.dept === fd) && (!q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase())));
   const hasWeek = staff.some((e) => days.some((d) => st.roster.cells[e.id]?.[d]));
   const isCurrent = week === st.roster.week;
   const status = isCurrent ? st.roster.status : "draft";
@@ -40,7 +41,7 @@ export function SchedulePage() {
     toast("Copied from previous week · Draft");
   };
   return (
-    <StaffFrame tab="schedule" search={q} onSearch={setQ} action={<Btn kind="primary" onClick={publish} disabled={status === "published" && isCurrent}>{status === "published" && isCurrent ? "Published" : "Publish roster"}</Btn>}
+    <StaffFrame tab="schedule" search={q} onSearch={setQ} activeFilters={fd !== "all" ? 1 : 0} onClearFilters={() => setFd("all")} filters={<FilterSelect label="Department" value={fd} onChange={setFd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} />} action={<Btn kind="primary" onClick={publish} disabled={status === "published" && isCurrent}>{status === "published" && isCurrent ? "Published" : "Publish roster"}</Btn>}
       right={
         <div className="flex h-11 items-center gap-1 rounded-xl border border-[#dfe2e8] bg-white px-1.5 text-[16px] font-medium">
           <button onClick={() => setWeek(addDays(week, -7))} aria-label="Previous week" className="grid size-8 place-items-center rounded-lg hover:bg-[#f2f3f6]"><ChevronLeft className="size-4" /></button>
@@ -50,14 +51,14 @@ export function SchedulePage() {
       }>
       <Card>
         <div className="flex flex-wrap items-center gap-4">
-          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#e0352b]")}>{status === "published" ? "Published" : "Draft"}</span>
+          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#c72f26]")}>{status === "published" ? "Published" : "Draft"}</span>
           <span className="hidden h-8 w-px bg-[#e6e8ee] sm:block" />
           <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-[#f2f3f6] px-4 py-2.5 text-[15.5px] text-[#4b5160]">
             <Info className="size-5 shrink-0" />
             {gaps.length ? (
               <span className="flex-1">Coverage gap: {gaps.length} shift{gaps.length > 1 ? "s are" : " is"} unassigned on {gaps.map((g) => `${dayName(g.date)} ${fmt(g.date)} (${g.shift})`).join(", ")}.</span>
             ) : <span className="flex-1">No coverage gaps this week.</span>}
-            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#e0352b]"><UserPlus className="size-4" /> Assign</button>}
+            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#c72f26]"><UserPlus className="size-4" /> Assign</button>}
           </div>
           <Btn onClick={() => setTpl(true)}><Layers className="size-[18px]" /> Shift templates</Btn>
         </div>
@@ -103,12 +104,11 @@ export function SchedulePage() {
       {assign !== null && <AssignOpen i={assign} onClose={() => setAssign(null)} />}
       {tpl && (
         <Drawer title="Shift templates" onClose={() => setTpl(false)} footer={<><Btn onClick={() => setTpl(false)}>Close</Btn><Btn kind="primary" onClick={() => { copyPrev(); setTpl(false); }}>Copy previous week</Btn></>}>
-          <p className="text-[15px] text-[#4b5160]">Shifts used on the roster. Times are the property defaults (Asia/Dhaka).</p>
+          <p className="text-[15px] text-[#4b5160]">Default shift times (Asia/Dhaka).</p>
           <ul className="divide-y divide-[#eceef2] rounded-xl border border-[#eceef2]">
             {(["Morning", "Evening", "Night"] as Shift[]).map((s) => <li key={s} className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE[s])} /><span className="flex-1 text-[15.5px] font-medium">{s}</span><span className="text-[15px] text-[#4b5160]">{SHIFT_TIME[s]}</span></li>)}
             <li className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE.Off)} /><span className="flex-1 text-[15.5px] font-medium">Off</span><span className="text-[15px] text-[#4b5160]">Weekly day off</span></li>
           </ul>
-          <p className="text-[14px] text-[#6b7180]">“Leave” is set automatically when leave is approved.</p>
         </Drawer>
       )}
     </StaffFrame>
@@ -135,7 +135,6 @@ function EditShift({ emp: id, date, onClose }: { emp: string; date: string; onCl
           ))}
         </div>
       )}
-      <p className="text-[14px] text-[#6b7180]">Changes keep the roster as Draft until you publish.</p>
     </Drawer>
   );
 }

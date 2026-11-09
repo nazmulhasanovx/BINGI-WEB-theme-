@@ -95,7 +95,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
-        <div className="min-h-0 flex-1">{children}</div>
+        <main className="min-h-0 flex-1">{children}</main>
       </div>
     </div>
   );

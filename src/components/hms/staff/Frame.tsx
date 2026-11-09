@@ -31,15 +31,16 @@ const hideToast = () => showToast(null);
 export const useToast = () => showToast as (t: string) => void;
 
 export function StaffFrame({
-  tab, action, search, onSearch, searchPlaceholder = "Search staff (name, ID, department)", right, children, hideSearch,
+  tab, action, search, onSearch, searchPlaceholder = "Search staff (name, ID, department)", right, children, hideSearch, searchFocus, onSubmit, filters, activeFilters = 0, onClearFilters,
 }: {
-  tab: StaffTab; action?: ReactNode; search?: string; onSearch?: (v: string) => void; searchPlaceholder?: string; right?: ReactNode; children: ReactNode; hideSearch?: boolean;
+  tab: StaffTab; action?: ReactNode; search?: string; onSearch?: (v: string) => void; searchPlaceholder?: string; right?: ReactNode; children: ReactNode; hideSearch?: boolean; searchFocus?: boolean; onSubmit?: (v: string) => void; filters?: ReactNode; activeFilters?: number; onClearFilters?: () => void;
 }) {
   const hotel = useProperty();
   const { st, reset } = useHrm();
   const toast = useSyncExternalStore(subToast, () => toastText, () => null);
   const setToast = showToast;
   const [more, setMore] = useState(false);
+  const [fOpen, setFOpen] = useState(false);
   const inMore = MORE.some((m) => m.id === tab);
   const exportCsv = () => {
     const rows = [["ID", "Name", "Department", "Position", "Status", "Phone", "Email", "Joined"], ...st.employees.map((e) => [e.id, e.name, e.dept, e.position, e.status, e.phone, e.email, e.joined])];
@@ -68,16 +69,16 @@ export function StaffFrame({
 
           <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-[#eceef2] pb-2.5" aria-label="Team & HR">
             {MAIN.map((t) => (
-              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("rounded-xl px-4 py-2 text-[15px] font-medium", tab === t.id ? "bg-[#fde8e7] text-[#e0352b]" : "hover:bg-[#f2f3f6]")}>{t.label}</Link>
+              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("rounded-xl px-4 py-2 text-[15px] font-medium", tab === t.id ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t.label}</Link>
             ))}
             <div className="relative">
-              <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl px-4 py-2 text-[15px] font-medium", inMore ? "bg-[#fde8e7] text-[#e0352b]" : "hover:bg-[#f2f3f6]")}>
+              <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl px-4 py-2 text-[15px] font-medium", inMore ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>
                 {inMore ? MORE.find((m) => m.id === tab)!.label : "More"} <ChevronDown className="size-4" />
               </button>
               {more && (
                 <div className="absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
                   {MORE.map((m) => (
-                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#e0352b]")}>{m.label}</Link>
+                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#c72f26]")}>{m.label}</Link>
                   ))}
                 </div>
               )}
@@ -88,11 +89,26 @@ export function StaffFrame({
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <label className="flex h-11 w-full max-w-[400px] items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-3.5">
                 <Search className="size-[18px] text-[#6b7180]" />
-                <input value={search ?? ""} onChange={(e) => onSearch?.(e.target.value)} placeholder={searchPlaceholder} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7b8190]" />
+                <input autoFocus={searchFocus} value={search ?? ""} onChange={(e) => onSearch?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && onSubmit) onSubmit((e.target as HTMLInputElement).value); }} enterKeyHint="search" placeholder={searchPlaceholder} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7b8190]" />
               </label>
               <div className="ml-auto flex items-center gap-3">
                 {right}
-                <button onClick={() => setToast("Filters: department, status, date — use the chips on the page")} className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[15px] font-medium hover:bg-[#f6f7f9]"><Filter className="size-[18px]" /> Filters</button>
+                {filters && (
+                  <div className="relative">
+                    <button onClick={() => setFOpen((o) => !o)} aria-expanded={fOpen} className={clsx("inline-flex h-11 items-center gap-2 rounded-xl border bg-white px-4 text-[15px] font-medium hover:bg-[#f6f7f9]", activeFilters ? "border-[#ef6f68] text-[#c72f26]" : "border-[#dfe2e8]")}>
+                      <Filter className="size-[18px]" /> Filters{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-[#d8372e] text-[12px] text-white">{activeFilters}</span>}
+                    </button>
+                    {fOpen && (
+                      <div role="dialog" aria-label="Filters" className="absolute right-0 top-full z-40 mt-2 w-[300px] space-y-3 rounded-2xl border border-[#e6e8ee] bg-white p-4 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.3)]">
+                        {filters}
+                        <div className="flex justify-between pt-1">
+                          <button onClick={() => onClearFilters?.()} disabled={!activeFilters} className="text-[14px] font-medium text-[#c72f26] disabled:text-[#8a8f9c]">Clear all</button>
+                          <button onClick={() => setFOpen(false)} className="rounded-lg bg-[#f2f3f6] px-3 py-1.5 text-[14px] font-medium">Done</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -112,6 +128,19 @@ export function DateBox({ value, onChange, type = "date", label }: { value: stri
       <span className="flex-1">{label}</span>
       <ChevronDown className="size-4" />
       <input type={type} value={value} onChange={(e) => e.target.value && onChange(e.target.value)} aria-label="Choose date" className="absolute inset-0 cursor-pointer opacity-0" />
+    </label>
+  );
+}
+
+/** One labelled select inside the Filters panel. */
+export function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; label: string }[] }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[13.5px] font-medium text-[#4b5160]">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px] outline-none focus:border-[#d8372e]">
+        <option value="all">All</option>
+        {options.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+      </select>
     </label>
   );
 }

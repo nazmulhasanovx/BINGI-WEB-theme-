@@ -29,11 +29,11 @@ export function WebsiteModule({ page }: { page: string }) {
         <InnerNav active={page} />
         <div className="flex min-w-0 flex-1 flex-col">
           <PublishBar />
-          <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-[1240px] px-6 py-7 lg:px-8">
               <Page />
             </div>
-          </main>
+          </div>
         </div>
       </div>
       {preview.open && <DevicePreview section={preview.section} onClose={() => setPreview({ open: false })} />}

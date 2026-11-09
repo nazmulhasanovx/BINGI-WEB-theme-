@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CalendarDays, Check, ExternalLink, History, Info, Plus, UserPlus, Wallet, Briefcase } from "lucide-react";
 import { TODAY, addDays, fmt, money, useHrm, type Candidate, type Dept, type Job, type Stage } from "@/lib/hrm/store";
 import { confirmJoining } from "@/lib/hrm/actions";
-import { StaffFrame, useToast } from "./Frame";
+import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Area, Avatar, Btn, Card, Chip, Drawer, Empty, Field, FilterChips, Input, Menu, Person, Select, Table, useQuery, type Tone } from "./ui";
 
 const STAGES: Stage[] = ["applied", "shortlisted", "interview", "offer", "joining"];
@@ -25,18 +25,19 @@ export function HiringPage() {
   const [stage, setStage] = useState<"all" | Stage>("all");
   const [job, setJob] = useState<Job | "new" | null>(null);
   const [addCand, setAddCand] = useState(false);
+  const [fj, setFj] = useState("all");
   const m = (s: string) => !q || s.toLowerCase().includes(q.toLowerCase());
-  const jobs = st.jobs.filter((j) => m(`${j.title} ${j.id}`));
-  const cands = st.candidates.filter((c) => (stage === "all" || c.stage === stage) && m(`${c.name} ${c.id} ${c.job}`));
-  const upcoming = st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId);
-  const ints = st.candidates.filter((c) => c.interview && m(`${c.name} ${c.id}`)).sort((a, b) => a.interview!.date.localeCompare(b.interview!.date));
+  const jobs = st.jobs.filter((j) => (fj === "all" || j.id === fj) && m(`${j.title} ${j.id}`));
+  const cands = st.candidates.filter((c) => (stage === "all" || c.stage === stage) && (fj === "all" || c.job === fj) && m(`${c.name} ${c.id} ${c.job}`));
+  const upcoming = st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId && (fj === "all" || c.job === fj));
+  const ints = st.candidates.filter((c) => c.interview && (fj === "all" || c.job === fj) && m(`${c.name} ${c.id}`)).sort((a, b) => a.interview!.date.localeCompare(b.interview!.date));
   const upd = <span className="text-[15.5px] text-[#4b5160]">Last updated {fmt(TODAY)} (Asia/Dhaka)</span>;
   return (
-    <StaffFrame tab="hiring" search={q} onSearch={setQ} searchPlaceholder="Search jobs, candidates, ID (e.g. HK001, CAND001)" action={tab === "cands" ? <Btn kind="primary" onClick={() => setAddCand(true)}><Plus className="size-[18px]" /> Add candidate</Btn> : <Btn kind="primary" onClick={() => setJob("new")}><Plus className="size-[18px]" /> Create job</Btn>}>
+    <StaffFrame tab="hiring" search={q} onSearch={setQ} activeFilters={fj !== "all" ? 1 : 0} onClearFilters={() => setFj("all")} filters={<FilterSelect label="Job" value={fj} onChange={setFj} options={st.jobs.map((j) => ({ v: j.id, label: `${j.title} · ${j.id}` }))} />} searchPlaceholder="Search jobs, candidates, ID (e.g. HK001, CAND001)" action={tab === "cands" ? <Btn kind="primary" onClick={() => setAddCand(true)}><Plus className="size-[18px]" /> Add candidate</Btn> : <Btn kind="primary" onClick={() => setJob("new")}><Plus className="size-[18px]" /> Create job</Btn>}>
       <h2 className="text-[26px] font-semibold">Hiring</h2>
       <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-2.5">
         {([["jobs", "Jobs"], ["cands", `Candidates (${st.candidates.length})`], ["int", "Interviews"]] as const).map(([v, l]) => (
-          <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "hover:bg-[#f2f3f6]")}>{l}</button>
+          <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{l}</button>
         ))}
       </div>
       {tab === "jobs" && (
@@ -166,7 +167,7 @@ function AddCandidate({ onClose }: { onClose: () => void }) {
       <Field label="Full name"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
       <Field label="Job"><Select value={f.job} onChange={(e) => setF({ ...f, job: e.target.value })}>{open.map((j) => <option key={j.id} value={j.id}>{j.title} · {j.id}</option>)}</Select></Field>
       <Field label="Mobile" hint="11 digits, starts with 01"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="01XXXXXXXXX" /></Field>
-      {f.phone && !phoneOk && <p className="text-[14px] text-[#d0342c]">Enter a valid Bangladesh mobile number.</p>}
+      {f.phone && !phoneOk && <p className="text-[14px] text-[#c33029]">Enter a valid Bangladesh mobile number.</p>}
       <Field label="Email (optional)"><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
     </Drawer>
   );
@@ -181,7 +182,7 @@ export function CandidatePage({ id }: { id: string }) {
   const qt = useQuery("t");
   const [tabState, setTab] = useState<CTab | null>(null);
   const tab: CTab = tabState ?? (qt === "interview" || qt === "offer" || qt === "profile" || qt === "joining" ? qt : c?.stage === "joining" ? "joining" : c?.stage === "offer" ? "offer" : c?.stage === "interview" || c?.stage === "shortlisted" ? "interview" : "profile");
-  if (!c) return <StaffFrame tab="hiring" hideSearch><Card><Empty icon={<UserPlus className="size-6" />} title="Candidate not found" action={<Link href="/hms/staff/hiring" className="font-medium text-[#e0352b]">Back to Hiring</Link>} /></Card></StaffFrame>;
+  if (!c) return <StaffFrame tab="hiring" hideSearch><Card><Empty icon={<UserPlus className="size-6" />} title="Candidate not found" action={<Link href="/hms/staff/hiring" className="font-medium text-[#c72f26]">Back to Hiring</Link>} /></Card></StaffFrame>;
   const job = st.jobs.find((j) => j.id === c.job);
   const si = c.stage === "rejected" ? -1 : STAGES.indexOf(c.stage);
   const ready = c.checklist.identity && c.checklist.documents && !c.employeeId;
@@ -190,7 +191,7 @@ export function CandidatePage({ id }: { id: string }) {
   const confirm = () => { let newId: string | null = null; update((s) => { newId = confirmJoining(s, c.id); }, `${c.name} joined — added to staff`); toast(`${c.name} added to staff${newId ? ` as ${newId}` : ""}`); };
   const ol = offerLabel(c);
   return (
-    <StaffFrame tab="hiring" hideSearch action={c.employeeId ? <Link href={`/hms/staff/people/${c.employeeId}`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#e63b31] px-5 text-[15.5px] font-medium text-white hover:bg-[#d13128]">Open employee {c.employeeId}</Link> : <Btn kind="primary" disabled={!canConfirm} onClick={confirm} className={clsx(!canConfirm && "!bg-[#e6e8ee] !text-[#8a8f9c]")}>Confirm joining</Btn>}>
+    <StaffFrame tab="hiring" hideSearch action={c.employeeId ? <Link href={`/hms/staff/people/${c.employeeId}`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#d8372e] px-5 text-[15.5px] font-medium text-white hover:bg-[#c4302a]">Open employee {c.employeeId}</Link> : <Btn kind="primary" disabled={!canConfirm} onClick={confirm} className={clsx(!canConfirm && "!bg-[#e6e8ee] !text-[#8a8f9c]")}>Confirm joining</Btn>}>
       <Link href="/hms/staff/hiring" className="inline-flex h-11 items-center gap-3 rounded-xl border border-[#dfe2e8] bg-white px-5 text-[16px] hover:bg-[#f6f7f9]"><ArrowLeft className="size-5" /> Back to Hiring</Link>
       <Card className="mt-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -206,7 +207,7 @@ export function CandidatePage({ id }: { id: string }) {
             return (
               <li key={s} className="flex flex-1 items-center gap-3">
                 <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full", done ? "bg-[#2fa45a] text-white" : cur ? "border-2 border-[#e63b31]" : "border-2 border-[#d6d9e0]")}>{done && <Check className="size-4" />}</span>
-                <span className={clsx("text-[16.5px]", cur && "font-medium text-[#e0352b]")}>{STAGE_LABEL[s][0]}</span>
+                <span className={clsx("text-[16.5px]", cur && "font-medium text-[#c72f26]")}>{STAGE_LABEL[s][0]}</span>
                 {i < STAGES.length - 1 && <span className={clsx("h-0.5 flex-1", done ? "bg-[#9fd7b2]" : "bg-[#e6e8ee]")} />}
               </li>
             );
@@ -214,7 +215,7 @@ export function CandidatePage({ id }: { id: string }) {
         </ol>
       </Card>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["profile", "interview", "offer", "joining"] as CTab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2.5 text-[16.5px] ", tab === t ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>)}
+        {(["profile", "interview", "offer", "joining"] as CTab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2.5 text-[16.5px] ", tab === t ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>)}
       </div>
       <div className="mt-3 grid gap-4 xl:grid-cols-[1.6fr_1fr]">
         <div>
@@ -246,7 +247,7 @@ export function CandidatePage({ id }: { id: string }) {
           <Card>
             <div className="flex items-start gap-3"><UserPlus className="mt-0.5 size-6" /><div className="flex-1"><p className="text-[18px] font-semibold">Account invitation</p><p className="text-[15px] text-[#4b5160]">{c.employeeId ? "Sent to the staff app." : "Will be sent after joining is confirmed."}</p></div><Chip tone={c.employeeId ? "green" : "amber"}>{c.employeeId ? "Sent" : "Pending"}</Chip></div>
           </Card>
-          <div className="flex items-start gap-3 rounded-2xl border border-[#e6e8ee] bg-[#f6f7f9] p-5"><Info className="mt-0.5 size-5" /><div>{c.employeeId ? <><p className="text-[16.5px] font-semibold">Employee {c.employeeId}</p><Link href={`/hms/staff/people/${c.employeeId}`} className="text-[15px] font-medium text-[#e0352b]">Open profile</Link></> : <><p className="text-[16.5px] font-semibold">Not an employee yet.</p><p className="text-[15px] text-[#4b5160]">The candidate will be added to staff after joining is confirmed.</p></>}</div></div>
+          <div className="flex items-start gap-3 rounded-2xl border border-[#e6e8ee] bg-[#f6f7f9] p-5"><Info className="mt-0.5 size-5" /><div>{c.employeeId ? <><p className="text-[16.5px] font-semibold">Employee {c.employeeId}</p><Link href={`/hms/staff/people/${c.employeeId}`} className="text-[15px] font-medium text-[#c72f26]">Open profile</Link></> : <><p className="text-[16.5px] font-semibold">Not an employee yet.</p><p className="text-[15px] text-[#4b5160]">The candidate will be added to staff after joining is confirmed.</p></>}</div></div>
           <Card>
             <p className="flex items-center gap-3 text-[18px] font-semibold"><History className="size-5" /> History</p>
             <ul className="mt-2 space-y-1.5 pl-9">{c.history.map((h, i) => <li key={i} className="grid grid-cols-[110px_1fr] gap-3 text-[15px]"><span>{fmt(h.date)}</span><span>{h.text}</span></li>)}</ul>

@@ -2,11 +2,12 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, CalendarDays, ChevronDown, ChevronUp, ExternalLink, FileText, GraduationCap, History, Layers, LogIn, Mail, Network, Pencil, Phone, Plus, User, UserRound } from "lucide-react";
 import { TODAY, emp, fmt, fmtStamp, gross, money, monthLabel, payStatus, useHrm, type Dept, type Employee } from "@/lib/hrm/store";
-import { StaffFrame, useToast } from "./Frame";
+import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { AddStaff } from "./overview";
-import { Btn, Card, Chip, Drawer, Empty, Field, FilterChips, Input, Menu, Pager, Person, Pills, Select, Table, type Tone } from "./ui";
+import { Btn, Card, Chip, Drawer, Empty, Field, FilterChips, Input, Menu, Pager, Person, Pills, Select, Table, useQuery, type Tone } from "./ui";
 
 const ACCESS: Record<Employee["access"], [string, Tone]> = { linked: ["Linked", "gray"], invited: ["Invited", "blue"], "not-invited": ["Not invited", "gray"], disabled: ["Disabled", "gray"] };
 const STATUS: Record<Employee["status"], [string, Tone]> = { active: ["Active", "green"], inactive: ["Inactive", "red"], former: ["Former", "gray"] };
@@ -15,21 +16,26 @@ const PER = 7;
 export function PeoplePage() {
   const { st, update } = useHrm();
   const toast = useToast();
-  const [q, setQ] = useState("");
+  const qq = useQuery("q");
+  const [qState, setQ] = useState<string | null>(null);
+  const q = qState ?? qq ?? "";
   const [tab, setTab] = useState<"dir" | "inv" | "join">("dir");
   const [f, setF] = useState<"all" | "active" | "inactive" | "former">("all");
   const [dept, setDept] = useState<"all" | Dept>("all");
+  const [acc, setAcc] = useState("all");
+  const [etype, setEtype] = useState("all");
   const [page, setPage] = useState(1);
   const [add, setAdd] = useState(false);
   const counts = { all: st.employees.filter((e) => e.status !== "former").length, active: st.employees.filter((e) => e.status === "active").length, inactive: st.employees.filter((e) => e.status === "inactive").length, former: st.employees.filter((e) => e.status === "former").length };
-  const list = st.employees.filter((e) => (f === "all" ? e.status !== "former" : e.status === f) && (dept === "all" || e.dept === dept) && (!q || `${e.name} ${e.id} ${e.dept} ${e.position}`.toLowerCase().includes(q.toLowerCase())));
+  const list = st.employees.filter((e) => (f === "all" ? e.status !== "former" : e.status === f) && (dept === "all" || e.dept === dept) && (acc === "all" || e.access === acc) && (etype === "all" || e.type === etype) && (!q || `${e.name} ${e.id} ${e.dept} ${e.position}`.toLowerCase().includes(q.toLowerCase())));
   const pages = Math.max(1, Math.ceil(list.length / PER));
   const p = Math.min(page, pages);
   const invites = st.employees.filter((e) => e.access === "invited" || e.access === "not-invited");
   const joining = [...st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId), ...st.employees.filter((e) => e.probationEnd && e.probationEnd >= TODAY)];
   const setStatus = (id: string, status: Employee["status"]) => update((s) => { const e = emp(s, id)!; e.status = status; if (status !== "active") e.access = "disabled"; }, `${emp(st, id)?.name} marked ${status}`);
   return (
-    <StaffFrame tab="people" search={q} onSearch={(v) => { setQ(v); setPage(1); }} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>}
+    <StaffFrame tab="people" search={q} onSearch={(v) => { setQ(v); setPage(1); }} activeFilters={(acc !== "all" ? 1 : 0) + (etype !== "all" ? 1 : 0)} onClearFilters={() => { setAcc("all"); setEtype("all"); }}
+      filters={<><FilterSelect label="Account access" value={acc} onChange={(v) => { setAcc(v); setPage(1); }} options={[{ v: "linked", label: "Linked" }, { v: "invited", label: "Invited" }, { v: "not-invited", label: "Not invited" }, { v: "disabled", label: "Disabled" }]} /><FilterSelect label="Employment" value={etype} onChange={(v) => { setEtype(v); setPage(1); }} options={["Full time", "Part time", "Contract"].map((x) => ({ v: x, label: x }))} /></>} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>}
       right={<label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[15px] font-medium"><Layers className="size-[18px]" /><select value={dept} onChange={(e) => { setDept(e.target.value as Dept); setPage(1); }} className="appearance-none bg-transparent pr-6 outline-none" aria-label="Department"><option value="all">All departments</option>{st.settings.departments.map((d) => <option key={d}>{d}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>}>
       <Card>
         <div className="mb-4 border-b border-[#eceef2] pb-3">
@@ -88,7 +94,7 @@ export function PeoplePage() {
         {tab === "join" && (
           <Table cols={[{ label: "Person" }, { label: "What" }, { label: "Date" }, { label: "Action", w: "160px" }]}>
             {st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId).map((c) => (
-              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#e0352b]">Open joining</Link></td></tr>
+              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#c72f26]">Open joining</Link></td></tr>
             ))}
             {st.employees.filter((e) => e.probationEnd && e.probationEnd >= TODAY).map((e) => (
               <tr key={e.id}><td><Person name={e.name} id={e.id} /></td><td>Probation review</td><td>{fmt(e.probationEnd!)}</td><td><Btn onClick={() => { update((s) => { const x = emp(s, e.id)!; delete x.probationEnd; x.reviews.unshift({ date: TODAY, by: s.settings.approver, score: 4, note: "Probation completed — confirmed." }); }, `${e.name} confirmed after probation`); toast(`${e.name} confirmed`); }}>Confirm</Btn></td></tr>
@@ -105,18 +111,20 @@ export function PeoplePage() {
 type ETab = "profile" | "work" | "attendance" | "pay" | "assets" | "reviews" | "joining" | "history";
 export function EmployeePage({ id }: { id: string }) {
   const { st } = useHrm();
+  const router = useRouter();
+  const [find, setFind] = useState("");
   const e = emp(st, id);
   const [tab, setTab] = useState<ETab>("profile");
   const [more, setMore] = useState(false);
   const [edit, setEdit] = useState(false);
-  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#e0352b]">Back to People</Link>} /></Card></StaffFrame>;
+  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#c72f26]">Back to People</Link>} /></Card></StaffFrame>;
   const moreItems: { v: ETab; label: string; icon: typeof Briefcase }[] = [{ v: "assets", label: "Assets & benefits", icon: Briefcase }, { v: "reviews", label: "Reviews & training", icon: GraduationCap }, { v: "joining", label: "Joining & exit", icon: LogIn }, { v: "history", label: "History", icon: History }];
   return (
-    <StaffFrame tab="people" action={<Btn kind="primary" onClick={() => setEdit(true)}><Pencil className="size-4" /> Edit employee</Btn>}>
+    <StaffFrame tab="people" search={find} onSearch={setFind} onSubmit={(v) => v.trim() && router.push(`/hms/staff/people?q=${encodeURIComponent(v.trim())}`)} action={<Btn kind="primary" onClick={() => setEdit(true)}><Pencil className="size-4" /> Edit employee</Btn>}>
       <Card>
-        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#e0352b]"><ArrowLeft className="size-[18px]" /> People</Link>
+        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#c72f26]"><ArrowLeft className="size-[18px]" /> People</Link>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <span className="grid size-16 place-items-center rounded-full bg-[#fde8e7] text-[22px] font-semibold text-[#d0342c]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
+          <span className="grid size-16 place-items-center rounded-full bg-[#fde8e7] text-[22px] font-semibold text-[#c33029]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
           <div><p className="text-[24px] font-semibold leading-tight">{e.name}</p><p className="text-[15px] text-[#5b6170]">{e.id}</p></div>
           <span className="h-8 w-px bg-[#e6e8ee]" />
           <Chip tone={STATUS[e.status][1]}>{STATUS[e.status][0]}</Chip>
@@ -125,9 +133,9 @@ export function EmployeePage({ id }: { id: string }) {
         </div>
         <div className="relative mt-5 flex items-center gap-1 border-b border-[#eceef2] pb-2.5">
           {(["profile", "work", "attendance", "pay"] as ETab[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#fde8e7] text-[#e0352b]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>
+            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>
           ))}
-          <button onClick={() => setMore((m) => !m)} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#fde8e7] text-[#e0352b]" : "border-[#dfe2e8]")}>
+          <button onClick={() => setMore((m) => !m)} aria-label="More employee sections" aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#fde8e7] text-[#c72f26]" : "border-[#dfe2e8]")}>
             {moreItems.find((m) => m.v === tab)?.label ?? "More"} {more ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </button>
           {more && (
@@ -177,7 +185,7 @@ function WorkTab({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Work"><Row icon={Network} label="Department" value={e.dept} /><Row icon={Briefcase} label="Position" value={e.position} /><Row icon={User} label="Reports to" value={e.manager} /><Row icon={FileText} label="Employment" value={e.type} /><Row icon={CalendarDays} label="Probation" value={e.probationEnd ? `Until ${fmt(e.probationEnd)}` : "Completed"} /></Card>
-      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#e0352b]">Schedule</Link>}>
+      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#c72f26]">Schedule</Link>}>
         <ul className="divide-y divide-[#eceef2]">{week.map(([d, s]) => <li key={d} className="flex justify-between py-2 text-[15px]"><span>{fmt(d)}</span><Chip tone={s === "Off" ? "gray" : s === "Leave" ? "red" : s === "Evening" ? "amber" : "blue"}>{s}</Chip></li>)}</ul>
       </Card>
     </div>
@@ -214,7 +222,7 @@ function EmpPay({ e }: { e: Employee }) {
       <Card title="Payslips">
         {lines.length === 0 ? <p className="text-[14.5px] text-[#6b7180]">No payroll run yet.</p> : (
           <Table cols={[{ label: "Month" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Status" }, { label: "" }]}>
-            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#e0352b]">Open</Link></td></tr>)}
+            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#c72f26]">Open</Link></td></tr>)}
           </Table>
         )}
       </Card>
@@ -229,7 +237,7 @@ function AssetsTab({ e }: { e: Employee }) {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Assets issued">
         {e.assets.length === 0 && <p className="mb-3 text-[14.5px] text-[#6b7180]">No assets issued.</p>}
-        <ul className="divide-y divide-[#eceef2]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#6b7180]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#6b7180]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#e0352b]">Return</button></span></li>)}</ul>
+        <ul className="divide-y divide-[#eceef2]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#6b7180]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#6b7180]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#c72f26]">Return</button></span></li>)}</ul>
         <div className="mt-3 flex gap-2"><Input value={name} onChange={(ev) => setName(ev.target.value)} placeholder="e.g. Uniform set" /><Btn disabled={!name.trim()} onClick={() => { update((s) => { emp(s, e.id)!.assets.push({ name: name.trim(), tag: `AS-${Math.floor(Math.random() * 900 + 100)}`, since: TODAY }); }, `${name} issued to ${e.name}`); setName(""); }}>Issue</Btn></div>
       </Card>
       <Card title="Benefits">
@@ -255,7 +263,7 @@ function ReviewsTab({ e }: { e: Employee }) {
         </div>
       </Card>
       <Card title="Training">
-        <ul className="divide-y divide-[#eceef2]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#6b7180]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#e0352b]">Mark done</button>}</li>)}</ul>
+        <ul className="divide-y divide-[#eceef2]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#6b7180]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#c72f26]">Mark done</button>}</li>)}</ul>
         {e.trainings.length === 0 && <p className="text-[14.5px] text-[#6b7180]">No training planned.</p>}
       </Card>
     </div>
@@ -272,8 +280,7 @@ function JoiningTab({ e }: { e: Employee }) {
         {e.exit ? (
           <>
             <p className="text-[15px]">{e.exit.reason} · last day {fmt(e.exit.lastDay)}</p>
-            <p className="mt-1 text-[14px] text-[#6b7180]">Clearance is tracked in Team Operations › Offboarding.</p>
-            <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#e0352b]">Open offboarding</Link>
+                        <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#c72f26]">Open offboarding</Link>
           </>
         ) : (
           <>

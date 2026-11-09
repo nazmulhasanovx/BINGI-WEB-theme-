@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, CalendarDays, Check, CalendarOff, Clock, ExternalLink, Minus, Plus, RefreshCw, Tag, User, X, Fingerprint } from "lucide-react";
 import { TODAY, addDays, emp, fmt, fmtStamp, useHrm, type Att, type AttStatus, type Employee } from "@/lib/hrm/store";
 import { decideRequest } from "@/lib/hrm/actions";
-import { DateBox, StaffFrame, useToast } from "./Frame";
+import { DateBox, FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Input, Menu, Pager, Person, Pills, Select, Table, type Tone } from "./ui";
 
 const PER = 7;
@@ -30,7 +30,7 @@ export function AttendancePage() {
   if (mode === "none")
     return (
       <StaffFrame tab="attendance" hideSearch>
-        <Card><Empty icon={<CalendarOff className="size-6" />} title="Attendance is off for this property" text="Staff, schedule, leave and fixed payroll still work. Turn attendance on any time." action={<Link href="/hms/staff/settings?s=attendance" className="font-medium text-[#e0352b]">Choose attendance method</Link>} /></Card>
+        <Card><Empty icon={<CalendarOff className="size-6" />} title="Attendance is off for this property" text="Staff, schedule, leave and fixed payroll still work. Turn attendance on any time." action={<Link href="/hms/staff/settings?s=attendance" className="font-medium text-[#c72f26]">Choose attendance method</Link>} /></Card>
       </StaffFrame>
     );
   return <ManualAttendance />;
@@ -48,7 +48,9 @@ function ManualAttendance() {
   const [mark, setMark] = useState<string[] | null>(null);
   const day = st.attendance[date] ?? {};
   const active = st.employees.filter((e) => e.status === "active");
-  const list = active.filter((e) => !q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase()));
+  const [fd, setFd] = useState("all");
+  const [fs, setFs] = useState("all");
+  const list = active.filter((e) => (fd === "all" || e.dept === fd) && (fs === "all" || (fs === "none" ? !day[e.id] : day[e.id]?.status === fs)) && (!q || `${e.name} ${e.id} ${e.dept}`.toLowerCase().includes(q.toLowerCase())));
   const pages = Math.max(1, Math.ceil(list.length / PER));
   const p = Math.min(page, pages);
   const rows = list.slice((p - 1) * PER, p * PER);
@@ -56,13 +58,14 @@ function ManualAttendance() {
   const corr = st.requests.filter((r) => r.kind === "Attendance correction");
   const allSel = rows.length > 0 && rows.every((r) => sel.includes(r.id));
   return (
-    <StaffFrame tab="attendance" search={q} onSearch={(v) => { setQ(v); setPage(1); }} action={<Btn kind="primary" onClick={() => setMark(sel.length ? sel : [])}><Plus className="size-[18px]" /> Mark attendance</Btn>}
+    <StaffFrame tab="attendance" search={q} onSearch={(v) => { setQ(v); setPage(1); }} activeFilters={(fd !== "all" ? 1 : 0) + (fs !== "all" ? 1 : 0)} onClearFilters={() => { setFd("all"); setFs("all"); }}
+      filters={<><FilterSelect label="Department" value={fd} onChange={(v) => { setFd(v); setPage(1); }} options={st.settings.departments.map((d) => ({ v: d, label: d }))} /><FilterSelect label="Attendance" value={fs} onChange={(v) => { setFs(v); setPage(1); }} options={[{ v: "present", label: "Present" }, { v: "half", label: "Half day" }, { v: "absent", label: "Absent" }, { v: "leave", label: "On leave" }, { v: "off", label: "Day off" }, { v: "none", label: "Not marked" }]} /></>} action={<Btn kind="primary" onClick={() => setMark(sel.length ? sel : [])}><Plus className="size-[18px]" /> Mark attendance</Btn>}
       right={<><DateBox value={date} onChange={(v) => { setDate(v); setSel([]); }} label={fmt(date)} /><span className="rounded-lg bg-[#eef0f4] px-3 py-1.5 text-[15px] text-[#4b5160]">Asia/Dhaka</span></>}>
       <Card>
-        <span className="inline-block rounded-xl bg-[#fde8e7] px-4 py-2 text-[15.5px] font-medium text-[#e0352b]">Manual attendance</span>
+        <span className="inline-block rounded-xl bg-[#fde8e7] px-4 py-2 text-[15.5px] font-medium text-[#c72f26]">Manual attendance</span>
         <div className="mt-3 flex flex-wrap gap-1 border-b border-[#eceef2]">
           {([["daily", "Daily"], ["corr", `Corrections${corr.some((r) => r.status === "pending") ? ` (${corr.filter((r) => r.status === "pending").length})` : ""}`], ["hist", "History"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap -mb-px rounded-t-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "border-b-2 border-[#e63b31] bg-[#fde8e7] text-[#e0352b]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap -mb-px rounded-t-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "border-b-2 border-[#e63b31] bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
 
@@ -72,16 +75,16 @@ function ManualAttendance() {
               <Kpi icon={<User className="size-5 text-[#5b6170]" />} text={`${active.length} active`} />
               <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#e3f5e8]"><Check className="size-4 text-[#1f8f4a]" /></span>} text={`${c.present} present`} />
               <Kpi icon={<CalendarDays className="size-5 text-[#5b6170]" />} text={`${c.leave} leave`} />
-              <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#fde8e7]"><X className="size-4 text-[#d0342c]" /></span>} text={`${c.absent} absent`} />
+              <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#fde8e7]"><X className="size-4 text-[#c33029]" /></span>} text={`${c.absent} absent`} />
               <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#eef0f4]"><Minus className="size-4" /></span>} text={`${c.nm} not marked`} />
             </div>
             <div className="mt-4 flex items-center gap-4">
               <label className="flex items-center gap-3 text-[15px] text-[#4b5160]"><input type="checkbox" checked={allSel} onChange={() => setSel(allSel ? sel.filter((s) => !rows.some((r) => r.id === s)) : [...new Set([...sel, ...rows.map((r) => r.id)])])} className="size-5 accent-[#e63b31]" aria-label="Select page" /> {sel.length} selected</label>
               <Btn disabled={!sel.length} onClick={() => setMark(sel)} className={clsx(!sel.length && "border-transparent bg-[#eef0f4] text-[#8a8f9c]")}>Mark selected</Btn>
-              {c.nm > 0 && <button onClick={() => setMark(active.filter((e) => !day[e.id]).map((e) => e.id))} className="ml-auto text-[14.5px] font-medium text-[#e0352b]">Mark all not marked ({c.nm})</button>}
+              {c.nm > 0 && <button onClick={() => setMark(active.filter((e) => !day[e.id]).map((e) => e.id))} className="ml-auto text-[14.5px] font-medium text-[#c72f26]">Mark all not marked ({c.nm})</button>}
             </div>
             <div className="mt-3">
-              <Table cols={[{ label: "", w: "44px" }, { label: "Employee", w: "22%" }, { label: "Attendance" }, { label: "Check-in" }, { label: "Check-out" }, { label: "Remark" }, { label: "Actions", w: "270px", align: "right" }]}>
+              <Table cols={[{ label: <span className="sr-only">Select</span>, w: "44px" }, { label: "Employee", w: "22%" }, { label: "Attendance" }, { label: "Check-in" }, { label: "Check-out" }, { label: "Remark" }, { label: "Actions", w: "270px", align: "right" }]}>
                 {rows.map((e) => {
                   const r = day[e.id];
                   return (
@@ -94,7 +97,7 @@ function ManualAttendance() {
                       <td><Remark r={r} /></td>
                       <td>
                         <div className="flex items-center justify-end gap-2">
-                          {!r && <button onClick={() => setMark([e.id])} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f3a9a3] px-4 text-[14.5px] font-medium text-[#e0352b] hover:bg-[#fdf0ef]"><Plus className="size-4" /> Mark</button>}
+                          {!r && <button onClick={() => setMark([e.id])} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f3a9a3] px-4 text-[14.5px] font-medium text-[#c72f26] hover:bg-[#fdf0ef]"><Plus className="size-4" /> Mark</button>}
                           <Link href={`/hms/staff/people/${e.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-4" /> Open</Link>
                           <Menu label={`Attendance actions for ${e.name}`} items={[
                             { label: r ? "Edit attendance" : "Mark attendance", onClick: () => setMark([e.id]) },
@@ -162,12 +165,11 @@ function AttHistory({ onDay }: { onDay: (d: string) => void }) {
               <td>{fmt(d)}{d === TODAY && <span className="ml-2 text-[13px] text-[#6b7180]">Today</span>}</td>
               <td className="text-right">{n("present") + n("half")}</td><td className="text-right">{n("leave")}</td><td className="text-right">{n("absent")}</td>
               <td className={clsx("text-right", nm && "font-medium text-[#b45309]")}>{nm}</td>
-              <td><button onClick={() => onDay(d)} className="font-medium text-[#e0352b]">Open day</button></td>
+              <td><button onClick={() => onDay(d)} className="font-medium text-[#c72f26]">Open day</button></td>
             </tr>
           );
         })}
       </Table>
-      <p className="mt-3 text-[14px] text-[#6b7180]">Days before the demo start have no records yet — open a day to mark it.</p>
     </div>
   );
 }
@@ -196,7 +198,7 @@ function MarkDrawer({ ids, date, onClose }: { ids: string[]; date: string; onClo
   return (
     <Drawer title="Mark attendance" onClose={onClose} footer={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" disabled={!who.length || bad} onClick={save}>Save attendance</Btn></>}>
       <p className="text-[15px] text-[#4b5160]">{fmt(date)} · Asia/Dhaka</p>
-      <Field label={`Staff (${who.length})`}>
+      <Field group label={`Staff (${who.length})`}>
         <div className="flex flex-wrap gap-2">
           {who.map((id) => <span key={id} className="inline-flex items-center gap-1.5 rounded-full bg-[#f2f3f6] py-1 pl-3 pr-1.5 text-[14px]">{emp(st, id)?.name}<button onClick={() => setWho(who.filter((x) => x !== id))} aria-label={`Remove ${emp(st, id)?.name}`} className="grid size-5 place-items-center rounded-full hover:bg-[#e2e4ea]"><X className="size-3.5" /></button></span>)}
         </div>
@@ -205,8 +207,8 @@ function MarkDrawer({ ids, date, onClose }: { ids: string[]; date: string; onClo
           {active.filter((e) => !who.includes(e.id)).map((e) => <option key={e.id} value={e.id}>{e.name} · {e.id}</option>)}
         </Select>
       </Field>
-      <Field label="Attendance">
-        <Pills value={status} onChange={setStatus} size="sm" items={[{ v: "present", label: "Present" }, { v: "half", label: "Half day" }, { v: "absent", label: "Absent" }, { v: "leave", label: "Leave" }, { v: "off", label: "Day off" }]} />
+      <Field group label="Attendance">
+        <Pills choice value={status} onChange={setStatus} size="sm" items={[{ v: "present", label: "Present" }, { v: "half", label: "Half day" }, { v: "absent", label: "Absent" }, { v: "leave", label: "Leave" }, { v: "off", label: "Day off" }]} />
       </Field>
       {(status === "present" || status === "half") && (
         <div className="grid grid-cols-2 gap-3">
@@ -214,7 +216,7 @@ function MarkDrawer({ ids, date, onClose }: { ids: string[]; date: string; onClo
           <Field label="Check-out" hint="Leave empty if still on duty"><Input type="time" value={tout} onChange={(e) => setOut(e.target.value)} /></Field>
         </div>
       )}
-      {bad && <p className="text-[14px] text-[#d0342c]">Check-out must be after check-in.</p>}
+      {bad && <p className="text-[14px] text-[#c33029]">Check-out must be after check-in.</p>}
       <Field label="Remark"><Input value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="e.g. Late 12m" /></Field>
       {onLeave.length > 0 && <p className="rounded-xl bg-[#fff6e5] px-3 py-2.5 text-[14px] text-[#8a5a00]">{onLeave.map((id) => emp(st, id)?.name).join(", ")} {onLeave.length > 1 ? "are" : "is"} on approved leave. Saving will replace the leave mark (the leave balance is not returned).</p>}
     </Drawer>
@@ -231,6 +233,8 @@ function MachineAttendance() {
   const [tab, setTab] = useState<"daily" | "corr" | "dev">("daily");
   const [date, setDate] = useState(TODAY);
   const [open, setOpen] = useState<string | null>("EMP001");
+  const [md, setMd] = useState("all");
+  const [ms, setMs] = useState("all");
   const z = st.zkt;
   const day = st.attendance[date] ?? {};
   const rows: MRow[] = st.employees.filter((e) => e.status === "active").flatMap((e): MRow[] => {
@@ -243,20 +247,21 @@ function MachineAttendance() {
     if (tin) return [{ e, in: tin, status: "Missing punch" }];
     if (!r) return [{ e, status: "Awaiting sync" }];
     return [];
-  }).filter((r) => !q || `${r.e.name} ${r.e.id} ${r.e.dept}`.toLowerCase().includes(q.toLowerCase()));
+  }).filter((r) => (md === "all" || r.e.dept === md) && (ms === "all" || r.status === ms) && (!q || `${r.e.name} ${r.e.id} ${r.e.dept}`.toLowerCase().includes(q.toLowerCase())));
   const sel = rows.find((r) => r.e.id === open);
   const sync = () => {
     if (!z.online) { toast("ZKT MB460 is offline — nothing synced. Check the device power and network."); return; }
     update((s) => { s.zkt.lastSync = `${TODAY}T${new Date().toTimeString().slice(0, 5)}`; }, "ZKT logs synced");
   };
   return (
-    <StaffFrame tab="attendance" search={q} onSearch={setQ} action={<Btn kind="primary" onClick={sync}><RefreshCw className="size-[18px]" /> Sync logs</Btn>}
+    <StaffFrame tab="attendance" search={q} onSearch={setQ} activeFilters={(md !== "all" ? 1 : 0) + (ms !== "all" ? 1 : 0)} onClearFilters={() => { setMd("all"); setMs("all"); }}
+      filters={<><FilterSelect label="Department" value={md} onChange={setMd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} /><FilterSelect label="Status" value={ms} onChange={setMs} options={["Missing punch", "Awaiting sync", "Complete"].map((x) => ({ v: x, label: x }))} /></>} action={<Btn kind="primary" onClick={sync}><RefreshCw className="size-[18px]" /> Sync logs</Btn>}
       right={<DateBox value={date} onChange={setDate} label={fmt(date)} />}>
       <div className={clsx("grid gap-4", sel && tab === "daily" && "xl:grid-cols-[minmax(0,1fr)_330px]")}>
         <Card className="min-w-0">
           <div className="flex flex-wrap gap-1">
             {([["daily", "Daily"], ["corr", "Corrections"], ["dev", "Devices & logs"]] as const).map(([v, l]) => (
-              <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "bg-[#fde8e7] text-[#e0352b]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+              <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
             ))}
           </div>
           <div className="mt-3 rounded-xl border border-[#e6e8ee] p-4">
@@ -264,7 +269,7 @@ function MachineAttendance() {
               <Fingerprint className="size-7" />
               <span className="text-[18px] font-semibold">{z.device}</span>
               <Chip tone="blue">Machine</Chip>
-              <Chip tone={z.online ? "green" : "red"}><span className={clsx("size-2.5 rounded-full", z.online ? "bg-[#1f8f4a]" : "bg-[#d0342c]")} /> {z.online ? "Online" : "Offline"}</Chip>
+              <Chip tone={z.online ? "green" : "red"}><span className={clsx("size-2.5 rounded-full", z.online ? "bg-[#1f8f4a]" : "bg-[#c33029]")} /> {z.online ? "Online" : "Offline"}</Chip>
               <span className="text-[15px] text-[#4b5160]">Last successful sync: {fmtStamp(z.lastSync)}</span>
             </div>
             {!z.online && <p className="mt-3 flex items-center gap-3 rounded-xl bg-[#fff1d6] px-4 py-3 text-[16px] text-[#8a5a00]"><AlertTriangle className="size-5" /> Device offline — attendance may be incomplete.</p>}

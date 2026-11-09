@@ -1,7 +1,7 @@
 "use client";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
-import { BarChart3, Bell, Building2, CalendarDays, Check, CheckCircle2, Download, FileClock, Info, KeyRound, Layers, Umbrella, Wallet, X } from "lucide-react";
+import { Bell, Building2, CalendarDays, Check, CheckCircle2, Download, FileClock, Info, KeyRound, Layers, Umbrella, Wallet, X } from "lucide-react";
 import { TODAY, addDays, fmt, fmtStamp, money, monthLabel, runTotals, useHrm, type Dept, type HrmState, type Settings } from "@/lib/hrm/store";
 import { useProperty } from "../property";
 import { DateBox, StaffFrame, useToast } from "./Frame";
@@ -22,7 +22,7 @@ const MODES: { v: Settings["attendance"]; title: string; text: string; label: st
 /** Human-readable list of what changed between saved and draft settings. */
 function diff(a: Settings, b: Settings, eff: string): string[] {
   const out: string[] = [];
-  if (a.attendance !== b.attendance) out.push(`Attendance: ${MODES.find((m) => m.v === a.attendance)!.label} → ${MODES.find((m) => m.v === b.attendance)!.label} (from ${fmt(eff)})`);
+  if (a.attendance !== b.attendance) out.push(`Attendance: ${MODES.find((m) => m.v === a.attendance)!.label} → ${MODES.find((m) => m.v === b.attendance)!.label} (applies now — effective-date scheduling needs the HMS backend; picked date: ${fmt(eff)})`);
   b.leaveTypes.forEach((t, i) => { if (a.leaveTypes[i]?.days !== t.days) out.push(`${t.name}: ${a.leaveTypes[i]?.days} → ${t.days} days / year`); });
   if (a.payDay !== b.payDay) out.push(`Pay day: ${a.payDay} → ${b.payDay} of the month`);
   if (a.approver !== b.approver) out.push(`Approver: ${a.approver} → ${b.approver}`);
@@ -60,14 +60,14 @@ export function SettingsPage() {
       <Card>
         <h2 className="text-[24px] font-semibold">Reports &amp; Settings</h2>
         <div className="mt-3 inline-flex flex-wrap gap-1 rounded-xl bg-[#f2f3f6] p-1">
-          {(["reports", "settings"] as const).map((v) => <button key={v} onClick={() => setView(v)} className={clsx("rounded-lg px-6 py-2 text-[16px] capitalize", view === v ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "")}>{v}</button>)}
+          {(["reports", "settings"] as const).map((v) => <button key={v} onClick={() => setView(v)} className={clsx("rounded-lg px-6 py-2 text-[16px] capitalize", view === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "")}>{v}</button>)}
         </div>
         <div className="mt-4 border-t border-[#eceef2] pt-4">
           {view === "reports" ? <Reports /> : (
             <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
               <nav className="space-y-1 lg:border-r lg:border-[#eceef2] lg:pr-5" aria-label="Settings sections">
                 {nav.map((n) => (
-                  <button key={n.v} onClick={() => setSec(n.v)} className={clsx("flex w-full items-center gap-4 rounded-xl px-4 py-3 text-[16.5px]", sec === n.v ? "bg-[#fde8e7] font-medium text-[#e0352b]" : "hover:bg-[#f6f7f9]")}><n.icon className="size-5" /> {n.label}</button>
+                  <button key={n.v} onClick={() => setSec(n.v)} className={clsx("flex w-full items-center gap-4 rounded-xl px-4 py-3 text-[16.5px]", sec === n.v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}><n.icon className="size-5" /> {n.label}</button>
                 ))}
               </nav>
               <div className="min-w-0">
@@ -134,7 +134,7 @@ function OrgSec({ d, set, st }: SP & { st: HrmState }) {
         {d.departments.map((x) => <tr key={x}><td>{x}</td><td className="text-right">{count(x)}</td><td>{count(x) === 0 && <button onClick={() => set({ ...d, departments: d.departments.filter((y) => y !== x) })} aria-label={`Remove ${x}`} className="grid size-8 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9]"><X className="size-4" /></button>}</td></tr>)}
       </Table>
       <div className="mt-3 flex max-w-[420px] gap-2"><Input value={n} onChange={(e) => setN(e.target.value)} placeholder="New department" /><Btn disabled={!n.trim() || d.departments.includes(n.trim() as Dept)} onClick={() => { set({ ...d, departments: [...d.departments, n.trim() as Dept] }); setN(""); }}>Add</Btn></div>
-      <p className="mt-3 text-[14px] text-[#6b7180]">Departments with staff can’t be removed — move the staff first.</p>
+      <p className="mt-3 text-[14px] text-[#6b7180]">Departments with staff can’t be removed.</p>
     </>
   );
 }
@@ -147,7 +147,7 @@ function AccessSec({ st }: { st: HrmState }) {
       <Head title="Access" sub="Who can use Team & HR" />
       <div className="grid gap-3 sm:grid-cols-4">{[["Linked", c("linked")], ["Invited", c("invited")], ["Not invited", c("not-invited")], ["Disabled", c("disabled")]].map(([k, v]) => <div key={k as string} className="rounded-xl border border-[#eceef2] px-4 py-3"><p className="text-[14px] text-[#5b6170]">{k}</p><p className="text-[24px] font-semibold">{v}</p></div>)}</div>
       <div className="mt-4"><Table cols={[{ label: "Role" }, { label: "Can do" }]}>{roles.map(([r, t]) => <tr key={r}><td className="font-medium">{r}</td><td>{t}</td></tr>)}</Table></div>
-      <p className="mt-3 text-[14px] text-[#6b7180]">Role permissions are managed in HMS Settings › Users & roles. Invite staff from People › Invitations.</p>
+      <p className="mt-3 text-[14px] text-[#6b7180]">Role permissions are managed in HMS Settings › Users & roles.</p>
     </>
   );
 }
@@ -161,7 +161,7 @@ function LeaveSec({ d, set }: SP) {
           <div key={t.name} className="flex items-center justify-between rounded-xl border border-[#eceef2] px-4 py-3"><span className="text-[16px]">{t.name}</span><span className="flex items-center gap-2"><Input type="number" min={0} max={60} value={t.days} onChange={(e) => set({ ...d, leaveTypes: d.leaveTypes.map((x, j) => (j === i ? { ...x, days: Math.min(60, Math.max(0, Number(e.target.value) || 0)) } : x)) })} className="w-[90px] text-right" aria-label={`${t.name} days`} /> days</span></div>
         ))}
       </div>
-      <p className="mt-3 text-[14px] text-[#6b7180]">New totals apply to new staff and the next leave year. Current balances are not changed.</p>
+      <p className="mt-3 text-[14px] text-[#6b7180]">Current balances don’t change.</p>
     </>
   );
 }
@@ -171,7 +171,7 @@ function PayrollSec({ d, set }: SP) {
     <>
       <Head title="Payroll" sub="Currency: BDT" />
       <Field label="Salary pay day (day of next month)"><Select value={d.payDay} onChange={(e) => set({ ...d, payDay: Number(e.target.value) })} className="max-w-[240px]">{Array.from({ length: 28 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}</Select></Field>
-      <p className="mt-3 text-[14px] text-[#6b7180]">Payroll is built from salary structures, bonuses, advances and deductions. Payments are recorded here; bank/bKash transfers are not connected.</p>
+      <p className="mt-3 text-[14px] text-[#6b7180]">Payments are recorded only — bank/bKash transfers are not connected.</p>
     </>
   );
 }
@@ -182,7 +182,7 @@ function ApprovalSec({ d, set, st }: SP & { st: HrmState }) {
     <>
       <Head title="Approvals" sub="Leave, corrections, overtime, shift swaps, advances" />
       <Field label="Assigned approver"><Select value={d.approver} onChange={(e) => set({ ...d, approver: e.target.value })} className="max-w-[320px]">{[...new Set(opts)].map((o) => <option key={o}>{o}</option>)}</Select></Field>
-      <p className="mt-3 text-[14px] text-[#6b7180]">New requests go to this approver. Existing requests keep their approver.</p>
+      <p className="mt-3 text-[14px] text-[#6b7180]">Existing requests keep their approver.</p>
     </>
   );
 }
@@ -252,7 +252,6 @@ function Reports() {
         )}
         <p className="mt-2 text-[13.5px] text-[#6b7180]">Monthly salary bill (active staff): BDT {money(active.reduce((t, e) => t + e.salary.basic + e.salary.house + e.salary.food + e.salary.transport, 0))}</p>
       </Card>
-      <p className="flex items-center gap-2 text-[14px] text-[#6b7180] lg:col-span-2"><BarChart3 className="size-4" /> Reports are calculated from the data in Team & HR.</p>
     </div>
   );
 }
