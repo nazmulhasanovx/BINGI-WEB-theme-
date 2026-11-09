@@ -4,15 +4,16 @@ import type { ComponentType } from "react";
 import type { Hotel, MasterTheme } from "@/lib/types";
 import { GrandHome } from "./grand/Home";
 import { CityHome } from "./city/Home";
+import { NestHome } from "./nest/Home";
 
 export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> = {
   grand: GrandHome,
   city: CityHome,
-  nest: CityHome, // NEST is next — uses CITY until built
+  nest: NestHome,
 };
 
 export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
-  { id: "nest", name: "NEST", plan: "Starter" },
+  { id: "nest", name: "NEST", plan: "Starter", demo: "tea-valley" },
   { id: "city", name: "CITY", plan: "Business", demo: "sea-pearl" },
   { id: "grand", name: "GRAND", plan: "Ultra", demo: "azure-bay" },
 ];

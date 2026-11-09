@@ -11,7 +11,7 @@ export function TopBar({ hotel }: { hotel: Hotel }) {
           <MapPin className="size-3.5" /> {hotel.area}, {hotel.city}
         </span>
         <span className="flex items-center gap-3">
-          {hotel.stars && (
+          {!!hotel.stars && (
             <span className="flex items-center gap-0.5 text-brand" aria-label={`${hotel.stars} star`}>
               {Array.from({ length: hotel.stars }).map((_, i) => (
                 <Star key={i} className="size-3 fill-current" />

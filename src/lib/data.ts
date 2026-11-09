@@ -1,9 +1,10 @@
 // Data adapter. Today: demo data. Later: BinGi HMS public API (see technology/data-contract.md).
 import { azureBay, azureBayPaused } from "@/data/azure-bay";
 import { seaPearl } from "@/data/sea-pearl";
+import { teaValley } from "@/data/tea-valley";
 import type { Hotel } from "./types";
 
-const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [azureBayPaused.slug]: azureBayPaused };
+const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [azureBayPaused.slug]: azureBayPaused };
 
 export async function getHotel(slug: string): Promise<Hotel | null> {
   return HOTELS[slug] ?? null;

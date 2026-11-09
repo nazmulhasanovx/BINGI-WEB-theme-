@@ -9,14 +9,14 @@ Every hotel on BinGi gets a public website + direct booking engine, fed by the s
 
 | Master theme | Plan | Demo hotel | Folder | Status |
 |---|---|---|---|---|
-| **NEST** — small hotel, guest house, home | Starter | — | `src/themes/nest` | Next (uses CITY layout until built) |
+| **NEST** — small hotel, guest house, home | Starter | `/hotel/tea-valley` | `src/themes/nest` | Front-end done, demo data |
 | **CITY** — premium city/business hotel | Business | `/hotel/sea-pearl` | `src/themes/city` | Front-end done, demo data |
 | **GRAND** — luxury hotel & resort | Ultra / Enterprise | `/hotel/azure-bay` | `src/themes/grand` | Front-end done, demo data |
 
 How a hotel's site is chosen: **plan → master theme**, **property type → category preset** (`src/lib/presets.ts`, labels + special sections), **owner → colour (10) + heading font**, **HMS → content**. Restaurant and Events pages exist only on Ultra/Enterprise (`PLAN_RULES` in `src/lib/data.ts`). Full rules: [`RULES.md`](RULES.md).
 
 New master theme → `src/themes/<name>/Home.tsx`, register in `src/themes/registry.ts`, add a demo hotel in `src/data/`.
-The dark bar on top of every demo page switches **Layout (NEST · CITY · GRAND)**, colour and heading font — turn it off with `NEXT_PUBLIC_THEME_SWITCHER=off`.
+The dark bar on top of every demo page switches **Layout (NEST · CITY · GRAND) — each opens its demo hotel**, colour and heading font — turn it off with `NEXT_PUBLIC_THEME_SWITCHER=off`.
 
 ## Shared rules (all themes)
 
