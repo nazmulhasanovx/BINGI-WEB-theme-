@@ -8,6 +8,8 @@ import { useState } from "react";
 import { Check, Palette } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/theme";
+import type { MasterTheme } from "@/lib/types";
+import { MASTERS } from "@/themes/registry";
 
 /**
  * Theme switcher bar for designers/developers (top of every hotel page).
@@ -15,8 +17,8 @@ import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/the
  * In production the hotel's theme comes from HMS → Website Management → Theme & Appearance.
  * Choice is kept in this browser (localStorage); ?theme=<id> in the URL also works.
  */
-const KEY = "bingi-theme";
-const HKEY = "bingi-heading";
+// Kept per master theme, so GRAND and CITY demos keep their own colour.
+const keysFor = (m: MasterTheme) => ({ KEY: `bingi-theme-${m}`, HKEY: `bingi-heading-${m}` });
 const listeners = new Set<() => void>();
 const sub = (l: () => void) => {
   listeners.add(l);
@@ -36,7 +38,8 @@ const write = (k: string, v: string) => {
   listeners.forEach((l) => l());
 };
 
-export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: ThemeId; defaultHeading: "sans" | "serif" }) {
+export function ThemePreview({ defaultTheme, defaultHeading, master }: { defaultTheme: ThemeId; defaultHeading: "sans" | "serif"; master: MasterTheme }) {
+  const { KEY, HKEY } = keysFor(master);
   const params = useSearchParams();
   const q = params.get("theme");
   const stored = useSyncExternalStore(sub, () => read(KEY), () => "");
@@ -46,7 +49,7 @@ export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: T
 
   useEffect(() => {
     if (isThemeId(q) && q !== read(KEY)) write(KEY, q);
-  }, [q]);
+  }, [q, KEY]);
 
   useEffect(() => {
     const el = document.getElementById("hotel-theme");
@@ -61,9 +64,11 @@ export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: T
   const t = themeById(active);
   return (
     <>
-    <PhoneThemeButton active={active} heading={heading} />
+    <PhoneThemeButton active={active} heading={heading} master={master} />
     <div className="hidden border-b border-ink/10 bg-ink text-white md:block">
       <div className="no-scrollbar mx-auto flex h-12 max-w-[1240px] items-center gap-3 overflow-x-auto px-4 sm:px-6">
+        <LayoutSwitch master={master} />
+        <span className="h-5 w-px shrink-0 bg-white/20" />
         <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold">
           <Palette className="size-4 opacity-80" /> <span className="hidden sm:inline">Theme</span>
         </span>
@@ -103,8 +108,9 @@ export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: T
 }
 
 /** Phone: small dark palette button in the header (left of the menu) that opens the switcher as a sheet. */
-function PhoneThemeButton({ active, heading }: { active: ThemeId; heading: "sans" | "serif" }) {
+function PhoneThemeButton({ active, heading, master }: { active: ThemeId; heading: "sans" | "serif"; master: MasterTheme }) {
   const [open, setOpen] = useState(false);
+  const { KEY, HKEY } = keysFor(master);
   return (
     <div className="md:hidden">
       <button
@@ -115,6 +121,19 @@ function PhoneThemeButton({ active, heading }: { active: ThemeId; heading: "sans
         <Palette className="size-[18px]" />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Theme (preview)">
+        <p className="mb-2 text-sm font-semibold">Layout</p>
+        <div className="mb-5 grid grid-cols-3 gap-2">
+          {MASTERS.map((m) => m.demo ? (
+            <Link key={m.id} href={`/hotel/${m.demo}`} onClick={() => setOpen(false)} className={clsx("rounded-2xl border p-2.5 text-center", m.id === master ? "border-ink bg-ink text-white" : "border-line")}>
+              <span className="block text-[14px] font-bold">{m.name}</span><span className="text-[11px] opacity-70">{m.plan}</span>
+            </Link>
+          ) : (
+            <span key={m.id} className="rounded-2xl border border-dashed border-line p-2.5 text-center text-muted">
+              <span className="block text-[14px] font-bold">{m.name}</span><span className="text-[11px]">Soon</span>
+            </span>
+          ))}
+        </div>
+        <p className="mb-2 text-sm font-semibold">Colour</p>
         <div className="grid grid-cols-5 gap-3 pb-2">
           {THEMES.map((th) => (
             <button key={th.id} onClick={() => write(KEY, th.id)} className="flex flex-col items-center gap-1.5" aria-pressed={active === th.id}>
@@ -135,6 +154,23 @@ function PhoneThemeButton({ active, heading }: { active: ThemeId; heading: "sans
         </div>
         <Link href="/theme-lab" className="mt-3 flex h-11 items-center justify-center rounded-full border border-line text-sm font-semibold">Open Theme Lab</Link>
       </Sheet>
+    </div>
+  );
+}
+
+/** Desktop: which master layout (one per plan). Each opens its demo hotel. */
+function LayoutSwitch({ master }: { master: MasterTheme }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Layout">
+      {MASTERS.map((m) =>
+        m.demo ? (
+          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={`${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-3", m.id === master ? "bg-white text-ink" : "text-white/80 hover:text-white")}>
+            {m.name}
+          </Link>
+        ) : (
+          <span key={m.id} title={`${m.plan} plan — coming next`} className="flex h-7 items-center rounded-full px-3 text-white/40">{m.name} · soon</span>
+        )
+      )}
     </div>
   );
 }

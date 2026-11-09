@@ -2,17 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowRight, Car, Flower2, Mail, MessageCircle, Phone, Presentation, Sparkles, Umbrella, UtensilsCrossed, Waves } from "lucide-react";
-import { getHotel } from "@/lib/data";
+import { ArrowRight, Car, ConciergeBell, Dumbbell, Flower2, Wifi, Mail, MessageCircle, Phone, Presentation, Sparkles, Umbrella, UtensilsCrossed, Waves } from "lucide-react";
+import { availablePages, getHotel } from "@/lib/data";
+import { presetFor } from "@/lib/presets";
 import { PageHero } from "@/components/site/PageHero";
 import { SectionTabs } from "@/components/explore/SectionTabs";
 import { Gallery } from "@/components/ui/Gallery";
-import { LocationBlock } from "@/components/home/Sections";
+import { LocationBlock } from "@/components/sections/HomeSections";
 import { Reveal } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = { title: "Explore" };
 
-const ICONS: Record<string, typeof Waves> = { waves: Waves, umbrella: Umbrella, flower: Flower2, utensils: UtensilsCrossed, presentation: Presentation, car: Car };
+const ICONS: Record<string, typeof Waves> = { waves: Waves, umbrella: Umbrella, flower: Flower2, utensils: UtensilsCrossed, presentation: Presentation, car: Car, dumbbell: Dumbbell, wifi: Wifi, concierge: ConciergeBell };
 
 export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explore">) {
   const { slug } = await props.params;
@@ -20,16 +21,16 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
   if (!hotel) notFound();
   const units = hotel.rooms.reduce((s, r) => s + r.units, 0);
   const stats = [
-    hotel.stars && { k: `${hotel.stars}-star`, v: "Resort" },
-    { k: String(units), v: "Rooms & villas" },
-    hotel.outlets.length && { k: String(hotel.outlets.length), v: hotel.outlets.length > 1 ? "Places to eat" : "Restaurant" },
+    hotel.stars && { k: `${hotel.stars}-star`, v: presetFor(hotel.propertyType).placeTitle },
+    { k: String(units), v: presetFor(hotel.propertyType).unitsLabel },
+    availablePages(hotel).dining && { k: String(hotel.outlets.length), v: hotel.outlets.length > 1 ? "Places to eat" : "Restaurant" },
     { k: hotel.checkIn, v: "Check-in" },
   ].filter(Boolean) as { k: string; v: string }[];
   const tel = `tel:${hotel.phone.replace(/[^+\d]/g, "")}`;
 
   return (
     <>
-      <PageHero title={hotel.name} photo="/demo/azure-bay/gallery-1.jpg" />
+      <PageHero title={hotel.name} photo={hotel.pagePhotos.explore} />
       <SectionTabs
         items={[
           { id: "about", label: "About" },
@@ -43,7 +44,7 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
         <section id="about" className="scroll-mt-32 py-12 md:py-16">
         <Reveal className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
           <div className="relative aspect-[16/10] overflow-hidden rounded-[28px]">
-            <Image src="/demo/azure-bay/gallery-1.jpg" alt={hotel.name} fill sizes="(max-width: 1024px) 100vw, 600px" className="object-cover" />
+            <Image src={hotel.pagePhotos.explore ?? hotel.heroPhoto} alt={hotel.name} fill sizes="(max-width: 1024px) 100vw, 600px" className="object-cover" />
           </div>
           <div>
             <h2 className="text-2xl font-bold md:text-[32px] md:leading-tight">{hotel.tagline}</h2>
@@ -98,7 +99,7 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
             {hotel.whatsapp && <a href={`https://wa.me/${hotel.whatsapp.replace(/\D/g, "")}`} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><MessageCircle className="size-5 text-action" /><span><span className="block font-semibold">WhatsApp</span><span className="text-sm text-muted">Chat with us</span></span></a>}
             <a href={`mailto:${hotel.email}`} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><Mail className="size-5 text-action" /><span><span className="block font-semibold">Email</span><span className="text-sm text-muted">{hotel.email}</span></span></a>
           </div>
-          {hotel.flags.events && (
+          {availablePages(hotel).events && (
             <Link href={`/hotel/${slug}/events`} className="group mt-4 flex items-center justify-between rounded-3xl bg-brand-soft p-5">
               <span className="font-semibold">Weddings, meetings & groups — send an enquiry</span>
               <ArrowRight className="size-5 shrink-0 text-action transition-transform group-hover:translate-x-1" />
