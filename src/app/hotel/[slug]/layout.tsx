@@ -36,7 +36,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
 
   if (hotel.status === "paused")
     return (
-      <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
+      <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading} master={hotel.theme.master}>
         <SitePaused hotel={hotel} />
       </ThemeScope>
     );
@@ -45,7 +45,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
   const base = `/hotel/${hotel.slug}`;
 
   return (
-    <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
+    <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading} master={hotel.theme.master}>
       <SmoothScroll>
       <BookingProvider hotel={hotel}>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:shadow-float">
@@ -53,7 +53,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
         </a>
         <LangSync />
         <Suspense fallback={<div className="h-12 bg-ink" />}>
-          <ThemePreview defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} />
+          <ThemePreview defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} master={hotel.theme.master} />
         </Suspense>
         <TopBar hotel={hotel} />
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />

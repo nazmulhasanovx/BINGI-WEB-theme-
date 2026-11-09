@@ -4,6 +4,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import type { NavItem } from "./nav";
 import { Logo } from "./Logo";
+import { availablePages } from "@/lib/data";
 import { T } from "@/lib/i18n";
 
 const icons = {
@@ -47,7 +48,7 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
   const hotelLinks = [
     has("Dining") && { href: `${base}/dining`, label: "Dining" },
     has("Experiences") && { href: `${base}/experiences`, label: "Experiences" },
-    hotel.flags.events && { href: `${base}/events`, label: "Events" },
+    availablePages(hotel).events && { href: `${base}/events`, label: "Events" },
     { href: `${base}/explore`, label: "Explore" },
   ].filter(Boolean) as { href: string; label: string }[];
   const tel = `tel:${hotel.phone.replace(/[^+\d]/g, "")}`;

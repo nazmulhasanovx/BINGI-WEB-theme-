@@ -55,7 +55,8 @@ export function unitsLeft(room: RoomCategory, dates: string[]): number {
   for (const iso of dates) {
     let hash = 0;
     for (const c of room.id + iso) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
-    const booked = hash % (room.units + 1);
+    // Demo occupancy (HMS supplies real inventory): ~8% of nights sold out, otherwise up to 60% booked.
+    const booked = hash % 100 < 8 ? room.units : Math.floor((hash % (room.units + 1)) * 0.6);
     min = Math.min(min, Math.max(0, room.units - booked));
   }
   return min;

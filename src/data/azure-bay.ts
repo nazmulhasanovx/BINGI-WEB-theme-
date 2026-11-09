@@ -33,6 +33,7 @@ export const azureBay: Hotel = {
     { name: "Meeting room", short: "Up to 30 guests", icon: "presentation" },
     { name: "Airport pickup", short: "On request", icon: "car" },
   ],
+  pagePhotos: { rooms: `${P}/room-premier-ocean.jpg`, dining: `${P}/dining-venue.jpg`, experiences: `${P}/exp-beach.jpg`, offers: `${P}/offer-couple.jpg`, explore: `${P}/gallery-1.jpg`, events: `${P}/events.jpg` },
   gallery: [`${P}/gallery-1.jpg`, `${P}/gallery-2.jpg`, `${P}/gallery-3.jpg`, `${P}/gallery-4.jpg`, `${P}/gallery-5.jpg`],
   rooms: [
     {
@@ -125,7 +126,8 @@ export const azureBay: Hotel = {
   ],
   taxes: { vatPercent: 15, serviceChargePercent: 10, inclusive: false },
   social: { facebook: "#", instagram: "#", youtube: "#" },
-  theme: { id: "coral", heading: "sans" },
+  theme: { master: "grand", id: "coral", heading: "sans" },
+  propertyType: "resort",
   flags: { packages: false, events: true },
   plan: "ultra",
   status: "live",

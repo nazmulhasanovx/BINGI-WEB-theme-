@@ -1,5 +1,8 @@
 import type { ThemeId } from "./theme";
 
+export type MasterTheme = "nest" | "city" | "grand";
+export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "other";
+
 export type Money = number; // in hotel currency units (BDT)
 
 export interface RoomCategory {
@@ -109,7 +112,11 @@ export interface Hotel {
   checkOut: string;
   highlights: string[];
   facilities: { name: string; short: string; icon: string }[];
+  /** Places nearby with travel time (CITY shows these prominently). */
+  nearby?: { name: string; time: string; mode: "walk" | "drive" }[];
   gallery: string[];
+  /** Banner photo per page (from HMS → Website → Pages & Content). */
+  pagePhotos: Partial<Record<"rooms" | "dining" | "experiences" | "offers" | "explore" | "events", string>>;
   rooms: RoomCategory[];
   services: ServiceItem[];
   outlets: Outlet[];
@@ -123,7 +130,10 @@ export interface Hotel {
   payments: PaymentMethod[];
   taxes: { vatPercent: number; serviceChargePercent: number; inclusive: boolean };
   social: { facebook?: string; instagram?: string; youtube?: string };
-  theme: { id: ThemeId; heading: "sans" | "serif" };
+  /** master = layout (from plan) · id = colour theme (hotel's choice) · heading = font */
+  theme: { master: MasterTheme; id: ThemeId; heading: "sans" | "serif" };
+  /** From onboarding step 1 — drives the category preset (labels, sections). */
+  propertyType: PropertyType;
   flags: { packages: boolean; events: boolean };
   plan: "starter" | "business" | "ultra" | "enterprise";
   status: "live" | "paused"; // paused = hotel turned the website off in HMS → Online controls

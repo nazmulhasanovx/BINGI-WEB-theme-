@@ -1,8 +1,9 @@
+import { presetFor } from "@/lib/presets";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BedDouble, Clock, MapPin, MessageCircle, Navigation, Phone, Quote, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Wallet } from "lucide-react";
 import type { Hotel } from "@/lib/types";
-import { formatMoney, showRating, visibleOffers } from "@/lib/data";
+import { availablePages, formatMoney, showRating, visibleOffers } from "@/lib/data";
 import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { ButtonLink } from "@/components/ui/Button";
@@ -13,10 +14,11 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 export function FactsStrip({ hotel }: { hotel: Hotel }) {
   const payAtHotel = hotel.payments.some((p) => p.kind === "pay-at-property");
   const freeCancel = /free cancellation/i.test(hotel.policies.cancellation);
+  const cancelHours = hotel.policies.cancellation.match(/(\d+)\s*hours/)?.[1];
   const facts = [
     showRating(hotel) && { icon: Star, title: `${hotel.reviewScore} / 5 guest rating`, sub: `${hotel.reviewCount} verified reviews` },
     { icon: Clock, title: `Check-in ${hotel.checkIn}`, sub: `Check-out ${hotel.checkOut}` },
-    freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: "Up to 48 hours before arrival" },
+    freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: cancelHours ? `Up to ${cancelHours} hours before arrival` : "See policy" },
     payAtHotel && { icon: Wallet, title: "Pay at the hotel", sub: "No prepayment needed" },
   ].filter(Boolean) as { icon: typeof Star; title: string; sub: string }[];
 
@@ -45,7 +47,7 @@ export function QuickLinks({ hotel }: { hotel: Hotel }) {
   const base = `/hotel/${hotel.slug}`;
   const items = [
     { href: `${base}/rooms`, label: "Rooms", icon: BedDouble },
-    hotel.outlets.length > 0 && { href: `${base}/dining`, label: "Dining", icon: UtensilsCrossed },
+    availablePages(hotel).dining && { href: `${base}/dining`, label: "Dining", icon: UtensilsCrossed },
     { href: `${base}/experiences`, label: "Experiences", icon: Sparkles },
     visibleOffers(hotel).length > 0 && { href: `${base}/offers`, label: "Offers", icon: Tag },
   ].filter(Boolean) as { href: string; label: string; icon: typeof Star }[];
@@ -70,7 +72,7 @@ export function FeaturedStays({ hotel }: { hotel: Hotel }) {
     <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
-          <SectionHead title="Rooms, suites & villas" link={{ href: `${base}/rooms`, label: "All rooms" }} />
+          <SectionHead title={presetFor(hotel.propertyType).unitsLabel} link={{ href: `${base}/rooms`, label: "All rooms" }} />
         </Reveal>
       </Container>
       {/* phone: swipe row; tablet: 2-up; desktop: 3-up */}
@@ -91,7 +93,7 @@ export function FeaturedStays({ hotel }: { hotel: Hotel }) {
 /* ---------- 3. Dining + experiences teaser ---------- */
 export function DineAndDo({ hotel }: { hotel: Hotel }) {
   const base = `/hotel/${hotel.slug}`;
-  const outlet = hotel.outlets.find((o) => o.photo);
+  const outlet = availablePages(hotel).dining ? hotel.outlets.find((o) => o.photo) : undefined;
   const exps = hotel.services.filter((s) => s.photo).slice(0, 3);
   if (!outlet && !exps.length) return null;
   return (

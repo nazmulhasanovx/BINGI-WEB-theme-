@@ -5,8 +5,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { SearchBar } from "@/components/booking/SearchBar";
 import { OpenSearchButton } from "@/components/booking/OpenSearchButton";
 import { HeroIn, PhotoIn } from "@/components/motion/Reveal";
-import { T } from "@/lib/i18n";
 import { showRating } from "@/lib/data";
+import { presetFor } from "@/lib/presets";
 
 /** Phone: app-style photo card + title + search pill. Tablet/desktop: full-bleed hero with floating search bar. */
 export function Hero({ hotel }: { hotel: Hotel }) {
@@ -38,7 +38,7 @@ export function Hero({ hotel }: { hotel: Hotel }) {
               <div className="mt-7 flex gap-3">
                 <OpenSearchButton />
                 <ButtonLink href={`${base}/explore`} variant="white" size="lg">
-                  <T>Explore the resort</T> <ArrowRight className="size-4" />
+                  {`Explore the ${presetFor(hotel.propertyType).place}`} <ArrowRight className="size-4" />
                 </ButtonLink>
               </div>
             </HeroIn>
