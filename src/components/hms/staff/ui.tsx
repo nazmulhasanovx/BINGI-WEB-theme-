@@ -207,7 +207,8 @@ export function Toast({ text, onDone }: { text: string; onDone: () => void }) {
 }
 
 /** Read a URL query value on the client without effects (null during SSR). */
-const noop = () => () => {};
+const subUrl = (f: () => void) => { window.addEventListener("hashchange", f); window.addEventListener("popstate", f); return () => { window.removeEventListener("hashchange", f); window.removeEventListener("popstate", f); }; };
 export function useQuery(name: string): string | null {
-  return useSyncExternalStore(noop, () => new URLSearchParams(window.location.search).get(name), () => null);
+  // works for normal URLs (?s=x) and the single-file preview (#/path?s=x)
+  return useSyncExternalStore(subUrl, () => new URLSearchParams(window.location.search).get(name) ?? new URLSearchParams(window.location.hash.split("?")[1] ?? "").get(name), () => null);
 }

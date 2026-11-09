@@ -30,6 +30,16 @@ import HmsLayout from "@/app/hms/layout";
 import HmsHome from "@/app/hms/page";
 import HmsModule from "@/app/hms/[module]/page";
 import HmsWebsite from "@/app/hms/website/[page]/page";
+import { OverviewPage as StaffOverview } from "@/components/hms/staff/overview";
+import { PeoplePage, EmployeePage } from "@/components/hms/staff/people";
+import { AttendancePage } from "@/components/hms/staff/attendance";
+import { SchedulePage } from "@/components/hms/staff/schedule";
+import { LeavePage } from "@/components/hms/staff/leave";
+import { PayrollPage, PayrollRunPage } from "@/components/hms/staff/payroll";
+import { HiringPage, CandidatePage } from "@/components/hms/staff/hiring";
+import { OperationsPage } from "@/components/hms/staff/operations";
+import { SettingsPage as StaffSettings } from "@/components/hms/staff/settings";
+const STAFF: Record<string, () => ReactNode> = { "": () => <StaffOverview />, people: () => <PeoplePage />, attendance: () => <AttendancePage />, schedule: () => <SchedulePage />, leave: () => <LeavePage />, payroll: () => <PayrollPage />, hiring: () => <HiringPage />, operations: () => <OperationsPage />, settings: () => <StaffSettings /> };
 
 (window as unknown as { __BINGI_SPA__: boolean }).__BINGI_SPA__ = true;
 
@@ -51,6 +61,13 @@ async function resolve(route: string): Promise<ReactNode> {
       if (seg[1] === "website") {
         if (!seg[2]) { location.replace("#/hms/website/overview"); return null; }
         page = await (HmsWebsite as Comp)({ params: Promise.resolve({ page: seg[2] }) });
+      } else if (seg[1] === "staff") {
+        const [sec = "", id] = seg.slice(2);
+        if (id && sec === "people") page = <EmployeePage key={id} id={id} />;
+        else if (id && sec === "payroll") page = <PayrollRunPage key={id} id={id} />;
+        else if (id && sec === "hiring") page = <CandidatePage key={id} id={id} />;
+        else if (STAFF[sec] && !id) page = STAFF[sec]();
+        else throw new NotFoundError("not found");
       } else if (seg[1]) page = await (HmsModule as Comp)({ params: Promise.resolve({ module: seg[1] }) });
       else page = await (HmsHome as Comp)({});
     } catch (e) {
