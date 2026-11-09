@@ -9,7 +9,7 @@ Every hotel on BinGi gets a public website + direct booking engine, fed by the s
 
 | Branch | Theme | Plan | Status |
 |---|---|---|---|
-| `theme/grand` | **GRAND** — luxury hotel & resort | Ultra (Enterprise base) | In build (B0–B1) |
+| `theme/grand` | **GRAND** — luxury hotel & resort | Ultra (Enterprise base) | Front-end complete (B0–B7), demo data — API wiring next |
 | `theme/city` | CITY — premium city/business hotel | Business | Planned |
 | `theme/nest` | NEST — small hotel, guest house, home | Starter | Planned |
 
