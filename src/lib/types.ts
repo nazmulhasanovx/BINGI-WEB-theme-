@@ -117,4 +117,5 @@ export interface Hotel {
   theme: { id: ThemeId; heading: "sans" | "serif" };
   flags: { packages: boolean; events: boolean };
   plan: "starter" | "business" | "ultra" | "enterprise";
+  status: "live" | "paused"; // paused = hotel turned the website off in HMS → Online controls
 }

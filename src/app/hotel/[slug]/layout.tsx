@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { MobileBookBar } from "@/components/site/MobileBookBar";
 import { buildNav } from "@/components/site/nav";
+import { SitePaused } from "@/components/site/SitePaused";
 
 export function generateStaticParams() {
   return listHotelSlugs().map((slug) => ({ slug }));
@@ -30,6 +31,13 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
   const { slug } = await props.params;
   const hotel = await getHotel(slug);
   if (!hotel) notFound();
+
+  if (hotel.status === "paused")
+    return (
+      <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
+        <SitePaused hotel={hotel} />
+      </ThemeScope>
+    );
 
   const nav = buildNav(hotel);
   const base = `/hotel/${hotel.slug}`;

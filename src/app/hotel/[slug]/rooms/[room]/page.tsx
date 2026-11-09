@@ -19,6 +19,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(props: PageProps<"/hotel/[slug]/rooms/[room]">): Promise<Metadata> {
+  "use cache";
   const { slug, room } = await props.params;
   const r = (await getHotel(slug))?.rooms.find((x) => x.slug === room);
   return r ? { title: r.name, description: r.short } : {};

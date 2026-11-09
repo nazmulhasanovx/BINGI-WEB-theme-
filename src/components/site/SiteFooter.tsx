@@ -18,7 +18,11 @@ const icons = {
 
 export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
   const base = `/hotel/${hotel.slug}`;
-  const links = [...nav.filter((n) => n.href !== base), { href: `${base}/policies`, label: "Policies" }];
+  const links = [
+    ...nav.filter((n) => n.href !== base),
+    ...(hotel.flags.events ? [{ href: `${base}/events`, label: "Events" }] : []),
+    { href: `${base}/policies`, label: "Policies" },
+  ];
   return (
     <footer className="border-t border-line bg-surface pb-24 md:pb-0">
       <div className="mx-auto grid max-w-[1240px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1.2fr] md:py-14">

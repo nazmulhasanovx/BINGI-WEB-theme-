@@ -124,4 +124,8 @@ export const azureBay: Hotel = {
   theme: { id: "coral", heading: "sans" },
   flags: { packages: false, events: true },
   plan: "ultra",
+  status: "live",
 };
+
+/** Same demo hotel with the website paused — to preview the paused state. */
+export const azureBayPaused: Hotel = { ...azureBay, slug: "paused-demo", status: "paused" };
