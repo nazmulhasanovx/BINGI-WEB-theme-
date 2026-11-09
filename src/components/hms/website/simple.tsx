@@ -1,0 +1,235 @@
+"use client";
+// The 6 pages of Website Management. Simple first: one job per page, tabs instead of more pages.
+import Image from "next/image";
+import Link from "next/link";
+import clsx from "clsx";
+import { useState, type ReactNode } from "react";
+import { ArrowRight, Check, CircleAlert, ExternalLink, Eye, MessageSquare } from "lucide-react";
+import { THEMES, themeById } from "@/lib/theme";
+import { hrefFor } from "@/lib/href";
+import { slotText } from "@/lib/site";
+import { MASTER_LIST, PLAN_LABEL, planAllows } from "@/themes/manifest";
+import { useWM, PreviewFrame } from "./WebsiteModule";
+import { Badge, Btn, Card, Embedded, PlanLock } from "./ui";
+import { PagesPage, SectionsPage } from "./design";
+import { MediaPage, OffersPage, ReviewsPage, RoomsPage, ServicesPage } from "./content";
+import { BookingPage, DomainPage, LanguagesPage, OnlinePage, PublishPage, SeoPage } from "./settings";
+import { InfoPage } from "./content";
+
+function Title({ children, right }: { children: ReactNode; right?: ReactNode }) {
+  return (
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h1 className="text-[24px] font-semibold">{children}</h1>
+      {right}
+    </div>
+  );
+}
+
+function Tabs({ tabs }: { tabs: { id: string; label: string; el: ReactNode }[] }) {
+  const [t, setT] = useState(tabs[0].id);
+  return (
+    <>
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-hms-line" role="tablist">
+        {tabs.map((x) => (
+          <button key={x.id} role="tab" aria-selected={t === x.id} onClick={() => setT(x.id)} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", t === x.id ? "border-hms-coral text-hms-coral" : "border-transparent text-hms-muted hover:text-hms-ink")}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+      <Embedded.Provider value={true}>{tabs.find((x) => x.id === t)?.el}</Embedded.Provider>
+    </>
+  );
+}
+
+/* ---------- Overview ---------- */
+export function OverviewSimple() {
+  const { hotel, site, manifest, openPreview, siteUrl } = useWM();
+  const d = site.draft;
+  const todo = [
+    { label: "Add a search description", ok: d.seo.description.length >= 50, href: "settings" },
+    { label: "Show at least one room with a photo", ok: hotel.rooms.some((r) => d.rooms[r.id]?.visible !== false && r.photos.length > 0), href: "content" },
+    { label: "Add phone and address", ok: !!d.info.phone && !!d.info.address, href: "settings" },
+    { label: "Write the headline in বাংলা", ok: !d.languages.bn || !!d.text["bn:hero.title"], href: "settings" },
+  ].filter((x) => !x.ok);
+  const newMsgs = site.rec.inquiries.filter((q) => q.status === "new").length;
+  return (
+    <>
+      <Title>Website</Title>
+      <Card pad={false} className="overflow-hidden">
+        <div className="grid md:grid-cols-[320px_1fr]">
+          <div className="relative aspect-[16/10] md:aspect-auto"><Image src={`/themes/${manifest.id}.jpg`} alt={`${manifest.name} theme`} fill sizes="320px" className="object-cover object-top" /></div>
+          <div className="flex flex-col justify-center gap-3 p-6">
+            <div className="flex items-center gap-2">
+              <Badge tone="green">● Live</Badge>
+              {site.changes.length > 0 && <Badge tone="amber">{site.changes.length} not published</Badge>}
+            </div>
+            <div>
+              <h2 className="text-[22px] font-semibold">{hotel.name}</h2>
+              <a href={hrefFor(siteUrl)} target="_blank" rel="noopener" className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-hms-blue hover:underline">bingi.app{siteUrl} <ExternalLink className="size-3.5" /></a>
+            </div>
+            <p className="text-[14px] text-hms-muted">{manifest.name} theme · {themeById(d.palette).name}</p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link href="/hms/website/homepage" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-hms-coral px-4 text-[14px] font-medium text-white">Edit homepage <ArrowRight className="size-4" /></Link>
+              <Btn variant="outline" onClick={() => openPreview()}><Eye className="size-4" /> Preview</Btn>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <Card title={todo.length ? `${todo.length} thing${todo.length > 1 ? "s" : ""} to finish` : "Everything is ready"}>
+          {todo.length ? (
+            <ul className="-my-1">
+              {todo.map((x) => (
+                <li key={x.label}><Link href={`/hms/website/${x.href}`} className="flex items-center gap-2.5 rounded-lg py-2 text-[14px] hover:text-hms-coral"><CircleAlert className="size-[18px] text-hms-amber" /> <span className="flex-1">{x.label}</span><ArrowRight className="size-4 text-hms-muted" /></Link></li>
+              ))}
+            </ul>
+          ) : (
+            <p className="flex items-center gap-2 text-[14px] text-hms-green"><Check className="size-4" /> Your website has everything it needs.</p>
+          )}
+        </Card>
+        <Card title="Messages from the website">
+          <Link href="/hms/chat" className="flex items-center gap-3 text-[14px] hover:text-hms-coral">
+            <span className="grid size-10 place-items-center rounded-xl bg-hms-coral-soft text-hms-coral"><MessageSquare className="size-5" /></span>
+            <span className="flex-1">{newMsgs ? <><b>{newMsgs} new</b> — reply in Chat</> : "No new messages"}</span>
+            <ArrowRight className="size-4 text-hms-muted" />
+          </Link>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+/* ---------- Design: theme, colour, font ---------- */
+export function DesignSimple() {
+  const { hotel, site } = useWM();
+  const d = site.draft;
+  const live = site.rec.published?.master;
+  return (
+    <>
+      <Title>Design</Title>
+      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="space-y-6">
+          <section>
+            <h2 className="mb-3 text-[15px] font-semibold">Theme</h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {MASTER_LIST.map((m) => {
+                const allowed = planAllows(hotel.plan, m.minPlan);
+                const on = d.master === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    disabled={!allowed}
+                    onClick={() => site.edit((x) => { x.master = m.id; })}
+                    className={clsx("group overflow-hidden rounded-2xl border bg-white text-left transition-shadow", on ? "border-hms-coral ring-4 ring-hms-coral/10" : "border-hms-line enabled:hover:shadow-[0_8px_24px_-14px_rgb(0_0_0/0.25)]", !allowed && "cursor-not-allowed")}
+                  >
+                    <span className="relative block aspect-[16/10] bg-hms-hover">
+                      <Image src={`/themes/${m.id}.jpg`} alt="" fill sizes="300px" className={clsx("object-cover object-top", !allowed && "opacity-50 grayscale")} />
+                      {on && <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-hms-coral text-white"><Check className="size-4" strokeWidth={3} /></span>}
+                      {live === m.id && <span className="absolute left-2.5 top-2.5"><Badge tone="green">Live</Badge></span>}
+                    </span>
+                    <span className="flex items-center justify-between gap-2 px-4 py-3">
+                      <span className="min-w-0">
+                        <span className="block text-[15px] font-semibold">{m.name}</span>
+                        <span className="block truncate text-[13px] text-hms-muted">{m.tagline}</span>
+                      </span>
+                      {!allowed && <PlanLock plan={PLAN_LABEL[m.minPlan]} />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+          <section>
+            <h2 className="mb-3 text-[15px] font-semibold">Colour</h2>
+            <div className="flex flex-wrap gap-3">
+              {THEMES.map((t) => (
+                <button key={t.id} title={t.name} aria-label={t.name} aria-pressed={d.palette === t.id} onClick={() => site.edit((x) => { x.palette = t.id; })} className={clsx("grid size-10 place-items-center rounded-full transition-transform hover:scale-105", d.palette === t.id && "ring-2 ring-hms-ink ring-offset-2")} style={{ background: t.brand }}>
+                  {d.palette === t.id && <Check className="size-4 text-white" strokeWidth={3} />}
+                </button>
+              ))}
+            </div>
+          </section>
+          <section>
+            <h2 className="mb-3 text-[15px] font-semibold">Heading font</h2>
+            <div className="grid max-w-[420px] grid-cols-2 gap-3">
+              {(["sans", "serif"] as const).map((h) => (
+                <button key={h} onClick={() => site.edit((x) => { x.heading = h; })} className={clsx("rounded-xl border px-4 py-3 text-left", d.heading === h ? "border-hms-coral bg-white ring-4 ring-hms-coral/10" : "border-hms-line bg-white hover:bg-hms-hover")}>
+                  <span className={clsx("block text-[22px] leading-tight", h === "serif" ? "font-[Fraunces_Variable,serif]" : "font-[Plus_Jakarta_Sans_Variable,sans-serif] font-bold")}>Aa</span>
+                  <span className="text-[13px] text-hms-muted">{h === "sans" ? "Modern" : "Classic"}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+        <Phone />
+      </div>
+    </>
+  );
+}
+
+function Phone() {
+  const { hotel } = useWM();
+  return (
+    <div className="xl:sticky xl:top-0 xl:self-start">
+      <div className="mx-auto h-[620px] w-[320px] overflow-hidden rounded-[34px] border-[8px] border-[#1d1f24] bg-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.4)]">
+        <div className="h-[756px] w-[390px] origin-top-left" style={{ transform: "scale(0.7795)" }}>
+          <PreviewFrame slug={hotel.slug} title="Phone preview" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Homepage: sections + menu ---------- */
+export function HomepageSimple() {
+  return (
+    <>
+      <Title>Homepage</Title>
+      <Tabs tabs={[{ id: "sections", label: "Sections", el: <SectionsPage /> }, { id: "menu", label: "Menu", el: <PagesPage /> }]} />
+    </>
+  );
+}
+
+/* ---------- Content: what the site shows from HMS ---------- */
+export function ContentSimple() {
+  return (
+    <>
+      <Title>Content</Title>
+      <Tabs
+        tabs={[
+          { id: "rooms", label: "Rooms", el: <RoomsPage /> },
+          { id: "services", label: "Services", el: <ServicesPage /> },
+          { id: "offers", label: "Offers", el: <OffersPage /> },
+          { id: "reviews", label: "Reviews & gallery", el: <ReviewsPage /> },
+          { id: "photos", label: "Photos", el: <MediaPage /> },
+        ]}
+      />
+    </>
+  );
+}
+
+/* ---------- Settings ---------- */
+export function SettingsSimple() {
+  return (
+    <>
+      <Title>Settings</Title>
+      <Tabs
+        tabs={[
+          { id: "booking", label: "Booking", el: <BookingPage /> },
+          { id: "contact", label: "Contact", el: <InfoPage /> },
+          { id: "seo", label: "Google & sharing", el: <SeoPage /> },
+          { id: "domain", label: "Domain", el: <DomainPage /> },
+          { id: "language", label: "Language", el: <LanguagesPage /> },
+          { id: "channels", label: "Online on/off", el: <OnlinePage /> },
+        ]}
+      />
+    </>
+  );
+}
+
+export function PublishSimple() {
+  return <PublishPage />;
+}
+
+export { slotText };

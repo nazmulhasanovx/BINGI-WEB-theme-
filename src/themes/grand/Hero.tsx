@@ -1,3 +1,4 @@
+import { DraftText } from "@/components/site-draft/Draft";
 import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
 import type { Hotel } from "@/lib/types";
@@ -34,7 +35,7 @@ export function Hero({ hotel }: { hotel: Hotel }) {
               <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-action">
                 {hotel.name} · {hotel.type}
               </p>
-              <h2 className="mt-3 text-5xl font-bold leading-[1.06] lg:text-[56px]">{hotel.tagline}</h2>
+              <h2 className="mt-3 text-5xl font-bold leading-[1.06] lg:text-[56px]"><DraftText slug={hotel.slug} k="hero.title" fallback={hotel.tagline} /></h2>
               <div className="mt-7 flex gap-3">
                 <OpenSearchButton />
                 <ButtonLink href={`${base}/explore`} variant="white" size="lg">
@@ -49,7 +50,7 @@ export function Hero({ hotel }: { hotel: Hotel }) {
       {/* phone title (the page's h1; desktop shows the same line inside the photo) */}
       <HeroIn className="px-4 pt-4 md:sr-only" delay={0.1}>
         <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-action">{hotel.name}</p>
-        <h1 className="mt-1 text-[26px] font-bold leading-[1.12]">{hotel.tagline}</h1>
+        <h1 className="mt-1 text-[26px] font-bold leading-[1.12]"><DraftText slug={hotel.slug} k="hero.title" fallback={hotel.tagline} /></h1>
       </HeroIn>
 
       <div className="relative z-10 mx-auto mt-4 max-w-[1040px] px-4 sm:px-6 md:-mt-[52px] lg:-mt-11">

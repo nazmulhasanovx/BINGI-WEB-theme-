@@ -18,6 +18,9 @@ How a hotel's site is chosen: **plan → master theme**, **property type → cat
 New master theme → `src/themes/<name>/Home.tsx`, register in `src/themes/registry.ts`, add a demo hotel in `src/data/`.
 The dark bar on top of every demo page switches **Layout (NEST · CITY · GRAND) — each opens its demo hotel**, colour and heading font — turn it off with `NEXT_PUBLIC_THEME_SWITCHER=off`.
 
+## HMS · Website Management
+Open `/hms/website/overview` — one simple module that manages any property and any theme (6 pages). How themes plug in: [`technology/website-management.md`](technology/website-management.md).
+
 ## Shared rules (all themes)
 
 - One theme engine, many skins: data, booking flow and routes are the same; look changes.

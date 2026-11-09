@@ -10,6 +10,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { useBooking } from "@/components/booking/BookingProvider";
 import type { NavItem } from "./nav";
 import { LangToggle, useT } from "@/lib/i18n";
+import { useSiteView } from "@/lib/site";
 
 export function SiteHeader({
   nav,
@@ -24,6 +25,9 @@ export function SiteHeader({
   whatsapp?: string;
   base: string;
 }) {
+  // Menu items the hotel turned off in Website Management › Pages & Navigation.
+  const doc = useSiteView(base.split("/").pop() ?? "");
+  nav = doc ? nav.filter((n) => doc.pages[n.href === base ? "home" : (n.href.split("/").pop() ?? "")]?.menu !== false) : nav;
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);

@@ -1,0 +1,33 @@
+"use client";
+// Which property the HMS is showing. Prototype: the demo hotels; production: the logged-in user's properties.
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
+import type { Hotel } from "@/lib/types";
+import { azureBay } from "@/data/azure-bay";
+import { seaPearl } from "@/data/sea-pearl";
+import { teaValley } from "@/data/tea-valley";
+
+export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley];
+const KEY = "hms-property";
+const listeners = new Set<() => void>();
+const sub = (l: () => void) => (listeners.add(l), () => void listeners.delete(l));
+const read = () => {
+  try {
+    return localStorage.getItem(KEY) ?? "";
+  } catch {
+    return "";
+  }
+};
+export function setProperty(slug: string) {
+  try {
+    localStorage.setItem(KEY, slug);
+  } catch {}
+  listeners.forEach((l) => l());
+}
+
+const Ctx = createContext<Hotel>(PROPERTIES[0]);
+export function PropertyProvider({ children }: { children: ReactNode }) {
+  const slug = useSyncExternalStore(sub, read, () => "");
+  const hotel = PROPERTIES.find((p) => p.slug === slug) ?? PROPERTIES[0];
+  return <Ctx.Provider value={hotel}>{children}</Ctx.Provider>;
+}
+export const useProperty = () => useContext(Ctx);

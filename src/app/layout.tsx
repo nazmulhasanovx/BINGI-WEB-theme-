@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/fraunces";
+import "@fontsource-variable/inter";
 import "@fontsource/hind-siliguri/400.css";
 import "@fontsource/hind-siliguri/600.css";
 import "./globals.css";

@@ -8,7 +8,10 @@ import { SearchBar } from "@/components/booking/SearchBar";
 import { HeroIn, PhotoIn, Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { Container } from "@/components/ui/Section";
 import { Reviews } from "@/components/sections/HomeSections";
+import { SiteVisible } from "@/components/site-draft/Draft";
 import { T } from "@/lib/i18n";
+import { DraftSections, DraftText } from "@/components/site-draft/Draft";
+import type { ReactNode } from "react";
 
 const ICONS: Record<string, typeof Leaf> = { leaf: Leaf, utensils: UtensilsCrossed, flower: Flower2, wifi: Wifi, car: Car, flame: Flame, waves: Waves };
 
@@ -20,23 +23,29 @@ export function NestHome({ hotel }: { hotel: Hotel }) {
   const preset = presetFor(hotel.propertyType);
   return (
     <>
-      <NestHero hotel={hotel} />
-      <NestRooms hotel={hotel} />
-      {preset.sections.host && hotel.host && <Host hotel={hotel} />}
-      <LifeHere hotel={hotel} />
-      <Extras hotel={hotel} />
-      <GettingHere hotel={hotel} />
-      <Reviews hotel={hotel} />
-      <BookBand hotel={hotel} />
+      <DraftSections
+        slug={hotel.slug}
+        master="nest"
+        items={[
+          { id: "hero", node: <NestHero hotel={hotel} /> },
+          { id: "rooms", node: <NestRooms hotel={hotel} /> },
+          { id: "host", node: preset.sections.host && hotel.host ? <Host hotel={hotel} /> : null },
+          { id: "life", node: <LifeHere hotel={hotel} /> },
+          { id: "extras", node: <Extras hotel={hotel} /> },
+          { id: "getting-here", node: <GettingHere hotel={hotel} /> },
+          { id: "reviews", node: <Reviews hotel={hotel} /> },
+          { id: "book-band", node: <BookBand hotel={hotel} /> },
+        ]}
+      />
     </>
   );
 }
 
-function Title({ label, title, center }: { label: string; title: string; center?: boolean }) {
+function Title({ label, title, center }: { label: string; title: ReactNode; center?: boolean }) {
   return (
     <div className={center ? "mb-6 text-center md:mb-12" : "mb-5 md:mb-10"}>
       <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-action md:text-[13px]"><T>{label}</T></p>
-      <h2 className="mt-1.5 font-heading text-[26px] leading-tight md:mt-2 md:text-[42px]"><T>{title}</T></h2>
+      <h2 className="mt-1.5 font-heading text-[26px] leading-tight md:mt-2 md:text-[42px]">{typeof title === "string" ? <T>{title}</T> : title}</h2>
     </div>
   );
 }
@@ -62,9 +71,9 @@ function NestHero({ hotel }: { hotel: Hotel }) {
             {presetFor(hotel.propertyType).placeTitle} · {hotel.city}
           </p>
           <h1 className="mt-2 font-heading text-[32px] leading-[1.1] md:mx-auto md:mt-4 md:max-w-[820px] md:text-[56px] md:leading-[1.05] lg:text-[64px]">
-            {hotel.tagline}
+            <DraftText slug={hotel.slug} k="hero.title" fallback={hotel.tagline} />
           </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-muted md:mx-auto md:mt-5 md:max-w-[560px] md:text-[18px]">{hotel.intro}</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted md:mx-auto md:mt-5 md:max-w-[560px] md:text-[18px]"><DraftText slug={hotel.slug} k="hero.intro" fallback={hotel.intro} /></p>
           {showRating(hotel) && (
             <p className="mt-3 flex items-center gap-1.5 text-[14px] md:mt-4 md:justify-center md:text-[15px]">
               <Star className="size-4 fill-brand text-brand" /> <b>{hotel.reviewScore}</b> <span className="text-muted">· {hotel.reviewCount} reviews</span>
@@ -105,11 +114,11 @@ function NestRooms({ hotel }: { hotel: Hotel }) {
     <section className="mt-12 md:mt-28">
       <Container>
         <Reveal>
-          <Title label={presetFor(hotel.propertyType).unitsLabel} title={hotel.rooms.length > 1 ? `${hotel.rooms.length} rooms, each a little different` : "Your room"} />
+          <Title label={presetFor(hotel.propertyType).unitsLabel} title={<DraftText slug={hotel.slug} k="rooms.title" fallback={hotel.rooms.length > 1 ? `${hotel.rooms.length} rooms, each a little different` : "Your room"} />} />
         </Reveal>
         <RevealGroup className="grid gap-5 sm:grid-cols-2 md:gap-6">
           {hotel.rooms.map((r) => (
-            <RevealItem key={r.id}>
+            <SiteVisible key={r.id} slug={hotel.slug} kind="rooms" id={r.id}><RevealItem>
               <article className="group overflow-hidden rounded-[24px] border border-line bg-surface">
                 <Link href={`${base}/rooms/${r.slug}`} className="relative block aspect-[3/2] overflow-hidden">
                   <Image src={r.photos[0]} alt={r.name} fill sizes="(max-width: 640px) 100vw, 600px" className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
@@ -129,7 +138,7 @@ function NestRooms({ hotel }: { hotel: Hotel }) {
                   </Link>
                 </div>
               </article>
-            </RevealItem>
+            </RevealItem></SiteVisible>
           ))}
         </RevealGroup>
       </Container>
@@ -207,7 +216,7 @@ function Extras({ hotel }: { hotel: Hotel }) {
         </Reveal>
         <RevealGroup className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {items.map((s) => (
-            <RevealItem key={s.id} className="w-[70%] shrink-0 snap-start sm:w-auto">
+            <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><RevealItem className="w-[70%] shrink-0 snap-start sm:w-auto">
               <div className="h-full overflow-hidden rounded-[24px] border border-line bg-surface">
                 {s.photo ? (
                   <div className="relative aspect-[4/3]">
@@ -224,7 +233,7 @@ function Extras({ hotel }: { hotel: Hotel }) {
                   <p className="mt-2 text-[15px]"><b className="tabular-nums">{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span></p>
                 </div>
               </div>
-            </RevealItem>
+            </RevealItem></SiteVisible>
           ))}
         </RevealGroup>
         <p className="mt-4 text-[14px] text-muted"><T>Add these when you book, or ask the host.</T></p>
