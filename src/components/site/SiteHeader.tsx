@@ -73,14 +73,11 @@ export function SiteHeader({
           <div className="ml-auto flex items-center gap-2 lg:ml-0">
             <Link
               href={`${base}/my-trip`}
-              className="hidden h-11 items-center gap-2 rounded-full border border-brand-ring px-4 text-[15px] font-semibold text-action hover:bg-brand-soft sm:flex"
+              className="hidden h-11 items-center gap-2 rounded-full border border-brand-ring px-4 text-[15px] font-semibold text-action hover:bg-brand-soft md:flex"
             >
               <User className="size-[18px]" /> {t("My Trip")}
             </Link>
-            <Link href={`${base}/my-trip`} aria-label="My Trip" className="grid size-11 place-items-center rounded-full border border-line sm:hidden">
-              <User className="size-5" />
-            </Link>
-            <button onClick={() => setMenu(true)} aria-label="Open menu" className="grid size-11 place-items-center rounded-full border border-line lg:hidden">
+            <button onClick={() => setMenu(true)} aria-label="Open menu" className="grid size-10 place-items-center rounded-full bg-canvas sm:size-11 sm:border sm:border-line sm:bg-transparent lg:hidden">
               <Menu className="size-5" />
             </button>
           </div>

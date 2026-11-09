@@ -23,6 +23,10 @@
   --header-h: 72px;
 }
 
+@media (max-width: 767px) {
+  :root { --header-h: 58px; }
+}
+
 [data-heading="serif"] {
   --font-heading: var(--font-serif-stack);
 }
@@ -59,6 +63,8 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth iframe { pointer-events: none; }
 
 body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-sans-stack);

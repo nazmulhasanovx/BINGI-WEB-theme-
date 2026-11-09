@@ -4,7 +4,9 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import Link from "next/link";
+import { useState } from "react";
 import { Check, Palette } from "lucide-react";
+import { Sheet } from "@/components/ui/Sheet";
 import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/theme";
 
 /**
@@ -58,7 +60,9 @@ export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: T
 
   const t = themeById(active);
   return (
-    <div className="border-b border-ink/10 bg-ink text-white">
+    <>
+    <PhoneThemeButton active={active} heading={heading} />
+    <div className="hidden border-b border-ink/10 bg-ink text-white md:block">
       <div className="no-scrollbar mx-auto flex h-12 max-w-[1240px] items-center gap-3 overflow-x-auto px-4 sm:px-6">
         <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold">
           <Palette className="size-4 opacity-80" /> <span className="hidden sm:inline">Theme</span>
@@ -93,6 +97,44 @@ export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: T
           Theme Lab
         </Link>
       </div>
+    </div>
+    </>
+  );
+}
+
+/** Phone: small dark palette button in the header (left of the menu) that opens the switcher as a sheet. */
+function PhoneThemeButton({ active, heading }: { active: ThemeId; heading: "sans" | "serif" }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="md:hidden">
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Theme switcher"
+        className="fixed right-[64px] top-[9px] z-50 grid size-10 place-items-center rounded-full bg-ink text-white active:scale-95"
+      >
+        <Palette className="size-[18px]" />
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Theme (preview)">
+        <div className="grid grid-cols-5 gap-3 pb-2">
+          {THEMES.map((th) => (
+            <button key={th.id} onClick={() => write(KEY, th.id)} className="flex flex-col items-center gap-1.5" aria-pressed={active === th.id}>
+              <span className={clsx("grid size-12 place-items-center rounded-full", active === th.id && "ring-2 ring-ink ring-offset-2")} style={{ background: th.brand }}>
+                {active === th.id && <Check className="size-5 text-white" strokeWidth={3} />}
+              </span>
+              <span className="text-[11px] font-semibold text-muted">{th.name}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between rounded-2xl bg-canvas p-3">
+          <span className="text-sm font-semibold">Heading font</span>
+          <div className="flex gap-1 rounded-full bg-surface p-1 text-[13px] font-semibold">
+            {(["sans", "serif"] as const).map((h) => (
+              <button key={h} onClick={() => write(HKEY, h)} className={clsx("h-8 rounded-full px-4", heading === h ? "bg-ink text-white" : "text-muted")}>{h === "sans" ? "Sans" : "Serif"}</button>
+            ))}
+          </div>
+        </div>
+        <Link href="/theme-lab" className="mt-3 flex h-11 items-center justify-center rounded-full border border-line text-sm font-semibold">Open Theme Lab</Link>
+      </Sheet>
     </div>
   );
 }

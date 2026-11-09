@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Clock, MapPin, MessageCircle, Navigation, Phone, Quote, ShieldCheck, Star, Wallet } from "lucide-react";
+import { ArrowRight, BedDouble, Clock, MapPin, MessageCircle, Navigation, Phone, Quote, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Wallet } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { formatMoney, showRating, visibleOffers } from "@/lib/data";
 import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
@@ -21,7 +21,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
   ].filter(Boolean) as { icon: typeof Star; title: string; sub: string }[];
 
   return (
-    <Reveal delay={0.45} className="mx-auto mt-6 max-w-[1240px] md:mt-12 md:px-6">
+    <Reveal delay={0.45} className="mx-auto mt-5 max-w-[1240px] md:mt-12 md:px-6">
       {/* phone: one swipe row of compact chips · tablet: 2×2 · desktop: 4 in a row */}
       <ul className="no-scrollbar flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 md:grid md:grid-cols-2 md:gap-3 md:overflow-visible md:px-0 lg:grid-cols-4">
         {facts.map((f) => (
@@ -40,13 +40,34 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
   );
 }
 
+/* ---------- 1b. Phone quick links (app-style tiles) ---------- */
+export function QuickLinks({ hotel }: { hotel: Hotel }) {
+  const base = `/hotel/${hotel.slug}`;
+  const items = [
+    { href: `${base}/rooms`, label: "Rooms", icon: BedDouble },
+    hotel.outlets.length > 0 && { href: `${base}/dining`, label: "Dining", icon: UtensilsCrossed },
+    { href: `${base}/experiences`, label: "Experiences", icon: Sparkles },
+    visibleOffers(hotel).length > 0 && { href: `${base}/offers`, label: "Offers", icon: Tag },
+  ].filter(Boolean) as { href: string; label: string; icon: typeof Star }[];
+  return (
+    <nav aria-label="Quick links" className="mt-5 grid grid-cols-4 gap-2 px-4 md:hidden">
+      {items.map((i) => (
+        <Link key={i.href} href={i.href} className="flex flex-col items-center gap-1.5 rounded-2xl py-2 active:scale-95 active:bg-canvas">
+          <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-action"><i.icon className="size-[22px]" /></span>
+          <span className="text-[12px] font-semibold"><T>{i.label}</T></span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 /* ---------- 2. Featured stays ---------- */
 export function FeaturedStays({ hotel }: { hotel: Hotel }) {
   const base = `/hotel/${hotel.slug}`;
   const rooms = hotel.rooms.filter((r) => r.featured).slice(0, 3);
   const list = rooms.length ? rooms : hotel.rooms.slice(0, 3);
   return (
-    <section className="mt-16 md:mt-24">
+    <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
           <SectionHead title="Rooms, suites & villas" link={{ href: `${base}/rooms`, label: "All rooms" }} />
@@ -74,7 +95,7 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
   const exps = hotel.services.filter((s) => s.photo).slice(0, 3);
   if (!outlet && !exps.length) return null;
   return (
-    <section className="mt-16 md:mt-24">
+    <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
           <SectionHead title="Eat well, slow down" />
@@ -138,7 +159,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
   const offers = visibleOffers(hotel).slice(0, 2);
   if (!offers.length) return null;
   return (
-    <section className="mt-16 md:mt-24">
+    <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
           <SectionHead title="Book direct, pay less" link={{ href: `${base}/offers`, label: "All offers" }} />
@@ -170,7 +191,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
 export function Reviews({ hotel }: { hotel: Hotel }) {
   if (!showRating(hotel) || !hotel.reviews.length) return null;
   return (
-    <section className="mt-16 md:mt-24">
+    <section className="mt-9 md:mt-24">
       <Container>
         <Reveal className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-10">
           <div>
@@ -207,7 +228,7 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name}, ${hotel.address}`)}`;
   const tel = `tel:${hotel.phone.replace(/[^+\d]/g, "")}`;
   return (
-    <section className="mb-16 mt-16 md:mb-24 md:mt-24">
+    <section className="mb-10 mt-9 md:mb-24 md:mt-24">
       <Container>
         <Reveal className="overflow-hidden rounded-[32px] border border-line bg-surface shadow-card lg:grid lg:grid-cols-[1fr_1.1fr]">
           <div className="p-6 md:p-10">

@@ -37,7 +37,7 @@ export function MyTrip({ hotel }: { hotel: Hotel }) {
 
   if (!session)
     return (
-      <div className="mx-auto max-w-md px-4 py-12 md:py-20">
+      <div className="mx-auto max-w-md px-4 py-6 md:py-20">
         <span className="grid size-14 place-items-center rounded-2xl bg-brand-soft text-action"><User className="size-7" /></span>
         <h1 className="mt-5 text-[28px] font-bold">Sign in to My Trip</h1>
         <p className="mt-2 text-muted">Use the mobile number you booked with. Your BinGi account works here and on bingi.app.</p>

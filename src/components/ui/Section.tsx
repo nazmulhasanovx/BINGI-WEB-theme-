@@ -20,10 +20,10 @@ export function SectionHead({
   link?: { href: string; label: string };
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4 md:mb-8">
+    <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
       <div className="min-w-0">
         {eyebrow && <p className="mb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-action">{eyebrow}</p>}
-        <h2 className="text-2xl font-bold md:text-[32px] md:leading-tight"><T>{title}</T></h2>
+        <h2 className="text-[20px] font-bold md:text-[32px] md:leading-tight"><T>{title}</T></h2>
         {sub && <p className="mt-2 max-w-xl text-[15px] text-muted md:text-base">{sub}</p>}
       </div>
       {link && (
@@ -37,7 +37,7 @@ export function SectionHead({
 
 export function MobileMore({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="mt-5 flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-surface text-[15px] font-semibold text-action sm:hidden">
+    <Link href={href} className="mt-4 flex h-11 items-center justify-center gap-2 rounded-2xl border border-line bg-surface text-[14px] font-semibold text-action active:scale-[0.98] sm:hidden">
       {label} <ArrowRight className="size-4" />
     </Link>
   );

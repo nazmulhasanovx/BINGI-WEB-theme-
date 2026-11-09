@@ -53,13 +53,13 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
   const tel = `tel:${hotel.phone.replace(/[^+\d]/g, "")}`;
 
   return (
-    <footer className="mt-auto border-t border-line bg-surface pb-24 md:pb-0">
-      <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6 md:py-14">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.3fr] lg:gap-10">
+    <footer className="mt-auto border-t border-line bg-surface pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
+      <div className="mx-auto max-w-[1240px] px-4 py-7 sm:px-6 md:py-14">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-7 md:gap-y-10 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.3fr] lg:gap-10">
           {/* brand */}
           <div className="col-span-2 lg:col-span-1">
             <Logo text={hotel.logoText} href={base} />
-            <p className="mt-3 max-w-xs text-[15px] text-muted">{hotel.tagline}</p>
+            <p className="mt-2 max-w-xs text-[14px] text-muted md:mt-3 md:text-[15px]">{hotel.tagline}</p>
             <div className="mt-5 flex gap-2">
               {(Object.keys(icons) as (keyof typeof icons)[]).map((k) =>
                 hotel.social[k] ? (
@@ -71,8 +71,8 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
             </div>
           </div>
 
-          <Col title="Stay" links={stay} />
-          <Col title="Hotel" links={hotelLinks} />
+          <div className="hidden md:block"><Col title="Stay" links={stay} /></div>
+          <div className="hidden md:block"><Col title="Hotel" links={hotelLinks} /></div>
 
           {/* contact */}
           <div className="col-span-2 lg:col-span-1">

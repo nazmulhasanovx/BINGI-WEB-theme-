@@ -1,14 +1,14 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getHotel, formatMoney, listHotelSlugs } from "@/lib/data";
+import { getHotel, listHotelSlugs } from "@/lib/data";
 import { ThemeScope } from "@/components/theme/ThemeScope";
 import { ThemePreview } from "@/components/theme/ThemePreview";
 import { BookingProvider } from "@/components/booking/BookingProvider";
 import { TopBar } from "@/components/site/TopBar";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { MobileBookBar } from "@/components/site/MobileBookBar";
+import { MobileTabBar } from "@/components/site/MobileTabBar";
 import { buildNav } from "@/components/site/nav";
 import { SitePaused } from "@/components/site/SitePaused";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
@@ -43,7 +43,6 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
 
   const nav = buildNav(hotel);
   const base = `/hotel/${hotel.slug}`;
-  const minPrice = Math.min(...hotel.rooms.map((r) => r.fromPrice));
 
   return (
     <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
@@ -60,7 +59,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />
         <main id="main">{props.children}</main>
         <SiteFooter hotel={hotel} nav={nav} />
-        <MobileBookBar fromLabel={formatMoney(minPrice)} />
+        <MobileTabBar base={base} />
       </BookingProvider>
       </SmoothScroll>
     </ThemeScope>

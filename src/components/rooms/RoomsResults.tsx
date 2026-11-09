@@ -58,11 +58,11 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
   const q = new URLSearchParams(params.toString()).toString();
 
   return (
-    <div className="mx-auto max-w-[1240px] px-4 pb-20 pt-6 sm:px-6 md:pt-10">
+    <div className="mx-auto max-w-[1240px] px-4 pb-10 pt-1 sm:px-6 md:pb-20 md:pt-10">
       {/* stay summary */}
       <button
         onClick={openSearch}
-        className="flex w-full items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left shadow-card md:hidden"
+        className="sticky top-[calc(var(--header-h)+8px)] z-20 flex w-full items-center gap-3 rounded-2xl border border-line bg-surface/95 p-3 text-left shadow-card backdrop-blur active:scale-[0.99] md:hidden"
       >
         <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-action"><CalendarDays className="size-5" /></span>
         <span className="min-w-0 flex-1">
@@ -73,7 +73,7 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
       </button>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 md:mt-0">
-        <h2 className="text-xl font-bold md:text-2xl">
+        <h2 className="text-[17px] font-bold md:text-2xl">
           {hasDates ? `${availableCount} of ${hotel.rooms.length} available` : `${hotel.rooms.length} ways to stay`}
           {hasDates && <span className="ml-2 text-base font-medium text-muted">· {dates.length} night{dates.length > 1 ? "s" : ""}</span>}
         </h2>
@@ -119,39 +119,39 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
               <Link
                 href={href}
                 className={clsx(
-                  "group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card transition-[box-shadow,border-color] hover:border-brand-ring hover:shadow-float sm:flex-row",
+                  "group flex h-full flex-row overflow-hidden rounded-3xl border border-line bg-surface shadow-card transition-[box-shadow,border-color,transform] hover:border-brand-ring hover:shadow-float active:scale-[0.99]",
                   unavailable && "opacity-70",
                 )}
               >
-                <div className="relative aspect-[16/10] sm:aspect-auto sm:w-[44%] sm:shrink-0">
+                <div className="relative w-[36%] shrink-0 sm:w-[44%]">
                   <Image src={r.photos[0]} alt={r.name} fill sizes="(max-width: 640px) 100vw, 300px" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
                   {hasDates && left > 0 && left <= 2 && fit && (
                     <span className="absolute left-3 top-3 rounded-full bg-surface/95 px-2.5 py-1 text-xs font-semibold text-action">Only {left} left</span>
                   )}
                 </div>
-                <div className="flex flex-1 flex-col p-4 md:p-5">
-                  <h3 className="text-lg font-bold">{r.name}</h3>
-                  <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
-                    <li className="flex items-center gap-1.5"><Users className="size-4" /> Up to {r.maxAdults} adults{r.maxChildren ? ` + ${r.maxChildren} child` : ""}</li>
+                <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4 md:p-5">
+                  <h3 className="text-[16px] font-bold leading-snug sm:text-lg">{r.name}</h3>
+                  <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted sm:mt-3 sm:gap-x-4 sm:text-[13px]">
+                    <li className="flex items-center gap-1.5"><Users className="size-4" /> {r.maxAdults}{r.maxChildren ? `+${r.maxChildren}` : ""}</li>
                     <li className="flex items-center gap-1.5"><BedDouble className="size-4" /> {r.bed}</li>
                     {r.sizeSqft && <li className="flex items-center gap-1.5"><Ruler className="size-4" /> {r.sizeSqft} sq ft</li>}
                   </ul>
-                  <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                  <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-3">
                     {unavailable ? (
                       <p className="text-sm font-semibold text-muted">{!fit ? `Fits up to ${r.maxAdults} adults` : "Not available for these dates"}</p>
                     ) : hasDates ? (
                       <p>
                         <span className="block text-xs text-muted">{dates.length} night{dates.length > 1 ? "s" : ""}, before tax</span>
-                        <span className="text-xl font-bold tabular-nums">{formatMoney(total)}</span>
+                        <span className="text-[17px] font-bold tabular-nums sm:text-xl">{formatMoney(total)}</span>
                       </p>
                     ) : (
                       <p>
                         <span className="block text-xs text-muted">from</span>
-                        <span className="text-xl font-bold tabular-nums">{formatMoney(r.fromPrice)}</span>
+                        <span className="text-[17px] font-bold tabular-nums sm:text-xl">{formatMoney(r.fromPrice)}</span>
                         <span className="text-sm text-muted"> / night</span>
                       </p>
                     )}
-                    <span className="inline-flex h-10 shrink-0 items-center rounded-full bg-brand-soft px-4 text-sm font-semibold text-action transition-colors group-hover:bg-action group-hover:text-on-action">
+                    <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-brand-soft px-3.5 text-[13px] font-semibold text-action sm:h-10 sm:px-4 sm:text-sm transition-colors group-hover:bg-action group-hover:text-on-action">
                       {unavailable ? "View" : "Select"}
                     </span>
                   </div>
