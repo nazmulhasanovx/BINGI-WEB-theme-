@@ -6,6 +6,7 @@ import type { NavItem } from "./nav";
 import { Logo } from "./Logo";
 import { availablePages } from "@/lib/data";
 import { T } from "@/lib/i18n";
+import { DraftInfo } from "@/components/site-draft/Draft";
 
 const icons = {
   facebook: <path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7H17l.5-4h-4V8.8c0-.5.3-.8.5-.8Z" />,
@@ -79,9 +80,9 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
           <div className="col-span-2 lg:col-span-1">
             <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted"><T>Contact</T></p>
             <ul className="mt-3 space-y-1 text-[15px] text-ink/80">
-              <li className="flex min-h-9 items-start gap-3 py-1.5"><MapPin className="mt-0.5 size-[18px] shrink-0 text-muted" /> {hotel.address}</li>
-              <li><a href={tel} className="flex min-h-9 items-center gap-3 hover:text-action"><Phone className="size-[18px] shrink-0 text-muted" /> {hotel.phone}</a></li>
-              <li><a href={`mailto:${hotel.email}`} className="flex min-h-9 items-center gap-3 break-all hover:text-action"><Mail className="size-[18px] shrink-0 text-muted" /> {hotel.email}</a></li>
+              <li className="flex min-h-9 items-start gap-3 py-1.5"><MapPin className="mt-0.5 size-[18px] shrink-0 text-muted" /> <DraftInfo slug={hotel.slug} field="address" fallback={hotel.address} /></li>
+              <li><a href={tel} className="flex min-h-9 items-center gap-3 hover:text-action"><Phone className="size-[18px] shrink-0 text-muted" /> <DraftInfo slug={hotel.slug} field="phone" fallback={hotel.phone} /></a></li>
+              <li><a href={`mailto:${hotel.email}`} className="flex min-h-9 items-center gap-3 break-all hover:text-action"><Mail className="size-[18px] shrink-0 text-muted" /> <DraftInfo slug={hotel.slug} field="email" fallback={hotel.email} /></a></li>
             </ul>
             <p className="mt-3 text-[13px] text-muted">Check-in {hotel.checkIn} · Check-out {hotel.checkOut}</p>
           </div>

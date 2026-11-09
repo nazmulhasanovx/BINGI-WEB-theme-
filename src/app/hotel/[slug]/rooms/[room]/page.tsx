@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DraftText } from "@/components/site-draft/Draft";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -74,8 +75,8 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
           <h2 className="mt-10 text-xl font-bold">Good to know</h2>
           <dl className="mt-4 divide-y divide-line rounded-3xl border border-line bg-surface">
             <div className="flex gap-4 p-4"><dt className="flex w-32 shrink-0 items-center gap-2 font-semibold"><Clock className="size-4 text-muted" /> Check-in</dt><dd className="text-muted">From {hotel.checkIn} · check-out by {hotel.checkOut}</dd></div>
-            <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Cancellation</dt><dd className="text-muted">{hotel.policies.cancellation}</dd></div>
-            <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Children</dt><dd className="text-muted">{hotel.policies.children}</dd></div>
+            <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Cancellation</dt><dd className="text-muted"><DraftText slug={hotel.slug} k="policy.cancellation" fallback={hotel.policies.cancellation} /></dd></div>
+            <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Children</dt><dd className="text-muted"><DraftText slug={hotel.slug} k="policy.children" fallback={hotel.policies.children} /></dd></div>
             <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Tax</dt><dd className="text-muted">{hotel.policies.tax}</dd></div>
           </dl>
         </Reveal>

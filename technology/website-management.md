@@ -2,8 +2,13 @@
 
 Open `/hms/website/overview`. The HMS shell (sidebar + header) matches the live HMS, so other modules can be designed here too (`/hms/<module>` placeholders exist).
 
-## 6 pages
-Overview · Design (theme, colour, font) · Homepage (sections, menu) · Content (rooms, services, offers, reviews & gallery, photos) · Settings (booking, contact, Google & sharing, domain, language, online on/off) · Publish (preview, publish, history).
+## Pages (17, grouped like iOS Settings)
+Overview
+Design — Theme & Style · Homepage · Pages & Menu · Photos
+Content — Rooms · Services & Dining · Offers · Reviews · Contact & Policies
+Bookings — Booking Engine · Inquiries
+Settings — Google & Sharing · Domain · Languages · Online On/Off
+Publish
 
 ## Add a new theme — no admin work
 1. Build `src/themes/<name>/Home.tsx`; wrap each homepage block in `DraftSections` with an `id`.
@@ -17,5 +22,5 @@ Website Management reads the manifest and shows the theme, its sections, fields 
 Prototype: stored in the browser (localStorage). Production: HMS backend (`site_draft`, `site_published`, `site_versions`).
 
 ## Applies on the site now
-Theme, colour, font, section order/visibility, headline/intro/section titles (EN + বাংলা), menu items, room/offer/review/service visibility.
-Saved but not yet read by themes (needs HMS API): booking engine, contact info, SEO, gallery order, domain, online on/off, footer.
+Theme, colour, font, section order/visibility, headline/intro/section titles (EN + বাংলা), menu items, each page's banner + title + intro, policies (cancellation, children, pets), phone/WhatsApp/email/address, room/offer/review/service visibility.
+Saved but not yet read by themes (needs HMS API): booking engine, SEO, gallery order, domain, online on/off.

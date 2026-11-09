@@ -30,7 +30,7 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
 
   return (
     <>
-      <PageHero title={hotel.name} photo={hotel.pagePhotos.explore} />
+      <PageHero slug={hotel.slug} pageId="explore" title={hotel.name} photo={hotel.pagePhotos.explore} />
       <SectionTabs
         items={[
           { id: "about", label: "About" },

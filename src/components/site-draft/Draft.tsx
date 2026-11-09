@@ -61,3 +61,9 @@ export function SiteVisible({ slug, kind, id, children }: { slug: string; kind: 
   const hidden = kind === "reviews" ? doc.hiddenReviews.includes(id) : doc[kind][id]?.visible === false;
   return hidden ? null : <>{children}</>;
 }
+
+/** Contact details from Website Management › Property Info. */
+export function DraftInfo({ slug, field, fallback }: { slug: string; field: "phone" | "email" | "address" | "whatsapp"; fallback: string }) {
+  const doc = useSiteView(slug);
+  return <>{doc?.info[field] || fallback}</>;
+}
