@@ -11,15 +11,16 @@ import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useGuestState } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { EmptyStay, PriceLines, StayHeader } from "./StaySummary";
+import { PromoField } from "./PromoField";
 
 export function StayCart({ hotel }: { hotel: Hotel }) {
   const router = useRouter();
   const base = `/hotel/${hotel.slug}`;
-  const { cart, setExtra, clearCart, ready } = useGuestState(hotel.slug);
+  const { cart, setExtra, clearCart, setPromo, ready } = useGuestState(hotel.slug);
   const stay = cart.stay;
   if (!ready) return <ListSkeleton rows={2} />;
   if (!stay) return <EmptyStay base={base} />;
-  const q = quote(hotel, stay, cart.extras);
+  const q = quote(hotel, stay, cart.extras, cart.promo);
   if (!q) return <EmptyStay base={base} />;
 
   const extras = hotel.services.filter((s) => s.addToStay && !(stay.plan === "breakfast" && s.category === "stay"));
@@ -46,8 +47,7 @@ export function StayCart({ hotel }: { hotel: Hotel }) {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold">Add to your stay</h2>
-            <p className="mt-1 text-[15px] text-muted">Optional. The hotel arranges these for your dates — pay with your booking.</p>
+            <h2 className="text-xl font-bold">Add to your stay <span className="text-base font-medium text-muted">(optional)</span></h2>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {extras.map((s) => {
                 const n = qty(s.id);
@@ -84,7 +84,7 @@ export function StayCart({ hotel }: { hotel: Hotel }) {
           <div className="rounded-3xl border border-line bg-surface p-5 shadow-card">
             <h2 className="mb-3 font-bold">Price details</h2>
             <PriceLines q={q} />
-            {q.discountLabel && <p className="mt-3 text-[13px] text-emerald-700">Offer applied automatically: {q.discountLabel}.</p>}
+            <PromoField hotel={hotel} nights={q.nights} applied={q.promoCode} entered={cart.promo} onApply={setPromo} />
             <Button size="lg" className="mt-5 hidden w-full md:flex" onClick={go}>Continue</Button>
           </div>
         </aside>

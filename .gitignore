@@ -41,3 +41,4 @@ yarn-error.log*
 next-env.d.ts
 /preview/node_modules
 /preview/dist
+/preview/.images

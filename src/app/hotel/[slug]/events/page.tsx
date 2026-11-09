@@ -18,7 +18,7 @@ export default async function EventsPage(props: PageProps<"/hotel/[slug]/events"
   ];
   return (
     <>
-      <PageHero eyebrow="Events" title="Celebrate and meet by the sea" sub="Tell us what you have in mind — we’ll come back with options and a quote." photo="/demo/azure-bay/exp-celebration.jpg" />
+      <PageHero title="Events & celebrations" photo="/demo/azure-bay/events.jpg" />
       <div className="mx-auto grid max-w-[1240px] gap-8 px-4 py-10 sm:px-6 md:py-14 lg:grid-cols-[1fr_1.4fr] lg:gap-12">
         <ul className="space-y-3">
           {points.map((p) => (

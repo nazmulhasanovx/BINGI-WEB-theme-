@@ -12,7 +12,7 @@ export default async function ExperiencesPage(props: PageProps<"/hotel/[slug]/ex
   if (!hotel || !availablePages(hotel).experiences) notFound();
   return (
     <>
-      <PageHero eyebrow="Experiences" title="Make the most of your stay" sub="Spa, transfers, beach dinners and more — add them to your booking." photo="/demo/azure-bay/exp-island.jpg" />
+      <PageHero title="Experiences" photo="/demo/azure-bay/exp-beach.jpg" />
       <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 md:py-12">
         <ExperienceList hotel={hotel} />
       </div>

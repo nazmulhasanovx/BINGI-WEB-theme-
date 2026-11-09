@@ -82,7 +82,7 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
                     {p.name}
                     <span className="shrink-0 tabular-nums">{p.perAdultPerNight ? `+${formatMoney(p.perAdultPerNight)}` : "Included"}</span>
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-muted">{p.short}{p.perAdultPerNight ? " · per adult / night" : ""}</span>
+                  {p.perAdultPerNight > 0 && <span className="mt-0.5 block text-[13px] text-muted">per adult / night</span>}
                 </span>
               </label>
             ))}
@@ -110,7 +110,7 @@ export function RatePicker({ hotel, room }: { hotel: Hotel; room: RoomCategory }
           Reserve
         </Button>
         <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[13px] text-muted">
-          <ShieldCheck className="size-4" /> You won’t pay yet. Next: add extras and confirm.
+          <ShieldCheck className="size-4" /> No payment yet
         </p>
       </div>
 

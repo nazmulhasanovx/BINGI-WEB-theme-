@@ -64,6 +64,14 @@ export interface Offer {
   validUntil?: string;
 }
 
+/** Coupon codes from HMS → Discounts & Rates → Discounts (coupons). */
+export interface PromoCode {
+  code: string;
+  percent: number;
+  minNights?: number;
+  label: string;
+}
+
 export interface Review {
   id: string;
   name: string;
@@ -107,6 +115,7 @@ export interface Hotel {
   outlets: Outlet[];
   menu: MenuItem[];
   offers: Offer[];
+  promoCodes: PromoCode[];
   reviews: Review[];
   reviewScore?: number;
   reviewCount: number;

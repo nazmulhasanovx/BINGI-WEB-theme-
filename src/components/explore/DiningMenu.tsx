@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/data";
 import { Chips } from "./Chips";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
+import { Reveal } from "@/components/motion/Reveal";
 
 export function DiningMenu({ hotel }: { hotel: Hotel }) {
   const tags = Array.from(new Set(hotel.menu.flatMap((m) => m.tags)));
@@ -18,13 +19,13 @@ export function DiningMenu({ hotel }: { hotel: Hotel }) {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold md:text-[28px]">From the menu</h2>
-          <p className="mt-1 text-[15px] text-muted">A few favourites. Prices before service charge and VAT.</p>
         </div>
       </div>
       <Chips label="Menu category" items={[{ id: "all", label: "All" }, ...tags.map((t) => ({ id: t, label: t }))]} value={tag} onChange={setTag} />
       <ul className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
-        {items.map((m) => (
-          <li key={m.id} className="overflow-hidden rounded-3xl border border-line bg-surface">
+        {items.map((m, i) => (
+          <li key={m.id}>
+          <Reveal delay={Math.min(i, 5) * 0.05} className="h-full overflow-hidden rounded-3xl border border-line bg-surface">
             {m.photo && (
               <div className="relative aspect-[4/3]">
                 <Image src={m.photo} alt={m.name} fill sizes="(max-width: 768px) 50vw, 240px" className="object-cover" />
@@ -33,15 +34,15 @@ export function DiningMenu({ hotel }: { hotel: Hotel }) {
             <div className="p-3 md:p-4">
               <p className="text-[12px] font-semibold text-action">{m.tags.join(" · ")}</p>
               <p className="mt-0.5 font-semibold leading-snug">{m.name}</p>
-              <p className="mt-1 line-clamp-2 text-[13px] text-muted">{m.short}</p>
               <p className="mt-2 font-bold tabular-nums">{formatMoney(m.price)}</p>
             </div>
+          </Reveal>
           </li>
         ))}
       </ul>
       <p className="mt-5 flex items-start gap-3 rounded-2xl bg-brand-soft p-4 text-[14px]">
         <QrCode className="mt-0.5 size-5 shrink-0 text-action" />
-        <span>Staying with us? Order to your room or table from the QR menu during your stay — it goes straight to the kitchen and onto your bill.</span>
+        <span>Staying with us? Order from the QR menu in your room.</span>
       </p>
     </section>
   );

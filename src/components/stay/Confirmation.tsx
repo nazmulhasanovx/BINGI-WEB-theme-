@@ -7,7 +7,7 @@ import type { Hotel } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
 import { ListSkeleton } from "@/components/ui/Skeleton";
 import { useGuestState, type GuestBooking } from "@/lib/store";
-import { PriceLines, StayHeader } from "./StaySummary";
+import { PriceLines, StayHeader, paidLabelFor } from "./StaySummary";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const BOOKING_STATUS: Record<GuestBooking["bookingStatus"], { label: string; cls: string }> = {
@@ -76,7 +76,7 @@ export function Confirmation({ hotel }: { hotel: Hotel }) {
           <Clock className="size-4 text-muted" /> Check-in from {hotel.checkIn} · check-out by {hotel.checkOut}
         </p>
         <div className="mt-4 border-t border-line pt-4">
-          <PriceLines q={b.quote} dueNow={b.payment.dueNow || undefined} />
+          <PriceLines q={b.quote} dueNow={b.payment.dueNow} paidLabel={paidLabelFor(b.payment.method, b.payment.provider)} />
         </div>
         {b.payment.reference && <p className="mt-3 text-[13px] text-muted">Transaction ID: <b className="text-ink">{b.payment.reference}</b></p>}
       </section>

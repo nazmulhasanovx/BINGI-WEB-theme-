@@ -8,6 +8,7 @@ import { Gallery } from "@/components/ui/Gallery";
 import { RatePicker } from "@/components/rooms/RatePicker";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { Skel } from "@/components/ui/Skeleton";
+import { Reveal } from "@/components/motion/Reveal";
 
 export async function generateStaticParams() {
   const out: { slug: string; room: string }[] = [];
@@ -48,7 +49,7 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
       </div>
 
       <div className="mx-auto mt-6 grid max-w-[1240px] gap-8 px-4 sm:px-6 md:mt-10 lg:grid-cols-[1fr_400px] lg:gap-12">
-        <div className="min-w-0">
+        <Reveal className="min-w-0">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">{room.kind}</p>
           <h1 className="mt-1 text-[30px] font-bold leading-tight md:text-[40px]">{room.name}</h1>
           <ul className="mt-4 flex flex-wrap gap-2">
@@ -77,7 +78,7 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
             <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Children</dt><dd className="text-muted">{hotel.policies.children}</dd></div>
             <div className="flex gap-4 p-4"><dt className="w-32 shrink-0 font-semibold">Tax</dt><dd className="text-muted">{hotel.policies.tax}</dd></div>
           </dl>
-        </div>
+        </Reveal>
 
         <aside className="lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:self-start">
           <Suspense fallback={<Skel className="h-[520px] w-full rounded-[28px]" />}>

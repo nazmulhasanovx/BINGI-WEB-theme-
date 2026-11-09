@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
+import { lockScroll } from "@/components/motion/SmoothScroll";
 
 /** Photo grid with full-screen viewer (swipe on phones, arrows/keyboard on desktop). */
 export function Gallery({ photos, alt, layout = "hero" }: { photos: string[]; alt: string; layout?: "hero" | "grid" }) {
@@ -19,9 +20,11 @@ export function Gallery({ photos, alt, layout = "hero" }: { photos: string[]; al
       if (e.key === "ArrowLeft") go(-1);
     };
     document.body.style.overflow = "hidden";
+    lockScroll(true);
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      lockScroll(false);
       window.removeEventListener("keydown", onKey);
     };
   }, [open, close, go]);

@@ -29,7 +29,6 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
       <div className="mt-4 rounded-3xl border border-line px-4">
         <GuestSteppers />
       </div>
-      <p className="mt-3 text-sm text-muted">{t("Prices and free rooms update after you pick dates.")}</p>
     </Sheet>
   );
 }

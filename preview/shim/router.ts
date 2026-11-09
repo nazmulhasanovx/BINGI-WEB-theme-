@@ -17,7 +17,9 @@ export function go(path: string, replace = false) {
   if (replace) location.replace(`#${path}`);
   else {
     location.hash = path;
-    window.scrollTo(0, 0);
+    const l = (window as unknown as { __lenis?: { scrollTo: (t: number, o: object) => void } }).__lenis;
+    if (l) l.scrollTo(0, { immediate: true });
+    else window.scrollTo(0, 0);
   }
 }
 export function split(route: string) {

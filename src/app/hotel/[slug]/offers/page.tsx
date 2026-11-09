@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { availablePages, getHotel, visibleOffers } from "@/lib/data";
 import { PageHero } from "@/components/site/PageHero";
 import { OpenSearchButton } from "@/components/booking/OpenSearchButton";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = { title: "Offers" };
 
@@ -15,15 +16,16 @@ export default async function OffersPage(props: PageProps<"/hotel/[slug]/offers"
   const offers = visibleOffers(hotel);
   return (
     <>
-      <PageHero eyebrow="Offers" title="Book direct, pay less" sub="Offers apply automatically when your dates match — no code needed." photo="/demo/azure-bay/offer-couple.jpg" />
+      <PageHero title="Offers" photo="/demo/azure-bay/offer-couple.jpg" />
       <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 md:py-12">
         <p className="mb-6 flex items-start gap-3 rounded-2xl bg-brand-soft p-4 text-[14px]">
           <Sparkles className="mt-0.5 size-5 shrink-0 text-action" />
-          <span>Only one offer applies per booking — we always pick the best one for your dates.</span>
+          <span>Applied automatically — best offer for your dates.</span>
         </p>
         <ul className="grid gap-4 md:grid-cols-2 md:gap-5">
-          {offers.map((o) => (
-            <li key={o.id} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
+          {offers.map((o, i) => (
+            <li key={o.id}>
+            <Reveal delay={i * 0.08} className="flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
               {o.photo && (
                 <div className="relative aspect-[16/8]">
                   <Image src={o.photo} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
@@ -38,6 +40,7 @@ export default async function OffersPage(props: PageProps<"/hotel/[slug]/offers"
                   <OpenSearchButton label="Check dates" />
                 </div>
               </div>
+            </Reveal>
             </li>
           ))}
         </ul>

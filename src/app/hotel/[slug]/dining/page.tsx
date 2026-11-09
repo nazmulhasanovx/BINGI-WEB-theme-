@@ -6,6 +6,7 @@ import { availablePages, getHotel } from "@/lib/data";
 import { PageHero } from "@/components/site/PageHero";
 import { DiningMenu, TableRequest } from "@/components/explore/DiningMenu";
 import { ButtonLink } from "@/components/ui/Button";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = { title: "Dining" };
 
@@ -15,11 +16,12 @@ export default async function DiningPage(props: PageProps<"/hotel/[slug]/dining"
   if (!hotel || !availablePages(hotel).dining) notFound();
   return (
     <>
-      <PageHero eyebrow="Dining" title="Eat by the sea" sub="Local seafood, Bangladeshi favourites and an all-day menu." photo="/demo/azure-bay/dining-hero.jpg" />
+      <PageHero title="Dining" photo="/demo/azure-bay/dining-venue.jpg" />
       <div className="mx-auto max-w-[1240px] space-y-14 px-4 py-10 sm:px-6 md:py-14">
         <section className="grid gap-4 md:gap-5 lg:grid-cols-2">
-          {hotel.outlets.map((o) => (
-            <article key={o.id} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card sm:flex-row lg:flex-col xl:flex-row">
+          {hotel.outlets.map((o, i) => (
+            <Reveal key={o.id} delay={i * 0.08}>
+            <article className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card sm:flex-row lg:flex-col xl:flex-row">
               {o.photo ? (
                 <div className="relative aspect-[16/10] sm:aspect-auto sm:w-2/5 lg:aspect-[16/9] lg:w-full xl:aspect-auto xl:w-2/5">
                   <Image src={o.photo} alt={o.name} fill sizes="(max-width: 1024px) 100vw, 500px" className="object-cover" />
@@ -28,9 +30,7 @@ export default async function DiningPage(props: PageProps<"/hotel/[slug]/dining"
                 <div className="hidden w-2/5 bg-brand-soft sm:block lg:hidden xl:block" />
               )}
               <div className="flex flex-1 flex-col p-5 md:p-6">
-                <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">{o.kind.replace("-", " ")}</p>
-                <h2 className="mt-1 text-2xl font-bold">{o.name}</h2>
-                <p className="mt-2 text-[15px] text-muted">{o.short}</p>
+                <h2 className="text-2xl font-bold">{o.name}</h2>
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-muted">
                   <span className="flex items-center gap-1.5"><Clock className="size-4" /> {o.hours}</span>
                   <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {o.location}</span>
@@ -41,6 +41,7 @@ export default async function DiningPage(props: PageProps<"/hotel/[slug]/dining"
                 </div>
               </div>
             </article>
+            </Reveal>
           ))}
         </section>
         {hotel.menu.length > 0 && <DiningMenu hotel={hotel} />}

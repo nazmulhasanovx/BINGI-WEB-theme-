@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import type { NavItem } from "./nav";
@@ -29,7 +30,6 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
       <div className="mx-auto grid max-w-[1240px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1.2fr] md:py-14">
         <div>
           <Logo text={hotel.logoText} href={base} />
-          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-muted">{hotel.intro}</p>
           <div className="mt-5 flex gap-2">
             {(Object.keys(icons) as (keyof typeof icons)[]).map((k) =>
               hotel.social[k] ? (
@@ -54,15 +54,18 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
           <p className="text-sm font-semibold"><T>Contact</T></p>
           <ul className="mt-3 space-y-3 text-[15px] text-muted">
             <li className="flex gap-3"><MapPin className="mt-0.5 size-[18px] shrink-0" /> {hotel.address}</li>
-            <li><a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex gap-3 hover:text-ink"><Phone className="size-[18px] shrink-0" /> {hotel.phone}</a></li>
-            <li><a href={`mailto:${hotel.email}`} className="flex gap-3 hover:text-ink"><Mail className="size-[18px] shrink-0" /> {hotel.email}</a></li>
+            <li><a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex gap-3 py-1.5 hover:text-ink"><Phone className="size-[18px] shrink-0" /> {hotel.phone}</a></li>
+            <li><a href={`mailto:${hotel.email}`} className="flex gap-3 py-1.5 hover:text-ink"><Mail className="size-[18px] shrink-0" /> {hotel.email}</a></li>
           </ul>
         </div>
       </div>
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 px-4 py-5 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {hotel.name}</span>
-          <span><T>Website & booking by</T> <span className="font-semibold text-ink">BinGi</span></span>
+          <a href="https://technology.bingi.com.bd" className="flex min-h-11 items-center gap-2 hover:text-ink">
+            <T>Website & booking by</T>
+            <Image src="/brand/bingi-logo.png" alt="BinGi" width={66} height={22} className="h-[22px] w-auto" />
+          </a>
         </div>
       </div>
     </footer>

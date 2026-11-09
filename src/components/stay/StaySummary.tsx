@@ -29,27 +29,57 @@ export function StayHeader({ hotel, stay, compact }: { hotel: Hotel; stay: StayD
   );
 }
 
-export function PriceLines({ q, dueNow }: { q: Quote; dueNow?: number }) {
+/** Itemised bill: stay → extras → discount → subtotal → service charge → VAT → total → paid / balance. */
+export function PriceLines({ q, dueNow, paidLabel = "Pay now" }: { q: Quote; dueNow?: number; paidLabel?: string }) {
+  const stay = q.lines.filter((l) => l.kind === "room" || l.kind === "plan");
+  const extras = q.lines.filter((l) => l.kind === "extra");
+  const discount = q.lines.filter((l) => l.kind === "discount");
+  const tax = q.lines.filter((l) => l.kind === "tax");
+  const Row = ({ l, cls }: { l: Quote["lines"][number]; cls?: string }) => (
+    <div className={clsx("flex justify-between gap-3", cls)}>
+      <dt className="min-w-0">{l.label}</dt>
+      <dd className="shrink-0 tabular-nums">{l.amount < 0 ? "−" : ""}{formatMoney(Math.abs(l.amount))}</dd>
+    </div>
+  );
+  const balance = dueNow !== undefined ? q.total - dueNow : undefined;
   return (
     <dl className="space-y-1.5 text-[14px]">
-      {q.lines.map((l) => (
-        <div key={l.label} className={clsx("flex justify-between gap-3", l.kind === "discount" && "text-emerald-700", l.kind === "tax" && "text-muted")}>
-          <dt className="min-w-0">{l.label}</dt>
-          <dd className="shrink-0 tabular-nums">{l.amount < 0 ? "−" : ""}{formatMoney(Math.abs(l.amount))}</dd>
+      {stay.map((l) => <Row key={l.label} l={l} />)}
+      {extras.length > 0 && <div className="pt-1 text-[12px] font-semibold uppercase tracking-wide text-muted">Extras</div>}
+      {extras.map((l) => <Row key={l.label} l={l} />)}
+      {discount.map((l) => <Row key={l.label} l={l} cls="text-emerald-700" />)}
+      {tax.length > 0 && (
+        <div className="flex justify-between gap-3 border-t border-dashed border-line pt-2 text-muted">
+          <dt>Subtotal</dt>
+          <dd className="tabular-nums">{formatMoney(q.subtotal ?? q.total - q.serviceCharge - q.vat)}</dd>
         </div>
-      ))}
+      )}
+      {tax.map((l) => <Row key={l.label} l={l} cls="text-muted" />)}
       <div className="flex justify-between border-t border-line pt-2.5 text-[17px] font-bold">
         <dt>Total</dt>
         <dd className="tabular-nums">{formatMoney(q.total)}</dd>
       </div>
       {dueNow !== undefined && (
-        <div className="flex justify-between rounded-xl bg-brand-soft px-3 py-2 font-semibold text-action">
-          <dt>Pay now</dt>
-          <dd className="tabular-nums">{formatMoney(dueNow)}</dd>
+        <div className="space-y-1 rounded-xl bg-brand-soft px-3 py-2.5">
+          <div className="flex justify-between font-semibold text-action">
+            <dt>{paidLabel}</dt>
+            <dd className="tabular-nums">{formatMoney(dueNow)}</dd>
+          </div>
+          <div className="flex justify-between text-[13px] text-ink/80">
+            <dt>Balance at the hotel</dt>
+            <dd className="tabular-nums">{formatMoney(balance ?? 0)}</dd>
+          </div>
         </div>
       )}
     </dl>
   );
+}
+
+/** What the guest has sent / paid so far, by method. */
+export function paidLabelFor(method: string, provider?: string) {
+  if (method === "pay-at-property") return "Paid now";
+  if (method === "card-online") return "Paid online";
+  return `Sent via ${provider ?? "bKash"} · checking`;
 }
 
 export function EmptyStay({ base }: { base: string }) {

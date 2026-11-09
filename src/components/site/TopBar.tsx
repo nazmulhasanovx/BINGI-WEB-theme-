@@ -19,9 +19,6 @@ export function TopBar({ hotel }: { hotel: Hotel }) {
             </span>
           )}
           <span className="text-ink">{hotel.type}</span>
-          {hotel.highlights.map((h) => (
-            <span key={h} className="before:mr-3 before:text-line before:content-['|']">{h}</span>
-          ))}
         </span>
         <span className="flex items-center gap-3">
           <a href={`tel:${hotel.phone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1.5 hover:text-ink">

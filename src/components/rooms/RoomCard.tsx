@@ -30,7 +30,6 @@ export function RoomCard({ room, href, layout = "auto" }: { room: RoomCategory; 
       </div>
       <div className="flex flex-1 flex-col p-4 md:p-5">
         <h3 className="text-lg font-bold leading-snug">{room.name}</h3>
-        <p className="mt-1 line-clamp-2 text-[14px] leading-relaxed text-muted">{room.short}</p>
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
           <li className="flex items-center gap-1.5"><Users className="size-4" /> {room.maxAdults} adults</li>
           <li className="flex items-center gap-1.5"><BedDouble className="size-4" /> {room.bed}</li>

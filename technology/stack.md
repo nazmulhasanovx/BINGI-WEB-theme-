@@ -30,4 +30,5 @@ src/lib/data.ts                data adapter (demo now → HMS API later)
 src/data/azure-bay.ts          DEMO data (fictional)
 ```
 
-Demo photos in `public/demo/azure-bay/` are cropped from the GRAND reference screens — replace with hotel uploads.
+Demo photos in `public/demo/azure-bay/` are 4K (3840px) Unsplash photos (free licence, demo only) — real hotels upload their own in HMS. next/image serves responsive sizes up to 3840w.
+Motion: Lenis smooth scroll (desktop wheel/trackpad; native on touch; off for reduced motion), Framer Motion reveals, CSS page fade.

@@ -9,6 +9,7 @@ import { useGuestState } from "@/lib/store";
 import { useBooking } from "@/components/booking/BookingProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Chips } from "./Chips";
+import { Reveal } from "@/components/motion/Reveal";
 
 const CAT: Record<ServiceItem["category"], string> = {
   spa: "Spa & wellness",
@@ -46,17 +47,17 @@ export function ExperienceList({ hotel }: { hotel: Hotel }) {
       <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
         {list
           .filter((s) => cat === "all" || s.category === cat)
-          .map((s) => {
+          .map((s, i) => {
             const inStay = cart.extras.some((e) => e.serviceId === s.id);
             return (
-              <li key={s.id} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
+              <li key={s.id}>
+              <Reveal delay={Math.min(i, 5) * 0.06} className="flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
                 <div className="relative aspect-[16/10]">
                   <Image src={s.photo!} alt={s.name} fill sizes="(max-width: 640px) 100vw, 400px" className="object-cover" />
                   <span className="absolute left-3 top-3 rounded-full bg-surface/95 px-2.5 py-1 text-xs font-semibold">{CAT[s.category]}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4 md:p-5">
                   <h3 className="text-lg font-bold">{s.name}</h3>
-                  <p className="mt-1 text-[14px] text-muted">{s.short}</p>
                   <div className="mt-auto flex items-end justify-between gap-3 pt-4">
                     <p>
                       <span className="text-xl font-bold tabular-nums">{formatMoney(s.price)}</span>
@@ -70,6 +71,7 @@ export function ExperienceList({ hotel }: { hotel: Hotel }) {
                     </button>
                   </div>
                 </div>
+              </Reveal>
               </li>
             );
           })}

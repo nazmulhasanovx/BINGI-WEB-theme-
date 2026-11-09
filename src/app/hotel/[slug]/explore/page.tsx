@@ -8,6 +8,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { SectionTabs } from "@/components/explore/SectionTabs";
 import { Gallery } from "@/components/ui/Gallery";
 import { LocationBlock } from "@/components/home/Sections";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = { title: "Explore" };
 
@@ -28,7 +29,7 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
 
   return (
     <>
-      <PageHero eyebrow="Explore" title={`About ${hotel.name}`} sub={hotel.tagline} photo="/demo/azure-bay/gallery-1.jpg" />
+      <PageHero title={hotel.name} photo="/demo/azure-bay/gallery-1.jpg" />
       <SectionTabs
         items={[
           { id: "about", label: "About" },
@@ -39,13 +40,13 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
         ]}
       />
       <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
-        <section id="about" className="grid scroll-mt-32 gap-8 py-12 md:py-16 lg:grid-cols-2 lg:items-center lg:gap-12">
+        <section id="about" className="scroll-mt-32 py-12 md:py-16">
+        <Reveal className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
           <div className="relative aspect-[16/10] overflow-hidden rounded-[28px]">
             <Image src="/demo/azure-bay/gallery-1.jpg" alt={hotel.name} fill sizes="(max-width: 1024px) 100vw, 600px" className="object-cover" />
           </div>
           <div>
-            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Our story</p>
-            <h2 className="mt-2 text-2xl font-bold md:text-[32px] md:leading-tight">{hotel.tagline}</h2>
+            <h2 className="text-2xl font-bold md:text-[32px] md:leading-tight">{hotel.tagline}</h2>
             <p className="mt-4 text-[16px] leading-relaxed text-ink/80">{hotel.intro}</p>
             <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {stats.map((s) => (
@@ -56,18 +57,21 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
               ))}
             </dl>
           </div>
+        </Reveal>
         </section>
 
         <section id="facilities" className="scroll-mt-32 border-t border-line py-12 md:py-16">
           <h2 className="text-2xl font-bold md:text-[32px]">Facilities</h2>
           <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-            {hotel.facilities.map((f) => {
+            {hotel.facilities.map((f, i) => {
               const Icon = ICONS[f.icon] ?? Sparkles;
               return (
-                <li key={f.name} className="rounded-3xl border border-line bg-surface p-4 text-center">
+                <li key={f.name}>
+                <Reveal delay={i * 0.05} className="h-full rounded-3xl border border-line bg-surface p-4 text-center">
                   <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-soft text-action"><Icon className="size-6" /></span>
                   <p className="mt-3 font-semibold">{f.name}</p>
                   <p className="mt-1 text-[13px] text-muted">{f.short}</p>
+                </Reveal>
                 </li>
               );
             })}
@@ -76,7 +80,9 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
 
         <section id="gallery" className="scroll-mt-32 border-t border-line py-12 md:py-16">
           <h2 className="mb-6 text-2xl font-bold md:text-[32px]">Gallery</h2>
-          <Gallery photos={[...hotel.gallery, ...hotel.rooms.map((r) => r.photos[0])]} alt={hotel.name} layout="grid" />
+          <Reveal>
+            <Gallery photos={[...hotel.gallery, ...hotel.rooms.map((r) => r.photos[0])]} alt={hotel.name} layout="grid" />
+          </Reveal>
         </section>
       </div>
 
@@ -87,15 +93,14 @@ export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explor
       <section id="contact" className="scroll-mt-32 border-t border-line bg-surface">
         <div className="mx-auto max-w-[1240px] px-4 py-12 sm:px-6 md:py-16">
           <h2 className="text-2xl font-bold md:text-[32px]">Contact</h2>
-          <p className="mt-2 text-muted">The front desk answers 24 hours a day.</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <a href={tel} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><Phone className="size-5 text-action" /><span><span className="block font-semibold">Call</span><span className="text-sm text-muted">{hotel.phone}</span></span></a>
-            {hotel.whatsapp && <a href={`https://wa.me/${hotel.whatsapp.replace(/\D/g, "")}`} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><MessageCircle className="size-5 text-action" /><span><span className="block font-semibold">WhatsApp</span><span className="text-sm text-muted">Usually replies in minutes</span></span></a>}
+            {hotel.whatsapp && <a href={`https://wa.me/${hotel.whatsapp.replace(/\D/g, "")}`} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><MessageCircle className="size-5 text-action" /><span><span className="block font-semibold">WhatsApp</span><span className="text-sm text-muted">Chat with us</span></span></a>}
             <a href={`mailto:${hotel.email}`} className="flex items-center gap-3 rounded-3xl border border-line p-4 hover:border-brand-ring"><Mail className="size-5 text-action" /><span><span className="block font-semibold">Email</span><span className="text-sm text-muted">{hotel.email}</span></span></a>
           </div>
           {hotel.flags.events && (
             <Link href={`/hotel/${slug}/events`} className="group mt-4 flex items-center justify-between rounded-3xl bg-brand-soft p-5">
-              <span><span className="block font-semibold">Planning a wedding, meeting or group stay?</span><span className="text-sm text-muted">Send an enquiry — our events team replies within a day.</span></span>
+              <span className="font-semibold">Weddings, meetings & groups — send an enquiry</span>
               <ArrowRight className="size-5 shrink-0 text-action transition-transform group-hover:translate-x-1" />
             </Link>
           )}

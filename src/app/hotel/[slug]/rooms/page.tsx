@@ -15,7 +15,7 @@ export default async function RoomsPage(props: PageProps<"/hotel/[slug]/rooms">)
   if (!hotel) notFound();
   return (
     <>
-      <PageHero eyebrow="Stay" title="Rooms, suites & villas" sub="Pick your dates to see what is free and the full price." photo={hotel.rooms[1]?.photos[0]} />
+      <PageHero title="Rooms, suites & villas" photo={hotel.rooms[1]?.photos[0]} />
       <div className="relative z-10 mx-auto -mt-8 hidden max-w-[1040px] px-6 md:block">
         <SearchBar />
       </div>

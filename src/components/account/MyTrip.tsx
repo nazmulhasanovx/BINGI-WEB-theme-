@@ -7,10 +7,11 @@ import type { Hotel } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
 import { useGuestState, type GuestBooking } from "@/lib/store";
 import { PhoneOtp } from "./PhoneOtp";
+import { InvoiceDoc } from "./InvoiceDoc";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ListSkeleton } from "@/components/ui/Skeleton";
-import { PriceLines, StayHeader } from "@/components/stay/StaySummary";
+import { PriceLines, StayHeader, paidLabelFor } from "@/components/stay/StaySummary";
 import { BOOKING_STATUS, PAYMENT_STATUS, icsFor } from "@/components/stay/Confirmation";
 import { shortDate } from "@/components/booking/BookingProvider";
 
@@ -30,6 +31,7 @@ export function MyTrip({ hotel }: { hotel: Hotel }) {
   const { ready, session, bookings, signIn, signOut, cancelBooking } = useGuestState(hotel.slug);
   const [tab, setTab] = useState<Tab>("overview");
   const [open, setOpen] = useState<GuestBooking | null>(null);
+  const [bill, setBill] = useState<GuestBooking | null>(null);
 
   if (!ready) return <ListSkeleton rows={2} />;
 
@@ -152,17 +154,17 @@ export function MyTrip({ hotel }: { hotel: Hotel }) {
           {tab === "invoices" && (
             <>
               <h1 className="text-2xl font-bold md:text-3xl">Invoices</h1>
-              <p className="mt-2 text-muted">The hotel issues your final invoice at check-out. Until then you can see the booking summary.</p>
+
               {mine.length ? (
                 <ul className="mt-5 space-y-3">
                   {mine.map((b) => (
                     <li key={b.id} className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4">
                       <FileText className="size-6 shrink-0 text-muted" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold">Booking summary · {b.id}</p>
-                        <p className="text-sm text-muted">Final invoice after check-out</p>
+                        <p className="font-semibold">{b.id.replace("WBK", "BILL")}</p>
+                        <p className="text-sm text-muted">{formatMoney(b.quote.total)} · balance {formatMoney(b.bookingStatus === "cancelled" ? 0 : b.quote.total - b.payment.dueNow)}</p>
                       </div>
-                      <button onClick={() => setOpen(b)} className="text-sm font-semibold text-action">View</button>
+                      <button onClick={() => setBill(b)} className="h-10 rounded-full bg-brand-soft px-4 text-sm font-semibold text-action">View bill</button>
                     </li>
                   ))}
                 </ul>
@@ -185,6 +187,10 @@ export function MyTrip({ hotel }: { hotel: Hotel }) {
           )}
         </div>
       </div>
+
+      <Sheet open={!!bill} onClose={() => setBill(null)} title="Bill">
+        {bill && <InvoiceDoc hotel={hotel} b={bookings.find((x) => x.id === bill.id) ?? bill} />}
+      </Sheet>
 
       <Sheet open={!!open} onClose={() => setOpen(null)} title={open ? `Booking ${open.id}` : ""}>
         {open && <BookingDetail hotel={hotel} b={bookings.find((x) => x.id === open.id) ?? open} onCancel={cancelBooking} />}
@@ -244,7 +250,7 @@ function BookingDetail({ hotel, b, onCancel }: { hotel: Hotel; b: GuestBooking; 
     <div className="space-y-5 pb-4">
       <div className="flex flex-wrap gap-2"><Status b={b} /></div>
       <StayHeader hotel={hotel} stay={b.stay} />
-      <div className="rounded-2xl border border-line p-4"><PriceLines q={b.quote} dueNow={b.payment.dueNow || undefined} /></div>
+      <div className="rounded-2xl border border-line p-4"><PriceLines q={b.quote} dueNow={b.payment.dueNow} paidLabel={paidLabelFor(b.payment.method, b.payment.provider)} /></div>
       <dl className="space-y-1 text-[14px]">
         <div className="flex justify-between"><dt className="text-muted">Guest</dt><dd>{b.guest.name}</dd></div>
         <div className="flex justify-between"><dt className="text-muted">Mobile</dt><dd>{b.guest.phone}</dd></div>

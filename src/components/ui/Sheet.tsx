@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { lockScroll } from "@/components/motion/SmoothScroll";
 
 /** Bottom sheet on phones, right drawer on tablet/desktop when side="right". */
 export function Sheet({
@@ -26,10 +27,12 @@ export function Sheet({
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    lockScroll(true);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      lockScroll(false);
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
@@ -54,7 +57,7 @@ export function Sheet({
             className={
               isRight
                 ? "absolute inset-y-0 right-0 flex w-[min(400px,88vw)] flex-col bg-surface shadow-float"
-                : "absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-[28px] bg-surface shadow-float"
+                : "absolute inset-x-0 bottom-0 mx-auto flex max-h-[92dvh] w-full flex-col rounded-t-[28px] bg-surface shadow-float md:max-w-[720px]"
             }
             initial={isRight ? { x: "100%" } : { y: "100%" }}
             animate={isRight ? { x: 0 } : { y: 0 }}
@@ -74,7 +77,7 @@ export function Sheet({
                 <X className="size-5" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">{children}</div>
+            <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">{children}</div>
             {footer && <div className="pb-safe shrink-0 border-t border-line px-5 pt-3">{footer}</div>}
           </motion.div>
         </div>

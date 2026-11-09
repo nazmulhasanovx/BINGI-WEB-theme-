@@ -7,6 +7,7 @@ import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { T } from "@/lib/i18n";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 
 /* ---------- 1. Real facts instead of a generic trust strip ---------- */
 export function FactsStrip({ hotel }: { hotel: Hotel }) {
@@ -16,11 +17,11 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
     showRating(hotel) && { icon: Star, title: `${hotel.reviewScore} / 5 guest rating`, sub: `${hotel.reviewCount} verified reviews` },
     { icon: Clock, title: `Check-in ${hotel.checkIn}`, sub: `Check-out ${hotel.checkOut}` },
     freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: "Up to 48 hours before arrival" },
-    payAtHotel && { icon: Wallet, title: "Pay at the hotel", sub: "Or bKash / advance" },
+    payAtHotel && { icon: Wallet, title: "Pay at the hotel", sub: "No prepayment needed" },
   ].filter(Boolean) as { icon: typeof Star; title: string; sub: string }[];
 
   return (
-    <div className="mx-auto mt-6 max-w-[1240px] md:mt-12 md:px-6">
+    <Reveal delay={0.45} className="mx-auto mt-6 max-w-[1240px] md:mt-12 md:px-6">
       {/* phone: one swipe row of compact chips · tablet: 2×2 · desktop: 4 in a row */}
       <ul className="no-scrollbar flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 md:grid md:grid-cols-2 md:gap-3 md:overflow-visible md:px-0 lg:grid-cols-4">
         {facts.map((f) => (
@@ -35,7 +36,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
           </li>
         ))}
       </ul>
-    </div>
+    </Reveal>
   );
 }
 
@@ -47,16 +48,18 @@ export function FeaturedStays({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-24">
       <Container>
-        <SectionHead eyebrow="Stay" title="Rooms, suites & villas" sub={`${hotel.rooms.length} ways to stay, from garden rooms to a private pool villa.`} link={{ href: `${base}/rooms`, label: "All rooms" }} />
+        <Reveal>
+          <SectionHead title="Rooms, suites & villas" link={{ href: `${base}/rooms`, label: "All rooms" }} />
+        </Reveal>
       </Container>
       {/* phone: swipe row; tablet: 2-up; desktop: 3-up */}
-      <div className="no-scrollbar flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:px-6 md:mx-auto md:grid md:max-w-[1240px] md:grid-cols-2 md:gap-5 md:overflow-visible lg:grid-cols-3">
+      <RevealGroup className="no-scrollbar flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:px-6 md:mx-auto md:grid md:max-w-[1240px] md:grid-cols-2 md:gap-5 md:overflow-visible lg:grid-cols-3">
         {list.map((r) => (
-          <div key={r.id} className="w-[82%] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none">
+          <RevealItem key={r.id} className="w-[82%] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none">
             <RoomCard room={r} href={`${base}/rooms/${r.slug}`} layout="vertical" />
-          </div>
+          </RevealItem>
         ))}
-      </div>
+      </RevealGroup>
       <Container>
         <MobileMore href={`${base}/rooms`} label={`See all ${hotel.rooms.length} rooms`} />
       </Container>
@@ -73,17 +76,18 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-24">
       <Container>
-        <SectionHead eyebrow="During your stay" title="Eat well, slow down" />
-        <div className="grid gap-4 md:gap-5 lg:grid-cols-[1.25fr_1fr]">
+        <Reveal>
+          <SectionHead title="Eat well, slow down" />
+        </Reveal>
+        <RevealGroup className="grid gap-4 md:gap-5 lg:grid-cols-[1.25fr_1fr]">
+          <RevealItem>
           {outlet && (
             <article className="overflow-hidden rounded-3xl border border-line bg-surface shadow-card md:flex lg:flex-col">
               <div className="relative aspect-[16/10] md:aspect-auto md:w-1/2 lg:aspect-[16/8] lg:w-full">
                 <Image src={outlet.photo!} alt={outlet.name} fill sizes="(max-width: 1024px) 100vw, 640px" className="object-cover" />
               </div>
               <div className="flex flex-1 flex-col p-5 md:p-6">
-                <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Restaurant</p>
-                <h3 className="mt-1 text-2xl font-bold">{outlet.name}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-muted">{outlet.short}</p>
+                <h3 className="text-2xl font-bold">{outlet.name}</h3>
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-muted">
                   <span className="flex items-center gap-1.5"><Clock className="size-4" /> {outlet.hours}</span>
                   <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {outlet.location}</span>
@@ -95,7 +99,9 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
               </div>
             </article>
           )}
-          <div className="rounded-3xl border border-line bg-surface p-2 shadow-card">
+          </RevealItem>
+          <RevealItem>
+          <div className="h-full rounded-3xl border border-line bg-surface p-2 shadow-card">
             <p className="px-3 pb-1 pt-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Experiences</p>
             <ul>
               {exps.map((s) => (
@@ -106,7 +112,6 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold">{s.name}</span>
-                      <span className="mt-0.5 block truncate text-[14px] text-muted">{s.short}</span>
                       <span className="mt-1 block text-[14px] font-semibold">
                         {formatMoney(s.price)} <span className="font-normal text-muted">{s.unit}</span>
                       </span>
@@ -120,7 +125,8 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
               <T>All experiences</T> <ArrowRight className="size-4" />
             </Link>
           </div>
-        </div>
+          </RevealItem>
+        </RevealGroup>
       </Container>
     </section>
   );
@@ -134,10 +140,13 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-24">
       <Container>
-        <SectionHead eyebrow="Offers" title="Book direct, pay less" link={{ href: `${base}/offers`, label: "All offers" }} />
-        <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+        <Reveal>
+          <SectionHead title="Book direct, pay less" link={{ href: `${base}/offers`, label: "All offers" }} />
+        </Reveal>
+        <RevealGroup className="grid gap-4 md:grid-cols-2 md:gap-5">
           {offers.map((o) => (
-            <Link key={o.id} href={`${base}/offers`} className="group flex overflow-hidden rounded-3xl border border-line bg-surface shadow-card transition-shadow hover:shadow-float">
+            <RevealItem key={o.id}>
+            <Link href={`${base}/offers`} className="group flex overflow-hidden rounded-3xl border border-line bg-surface shadow-card transition-shadow hover:shadow-float">
               {o.photo && (
                 <span className="relative w-[38%] shrink-0 sm:w-[42%]">
                   <Image src={o.photo} alt="" fill sizes="(max-width: 768px) 40vw, 260px" className="object-cover" />
@@ -147,11 +156,11 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
                 <span className="w-fit rounded-full bg-action px-3 py-1 text-[13px] font-bold text-on-action">{o.value}</span>
                 <span className="mt-3 text-lg font-bold leading-snug">{o.title}</span>
                 <span className="mt-1 text-[14px] text-muted">{o.short}</span>
-                <span className="mt-auto pt-3 text-[12px] text-muted">{o.conditions}</span>
               </span>
             </Link>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       </Container>
     </section>
   );
@@ -163,14 +172,14 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-24">
       <Container>
-        <div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-10">
+        <Reveal className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-10">
           <div>
             <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action"><T>Guest reviews</T></p>
             <p className="mt-2 flex items-baseline gap-2">
               <span className="font-heading text-5xl font-bold">{hotel.reviewScore}</span>
               <span className="text-lg text-muted">/ 5</span>
             </p>
-            <p className="mt-1 text-[15px] text-muted">From {hotel.reviewCount} guests who stayed with us.</p>
+            <p className="mt-1 text-[15px] text-muted">{hotel.reviewCount} reviews</p>
           </div>
           <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
             {hotel.reviews.map((r) => (
@@ -187,7 +196,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
               </figure>
             ))}
           </div>
-        </div>
+        </Reveal>
       </Container>
     </section>
   );
@@ -200,7 +209,7 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mb-16 mt-16 md:mb-24 md:mt-24">
       <Container>
-        <div className="overflow-hidden rounded-[32px] border border-line bg-surface shadow-card lg:grid lg:grid-cols-[1fr_1.1fr]">
+        <Reveal className="overflow-hidden rounded-[32px] border border-line bg-surface shadow-card lg:grid lg:grid-cols-[1fr_1.1fr]">
           <div className="p-6 md:p-10">
             <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-action"><T>Find us</T></p>
             <h2 className="mt-2 text-2xl font-bold md:text-[32px]">{hotel.area}</h2>
@@ -233,7 +242,7 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
               <span className="rounded-full bg-surface px-3 py-1.5 text-[13px] font-semibold shadow-card">Open in Google Maps</span>
             </span>
           </a>
-        </div>
+        </Reveal>
       </Container>
     </section>
   );

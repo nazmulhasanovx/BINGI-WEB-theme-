@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { listHotelSlugs } from "@/lib/data";
 
 export default function Index() {
   return (
     <main className="mx-auto max-w-xl px-6 py-20">
-      <p className="text-sm font-semibold text-action">BinGi Web Themes · GRAND</p>
+      <Image src="/brand/bingi-logo.png" alt="BinGi" width={120} height={40} className="h-10 w-auto" priority />
+      <p className="mt-6 text-sm font-semibold text-action">Web Themes · GRAND</p>
       <h1 className="mt-2 text-3xl font-bold">Theme preview</h1>
       <ul className="mt-8 space-y-3">
         {listHotelSlugs().map((s) => (

@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/data";
 import { dateList, fits, nightlyRate, unitsLeft } from "@/lib/pricing";
 import { shortDate, useBooking } from "@/components/booking/BookingProvider";
 import { guestLabel } from "@/components/booking/SearchFields";
+import { Reveal } from "@/components/motion/Reveal";
 
 const KINDS: { id: "all" | RoomCategory["kind"]; label: string }[] = [
   { id: "all", label: "All" },
@@ -104,16 +105,17 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
 
       {!hasDates && (
         <p className="mt-4 rounded-2xl bg-brand-soft px-4 py-3 text-sm text-ink">
-          Prices shown are “from” prices. <button onClick={openSearch} className="font-semibold text-action underline underline-offset-2">Add your dates</button> to see free rooms and the total.
+          <button onClick={openSearch} className="font-semibold text-action underline underline-offset-2">Add your dates</button> for live prices.
         </p>
       )}
 
       <ul className="mt-5 grid gap-4 md:gap-5 lg:grid-cols-2">
-        {list.map(({ r, left, total, fit }) => {
+        {list.map(({ r, left, total, fit }, i) => {
           const href = `/hotel/${hotel.slug}/rooms/${r.slug}${q ? `?${q}` : ""}`;
           const unavailable = hasDates && (left === 0 || !fit);
           return (
             <li key={r.id}>
+              <Reveal delay={Math.min(i, 4) * 0.06} className="h-full">
               <Link
                 href={href}
                 className={clsx(
@@ -129,7 +131,6 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
                 </div>
                 <div className="flex flex-1 flex-col p-4 md:p-5">
                   <h3 className="text-lg font-bold">{r.name}</h3>
-                  <p className="mt-1 line-clamp-2 text-[14px] text-muted">{r.short}</p>
                   <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted">
                     <li className="flex items-center gap-1.5"><Users className="size-4" /> Up to {r.maxAdults} adults{r.maxChildren ? ` + ${r.maxChildren} child` : ""}</li>
                     <li className="flex items-center gap-1.5"><BedDouble className="size-4" /> {r.bed}</li>
@@ -156,6 +157,7 @@ export function RoomsResults({ hotel }: { hotel: Hotel }) {
                   </div>
                 </div>
               </Link>
+              </Reveal>
             </li>
           );
         })}

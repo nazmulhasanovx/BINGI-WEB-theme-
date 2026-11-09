@@ -24,7 +24,7 @@ export default async function PoliciesPage(props: PageProps<"/hotel/[slug]/polic
   ];
   return (
     <>
-      <PageHero eyebrow="Good to know" title="Hotel policies" />
+      <PageHero title="Policies" />
       <SectionTabs items={sections.map((s) => ({ id: s.id, label: s.title.split(" & ")[0] }))} />
       <div className="mx-auto max-w-[820px] px-4 py-10 sm:px-6 md:py-14">
         {sections.map((s) => (

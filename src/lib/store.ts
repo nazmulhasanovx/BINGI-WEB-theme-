@@ -9,6 +9,7 @@ import type { Extra, Quote, StayDraft } from "./pricing";
 export interface Cart {
   stay: StayDraft | null;
   extras: Extra[];
+  promo?: string;
 }
 
 export type PaymentChoice = "pay-at-property" | "mfs-manual" | "advance" | "card-online";
@@ -20,7 +21,7 @@ export interface GuestBooking {
   extras: Extra[];
   quote: Quote;
   guest: { name: string; phone: string; email?: string; arrival?: string; request?: string };
-  payment: { method: PaymentChoice; dueNow: number; reference?: string };
+  payment: { method: PaymentChoice; dueNow: number; reference?: string; provider?: string };
   bookingStatus: "pending" | "confirmed" | "cancelled";
   paymentStatus: "unpaid" | "pay-at-hotel" | "advance-submitted" | "paid";
 }
@@ -83,7 +84,8 @@ export function useGuestState(slug: string) {
   return {
     ...state,
     ready,
-    setStay: (stay: StayDraft) => update((s) => ({ ...s, cart: { stay, extras: s.cart.stay?.roomSlug === stay.roomSlug ? s.cart.extras : s.cart.extras } })),
+    setStay: (stay: StayDraft) => update((s) => ({ ...s, cart: { ...s.cart, stay } })),
+    setPromo: (promo?: string) => update((s) => ({ ...s, cart: { ...s.cart, promo } })),
     clearCart: () => update((s) => ({ ...s, cart: { stay: null, extras: [] } })),
     setExtra: (serviceId: string, qty: number) =>
       update((s) => {

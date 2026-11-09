@@ -82,7 +82,9 @@ export interface StayDraft {
 export interface PriceLine {
   label: string;
   amount: number;
-  kind?: "discount" | "tax" | "extra";
+  kind?: "room" | "plan" | "discount" | "tax" | "extra";
+  qty?: number;
+  unit?: number;
 }
 
 export interface Quote {
@@ -92,6 +94,8 @@ export interface Quote {
   extrasTotal: number;
   discount: number;
   discountLabel?: string;
+  promoCode?: string;
+  subtotal: number;
   serviceCharge: number;
   vat: number;
   total: number;
@@ -113,7 +117,17 @@ export function bestOffer(h: Hotel, checkIn: string, n: number): { offer: Offer;
   return candidates.sort((a, b) => b.percent - a.percent)[0] ?? null;
 }
 
-export function quote(h: Hotel, stay: StayDraft, extras: Extra[]): Quote | null {
+export type PromoCheck = { ok: true; percent: number; label: string; code: string } | { ok: false; reason: string };
+
+/** Coupon validation (HMS Discounts → coupons). */
+export function checkPromo(h: Hotel, code: string, nights: number): PromoCheck {
+  const c = h.promoCodes.find((p) => p.code.toLowerCase() === code.trim().toLowerCase());
+  if (!c) return { ok: false, reason: "This code isn’t valid" };
+  if (c.minNights && nights < c.minNights) return { ok: false, reason: `Needs ${c.minNights}+ nights` };
+  return { ok: true, percent: c.percent, label: c.label, code: c.code };
+}
+
+export function quote(h: Hotel, stay: StayDraft, extras: Extra[], promo?: string): Quote | null {
   const room = h.rooms.find((r) => r.slug === stay.roomSlug);
   if (!room) return null;
   const dates = dateList(stay.checkIn, stay.checkOut);
@@ -123,12 +137,17 @@ export function quote(h: Hotel, stay: StayDraft, extras: Extra[]): Quote | null 
   const planAdd = plan.perAdultPerNight * stay.adults * n;
   const roomTotal = roomOnly + planAdd;
 
-  const lines: PriceLine[] = [{ label: `${room.name} · ${n} night${n > 1 ? "s" : ""}`, amount: roomOnly }];
-  if (planAdd) lines.push({ label: `Breakfast · ${stay.adults} adult${stay.adults > 1 ? "s" : ""} × ${n}`, amount: planAdd });
+  const lines: PriceLine[] = [{ label: `${room.name} · ${n} night${n > 1 ? "s" : ""}`, amount: roomOnly, kind: "room", qty: n, unit: Math.round(roomOnly / Math.max(1, n)) }];
+  if (planAdd) lines.push({ label: `Breakfast · ${stay.adults} adult${stay.adults > 1 ? "s" : ""} × ${n}`, amount: planAdd, kind: "plan", qty: stay.adults * n, unit: plan.perAdultPerNight });
 
+  // One discount per booking: the better of the automatic offer and a valid promo code.
   const best = bestOffer(h, stay.checkIn, n);
-  const discount = best ? Math.round((roomOnly * best.percent) / 100) : 0;
-  if (best) lines.push({ label: `${best.offer.title} (${best.offer.value})`, amount: -discount, kind: "discount" });
+  const pc = promo ? checkPromo(h, promo, n) : null;
+  const usePromo = pc && pc.ok && pc.percent >= (best?.percent ?? 0);
+  const pct = usePromo ? (pc as Extract<PromoCheck, { ok: true }>).percent : best?.percent ?? 0;
+  const discount = Math.round((roomOnly * pct) / 100);
+  const discountLabel = usePromo ? `Code ${(pc as Extract<PromoCheck, { ok: true }>).code} (${pct}% off)` : best ? `${best.offer.title} (${best.offer.value})` : undefined;
+  if (discount) lines.push({ label: discountLabel!, amount: -discount, kind: "discount" });
 
   let extrasTotal = 0;
   for (const e of extras) {
@@ -136,7 +155,7 @@ export function quote(h: Hotel, stay: StayDraft, extras: Extra[]): Quote | null 
     if (!s || e.qty < 1) continue;
     const amt = s.price * e.qty;
     extrasTotal += amt;
-    lines.push({ label: `${s.name} × ${e.qty}`, amount: amt, kind: "extra" });
+    lines.push({ label: `${s.name} × ${e.qty}`, amount: amt, kind: "extra", qty: e.qty, unit: s.price });
   }
 
   const base = roomTotal - discount + extrasTotal;
@@ -152,5 +171,5 @@ export function quote(h: Hotel, stay: StayDraft, extras: Extra[]): Quote | null 
     if (vat) lines.push({ label: `VAT ${vatPercent}%`, amount: vat, kind: "tax" });
   }
 
-  return { nights: n, lines, roomTotal, extrasTotal, discount, discountLabel: best?.offer.title, serviceCharge, vat, total };
+  return { nights: n, lines, roomTotal, extrasTotal, discount, discountLabel, promoCode: usePromo ? (pc as Extract<PromoCheck, { ok: true }>).code : undefined, subtotal: base, serviceCharge, vat, total };
 }

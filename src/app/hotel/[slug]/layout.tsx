@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { MobileBookBar } from "@/components/site/MobileBookBar";
 import { buildNav } from "@/components/site/nav";
 import { SitePaused } from "@/components/site/SitePaused";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { LangSync } from "@/lib/i18n";
 
 export function generateStaticParams() {
@@ -46,6 +47,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
 
   return (
     <ThemeScope themeId={hotel.theme.id} heading={hotel.theme.heading}>
+      <SmoothScroll>
       <BookingProvider
         slug={hotel.slug}
         maxAdults={Math.max(...hotel.rooms.map((r) => r.maxAdults)) * 2}
@@ -64,6 +66,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
           <ThemePreview defaultTheme={hotel.theme.id} />
         </Suspense>
       </BookingProvider>
+      </SmoothScroll>
     </ThemeScope>
   );
 }

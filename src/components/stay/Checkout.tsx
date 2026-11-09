@@ -28,11 +28,11 @@ function paymentOptions(methods: PaymentMethod[]): Option[] {
   const out: Option[] = [];
   for (const m of methods) {
     if (m.kind === "pay-at-property")
-      out.push({ id: "pay-at-property", title: "Pay at the hotel", sub: "Nothing to pay now. Pay cash or card when you arrive.", dueNow: () => 0, needsRef: false });
+      out.push({ id: "pay-at-property", title: "Pay at the hotel", sub: "Cash or card on arrival.", dueNow: () => 0, needsRef: false });
     if (m.kind === "advance" && mfs)
-      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${mfs.provider}`, sub: `Rest at the hotel. Send the advance to ${mfs.provider} ${mfs.number}.`, dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs });
+      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${mfs.provider}`, sub: "Rest at the hotel.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs });
     if (m.kind === "mfs-manual")
-      out.push({ id: "mfs-manual", title: `Pay in full with ${m.provider}`, sub: `Send to ${m.provider} ${m.number} (Send Money), then enter the transaction ID.`, dueNow: (t) => t, needsRef: true, mfs: { provider: m.provider, number: m.number } });
+      out.push({ id: "mfs-manual", title: `Pay in full with ${m.provider}`, sub: `Send Money to ${m.number}.`, dueNow: (t) => t, needsRef: true, mfs: { provider: m.provider, number: m.number } });
     if (m.kind === "card-online" && m.gatewayApproved)
       out.push({ id: "card-online", title: "Card / online", sub: "Secure payment through the hotel's gateway.", dueNow: (t) => t, needsRef: false });
   }
@@ -74,7 +74,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
   const [tried, setTried] = useState(false);
 
   const stay = cart.stay;
-  const q = stay ? quote(hotel, stay, cart.extras) : null;
+  const q = stay ? quote(hotel, stay, cart.extras, cart.promo) : null;
   if (!loaded) return <ListSkeleton rows={2} />;
   if (!stay || !q) return <EmptyStay base={base} />;
 
@@ -94,7 +94,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
       extras: cart.extras,
       quote: q,
       guest: { name: name.trim(), phone, email: email || undefined, arrival: arrival || undefined, request: request || undefined },
-      payment: { method: opt.id, dueNow, reference: ref || undefined },
+      payment: { method: opt.id, dueNow, reference: ref || undefined, provider: opt.mfs?.provider },
       bookingStatus: "pending",
       paymentStatus: opt.id === "pay-at-property" ? "pay-at-hotel" : opt.id === "card-online" ? "paid" : "advance-submitted",
     };
@@ -137,7 +137,7 @@ export function Checkout({ hotel }: { hotel: Hotel }) {
               </label>
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold">Special request <span className="font-normal text-muted">(optional)</span></span>
-                <textarea className="mt-1.5 w-full rounded-2xl border border-line bg-surface p-4 text-[16px] outline-none focus:border-action" rows={3} maxLength={500} value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Celebrating something? Need a cot? Tell the hotel." />
+                <textarea className="mt-1.5 w-full rounded-2xl border border-line bg-surface p-4 text-[16px] outline-none focus:border-action" rows={3} maxLength={500} value={request} onChange={(e) => setRequest(e.target.value)} placeholder="Anything the hotel should know" />
               </label>
             </div>
           </Section>
