@@ -43,7 +43,7 @@ export default function ThemeLab() {
                     <span key={k} title={k} className="h-6 flex-1 rounded-md border border-line" style={{ background: tk[k] }} />
                   ))}
                 </div>
-                <Link href={`/hotel/azure-bay?theme=${t.id}&preview=1`} className="mt-2 inline-flex h-10 items-center rounded-full border border-brand-ring px-4 font-semibold text-action hover:bg-brand-soft">
+                <Link href={`/hotel/azure-bay?theme=${t.id}`} className="mt-2 inline-flex h-10 items-center rounded-full border border-brand-ring px-4 font-semibold text-action hover:bg-brand-soft">
                   Preview on demo hotel →
                 </Link>
               </div>

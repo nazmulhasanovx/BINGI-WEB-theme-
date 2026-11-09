@@ -53,14 +53,14 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
           Skip to content
         </a>
         <LangSync />
+        <Suspense fallback={<div className="h-12 bg-ink" />}>
+          <ThemePreview defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} />
+        </Suspense>
         <TopBar hotel={hotel} />
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />
         <main id="main">{props.children}</main>
         <SiteFooter hotel={hotel} nav={nav} />
         <MobileBookBar fromLabel={formatMoney(minPrice)} />
-        <Suspense>
-          <ThemePreview defaultTheme={hotel.theme.id} />
-        </Suspense>
       </BookingProvider>
       </SmoothScroll>
     </ThemeScope>

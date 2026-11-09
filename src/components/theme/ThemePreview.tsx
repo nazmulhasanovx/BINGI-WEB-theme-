@@ -1,75 +1,98 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, Palette, X } from "lucide-react";
-import { THEMES, isThemeId, tokensFor, type ThemeId } from "@/lib/theme";
+import { useEffect, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
+import clsx from "clsx";
+import Link from "next/link";
+import { Check, Palette } from "lucide-react";
+import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/theme";
 
 /**
- * Preview helper (not part of the hotel's live site):
- *  ?theme=ocean  → shows the page in that colour theme
- *  ?preview=1    → opens the floating theme picker
+ * Theme switcher bar for designers/developers (top of every hotel page).
+ * Not part of a hotel's live site: turn it off with NEXT_PUBLIC_THEME_SWITCHER=off.
+ * In production the hotel's theme comes from HMS → Website Management → Theme & Appearance.
+ * Choice is kept in this browser (localStorage); ?theme=<id> in the URL also works.
  */
-export function ThemePreview({ defaultTheme }: { defaultTheme: ThemeId }) {
+const KEY = "bingi-theme";
+const HKEY = "bingi-heading";
+const listeners = new Set<() => void>();
+const sub = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const read = (k: string) => {
+  try {
+    return localStorage.getItem(k) ?? "";
+  } catch {
+    return "";
+  }
+};
+const write = (k: string, v: string) => {
+  try {
+    localStorage.setItem(k, v);
+  } catch {}
+  listeners.forEach((l) => l());
+};
+
+export function ThemePreview({ defaultTheme, defaultHeading }: { defaultTheme: ThemeId; defaultHeading: "sans" | "serif" }) {
   const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const q = params.get("theme");
-  const active: ThemeId = isThemeId(q) ? q : defaultTheme;
-  const enabled = params.has("preview") || isThemeId(q);
-  const [open, setOpen] = useState(false);
+  const stored = useSyncExternalStore(sub, () => read(KEY), () => "");
+  const storedH = useSyncExternalStore(sub, () => read(HKEY), () => "");
+  const active: ThemeId = isThemeId(q) ? q : isThemeId(stored) ? stored : defaultTheme;
+  const heading = storedH === "serif" || storedH === "sans" ? storedH : defaultHeading;
+
+  useEffect(() => {
+    if (isThemeId(q) && q !== read(KEY)) write(KEY, q);
+  }, [q]);
 
   useEffect(() => {
     const el = document.getElementById("hotel-theme");
     if (!el) return;
-    const tokens = tokensFor(active);
-    Object.entries(tokens).forEach(([k, v]) => el.style.setProperty(k, v));
+    Object.entries(tokensFor(active)).forEach(([k, v]) => el.style.setProperty(k, v));
     el.dataset.theme = active;
-  }, [active]);
+    el.dataset.heading = heading;
+  }, [active, heading]);
 
-  if (!enabled) return null;
+  if (process.env.NEXT_PUBLIC_THEME_SWITCHER === "off") return null;
 
-  const pick = (id: ThemeId) => {
-    const next = new URLSearchParams(params.toString());
-    next.set("theme", id);
-    next.set("preview", "1");
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  };
-
+  const t = themeById(active);
   return (
-    <div className="fixed left-3 top-[calc(var(--header-h)+12px)] z-50 sm:left-5">
-      {open ? (
-        <div className="w-64 rounded-2xl border border-line bg-surface/95 p-3 shadow-float backdrop-blur">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold">Colour theme</p>
-            <button aria-label="Close" onClick={() => setOpen(false)} className="grid size-8 place-items-center rounded-full hover:bg-canvas">
-              <X className="size-4" />
+    <div className="border-b border-ink/10 bg-ink text-white">
+      <div className="no-scrollbar mx-auto flex h-12 max-w-[1240px] items-center gap-3 overflow-x-auto px-4 sm:px-6">
+        <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold">
+          <Palette className="size-4 opacity-80" /> <span className="hidden sm:inline">Theme</span>
+        </span>
+        <div className="flex shrink-0 items-center gap-1.5" role="radiogroup" aria-label="Colour theme">
+          {THEMES.map((th, i) => (
+            <button
+              key={th.id}
+              role="radio"
+              aria-checked={active === th.id}
+              title={`${i + 1}. ${th.name} ${th.brand}`}
+              aria-label={th.name}
+              onClick={() => write(KEY, th.id)}
+              className={clsx("grid size-7 place-items-center rounded-full transition-transform hover:scale-110", active === th.id && "ring-2 ring-white ring-offset-2 ring-offset-ink")}
+              style={{ background: th.brand }}
+            >
+              {active === th.id && <Check className="size-3.5 text-white" strokeWidth={3} />}
             </button>
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => pick(t.id)}
-                title={t.name}
-                aria-label={t.name}
-                className="grid aspect-square place-items-center rounded-full ring-offset-2 transition hover:scale-105"
-                style={{ background: t.brand, boxShadow: active === t.id ? `0 0 0 2px #fff, 0 0 0 4px ${t.brand}` : undefined }}
-              >
-                {active === t.id && <Check className="size-4 text-white" />}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted">{THEMES.find((t) => t.id === active)?.name} · preview only</p>
+          ))}
         </div>
-      ) : (
-        <button
-          onClick={() => setOpen(true)}
-          className="flex h-10 items-center gap-2 rounded-full border border-line bg-surface/95 px-3 text-sm font-semibold shadow-float backdrop-blur"
-        >
-          <Palette className="size-4 text-action" /> Theme
-        </button>
-      )}
+        <span className="shrink-0 text-[13px] text-white/70">
+          <b className="text-white">{t.name}</b> <code className="ml-1 text-white/60">{t.brand}</code>
+        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Heading font">
+          {(["sans", "serif"] as const).map((h) => (
+            <button key={h} onClick={() => write(HKEY, h)} aria-pressed={heading === h} className={clsx("h-7 rounded-full px-3", heading === h ? "bg-white text-ink" : "text-white/80 hover:text-white")}>
+              {h === "sans" ? "Sans" : "Serif"}
+            </button>
+          ))}
+        </div>
+        <Link href="/theme-lab" className="hidden h-8 shrink-0 items-center rounded-full border border-white/20 px-3 text-[12px] font-semibold hover:bg-white/10 md:flex">
+          Theme Lab
+        </Link>
+      </div>
     </div>
   );
 }

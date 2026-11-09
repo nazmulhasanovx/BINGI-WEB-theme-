@@ -26,7 +26,9 @@ Hotel picks 1 of 10 colour themes. Neutrals are shared; only the brand family ch
 | 10 | Graphite | #2E3338 |
 
 Theme Lab (`/theme-lab`) shows every theme with its computed tokens and contrast ratios.
-Preview any theme on a hotel page: `?theme=ocean`.
+
+**Theme switcher bar** (dark strip at the very top of every hotel page, for designers/developers): 10 colour swatches, Sans/Serif heading toggle, link to Theme Lab. The choice is kept in the browser while you navigate; `?theme=ocean` also works.
+Not shown to real guests: set `NEXT_PUBLIC_THEME_SWITCHER=off` in production — the hotel's theme then comes from HMS (Website Management → Theme & Appearance).
 
 ## Type
 Heading: Plus Jakarta Sans (option: Fraunces serif) · Body: Plus Jakarta Sans · Bangla: Hind Siliguri.
