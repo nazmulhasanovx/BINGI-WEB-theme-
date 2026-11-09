@@ -8,7 +8,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { split, useRoute } from "../shim/router";
 import { NotFoundError } from "../shim/navigation";
 
-import Index from "@/app/page";
+import Index from "@/app/themes/page";
 import ThemeLab from "@/app/theme-lab/page";
 import RootNotFound from "@/app/not-found";
 import HotelLayout from "@/app/hotel/[slug]/layout";
@@ -43,7 +43,7 @@ const PAGES: Record<string, Comp> = {
 async function resolve(route: string): Promise<ReactNode> {
   const { path } = split(route);
   const seg = path.split("/").filter(Boolean);
-  if (seg.length === 0) return await (Index as Comp)({});
+  if (seg.length === 0 || seg[0] === "themes") return await (Index as Comp)({});
   if (seg[0] === "theme-lab") return await (ThemeLab as Comp)({});
   if (seg[0] === "hms") {
     let page: ReactNode;

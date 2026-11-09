@@ -3,14 +3,14 @@ import { useSyncExternalStore } from "react";
 
 export function currentRoute(): string {
   const h = typeof location !== "undefined" ? location.hash : "";
-  return h.startsWith("#/") ? h.slice(1) : "/";
+  return h.startsWith("#/") ? h.slice(1) : "/hms/website/overview";
 }
 function subscribe(cb: () => void) {
   window.addEventListener("hashchange", cb);
   return () => window.removeEventListener("hashchange", cb);
 }
 export function useRoute() {
-  return useSyncExternalStore(subscribe, currentRoute, () => "/");
+  return useSyncExternalStore(subscribe, currentRoute, () => "/hms/website/overview");
 }
 export function go(path: string, replace = false) {
   // plain hash navigation: works inside sandboxed frames (no pushState needed)
