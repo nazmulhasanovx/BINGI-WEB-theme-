@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowRight, Car, ConciergeBell, Dumbbell, Flower2, Wifi, Mail, MessageCircle, Phone, Presentation, Sparkles, Umbrella, UtensilsCrossed, Waves } from "lucide-react";
+import { ArrowRight, Car, ConciergeBell, Leaf, Flame, Dumbbell, Flower2, Wifi, Mail, MessageCircle, Phone, Presentation, Sparkles, Umbrella, UtensilsCrossed, Waves } from "lucide-react";
 import { availablePages, getHotel } from "@/lib/data";
 import { presetFor } from "@/lib/presets";
 import { PageHero } from "@/components/site/PageHero";
@@ -13,7 +13,7 @@ import { Reveal } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = { title: "Explore" };
 
-const ICONS: Record<string, typeof Waves> = { waves: Waves, umbrella: Umbrella, flower: Flower2, utensils: UtensilsCrossed, presentation: Presentation, car: Car, dumbbell: Dumbbell, wifi: Wifi, concierge: ConciergeBell };
+const ICONS: Record<string, typeof Waves> = { waves: Waves, umbrella: Umbrella, flower: Flower2, utensils: UtensilsCrossed, presentation: Presentation, car: Car, dumbbell: Dumbbell, wifi: Wifi, concierge: ConciergeBell, leaf: Leaf, flame: Flame };
 
 export default async function ExplorePage(props: PageProps<"/hotel/[slug]/explore">) {
   const { slug } = await props.params;

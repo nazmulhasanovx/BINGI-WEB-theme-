@@ -114,3 +114,4 @@ h1, h2, h3, .font-heading {
 [data-master="city"] .rounded-3xl { border-radius: 16px; }
 [data-master="city"] .rounded-\[22px\] { border-radius: 16px; }
 [data-master="city"] .rounded-2xl { border-radius: 12px; }
+/* NEST keeps GRAND's soft shapes; nothing to override. */
