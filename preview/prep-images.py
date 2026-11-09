@@ -9,5 +9,5 @@ for hotel in ["azure-bay", "sea-pearl", "tea-valley", "mistwood", "shalbon", "la
     for f in glob.glob(os.path.join(app, "public", "demo", hotel, "*.jpg")):
         im = Image.open(f).convert("RGB")
         w, h = im.size
-        s = min(1, 1100 / max(w, h))
-        im.resize((round(w * s), round(h * s)), Image.LANCZOS).save(os.path.join(out, os.path.basename(f)), quality=56, optimize=True, progressive=True)
+        s = min(1, 1000 / max(w, h))
+        im.resize((round(w * s), round(h * s)), Image.LANCZOS).save(os.path.join(out, os.path.basename(f)), quality=52, optimize=True, progressive=True)
