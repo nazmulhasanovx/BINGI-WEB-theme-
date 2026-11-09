@@ -12,7 +12,7 @@ export const seaPearl: Hotel = {
   tagline: "Stay in the heart of Kolatoli, minutes from the beach.",
   intro: "A modern hotel on Kolatoli Road with a rooftop pool, meeting rooms and 24-hour service — close to the beach and the airport.",
   logoText: "Sea Pearl",
-  heroPhoto: `${P}/hero.jpg`,
+  heroPhoto: `${P}/lounge.jpg`,
   area: "Kolatoli Road",
   city: "Cox's Bazar",
   country: "Bangladesh",
@@ -39,7 +39,7 @@ export const seaPearl: Hotel = {
     { name: "Burmese Market", time: "12 min", mode: "drive" },
   ],
   pagePhotos: { rooms: `${P}/room-deluxe.jpg`, experiences: `${P}/beach.jpg`, offers: `${P}/rooftop.jpg`, explore: `${P}/exterior.jpg` },
-  gallery: [`${P}/lobby.jpg`, `${P}/rooftop.jpg`, `${P}/lounge.jpg`, `${P}/meeting.jpg`, `${P}/gym.jpg`, `${P}/pool.jpg`, `${P}/beach.jpg`],
+  gallery: [`${P}/hero.jpg`, `${P}/lobby.jpg`, `${P}/rooftop.jpg`, `${P}/lounge.jpg`, `${P}/meeting.jpg`, `${P}/gym.jpg`, `${P}/pool.jpg`, `${P}/beach.jpg`],
   rooms: [
     {
       id: "c1", slug: "standard", name: "Standard Room", kind: "room",
@@ -85,7 +85,7 @@ export const seaPearl: Hotel = {
   menu: [],
   offers: [
     { id: "o1", title: "Weekday stay", short: "Sunday to Wednesday check-ins.", kind: "discount", value: "10% off", conditions: "Check-in Sun–Wed.", photo: `${P}/room-deluxe.jpg` },
-    { id: "o2", title: "Stay 3 nights", short: "Longer trips cost less.", kind: "discount", value: "15% off", conditions: "Min. 3 nights. Not combinable.", photo: `${P}/rooftop.jpg` },
+    { id: "o2", title: "Stay 3 nights", short: "Longer trips cost less.", kind: "discount", value: "15% off", conditions: "Min. 3 nights. Not combinable.", photo: `${P}/room-suite.jpg` },
   ],
   promoCodes: [{ code: "CITY10", percent: 10, label: "City 10%" }],
   reviews: [
