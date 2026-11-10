@@ -1,8 +1,8 @@
 "use client";
 // Real device frames for previews: iPhone 16 Pro Max (440×956 pt) and iPad Pro 12.9″ (1024×1366 pt).
-// The site renders at the device's true CSS width; the whole frame is scaled to fit the space it gets.
+// The site renders at the device's true CSS width (height minus the status bar); the whole frame is scaled to fit the space it gets.
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Globe } from "lucide-react";
+import { BatteryFull, Globe, Signal, Wifi } from "lucide-react";
 
 export const DEVICE_SPEC = {
   iphone: { label: "iPhone 16 Pro Max", w: 440, h: 956, bezel: 14, outer: 70, inner: 56 },
@@ -29,7 +29,7 @@ export function FittedDevice({ kind, children, pad = 24, landscape = false }: { 
     return () => ro.disconnect();
   }, [fw, fh, pad]);
   return (
-    <div ref={box} className="flex size-full min-h-0 items-center justify-center overflow-hidden">
+    <div ref={box} className="flex size-full min-h-0 items-center justify-center overflow-clip">
       <div style={{ width: fw * scale, height: fh * scale }} className="relative shrink-0">
         <div
           aria-label={s.label}
@@ -38,13 +38,29 @@ export function FittedDevice({ kind, children, pad = 24, landscape = false }: { 
           className="absolute left-0 top-0 bg-[#15161a] shadow-[0_0_0_2px_#3a3d44,0_30px_80px_-24px_rgb(0_0_0/0.45)]"
         >
           {kind === "iphone" ? <PhoneHardware /> : <TabletHardware landscape={landscape} />}
-          <div style={{ width: sw, height: sh, borderRadius: s.inner }} className="relative overflow-hidden bg-white">
-            {children}
+          <div style={{ width: sw, height: sh, borderRadius: s.inner }} className="relative flex flex-col overflow-clip bg-white">
+            <StatusBar kind={kind} />
+            <div className="min-h-0 flex-1">{children}</div>
             {kind === "iphone" && <span aria-hidden className="pointer-events-none absolute left-1/2 top-[11px] z-10 h-[37px] w-[126px] -translate-x-1/2 rounded-full bg-black" />}
             {kind === "iphone" && <span aria-hidden className="pointer-events-none absolute bottom-[8px] left-1/2 z-10 h-[5px] w-[150px] -translate-x-1/2 rounded-full bg-black/80 mix-blend-difference" />}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The device status bar: the site starts below it, as in Safari. */
+function StatusBar({ kind }: { kind: DeviceKind }) {
+  const phone = kind === "iphone";
+  return (
+    <div aria-hidden className={phone ? "flex h-[54px] shrink-0 items-center justify-between bg-white px-[34px] pt-[6px] text-[17px] font-semibold text-black" : "flex h-[24px] shrink-0 items-center justify-between bg-white px-5 text-[13px] font-semibold text-black"}>
+      <span>9:41</span>
+      <span className="flex items-center gap-1.5">
+        <Signal className={phone ? "size-[18px]" : "size-3.5"} strokeWidth={2.4} />
+        <Wifi className={phone ? "size-[18px]" : "size-3.5"} strokeWidth={2.4} />
+        <BatteryFull className={phone ? "size-[24px]" : "size-[18px]"} strokeWidth={1.8} />
+      </span>
     </div>
   );
 }
