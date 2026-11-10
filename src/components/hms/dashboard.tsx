@@ -86,12 +86,12 @@ export function Dashboard() {
           <Link href="/hms/bookings" className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-hms-red px-4 text-[14px] font-semibold text-white shadow-[0_6px_16px_-8px_rgb(185_28_44/0.7)] hover:bg-[#b11c29]"><Plus className="size-4" />New booking</Link>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           {kpis.map((k) => (
-            <div key={k.label} className={clsx("flex items-center gap-4 rounded-xl p-4", k.card)}>
-              <span className={clsx("grid size-12 shrink-0 place-items-center rounded-xl bg-white shadow-[0_1px_2px_rgb(0_0_0/0.05)]", k.ink)}><k.icon className="size-[22px]" strokeWidth={1.8} /></span>
+            <div key={k.label} className={clsx("flex items-center gap-3 rounded-xl p-3.5 sm:gap-4 sm:p-4", k.card)}>
+              <span className={clsx("hidden size-12 shrink-0 sm:grid place-items-center rounded-xl bg-white shadow-[0_1px_2px_rgb(0_0_0/0.05)]", k.ink)}><k.icon className="size-[22px]" strokeWidth={1.8} /></span>
               <div className="min-w-0">
-                <p className="truncate text-[22px] font-bold leading-tight tabular-nums">{k.value}</p>
+                <p className="truncate text-[19px] font-bold leading-tight tabular-nums sm:text-[22px]">{k.value}</p>
                 <p className="text-[13.5px] text-[#4b5160]">{k.label}</p>
                 {k.sub && <p className="text-[12.5px] text-[#4b5160]">{k.sub}</p>}
               </div>

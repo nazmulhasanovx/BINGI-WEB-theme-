@@ -4,17 +4,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import clsx from "clsx";
 import {
-  Activity, Bell, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
-  Landmark, Languages, LayoutGrid, MessageSquare, Minimize2, Moon, MoreHorizontal, Plus, ReceiptText, Search, Send, Settings, Sparkles, Star, Tag,
+  Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
+  Landmark, LayoutGrid, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
   UserPlus, Users, Wallet,
 } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
 import { SetupModeBanner } from "./setup-mode";
 import { useSubmittedHotels } from "@/lib/onboarding/store";
 import { WM_PAGES } from "./website/pages";
+import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
 const GROUPS: { label: string; items: Item[] }[] = [
@@ -60,6 +61,15 @@ const GROUPS: { label: string; items: Item[] }[] = [
 ];
 export const ALL_ITEMS = [...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }];
 
+/** Everything ⌘K can open: modules + their main sub-pages. */
+const SEARCH_TARGETS: NavTarget[] = [
+  ...[...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }].map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
+  { label: "Guest reviews", href: "/hms/guests/reviews", icon: Star }, { label: "Inventory history", href: "/hms/inventory/history", icon: Boxes },
+  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles },
+  { label: "Room categories", href: "/hms/rooms/categories", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
+  { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
+];
+
 const modeSub = (l: () => void) => (window.addEventListener("storage", l), () => window.removeEventListener("storage", l));
 const readMode = () => {
   try {
@@ -91,14 +101,17 @@ function ShellInner({ children }: { children: ReactNode }) {
   };
   const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? ALL_ITEMS[0];
 
+  const [drawer, setDrawer] = useState(false);
   return (
     <div className="hms-app flex h-dvh overflow-hidden bg-hms-canvas text-[14px]">
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Header />
+        <Header onMenu={() => setDrawer(true)} />
         <SetupModeBanner />
-        <main className="min-h-0 flex-1">{children}</main>
+        <main className="min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
       </div>
+      <TabBar activeId={active.id} onMore={() => setDrawer(true)} />
+      {drawer && <MobileDrawer activeId={active.id} onClose={() => setDrawer(false)} />}
     </div>
   );
 }
@@ -114,30 +127,9 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
               <Image src={hotel.heroPhoto} alt={hotel.name} fill sizes="36px" className="object-cover" />
             </span>}
       </div>
-      <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="HMS">
-        {GROUPS.map((g) => (
-          <div key={g.label} className="mt-2.5 first:mt-0.5">
-            {!collapsed && <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>}
-            {g.items.map((i) => (
-              <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} />
-            ))}
-          </div>
-        ))}
-        <div className="mt-2.5 border-t border-hms-line pt-2.5">
-          <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} />
-        </div>
-      </nav>
+      <NavList activeId={activeId} collapsed={collapsed} />
       <div className="shrink-0 border-t border-hms-line p-3">
-        {!collapsed && (
-          <div className="mb-3 flex rounded-full border border-hms-line bg-hms-hover p-0.5 text-[12px] font-semibold">
-            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white py-1.5 shadow-sm">
-              <span className="grid size-3 place-items-center rounded-full border-2 border-hms-red"><span className="size-1 rounded-full bg-hms-red" /></span> Flat
-            </span>
-            <span className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-hms-muted">
-              <span className="size-3 rounded-full border border-hms-line bg-white" /> Expandable
-            </span>
-          </div>
-        )}
+        {!collapsed && <ModeSwitch />}
         <PropertySwitcher collapsed={collapsed} />
         <button onClick={onToggle} className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-hms-muted hover:bg-hms-hover">
           <ChevronsLeft className={clsx("size-4 transition-transform", collapsed && "rotate-180")} /> {!collapsed && "Collapse"}
@@ -147,7 +139,94 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
   );
 }
 
-function NavItem({ item, active, collapsed }: { item: Item; active: boolean; collapsed: boolean }) {
+// ---------- Sidebar mode (decision 2 Nov): Flat = all items, Expandable = groups fold (accordion) ----------
+const MODE_KEY = "hms-sidebar-mode";
+const modeSubs = new Set<() => void>();
+const readNavMode = () => { try { return localStorage.getItem(MODE_KEY) === "expandable" ? "expandable" : "flat"; } catch { return "flat"; } };
+function useNavMode() {
+  const mode = useSyncExternalStore((f) => { modeSubs.add(f); return () => { modeSubs.delete(f); }; }, readNavMode, () => "flat");
+  const set = (m: "flat" | "expandable") => { try { localStorage.setItem(MODE_KEY, m); } catch {} modeSubs.forEach((f) => f()); };
+  return [mode, set] as const;
+}
+function ModeSwitch() {
+  const [mode, set] = useNavMode();
+  return (
+    <div role="radiogroup" aria-label="Sidebar mode" className="mb-3 flex rounded-full border border-hms-line bg-hms-hover p-0.5 text-[12px] font-semibold">
+      {(["flat", "expandable"] as const).map((m) => (
+        <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => set(m)} className={clsx("flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 transition-colors", mode === m ? "bg-white shadow-sm" : "text-hms-muted hover:text-hms-ink")}>
+          {mode === m ? <span className="grid size-3 place-items-center rounded-full border-2 border-hms-red"><span className="size-1 rounded-full bg-hms-red" /></span> : <span className="size-3 rounded-full border border-hms-line bg-white" />}
+          {m === "flat" ? "Flat" : "Expandable"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: boolean; big?: boolean }) {
+  const [mode] = useNavMode();
+  const [openG, setOpenG] = useState<string[]>([]);
+  const fold = mode === "expandable" && !collapsed;
+  return (
+    <nav className={clsx("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-3", big ? "px-3" : "px-2")} aria-label="HMS">
+      {GROUPS.map((g) => {
+        const hasActive = g.items.some((i) => i.id === activeId);
+        const isOpen = !fold || hasActive || openG.includes(g.label);
+        return (
+          <div key={g.label} className="mt-2.5 first:mt-0.5">
+            {!collapsed && (fold
+              ? <button type="button" onClick={() => setOpenG((o) => (o.includes(g.label) ? o.filter((x) => x !== g.label) : [...o, g.label]))} aria-expanded={isOpen} disabled={hasActive}
+                  className="flex w-full items-center px-2.5 pb-0.5 text-left text-[11.5px] font-medium text-hms-muted hover:text-hms-ink disabled:cursor-default">
+                  <span className="flex-1">{g.label}</span><ChevronDown className={clsx("size-3.5 transition-transform", !isOpen && "-rotate-90")} />
+                </button>
+              : <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>)}
+            {isOpen && <div className={fold ? "hms-fade" : undefined}>{g.items.map((i) => <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} big={big} />)}</div>}
+          </div>
+        );
+      })}
+      <div className="mt-2.5 border-t border-hms-line pt-2.5">
+        <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} big={big} />
+      </div>
+    </nav>
+  );
+}
+
+/** Phones: bottom tab bar (iOS style). "More" opens the full menu. */
+const TABS = ["dashboard", "bookings", "rooms", "guests"];
+function TabBar({ activeId, onMore }: { activeId: string; onMore: () => void }) {
+  const items = TABS.map((id) => ALL_ITEMS.find((i) => i.id === id)!);
+  const inMore = !TABS.includes(activeId);
+  return (
+    <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-hms-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {items.map((i) => (
+        <Link key={i.id} href={i.href} aria-current={activeId === i.id ? "page" : undefined} className={clsx("flex h-[60px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", activeId === i.id ? "text-hms-red" : "text-hms-muted")}>
+          <i.icon className="size-[22px]" strokeWidth={activeId === i.id ? 2.2 : 1.75} />{i.label}
+        </Link>
+      ))}
+      <button onClick={onMore} aria-label="More — all modules" className={clsx("flex h-[60px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", inMore ? "text-hms-red" : "text-hms-muted")}>
+        <MenuIcon className="size-[22px]" strokeWidth={inMore ? 2.2 : 1.75} />More
+      </button>
+    </nav>
+  );
+}
+
+function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => void }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  return (
+    <div className="hms-fade fixed inset-0 z-[80] bg-black/30 md:hidden" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest("a")) onClose(); }} className="hms-drawer-l flex h-full w-[min(300px,86vw)] flex-col bg-white shadow-2xl">
+        <div className="flex h-14 shrink-0 items-center justify-between px-4"><span className="text-[16px] font-bold">Menu</span><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
+        <NavList activeId={activeId} collapsed={false} big />
+        <div className="shrink-0 border-t border-hms-line p-3"><PropertySwitcher collapsed={false} /></div>
+      </div>
+    </div>
+  );
+}
+
+function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean; collapsed: boolean; big?: boolean }) {
   const Icon = item.icon;
   return (
     <Link
@@ -155,7 +234,8 @@ function NavItem({ item, active, collapsed }: { item: Item; active: boolean; col
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "group flex h-[30px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] transition-colors",
+        "group flex items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150",
+        big ? "h-11 text-[15px]" : "h-[30px] text-[14px]",
         active ? "bg-hms-red font-medium text-white shadow-[0_6px_16px_-6px_rgb(185_28_44/0.6)]" : "text-hms-ink hover:bg-hms-hover",
         collapsed && "justify-center px-0",
       )}
@@ -228,40 +308,31 @@ function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function Header() {
+function Header({ onMenu }: { onMenu: () => void }) {
   const path = usePathname();
   const crumbs = useCrumbs(path);
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-hms-line bg-white px-3 sm:gap-3 sm:px-4">
+      <button onClick={onMenu} aria-label="Open menu" className="grid size-9 shrink-0 place-items-center rounded-lg hover:bg-hms-hover md:hidden"><MenuIcon className="size-5" /></button>
       <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[15px]">
         {crumbs.map((c, i) => (
-          <span key={c.label} className="flex min-w-0 items-center gap-2">
-            {i > 0 && <span className="text-hms-muted">›</span>}
+          <span key={c.label} className={clsx("min-w-0 items-center gap-2", i < crumbs.length - 1 ? "hidden sm:flex" : "flex")}>
+            {i > 0 && <span className="hidden text-hms-muted sm:inline">›</span>}
             {c.href && i < crumbs.length - 1 ? (
               <Link href={c.href} className="truncate text-hms-muted hover:text-hms-ink">{c.label}</Link>
             ) : (
-              <span className="truncate font-medium">{c.label}</span>
+              <span className="truncate font-semibold sm:font-medium">{c.label}</span>
             )}
           </span>
         ))}
       </nav>
       <span className="ml-1 hidden rounded-full bg-hms-amber-soft px-2 py-0.5 text-[11px] font-semibold text-hms-amber lg:inline">Prototype · demo data</span>
-      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#d8372e] hover:to-[#b11c29]"><Plus className="size-4" aria-hidden /><span className="hidden sm:inline">New property</span></Link>
-      <div className="ml-auto flex items-center gap-1.5">
-        <button aria-label="Compact view" className="grid size-9 place-items-center rounded-lg text-hms-muted hover:bg-hms-hover"><Minimize2 className="size-[17px]" /></button>
-        <label className="hidden h-9 w-[210px] items-center gap-2 rounded-full bg-hms-hover px-3 text-[13px] text-hms-muted lg:flex">
-          <Search className="size-4" />
-          <input placeholder="Search rooms, guests" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-hms-muted" />
-          <kbd className="font-sans text-[11px] font-semibold">⌘K</kbd>
-        </label>
-        <button className="flex h-9 items-center gap-1.5 rounded-lg px-2 text-[14px] text-hms-ink hover:bg-hms-hover"><Languages className="size-[17px]" /> EN</button>
-        <button aria-label="Dark mode" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><Moon className="size-[17px]" /></button>
-        <button aria-label="Notifications" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><Bell className="size-[17px]" /></button>
-        <button className="ml-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-hms-hover">
-          <span className="grid size-8 place-items-center rounded-full bg-hms-coral-soft text-[12px] font-bold text-hms-red">MY</span>
-          <span className="hidden text-[14px] font-semibold sm:inline">Md Yeapas</span>
-          <ChevronDown className="size-4 text-hms-muted" />
-        </button>
+      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#d8372e] hover:to-[#b11c29] sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
+      <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
+        <SearchBox items={SEARCH_TARGETS} />
+        <span className="hidden sm:block"><LanguageMenu /></span>
+        <Notifications />
+        <AccountMenu />
       </div>
     </header>
   );

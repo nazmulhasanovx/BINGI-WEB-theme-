@@ -108,7 +108,7 @@ export function Card({ children, className, title, right, pad = true }: { childr
 /** Simple table: header row on gray, rows with dividers. */
 export function Table({ cols, children, className }: { cols: { label: ReactNode; w?: string; align?: "right" | "center" }[]; children: ReactNode; className?: string }) {
   return (
-    <div className={clsx("overflow-x-auto", className)}>
+    <div className={clsx("overflow-x-auto", className)} tabIndex={0} role="region" aria-label="Table">
       <table className="w-full min-w-[860px] border-separate border-spacing-0 text-[15px]">
         <thead>
           <tr>
@@ -148,8 +148,8 @@ export function Drawer({ title, onClose, children, footer, wide }: { title: Reac
     return () => window.removeEventListener("keydown", k);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-[70] flex justify-end bg-[#1b2136]/25" onClick={onClose}>
-      <aside role="dialog" aria-label={typeof title === "string" ? title : undefined} className={clsx("flex h-full w-full flex-col bg-white shadow-2xl", wide ? "max-w-[620px]" : "max-w-[460px]")} onClick={(e) => e.stopPropagation()}>
+    <div className="hms-fade fixed inset-0 z-[70] flex justify-end bg-[#1b2136]/25" onClick={onClose}>
+      <aside role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : undefined} className={clsx("hms-drawer-r flex h-full w-full flex-col bg-white shadow-2xl", wide ? "max-w-[620px]" : "max-w-[460px]")} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#eceef2] px-6 py-4">
           <h2 className="text-[20px] font-semibold">{title}</h2>
           <button aria-label="Close" onClick={onClose} className="grid size-9 place-items-center rounded-lg hover:bg-[#f2f3f6]"><X className="size-5" /></button>
@@ -193,7 +193,7 @@ export function Menu({ items, label = "Actions" }: { items: { label: string; onC
   return (
     <details className="relative">
       <summary aria-label={label} className="grid size-10 cursor-pointer list-none place-items-center rounded-xl border border-[#dfe2e8] bg-white text-[18px] leading-none hover:bg-[#f6f7f9] [&::-webkit-details-marker]:hidden">···</summary>
-      <div className="absolute right-0 top-full z-30 mt-1 w-[200px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
+      <div className="hms-pop absolute right-0 top-full z-30 mt-1 w-[200px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
         {items.map((i) => (
           <button key={i.label} onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; i.onClick(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-[#f6f7f9]", i.danger && "text-[#c33029]")}>
             {i.label}
@@ -206,7 +206,7 @@ export function Menu({ items, label = "Actions" }: { items: { label: string; onC
 
 export function Toast({ text, onDone }: { text: string; onDone: () => void }) {
   useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
-  return <div role="status" className="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg">{text}</div>;
+  return <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg">{text}</div>;
 }
 
 /** Read a URL query value on the client without effects (null during SSR). */

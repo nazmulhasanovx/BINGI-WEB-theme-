@@ -7,7 +7,7 @@ import { BedDouble, CircleCheck, History, Lock, MoreHorizontal, Package, Pencil,
 import { hasServices, orderTotal, tk, useServices, whenLabel, type Order, type Service, type SvcCategory } from "@/lib/services/store";
 import { TODAY } from "@/lib/rooms/store";
 import { useProperty } from "../property";
-import { btnLine, btnPrimary } from "../guests/ui";
+import { btnIcon, btnLine, btnPrimary } from "../guests/ui";
 import { CancelSheet, CategorySheet, DetailsSheet, OrderSheet, PayPill, PreviewSheet, ServiceSheet } from "./sheets";
 
 type Open = { k: "service"; item?: Service } | { k: "order"; order?: Order; service?: string } | { k: "details"; id: string } | { k: "cancel"; id: string } | { k: "cat"; cat?: SvcCategory } | { k: "preview"; id: string };
@@ -50,7 +50,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
           <div className="flex flex-wrap gap-2">
             {tab === "categories" ? <button onClick={() => setO({ k: "cat" })} className={btnLine}><Plus className="size-4" />Add Category</button> : <button onClick={() => setO({ k: "service" })} className={btnLine}><Plus className="size-4" />Add Service</button>}
             <button onClick={() => setO({ k: "order" })} className={btnPrimary}><Plus className="size-4" />New Service Order</button>
-            <button onClick={() => setToast("Up to date")} aria-label="Refresh" className={clsx(btnLine, "w-10 px-0")}><RefreshCw className="size-4" /></button>
+            <button onClick={() => setToast("Up to date")} aria-label="Refresh" className={btnIcon}><RefreshCw className="size-4" /></button>
           </div>
         </div>
         <nav aria-label="Other Services sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
@@ -64,7 +64,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
       {o?.k === "cancel" && det && <CancelSheet svc={svc} order={det} onClose={() => setO(null)} onDone={setToast} />}
       {o?.k === "cat" && <CategorySheet svc={svc} cat={o.cat} onClose={() => setO(null)} />}
       {o?.k === "preview" && prev && <PreviewSheet svc={svc} item={prev} onClose={() => setO(null)} onBack={() => setO({ k: "service", item: prev })} />}
-      {toast && <div role="status" className="onb-in fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
+      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
     </C.Provider>
   );
 }
@@ -76,7 +76,7 @@ function Menu({ label, items }: { label: string; items: [string, () => void, boo
   return (
     <div ref={ref} className="relative inline-block">
       <button onClick={() => setM((x) => !x)} aria-haspopup="menu" aria-expanded={m} aria-label={label} className="grid size-9 place-items-center rounded-lg border border-hms-line bg-white hover:bg-hms-hover"><MoreHorizontal className="size-4" /></button>
-      {m && <div role="menu" className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{items.map(([l, f, danger]) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", danger && "text-[#b42318]")}>{l}</button>)}</div>}
+      {m && <div role="menu" className="hms-pop absolute right-0 top-10 z-20 w-48 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{items.map(([l, f, danger]) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", danger && "text-[#b42318]")}>{l}</button>)}</div>}
     </div>
   );
 }

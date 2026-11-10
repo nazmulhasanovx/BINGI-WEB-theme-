@@ -24,7 +24,7 @@ import { useLicences } from "@/lib/licences";
 function Title({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="mb-5 flex items-center justify-between gap-3">
-      <h1 className="text-[24px] font-semibold">{children}</h1>
+      <h1 className="text-[24px] font-bold tracking-[-0.01em]">{children}</h1>
       {right}
     </div>
   );

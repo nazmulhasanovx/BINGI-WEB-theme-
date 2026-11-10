@@ -55,7 +55,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
         <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-7">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-[26px] font-bold leading-tight tracking-[-0.01em] sm:text-[28px]">{title}</h1>
+              <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>
               <p className="mt-0.5 text-[15.5px] text-[#5b6170]">{h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
@@ -67,9 +67,9 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
             </div>
           </div>
           {st.config.configured && (
-            <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-[#eceef2] pb-2.5" aria-label={title}>
+            <nav className="no-scrollbar mt-4 flex items-center gap-1 overflow-x-auto border-b border-hms-line" aria-label={title}>
               {TABS.map((t) => (
-                <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("rounded-xl px-4 py-2 text-[15px] font-medium", tab === t.id ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t.label}</Link>
+                <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("shrink-0 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
               ))}
             </nav>
           )}
