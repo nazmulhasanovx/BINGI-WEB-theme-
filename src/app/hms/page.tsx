@@ -1,5 +1,5 @@
-import { ModulePlaceholder } from "@/components/hms/Placeholder";
+import { HmsHomeSwitch } from "@/components/hms/home";
 
 export default function HmsHome() {
-  return <ModulePlaceholder id="dashboard" />;
+  return <HmsHomeSwitch />;
 }
