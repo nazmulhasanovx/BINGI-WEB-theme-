@@ -30,12 +30,12 @@ export function EstateHome({ hotel }: { hotel: Hotel }) {
         ),
         experiences: <Experiences hotel={hotel} eyebrow="Arranged for you" title="Dinners, celebrations, slow days" />,
         dining: <Dining hotel={hotel} eyebrow="The kitchen" title="A chef who cooks for you alone" />,
-        amenities: <Amenities hotel={hotel} src={photo(hotel, /pool-deck|living/)} eyebrow="On the estate" title="Staffed like a house, private like a home" />,
+        amenities: <Amenities hotel={hotel} src={photo(hotel, /living-room/)} eyebrow="On the estate" title="Staffed like a house, private like a home" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The estate" title="Light, stone, water, trees" />,
         reviews: <Quote hotel={hotel} />,
         faq: <Faq hotel={hotel} />,
         arrival: <Arrival hotel={hotel} src={photo(hotel, /infinity/)} eyebrow="Finding us" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /pool-deck|villa-white/)} title="The gates open at two" />,
+        reserve: <Reserve hotel={hotel} src={photo(hotel, /villa-white/)} title="The gates open at two" />,
       }}
     />
   );
