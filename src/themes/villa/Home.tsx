@@ -137,7 +137,7 @@ function Inside({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="Inside" title="Walk through the villa" /></Reveal>
+        <Reveal><Head label="Inside" title={<DraftText slug={hotel.slug} k="copy.walk-through-the-villa" fallback="Walk through the villa" />} /></Reveal>
         <RevealGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:grid-rows-2 md:gap-4">
           {pics.map((p, i) => (
             <RevealItem key={p} className={`relative overflow-hidden rounded-[16px] ${i === 0 ? "col-span-2 aspect-[16/10] md:row-span-2 md:aspect-auto" : "aspect-square"}`}>
@@ -159,7 +159,7 @@ function Included({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="Service" title="What's included, what's on request" /></Reveal>
+        <Reveal><Head label="Service" title={<DraftText slug={hotel.slug} k="copy.what-s-included-what-s-on-request" fallback="What's included, what's on request" />} /></Reveal>
         <div className="grid gap-4 md:grid-cols-2 md:gap-6">
           {[{ t: "Included with every villa", items: inc, included: true }, { t: "On request", items: req, included: false }].filter((g) => g.items.length).map((g) => (
             <Reveal key={g.t} className="rounded-[20px] border border-line bg-surface p-5 md:p-8">
@@ -196,7 +196,7 @@ function Rules({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="Good to know" title="House rules" /></Reveal>
+        <Reveal><Head label="Good to know" title={<DraftText slug={hotel.slug} k="copy.house-rules" fallback="House rules" />} /></Reveal>
         <RevealGroup className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           {rules.map((r) => (
             <RevealItem key={r.title} className="flex gap-3.5 border-t border-line pt-5">
@@ -243,7 +243,7 @@ function Enquire({ hotel }: { hotel: Hotel }) {
         <Reveal className="grid overflow-hidden rounded-[20px] bg-ink text-white md:grid-cols-2">
           <div className="p-6 md:p-14">
             <p className="text-[12px] font-medium uppercase tracking-[0.22em] opacity-70"><T>Private events & long stays</T></p>
-            <h2 className="mt-3 font-heading text-[28px] leading-tight md:text-[44px]"><T>Birthdays, shoots, family weekends</T></h2>
+            <h2 className="mt-3 font-heading text-[28px] leading-tight md:text-[44px]"><DraftText slug={hotel.slug} k="copy.birthdays-shoots-family-weekends" fallback="Birthdays, shoots, family weekends" /></h2>
             <p className="mt-3 text-[15px] opacity-80 md:text-[17px]">Tell us your date, group size and occasion on WhatsApp and we will send a price.</p>
             <a href={waLink(hotel, `Hello, I'd like a quote for ${hotel.name}. Date: , guests: , occasion: `)} target="_blank" rel="noopener" className="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#1d1d1f]">
               <MessageCircle className="size-[18px]" /> <T>Ask on WhatsApp</T>

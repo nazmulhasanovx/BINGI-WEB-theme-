@@ -1,3 +1,4 @@
+import { DraftText } from "@/components/site-draft/Draft";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
@@ -13,9 +14,12 @@ export function SectionHead({
   title,
   sub,
   link,
+  slug,
 }: {
   eyebrow?: string;
   title: string;
+  /** Pass the hotel slug to make the title editable in Website Management (Preview › Edit). */
+  slug?: string;
   sub?: string;
   link?: { href: string; label: string };
 }) {
@@ -23,7 +27,7 @@ export function SectionHead({
     <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
       <div className="min-w-0">
         {eyebrow && <p className="mb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-action">{eyebrow}</p>}
-        <h2 className="text-[20px] font-bold md:text-[32px] md:leading-tight"><T>{title}</T></h2>
+        <h2 className="text-[20px] font-bold md:text-[32px] md:leading-tight">{slug ? <DraftText slug={slug} k={`copy.${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40)}`} fallback={title} /> : <T>{title}</T>}</h2>
         {sub && <p className="mt-2 max-w-xl text-[15px] text-muted md:text-base">{sub}</p>}
       </div>
       {link && (

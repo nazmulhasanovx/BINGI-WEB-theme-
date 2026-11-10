@@ -3,7 +3,7 @@ import { hrefFor } from "@/lib/href";
 import Link from "next/link";
 import clsx from "clsx";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ExternalLink, Laptop, Monitor, Smartphone, Tablet, X } from "lucide-react";
+import { Check, ExternalLink, Laptop, Monitor, Pencil, Smartphone, Tablet, X } from "lucide-react";
 import { useProperty } from "../property";
 import { useSite } from "@/lib/site";
 import { MANIFESTS, type ThemeManifest } from "@/themes/manifest";
@@ -117,8 +117,21 @@ const DEVICES = [
 ] as const;
 
 export function DevicePreview({ section, onClose }: { section?: string; onClose: () => void }) {
-  const { hotel } = useWM();
+  const { hotel, site } = useWM();
   const [device, setDevice] = useState<(typeof DEVICES)[number]["id"]>("desktop");
+  const [edit, setEdit] = useState(false);
+  const [saved, setSaved] = useState(0);
+  useEffect(() => {
+    const on = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.data?.type !== "bingi:edit-text") return;
+      const key = String(e.data.key);
+      const value = String(e.data.value ?? "").slice(0, 300);
+      site.edit((x) => { if (value) x.text[key] = value; else delete x.text[key]; });
+      setSaved((n) => n + 1);
+    };
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+  }, [site]);
   const d = DEVICES.find((x) => x.id === device)!;
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -137,7 +150,7 @@ export function DevicePreview({ section, onClose }: { section?: string; onClose:
     <div className="hms-app fixed inset-0 z-[80] flex flex-col bg-[#eef0f4]" role="dialog" aria-label="Preview">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
         <p className="text-[15px] font-semibold">Preview · draft</p>
-        <span className="hidden text-[13px] text-hms-muted sm:inline">Only you see this</span>
+        <span className="hidden text-[13px] text-hms-muted lg:inline">{edit ? (saved ? `${saved} change${saved > 1 ? "s" : ""} saved to draft` : "Click any outlined text to change it") : "Only you see this"}</span>
         <div className="mx-auto flex rounded-full border border-hms-line bg-hms-hover p-0.5">
           {DEVICES.map((x) => (
             <button key={x.id} onClick={() => setDevice(x.id)} className={clsx("flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium", device === x.id ? "bg-white shadow-sm" : "text-hms-muted")}>
@@ -145,12 +158,14 @@ export function DevicePreview({ section, onClose }: { section?: string; onClose:
             </button>
           ))}
         </div>
+        <Btn variant={edit ? "primary" : "outline"} onClick={() => setEdit((v) => !v)} aria-pressed={edit} className="h-8 px-3">{edit ? <><Check className="size-4" /> Done</> : <><Pencil className="size-4" /> Edit</>}</Btn>
         <Btn variant="outline" onClick={onClose} className="h-8 px-3"><X className="size-4" /> Close</Btn>
       </div>
+      {edit && <p className="shrink-0 border-b border-hms-line bg-[#fff7ed] px-4 py-2 text-center text-[13px] text-[#7a4a0b]">Edit mode: click outlined text to type, press Enter to save. Room names, prices and reviews come from HMS — change them in Rooms, Rates or Reviews.</p>}
       <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-6">
         <div style={{ width: d.w * scale, height: "100%" }} className="relative">
           <div style={{ width: d.w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className={clsx("overflow-hidden bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]", device === "phone" ? "rounded-[36px] border-[10px] border-[#1d1f24]" : "rounded-xl")}>
-            <PreviewFrame slug={hotel.slug} section={section} title={`${hotel.name} draft preview`} />
+            <PreviewFrame slug={hotel.slug} section={section} edit={edit} title={`${hotel.name} draft preview`} />
           </div>
         </div>
       </div>
@@ -159,15 +174,19 @@ export function DevicePreview({ section, onClose }: { section?: string; onClose:
 }
 
 /** The real site, rendering the draft (?preview=draft). Updates live as the draft changes. */
-export function PreviewFrame({ slug, section, title }: { slug: string; section?: string; title: string }) {
+export function PreviewFrame({ slug, section, title, edit = false }: { slug: string; section?: string; title: string; edit?: boolean }) {
   const ref = useRef<HTMLIFrameElement>(null);
+  const sendEdit = () => ref.current?.contentWindow?.postMessage({ type: "bingi:edit-mode", on: edit }, window.location.origin);
+  useEffect(() => {
+    ref.current?.contentWindow?.postMessage({ type: "bingi:edit-mode", on: edit }, window.location.origin);
+  }, [edit]);
   useEffect(() => {
     if (!section) return;
     const send = () => ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin);
     const t = setTimeout(send, 600);
     return () => clearTimeout(t);
   }, [section]);
-  return <iframe ref={ref} title={title} src={hrefFor(`/hotel/${slug}?preview=draft`)} className="size-full border-0" onLoad={() => section && ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin)} />;
+  return <iframe ref={ref} title={title} src={hrefFor(`/hotel/${slug}?preview=draft`)} className="size-full border-0" onLoad={() => { sendEdit(); if (section) ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin); }} />;
 }
 
 /** Fits a full-width site (e.g. 1440) into whatever column it sits in, scaled down. */

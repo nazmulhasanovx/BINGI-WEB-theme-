@@ -116,6 +116,12 @@ h1, h2, h3, .font-heading {
 [data-master="city"] .rounded-2xl { border-radius: 12px; }
 /* NEST keeps GRAND's soft shapes; nothing to override. */
 
+/* Inline text editing in the admin preview (Website Management › Preview › Edit) */
+.bingi-editable { outline: 2px dashed rgb(215 56 56 / .55); outline-offset: 3px; border-radius: 4px; cursor: text; transition: outline-color .15s, background .15s; }
+.bingi-editable:hover { outline-color: #d73838; background: rgb(215 56 56 / .06); }
+.bingi-editable:focus { outline: 2px solid #d73838; background: rgb(255 255 255 / .85); color: #16181d; }
+html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
+
 /* ORBIT floor stack: slow float (only when Motion = Immersive; never with reduced motion) */
 @keyframes orbit-float {
   0%, 100% { transform: rotateX(58deg) rotateZ(-36deg); }

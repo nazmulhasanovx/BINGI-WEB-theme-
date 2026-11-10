@@ -207,7 +207,7 @@ function Faq({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-28">
       <Container className="max-w-[900px]">
-        <Reveal><Head label="Questions" title="Before you board" /></Reveal>
+        <Reveal><Head label="Questions" title={<DraftText slug={hotel.slug} k="copy.before-you-board" fallback="Before you board" />} /></Reveal>
         <div className="divide-y divide-line rounded-[22px] bg-surface px-5 shadow-card md:px-7">
           {qa.map((x) => (
             <details key={x.q} className="group py-4">

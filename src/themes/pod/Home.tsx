@@ -157,7 +157,7 @@ function Rules({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-16 md:mt-24">
       <Container className="max-w-[900px]">
-        <Reveal><Head label="Good to know" title="Rules and questions" /></Reveal>
+        <Reveal><Head label="Good to know" title={<DraftText slug={hotel.slug} k="copy.rules-and-questions" fallback="Rules and questions" />} /></Reveal>
         <div className="divide-y divide-line border-y border-line">
           {qa.map((x) => (
             <details key={x.q} className="group py-4">

@@ -143,7 +143,7 @@ function ADayHere({ hotel }: { hotel: Hotel }) {
             <Image src={pic} alt="" fill sizes="(max-width: 768px) 100vw, 560px" className="object-cover" />
           </Reveal>
           <div>
-            <Reveal><Title label="A day here" title="Slow days, warm evenings" /></Reveal>
+            <Reveal><Title label="A day here" title={<DraftText slug={hotel.slug} k="copy.slow-days-warm-evenings" fallback="Slow days, warm evenings" />} /></Reveal>
             <RevealGroup className="relative space-y-6 border-l border-action/30 pl-6">
               {steps.map((s) => (
                 <SiteVisible key={s.time} slug={hotel.slug} kind="services" id={s.sid ?? "-"}><RevealItem className="relative">
@@ -229,7 +229,7 @@ function BookBand({ hotel }: { hotel: Hotel }) {
           <Image src={photo(hotel, /aerial|cabin-a/)} alt="" fill sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-black/45" />
           <div className="relative">
-            <h2 className="font-heading text-[30px] leading-tight md:text-[48px]"><T>Come stay a while</T></h2>
+            <h2 className="font-heading text-[30px] leading-tight md:text-[48px]"><DraftText slug={hotel.slug} k="copy.come-stay-a-while" fallback="Come stay a while" /></h2>
             <p className="mx-auto mt-2 max-w-[460px] text-[15px] opacity-90 md:text-[17px]">From {formatMoney(cheapest)} a night · Check-in {hotel.checkIn}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-2.5">
               <Link href={`/hotel/${hotel.slug}/rooms`} className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#1d1d1f] transition-transform active:scale-[0.98]">
