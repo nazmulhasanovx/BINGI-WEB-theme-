@@ -8,7 +8,7 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import clsx from "clsx";
 import {
   Activity, Bell, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
-  Landmark, Languages, LayoutGrid, MessageSquare, Minimize2, Moon, MoreHorizontal, ReceiptText, Search, Send, Settings, Sparkles, Star, Tag,
+  Landmark, Languages, LayoutGrid, MessageSquare, Minimize2, Moon, MoreHorizontal, Plus, ReceiptText, Search, Send, Settings, Sparkles, Star, Tag,
   UserPlus, Users, Wallet,
 } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
@@ -193,6 +193,7 @@ function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
       </button>
       {open && (
         <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[min(70vh,560px)] w-[260px] overflow-y-auto rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">
+          <Link href="/onboarding" onClick={() => setOpen(false)} className="mb-1 flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-semibold text-hms-red hover:bg-hms-coral-soft"><span className="grid size-8 place-items-center rounded-lg bg-hms-coral-soft"><Plus className="size-4" /></span>Add a new property</Link>
           {mine.length > 0 && <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-hms-muted">Your properties</p>}
           {mine.length > 0 && mine.map((p) => (
             <button key={p.slug} onClick={() => { setProperty(p.slug); setOpen(false); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-hms-hover">
@@ -246,6 +247,7 @@ function Header() {
         ))}
       </nav>
       <span className="ml-1 hidden rounded-full bg-hms-amber-soft px-2 py-0.5 text-[11px] font-semibold text-hms-amber lg:inline">Prototype · demo data</span>
+      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#d8372e] hover:to-[#b11c29]"><Plus className="size-4" aria-hidden /><span className="hidden sm:inline">New property</span></Link>
       <div className="ml-auto flex items-center gap-1.5">
         <button aria-label="Compact view" className="grid size-9 place-items-center rounded-lg text-hms-muted hover:bg-hms-hover"><Minimize2 className="size-[17px]" /></button>
         <label className="hidden h-9 w-[210px] items-center gap-2 rounded-full bg-hms-hover px-3 text-[13px] text-hms-muted lg:flex">
