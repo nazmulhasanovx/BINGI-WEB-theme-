@@ -40,9 +40,9 @@ function Body() {
   };
   return (
     <main className="mx-auto max-w-[760px] px-4 pb-10 pt-4 sm:px-6">
-      <div className="rounded-[28px] bg-white p-6 shadow-[0_30px_80px_-40px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] sm:p-8">
+      <div className="rounded-xl bg-white p-6 shadow-[0_30px_80px_-40px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] sm:p-8">
         <p className={clsx("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13.5px] font-semibold", approved ? "bg-[#eef8f1] text-[#1c6b3c]" : "bg-[#fdf6e7] text-[#7a4a0b]")}>{approved ? <Check className="size-4" /> : <Clock className="size-4" />}{t(STATUS_BN[d.status], STATUS_LABEL[d.status])}</p>
-        <h1 className="mt-3 text-[28px] font-bold">{d.name || t("নাম নেই", "Untitled property")}</h1>
+        <h1 className="mt-3 text-[28px] font-semibold">{d.name || t("নাম নেই", "Untitled property")}</h1>
         <p className="mt-1 text-[15px] text-[#5b6170]">{PLANS[d.plan].label} · {t(`ফ্রি ট্রায়াল: ${num(trialLeft(d), lang)}/${num(TRIAL_DAYS, lang)} দিন বাকি`, `free trial: ${trialLeft(d)} of ${TRIAL_DAYS} days left`)}</p>
         <ol className="mt-6 flex items-center gap-1.5 sm:gap-2" aria-label={t("অনুমোদনের ধাপ", "Approval progress")}>
           {steps.map((s, i) => (
@@ -54,10 +54,10 @@ function Body() {
           ))}
         </ol>
         {d.status === "needs-changes" && (
-          <div role="alert" className="mt-6 rounded-2xl border border-[#f6cfcb] bg-[#fff4f3] p-4">
-            <p className="font-bold text-[#9b241d]">{t("BinGi একটা পরিবর্তন চেয়েছে", "BinGi asked for a change")}</p>
+          <div role="alert" className="mt-6 rounded-xl border border-[#f6cfcb] bg-[#fff4f3] p-4">
+            <p className="font-semibold text-[#9b241d]">{t("BinGi একটা পরিবর্তন চেয়েছে", "BinGi asked for a change")}</p>
             <p className="mt-1 text-[14.5px] text-[#9b241d]">{d.note}</p>
-            <Link href="/onboarding/flow" onClick={() => edit((x) => { x.step = "6.2"; x.status = "draft"; })} className="mt-3 inline-flex h-10 items-center rounded-2xl bg-[#1d1f24] px-4 text-[14.5px] font-semibold text-white">{t("ঠিক করে আবার জমা দিন", "Fix and resubmit")}</Link>
+            <Link href="/onboarding/flow" onClick={() => edit((x) => { x.step = "6.2"; x.status = "draft"; })} className="mt-3 inline-flex h-10 items-center rounded-xl bg-[#1d1f24] px-4 text-[14.5px] font-semibold text-white">{t("ঠিক করে আবার জমা দিন", "Fix and resubmit")}</Link>
           </div>
         )}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -66,11 +66,11 @@ function Body() {
           <Gate icon={Wallet} title={t("অনলাইন পেমেন্ট", "Online payment")} on={false} text={approved ? t("সেটিংস থেকে আবেদন", "Apply in Settings") : t("অনুমোদন + যাচাইয়ের পরে", "After approval + verification")} />
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/hms" onClick={() => setProperty(d.slug)} className="inline-flex h-12 items-center rounded-2xl bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-6 text-[15.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>
+          <Link href="/hms" onClick={() => setProperty(d.slug)} className="inline-flex h-12 items-center rounded-xl bg-[#c8232e] px-6 text-[15.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>
           {d.status !== "needs-changes" && <Ghost onClick={() => edit((x) => { x.status = "draft"; x.step = "6.3"; })} className="h-12">{t("সেটআপ বদলান", "Edit setup")}</Ghost>}
         </div>
       </div>
-      <div className="mt-6 rounded-2xl border border-dashed border-[#d5d8e0] bg-white/60 p-4">
+      <div className="mt-6 rounded-xl border border-dashed border-[#d5d8e0] bg-white/60 p-4">
         <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[#5b6170]">Prototype only — BinGi review (Super Admin)</p>
         <div className="mt-2 flex flex-wrap gap-2">
           <button onClick={() => decide("approved")} className="h-9 rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14px] font-medium">Approve</button>
@@ -84,9 +84,9 @@ function Body() {
 
 function Gate({ icon: I, title, text, on }: { icon: typeof Lock; title: string; text: string; on: boolean }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border-2 border-[#e6e8ee] bg-white p-4 sm:block">
+    <div className="flex items-center gap-3 rounded-xl border border-[#dcdfe5] bg-white p-4 sm:block">
       <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-[#eef8f1] text-[#1c7d45]" : "bg-[#f1f2f5] text-[#5b6170]")}>{on ? <I className="size-5" /> : <Lock className="size-[18px]" />}</span>
-      <div className="sm:mt-3"><p className="text-[15px] font-bold">{title}</p><p className="text-[13.5px] text-[#5b6170]">{text}</p></div>
+      <div className="sm:mt-3"><p className="text-[15px] font-semibold">{title}</p><p className="text-[13.5px] text-[#5b6170]">{text}</p></div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useSite } from "@/lib/site";
 import { MANIFESTS, type ThemeManifest } from "@/themes/manifest";
 import type { Hotel } from "@/lib/types";
 import { WM_PAGES } from "./pages";
+import { DEVICE_SPEC, FittedDevice, SiteNotReady, siteReady } from "./devices";
 import { Btn } from "./ui";
 import { PAGE_COMPONENTS } from "./registry";
 
@@ -111,9 +112,9 @@ function PublishBar() {
 
 const DEVICES = [
   { id: "desktop", label: "Desktop", w: 1440, icon: Monitor },
-  { id: "laptop", label: "Laptop", w: 1024, icon: Laptop },
-  { id: "tablet", label: "Tablet", w: 834, icon: Tablet },
-  { id: "phone", label: "Phone", w: 390, icon: Smartphone },
+  { id: "laptop", label: "Laptop", w: 1280, icon: Laptop },
+  { id: "tablet", label: DEVICE_SPEC.ipad.label, w: DEVICE_SPEC.ipad.w, icon: Tablet },
+  { id: "phone", label: DEVICE_SPEC.iphone.label, w: DEVICE_SPEC.iphone.w, icon: Smartphone },
 ] as const;
 
 export function DevicePreview({ section, onClose }: { section?: string; onClose: () => void }) {
@@ -162,19 +163,27 @@ export function DevicePreview({ section, onClose }: { section?: string; onClose:
         <Btn variant="outline" onClick={onClose} className="h-8 px-3"><X className="size-4" /> Close</Btn>
       </div>
       {edit && <p className="shrink-0 border-b border-hms-line bg-[#fff7ed] px-4 py-2 text-center text-[13px] text-[#7a4a0b]">Edit mode: click outlined text to type, press Enter to save. Room names, prices and reviews come from HMS — change them in Rooms, Rates or Reviews.</p>}
-      <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-6">
-        <div style={{ width: d.w * scale, height: "100%" }} className="relative">
-          <div style={{ width: d.w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className={clsx("overflow-hidden bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]", device === "phone" ? "rounded-[36px] border-[10px] border-[#1d1f24]" : "rounded-xl")}>
-            <PreviewFrame slug={hotel.slug} section={section} edit={edit} title={`${hotel.name} draft preview`} />
+      {device === "tablet" || device === "phone" ? (
+        <div className="min-h-0 flex-1">
+          <FittedDevice kind={device === "phone" ? "iphone" : "ipad"}>
+            <PreviewFrame slug={hotel.slug} section={section} edit={edit} title={`${hotel.name} draft preview`} name={hotel.name} />
+          </FittedDevice>
+        </div>
+      ) : (
+        <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-6">
+          <div style={{ width: d.w * scale, height: "100%" }} className="relative">
+            <div style={{ width: d.w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className="overflow-hidden rounded-xl bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]">
+              <PreviewFrame slug={hotel.slug} section={section} edit={edit} title={`${hotel.name} draft preview`} name={hotel.name} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 /** The real site, rendering the draft (?preview=draft). Updates live as the draft changes. */
-export function PreviewFrame({ slug, section, title, edit = false }: { slug: string; section?: string; title: string; edit?: boolean }) {
+export function PreviewFrame({ slug, section, title, edit = false, name }: { slug: string; section?: string; title: string; edit?: boolean; name?: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const sendEdit = () => ref.current?.contentWindow?.postMessage({ type: "bingi:edit-mode", on: edit }, window.location.origin);
   useEffect(() => {
@@ -186,6 +195,7 @@ export function PreviewFrame({ slug, section, title, edit = false }: { slug: str
     const t = setTimeout(send, 600);
     return () => clearTimeout(t);
   }, [section]);
+  if (!siteReady(slug)) return <SiteNotReady name={name} />;
   return <iframe ref={ref} title={title} src={hrefFor(`/hotel/${slug}?preview=draft`)} className="size-full border-0" onLoad={() => { sendEdit(); if (section) ref.current?.contentWindow?.postMessage({ type: "bingi:scroll-to", id: section }, window.location.origin); }} />;
 }
 

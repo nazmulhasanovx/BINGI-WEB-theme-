@@ -6,9 +6,10 @@ import { useState, useSyncExternalStore } from "react";
 import { ArrowRight, Building2, Clock, Plus, ShieldCheck } from "lucide-react";
 import { setProperty } from "../hms/property";
 import { Canvas, Ghost, Header, Primary, field } from "./shell";
-import { KeyCard } from "./keycard";
 
-import { STEP_TITLE, newDraft, num, useL, useOnboarding, validPhone } from "@/lib/onboarding/store";
+import { SECTIONS, STEP_TITLE, newDraft, num, useL, useOnboarding, validPhone } from "@/lib/onboarding/store";
+
+const INTRO: [string, string][] = [["ধরন, নাম, ঠিকানা", "Type, name, address"], ["রুম, তলা, রুম নম্বর, দাম", "Rooms, floors, numbers, prices"], ["দামের নিয়ম, বাতিলের নিয়ম", "Price rules, cancellation"], ["কোন কোন কাজ, টিম", "Tools and team"], ["গেস্ট পেমেন্ট, ওয়েবসাইট", "Guest payments, website"], ["প্ল্যান, কাগজপত্র, জমা", "Plan, documents, submit"]];
 import { TYPE_META as TYPES } from "./types";
 
 const noop = () => () => {};
@@ -34,7 +35,7 @@ function SignOut() {
 
 function Auth() {
   const { update } = useOnboarding();
-  const { t } = useL();
+  const { t, lang } = useL();
   const [phone, setPhone] = useState("");
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
@@ -49,26 +50,31 @@ function Auth() {
     if (code !== DEMO_OTP) { setErr(t("কোডটা মেলেনি। SMS দেখে আবার দিন।", "That code is not right. Check the SMS and try again.")); return; }
     update((s) => { s.phone = phone.replace(/[\s-]/g, ""); s.verified = true; });
   };
-  const [demo] = useState(() => ({ ...newDraft(0), propertyType: "hotel", name: t("সী ব্রিজ হোটেল", "Sea Breeze Hotel"), city: t("কক্সবাজার", "Cox's Bazar"), area: t("কলাতলী", "Kolatoli"), floors: [1, 2, 3, 4], stay: ["ROOM"], plan: "business" as const, planPicked: true }));
   return (
-    <main className="mx-auto max-w-[1120px] px-3 pb-8 sm:px-6">
-      <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05),0_20px_50px_-30px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] lg:grid lg:grid-cols-[1.1fr_1fr]">
-        <div className="hidden flex-col justify-center gap-4 bg-[#eceef2] p-10 lg:flex">
-          <p className="text-[14px] font-semibold text-[#4b5160]">{t("শেষে আপনার property-র কার্ড এমন হবে", "Your property card at the end")}</p>
-          <div className="max-w-[360px]"><KeyCard d={demo} step="6.3" rooms={24} /></div>
+    <main className="mx-auto max-w-[1000px] px-3 py-8 sm:px-6 sm:py-14">
+      <div className="overflow-hidden rounded-xl bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05),0_20px_50px_-30px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] lg:grid lg:grid-cols-[1.1fr_1fr]">
+        <div className="hidden border-r border-[#e6e8ec] bg-[#f7f8fa] p-10 lg:block">
+          <p className="text-[15px] font-semibold">{t("সেটআপে যা যা করবেন", "What you'll set up")}</p>
+          <ol className="mt-5 space-y-4">
+            {SECTIONS.map((x, i) => (
+              <li key={x.id} className="flex items-start gap-3">
+                <span className="grid size-7 shrink-0 place-items-center rounded-full border border-[#cfd3db] bg-white text-[13px] font-semibold">{num(i + 1, lang)}</span>
+                <span><span className="block text-[15px] font-semibold">{t(x.bn, x.label)}</span><span className="text-[13.5px] text-[#5b6170]">{t(...INTRO[i])}</span></span>
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="p-6 sm:p-10 lg:py-16">
-          <p className="text-[13.5px] font-semibold text-[#c8232e]">BinGi HMS</p>
-          {!sent ? (
+        <div className="p-6 sm:p-10">
+                    {!sent ? (
             <form onSubmit={send} noValidate>
-              <h1 className="mt-1 text-[28px] font-bold leading-tight sm:text-[32px]">{t("আপনার property সেটআপ করুন", "Set up your property")}</h1>
+              <h1 className="mt-1 text-[28px] font-semibold leading-tight sm:text-[32px]">{t("আপনার property সেটআপ করুন", "Set up your property")}</h1>
               <p className="mt-2 text-[16px] text-[#5b6170]">{t("৬টা ছোট ধাপ। যেকোনো সময় থামিয়ে পরে চালিয়ে যেতে পারবেন।", "Six short parts. Stop anytime and continue later.")}</p>
               <ul className="mt-5 space-y-2 text-[15px]">
                 {[t("৭ দিন ফ্রি ট্রায়াল", "7-day free trial"), t("রুম, কটেজ, ভিলা — সব এক জায়গায়", "Rooms, cottages, villas — one setup"), t("যেকোনো ধাপে BinGi টিমের সাহায্য", "Help from the BinGi team at any step")].map((x) => <li key={x} className="flex items-center gap-2.5"><ShieldCheck className="size-5 text-[#1c7d45]" />{x}</li>)}
               </ul>
-              <label className="mt-7 block text-[15px] font-bold" htmlFor="ph">{t("মোবাইল নম্বর", "Mobile number")}</label>
+              <label className="mt-7 block text-[15px] font-semibold" htmlFor="ph">{t("মোবাইল নম্বর", "Mobile number")}</label>
               <div className="mt-2 flex gap-2">
-                <span className="grid h-12 place-items-center rounded-2xl border-2 border-[#e6e8ee] bg-[#f8f9fb] px-3 text-[15px] font-semibold">🇧🇩 +880</span>
+                <span className="grid h-12 place-items-center rounded-xl border border-[#dcdfe5] bg-[#f8f9fb] px-3 text-[15px] font-semibold">🇧🇩 +880</span>
                 <input id="ph" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01712 345678" className={field + " flex-1 text-[17px]"} aria-invalid={!!err} aria-describedby={err ? "pherr" : undefined} />
               </div>
               {err && <p id="pherr" role="alert" className="mt-2 text-[14px] font-medium text-[#b12a22]">{err}</p>}
@@ -77,9 +83,9 @@ function Auth() {
             </form>
           ) : (
             <form onSubmit={verify} noValidate>
-              <h1 className="mt-1 text-[28px] font-bold leading-tight sm:text-[32px]">{t("কোডটা দিন", "Enter the code")}</h1>
+              <h1 className="mt-1 text-[28px] font-semibold leading-tight sm:text-[32px]">{t("কোডটা দিন", "Enter the code")}</h1>
               <p className="mt-2 text-[16px] text-[#5b6170]">{t(`${phone} নম্বরে পাঠানো হয়েছে।`, `Sent to ${phone}.`)} <button type="button" onClick={() => { setSent(false); setCode(""); setErr(""); }} className="font-semibold text-[#c8232e]">{t("নম্বর বদলান", "Change")}</button></p>
-              <label className="mt-7 block text-[15px] font-bold" htmlFor="otp">{t("৬ সংখ্যার কোড", "6-digit code")}</label>
+              <label className="mt-7 block text-[15px] font-semibold" htmlFor="otp">{t("৬ সংখ্যার কোড", "6-digit code")}</label>
               <input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={field + " mt-2 h-14 text-center font-mono text-[26px] tracking-[0.45em]"} aria-invalid={!!err} />
               {err && <p role="alert" className="mt-2 text-[14px] font-medium text-[#b12a22]">{err}</p>}
               <p className="mt-3 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13.5px] text-[#7a4a0b]">{t(`প্রোটোটাইপ: SMS যায় না। কোড ${DEMO_OTP} দিন।`, `Prototype: no SMS is sent. Use code ${DEMO_OTP}.`)}</p>
@@ -105,11 +111,11 @@ function MyProperties() {
   const open = (id: string, submitted: boolean) => { update((s) => { s.current = id; }); router.push(submitted ? "/onboarding/status" : "/onboarding/flow"); };
   return (
     <main className="mx-auto max-w-[760px] px-4 pb-10 pt-4 sm:px-6">
-      <h1 className="text-[30px] font-bold">{t("আমার property", "My properties")}</h1>
+      <h1 className="text-[30px] font-semibold">{t("আমার property", "My properties")}</h1>
       <p className="mt-1 text-[15.5px] text-[#5b6170]">{t("প্রতিটা property-র আলাদা সেটআপ।", "Each property has its own setup.")} · {num(st.phone, lang)}</p>
-      <button onClick={start} className="mt-6 flex w-full items-center gap-4 rounded-[26px] border-2 border-dashed border-[#efb7b1] bg-white p-5 text-left transition-shadow hover:shadow-[0_14px_30px_-18px_rgb(200_35_46/0.5)]">
-        <span className="grid size-14 place-items-center rounded-2xl bg-gradient-to-b from-[#e2483f] to-[#c8232e] text-white"><Plus className="size-7" /></span>
-        <span><span className="block text-[19px] font-bold">{t("নতুন property যোগ করুন", "Add a new property")}</span><span className="text-[14.5px] text-[#5b6170]">{t("প্রায় ৮–১০ মিনিট", "About 8–10 minutes")}</span></span>
+      <button onClick={start} className="mt-6 flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-white p-5 text-left transition-shadow hover:shadow-[0_14px_30px_-18px_rgb(200_35_46/0.5)]">
+        <span className="grid size-14 place-items-center rounded-xl bg-[#c8232e] text-white"><Plus className="size-7" /></span>
+        <span><span className="block text-[19px] font-semibold">{t("নতুন property যোগ করুন", "Add a new property")}</span><span className="text-[14.5px] text-[#5b6170]">{t("প্রায় ৮–১০ মিনিট", "About 8–10 minutes")}</span></span>
         <ArrowRight className="ml-auto size-6 text-[#c8232e]" />
       </button>
       {st.drafts.length > 0 && (
@@ -119,17 +125,17 @@ function MyProperties() {
             const I = ty?.icon ?? Building2;
             const submitted = d.status !== "draft";
             return (
-              <li key={d.id} className="flex flex-wrap items-center gap-4 rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-[#e8e9ee]">
-                <span className="grid size-12 place-items-center rounded-2xl bg-[#fdeceb] text-[#d8372e]"><I className="size-6" /></span>
+              <li key={d.id} className="flex flex-wrap items-center gap-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-[#e8e9ee]">
+                <span className="grid size-12 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]"><I className="size-6" /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[17px] font-bold">{d.name || t("নাম নেই", "Untitled property")}</span>
+                  <span className="block truncate text-[17px] font-semibold">{d.name || t("নাম নেই", "Untitled property")}</span>
                   <span className="text-[14px] text-[#5b6170]">{[ty ? t(ty.bn, ty.en) : null, d.city].filter(Boolean).join(" · ") || t("শুরু হয়নি", "Not started")}</span>
                 </span>
                 {submitted
                   ? <span className="rounded-full bg-[#fdf6e7] px-3 py-1 text-[13px] font-semibold text-[#7a4a0b]">{d.status === "approved" ? t("অনুমোদিত", "Approved") : d.status === "needs-changes" ? t("ঠিক করতে হবে", "Needs changes") : t("অনুমোদনের অপেক্ষায়", "Waiting for approval")}</span>
                   : <span className="inline-flex items-center gap-1 text-[13.5px] text-[#5b6170]"><Clock className="size-4" /> {t("পরের ধাপ", "Next")}: {t(...STEP_TITLE[d.step])}</span>}
                 <Ghost onClick={() => open(d.id, submitted)} className="h-10">{submitted ? t("স্ট্যাটাস", "Status") : t("চালিয়ে যান", "Continue")}</Ghost>
-                {submitted && <Link href="/hms" onClick={() => { update((s) => { s.current = d.id; }); setProperty(d.slug); }} className="inline-flex h-10 items-center rounded-2xl bg-[#1d1f24] px-4 text-[14.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>}
+                {submitted && <Link href="/hms" onClick={() => { update((s) => { s.current = d.id; }); setProperty(d.slug); }} className="inline-flex h-10 items-center rounded-xl bg-[#1d1f24] px-4 text-[14.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>}
               </li>
             );
           })}

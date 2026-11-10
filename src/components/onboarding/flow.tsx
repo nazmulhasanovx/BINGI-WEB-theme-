@@ -9,9 +9,10 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
+  CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck,
 } from "lucide-react";
 import {
-  CYCLE_OFF, EXTRAS, MIN_BILLED, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, num, quote, recommend, score, useL, useOnboarding, validPhone,
+  CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
   type Cycle, type Draft, type PlanId, type StepId,
 } from "@/lib/onboarding/store";
 import { SUGGEST, configFrom } from "@/lib/onboarding/rooms-easy";
@@ -19,10 +20,10 @@ import { useRooms } from "@/lib/rooms/store";
 import { MASTER_LIST, PLAN_ORDER } from "@/themes/manifest";
 import { setProperty } from "../hms/property";
 import { money } from "../hms/rooms/parts";
-import { KeyCard } from "./keycard";
+import { MobileSteps, Sidebar } from "./sidebar";
 import { AddressSheet } from "./address";
 import { FormSlot, RoomsWhat, RoomsWhere, RoomTypes } from "./rooms-easy";
-import { Canvas, Card, Chip, Dots, Errors, Foot, Ghost, Header, Later, Next, Primary, Q, Stepper, Tile, field } from "./shell";
+import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Primary, Q, Stepper, Tile, field, label } from "./shell";
 
 const noop = () => () => {};
 import { TYPE_META as TYPES } from "./types";
@@ -57,6 +58,8 @@ function Flow({ d }: { d: Draft }) {
   const next = () => go(ORDER[Math.min(ORDER.length - 1, i + 1)]);
   const back = i > 0 ? () => go(ORDER[i - 1]) : () => router.push("/onboarding");
   const errs = errorsFor(d, counts.total, t);
+  const cs = checks(d, counts);
+  const pct = score(cs);
   const cont = () => {
     if (errs.length) { setTried(true); return; }
     if (d.step === "2.2") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
@@ -87,8 +90,8 @@ function Flow({ d }: { d: Draft }) {
   return (
     <FormSlot.Provider value={{ slot, setOpen: setFormOpen }}>
     <Canvas>
-      <Header right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e5ea]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
-      <Card aside={<KeyCard d={d} step={d.step} rooms={counts.total} />} bar={<KeyCard compact d={d} step={d.step} rooms={counts.total} />}
+      <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e5ea]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
+      <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={((i + 1) / ORDER.length) * 100}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
           {!formOpen && <Foot back={back}>
@@ -96,8 +99,7 @@ function Flow({ d }: { d: Draft }) {
             {d.step === "6.3" ? <Primary onClick={submit}>{t("জমা দিন", "Submit")} <Check className="size-[18px]" /></Primary> : <Next onClick={cont} />}
           </Foot>}
         </>}>
-        <Dots step={d.step} />
-        <div className="mt-5">
+        <div>
           {tried && <Errors list={d.step === "6.3" ? required : errs} />}
           <div key={d.step + lang} className="onb-in">{body[d.step]}</div>
         </div>
@@ -122,7 +124,19 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
   if (d.step === "2.3" && !units) e.push(t("কমপক্ষে একটা রুমের ধরন যোগ করুন।", "Add at least one room type."));
   if (d.step === "3.2" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
   if (d.step === "4.2" && d.team.some((x) => !validPhone(x.phone))) e.push(t("প্রত্যেকের সঠিক মোবাইল নম্বর দিন।", "Each invite needs a valid mobile number."));
-  if (d.step === "5.1" && !d.pay.cash) e.push(t("নগদ টাকা নেওয়া চালু রাখতে হবে।", "Pay at property must stay on."));
+  if (d.step === "5.1") {
+    const p = d.pay;
+    if (!p.cash) e.push(t("নগদ টাকা নেওয়া চালু রাখতে হবে।", "Pay at property must stay on."));
+    if (p.bkash && !validPhone(p.bkashNo ?? "")) e.push(t("সঠিক bKash নম্বর দিন।", "Enter a valid bKash number."));
+    if (p.nagad && !validPhone(p.nagadNo ?? "")) e.push(t("সঠিক Nagad নম্বর দিন।", "Enter a valid Nagad number."));
+    if (p.bank && !(p.bankName && p.bankHolder?.trim() && /^\d{9,17}$/.test(p.bankAcc ?? ""))) e.push(t("ব্যাংক, অ্যাকাউন্টের নাম আর সঠিক অ্যাকাউন্ট নম্বর দিন।", "Add the bank, account name and a valid account number."));
+    if (!p.bingi) e.push(t("BinGi Payments — এখন আবেদন নাকি পরে, বাছাই করুন।", "BinGi Payments — choose apply now or later."));
+    if (p.bingi === "apply") {
+      const s = p.settle;
+      if (!s || (s.method === "bank" ? !(s.holder.trim() && s.bank && /^\d{9,17}$/.test(s.acc) && /^\d{9}$/.test(s.routing)) : !(s.holder.trim() && validPhone(s.wallet))))
+        e.push(t("সেটেলমেন্ট অ্যাকাউন্টের সব তথ্য দিন (রাউটিং ৯ সংখ্যা)।", "Complete the settlement account (routing is 9 digits)."));
+    }
+  }
   if (d.step === "6.1" && !d.planPicked) e.push(t("একটা প্ল্যান বাছাই করুন।", "Choose a plan."));
   return e;
 }
@@ -174,15 +188,15 @@ function Address({ d }: { d: Draft }) {
   return (
     <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests use the map to find you.")}>
       {has ? (
-        <div className="flex items-start gap-3 rounded-[20px] border-2 border-[#e6e8ee] bg-white p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fdeceb] text-[#d8372e]"><MapPin className="size-6" /></span>
-          <div className="min-w-0 flex-1"><p className="text-[16px] font-bold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#5b6170]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
+        <div className="flex items-start gap-3 rounded-xl border border-[#dcdfe5] bg-white p-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]"><MapPin className="size-6" /></span>
+          <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#5b6170]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
           <Ghost onClick={() => setOpen(true)} className="h-10">{t("বদলান", "Change")}</Ghost>
         </div>
       ) : (
-        <button onClick={() => setOpen(true)} className="flex w-full items-center gap-4 rounded-[22px] border-2 border-dashed border-[#efb7b1] bg-[#fffaf9] p-5 text-left hover:bg-[#fff4f3]">
-          <span className="grid size-14 place-items-center rounded-2xl bg-gradient-to-b from-[#e2483f] to-[#c8232e] text-white"><MapPin className="size-7" /></span>
-          <span><span className="block text-[18px] font-bold">{t("ম্যাপে পিন দিন", "Drop a pin on the map")}</span><span className="text-[14.5px] text-[#5b6170]">{t("তারপর ঠিকানা নিশ্চিত করুন", "Then confirm the address")}</span></span>
+        <button onClick={() => setOpen(true)} className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] p-5 text-left hover:bg-[#fff4f3]">
+          <span className="grid size-14 place-items-center rounded-xl bg-[#c8232e] text-white"><MapPin className="size-7" /></span>
+          <span><span className="block text-[18px] font-semibold">{t("ম্যাপে পিন দিন", "Drop a pin on the map")}</span><span className="text-[14.5px] text-[#5b6170]">{t("তারপর ঠিকানা নিশ্চিত করুন", "Then confirm the address")}</span></span>
         </button>
       )}
       {open && <AddressSheet d={d} onClose={() => setOpen(false)} />}
@@ -225,10 +239,10 @@ function Rates({ d }: { d: Draft }) {
 }
 function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: () => void; icon: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className={clsx("rounded-[20px] border-2 p-4 transition-colors", on ? "border-[#ef6b62] bg-[#fff6f5]" : "border-[#e6e8ee] bg-white")}>
+    <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#1d1f24] bg-white shadow-[inset_0_0_0_1px_#1d1f24]" : "border-[#dcdfe5] bg-white")}>
       <button type="button" role="switch" aria-checked={on} onClick={onClick} className="flex w-full items-center gap-3 text-left">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#fdeceb] text-[#d8372e]">{icon}</span>
-        <span className="flex-1 text-[16px] font-bold">{title}</span>
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]">{icon}</span>
+        <span className="flex-1 text-[16px] font-semibold">{title}</span>
         <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#d8372e]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
       </button>
       {children}
@@ -237,9 +251,9 @@ function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: 
 }
 
 const POLICIES = [
-  { id: "flexible", bn: "নমনীয়", en: "Flexible", subBn: "চেক-ইনের ২৪ ঘণ্টা আগে পর্যন্ত ফ্রি বাতিল", subEn: "Free cancellation until 24 h before", emoji: "🙂" },
-  { id: "moderate", bn: "মাঝারি", en: "Moderate", subBn: "৫ দিন আগে পর্যন্ত ফ্রি, পরে ১ রাতের দাম", subEn: "Free until 5 days before, then 1 night", emoji: "😐" },
-  { id: "strict", bn: "কড়া", en: "Strict", subBn: "৭ দিন আগে ৫০% ফেরত, পরে ফেরত নেই", subEn: "50% back until 7 days, then none", emoji: "🔒" },
+  { id: "flexible", bn: "নমনীয়", en: "Flexible", subBn: "চেক-ইনের ২৪ ঘণ্টা আগে পর্যন্ত ফ্রি বাতিল", subEn: "Free cancellation until 24 h before", icon: ShieldCheck },
+  { id: "moderate", bn: "মাঝারি", en: "Moderate", subBn: "৫ দিন আগে পর্যন্ত ফ্রি, পরে ১ রাতের দাম", subEn: "Free until 5 days before, then 1 night", icon: Scale },
+  { id: "strict", bn: "কড়া", en: "Strict", subBn: "৭ দিন আগে ৫০% ফেরত, পরে ফেরত নেই", subEn: "50% back until 7 days, then none", icon: Lock },
 ] as const;
 const TIMES_IN = ["12:00", "13:00", "14:00", "15:00"];
 const TIMES_OUT = ["10:00", "11:00", "12:00"];
@@ -251,22 +265,14 @@ function Policy({ d }: { d: Draft }) {
   const [tax, setTax] = useState(false);
   return (
     <Q title={t("বাতিলের নিয়ম ও সময়", "Cancellation & times")} why={t("গেস্ট বুক করার আগে এটা দেখে।", "Guests see this before they book.")}>
-      <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-3 sm:grid-cols-3">
-        {POLICIES.map((x) => (
-          <button key={x.id} role="radio" aria-checked={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })}
-            className={clsx("relative rounded-[20px] border-2 p-4 text-left transition-colors", p.preset === x.id ? "border-[#ef6b62] bg-[#fff6f5]" : "border-[#e6e8ee] bg-white hover:border-[#d5d8e0]")}>
-            <span className="text-[28px]" aria-hidden>{x.emoji}</span>
-            <span className="mt-1 block text-[16px] font-bold">{t(x.bn, x.en)}</span>
-            <span className="mt-0.5 block text-[13.5px] leading-snug text-[#5b6170]">{t(x.subBn, x.subEn)}</span>
-            {p.preset === x.id && <span className="onb-pop absolute right-3 top-3 grid size-6 place-items-center rounded-full bg-[#d8372e] text-white"><Check className="size-4" /></span>}
-          </button>
-        ))}
+      <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-2.5">
+        {POLICIES.map((x) => <Tile key={x.id} role="radio" on={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })} icon={<x.icon className="size-6" />} title={t(x.bn, x.en)} sub={t(x.subBn, x.subEn)} />)}
       </div>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div><p className="text-[15px] font-bold">{t("চেক-ইন", "Check-in")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_IN.map((v) => <Chip key={v} on={p.checkIn === v} onClick={() => edit((y) => { y.policy.checkIn = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
-        <div><p className="text-[15px] font-bold">{t("চেক-আউট", "Check-out")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_OUT.map((v) => <Chip key={v} on={p.checkOut === v} onClick={() => edit((y) => { y.policy.checkOut = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
+        <div><p className="text-[15px] font-semibold">{t("চেক-ইন", "Check-in")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_IN.map((v) => <Chip key={v} on={p.checkIn === v} onClick={() => edit((y) => { y.policy.checkIn = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
+        <div><p className="text-[15px] font-semibold">{t("চেক-আউট", "Check-out")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_OUT.map((v) => <Chip key={v} on={p.checkOut === v} onClick={() => edit((y) => { y.policy.checkOut = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
       </div>
-      <div className="mt-5 flex flex-wrap items-center gap-2 rounded-2xl bg-[#f4f5f7] px-4 py-3 text-[14.5px]">
+      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-lg border border-[#e6e8ec] bg-white px-4 py-3 text-[14.5px]">
         <span>{t("ভ্যাট", "VAT")} {num(p.vat, lang)}% · {t("সার্ভিস চার্জ", "Service")} {num(p.sc, lang)}%</span>
         <button onClick={() => setTax((x) => !x)} aria-expanded={tax} className="ml-auto font-semibold text-[#c8232e]">{t("বদলান", "Change")}</button>
         {tax && <div className="flex w-full flex-wrap gap-4 pt-2">
@@ -282,25 +288,26 @@ function Policy({ d }: { d: Draft }) {
 const MODULES = [
   { id: "frontdesk", bn: "ফ্রন্ট ডেস্ক ও বুকিং", en: "Front desk & bookings", icon: BookOpen, locked: true },
   { id: "housekeeping", bn: "হাউসকিপিং", en: "Housekeeping", icon: Brush },
-  { id: "staff", bn: "স্টাফ ও হাজিরা", en: "Staff & attendance", icon: UsersRound },
+  { id: "staff", bn: "পূর্ণ HRM (স্টাফ, হাজিরা, বেতন)", en: "Full HRM (staff, attendance, payroll)", icon: UsersRound },
   { id: "inventory", bn: "স্টক / ইনভেন্টরি", en: "Inventory", icon: Boxes },
-  { id: "accounts", bn: "হিসাব-নিকাশ", en: "Accounts", icon: Landmark },
-  { id: "restaurant", bn: "রেস্টুরেন্ট ও বার", en: "Restaurant & Bar", icon: Utensils, ultra: true },
+  { id: "accounts", bn: "খরচের হিসাব", en: "Expense management", icon: Landmark },
+  { id: "restaurant", bn: "রেস্টুরেন্ট ও মিল", en: "Restaurant & meals", icon: Utensils },
 ];
 function Modules({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
-  const wantsFood = d.extras.some((e) => e === "Restaurant" || e === "Bar");
+  const need = recommend(d);
   return (
     <Q title={t("কোন কোন কাজ BinGi দিয়ে করবেন?", "What will you run on BinGi?")} why={t("যেগুলো চালান না সেগুলো বন্ধ রাখুন — মেনু ছোট থাকবে। পরে চালু করা যায়।", "Turn off what you don't run. You can turn it on later.")}>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5">
         {MODULES.map((m) => {
           const on = m.locked || d.modules.includes(m.id);
+          const pl = MODULE_PLAN[m.id];
           return <Tile key={m.id} on={on} locked={m.locked} onClick={() => edit((x) => { x.modules = x.modules.includes(m.id) ? x.modules.filter((y) => y !== m.id) : [...x.modules, m.id]; })}
-            icon={<m.icon className="size-5" />} title={t(m.bn, m.en)} badge={m.locked ? t("সবসময় চালু", "Always on") : m.ultra ? t("Ultra প্ল্যানে", "Ultra plan") : undefined} />;
+            icon={<m.icon className="size-6" />} title={t(m.bn, m.en)} badge={m.locked ? t("সবসময় চালু", "Always on") : pl === "starter" ? undefined : t(`${PLANS[pl].label} থেকে`, `From ${PLANS[pl].label}`)} />;
         })}
       </div>
-      {(d.modules.includes("restaurant") || wantsFood) && <p className="mt-4 flex gap-2 rounded-2xl bg-[#fdf6e7] px-4 py-3 text-[14px] text-[#7a4a0b]"><CircleAlert className="mt-0.5 size-4 shrink-0" />{t("রেস্টুরেন্ট ও বার Ultra প্ল্যানে আছে — শেষ ধাপে Ultra বাছলে চালু হবে।", "Restaurant & Bar is in Ultra — pick Ultra in the last part to use it.")}</p>}
+      <p className="mt-4 rounded-lg border border-[#e6e8ec] bg-white px-4 py-3 text-[14px] text-[#4b5160]">{t("আপনার বাছাই অনুযায়ী মানানসই প্ল্যান:", "Plan that fits your choices:")} <b className="text-[#1d1f24]">{PLANS[need].label}</b> · {t("শেষ ধাপে বদলাতে পারবেন", "you can change it in the last part")}</p>
     </Q>
   );
 }
@@ -310,12 +317,12 @@ function Team({ d }: { d: Draft }) {
   const { t } = useL();
   return (
     <Q title={t("আপনার টিম", "Your team")} why={t("তারা SMS পাবে আর নিজের BinGi ID দিয়ে যোগ দেবে।", "They get an SMS and join with their own BinGi ID.")}>
-      <p className="text-[15px] font-bold">{t("কত জন কাজ করেন?", "How many people work here?")}</p>
+      <p className="text-[15px] font-semibold">{t("কত জন কাজ করেন?", "How many people work here?")}</p>
       <div className="mt-2 flex flex-wrap gap-2">{STAFF.map((s, i) => <Chip key={s} on={d.staff === s} onClick={() => edit((x) => { x.staff = s; })}>{t(["শুধু আমি", "২–৫", "৬–১৫", "১৬–৫০", "৫০+"][i], s)}</Chip>)}</div>
-      <p className="mt-6 text-[15px] font-bold">{t("কাউকে এখনই যোগ করবেন? (৩ জন পর্যন্ত)", "Invite someone now? (up to 3)")}</p>
+      <p className="mt-6 text-[15px] font-semibold">{t("কাউকে এখনই যোগ করবেন? (৩ জন পর্যন্ত)", "Invite someone now? (up to 3)")}</p>
       <div className="mt-2 space-y-2">
         {d.team.map((m, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2 rounded-[20px] border-2 border-[#e6e8ee] bg-white p-2.5">
+          <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#dcdfe5] bg-white p-2.5">
             <input aria-label={`${t("মোবাইল", "Mobile")} ${i + 1}`} inputMode="tel" placeholder="01712 345678" value={m.phone} onChange={(e) => edit((x) => { x.team[i].phone = e.target.value; })} className={field + " h-11 min-w-0 flex-1 basis-[160px]"} />
             <div className="flex flex-wrap gap-1.5">{ROLES.map(([en, bn]) => <Chip key={en} on={m.role === en} onClick={() => edit((x) => { x.team[i].role = en; })}>{t(bn, en)}</Chip>)}</div>
             <button aria-label={`${t("বাদ দিন", "Remove")} ${i + 1}`} onClick={() => edit((x) => { x.team.splice(i, 1); })} className="ml-auto grid size-10 place-items-center rounded-full text-[#5b6170] hover:bg-[#f1f2f5]">✕</button>
@@ -328,20 +335,71 @@ function Team({ d }: { d: Draft }) {
 }
 
 // ---------------- Part 5 ----------------
+const BANKS = ["Sonali Bank", "Janata Bank", "Agrani Bank", "Rupali Bank", "BRAC Bank", "Dutch-Bangla Bank", "The City Bank", "Eastern Bank", "Islami Bank Bangladesh", "Prime Bank", "Mutual Trust Bank", "Bank Asia", "Pubali Bank", "Uttara Bank", "Dhaka Bank", "Southeast Bank", "NCC Bank", "ONE Bank", "AB Bank", "Standard Chartered"];
+function In({ id, lab, value, set, ph, mode, hint }: { id: string; lab: string; value?: string; set: (v: string) => void; ph?: string; mode?: "tel" | "numeric"; hint?: string }) {
+  return <div><label htmlFor={id} className={label}>{lab}</label><input id={id} value={value ?? ""} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode={mode} className={field + " mt-1.5"} />{hint && <p className="mt-1 text-[12.5px] text-[#5b6170]">{hint}</p>}</div>;
+}
 function Payments({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
   const p = d.pay;
   const tog = (k: "cash" | "bkash" | "nagad" | "bank") => edit((x) => { x.pay[k] = !x.pay[k]; });
+  const setP = (fn: (x: Draft["pay"]) => void) => edit((x) => { fn(x.pay); });
+  const st = p.settle ?? { method: "bank" as const, holder: "", bank: "", acc: "", branch: "", routing: "", wallet: "" };
+  const setS = (k: keyof typeof st, v: string) => setP((x) => { x.settle = { ...st, [k]: v } as typeof st; });
+  const types: [NonNullable<Draft["pay"]["bkashType"]>, string, string][] = [["personal", "পার্সোনাল", "Personal"], ["merchant", "মার্চেন্ট", "Merchant"], ["agent", "এজেন্ট", "Agent"]];
   return (
-    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} why={t("শুরুতে গেস্ট সরাসরি আপনাকে টাকা দেয়। অনলাইন পেমেন্ট যাচাইয়ের পরে চালু হয়।", "Guests pay you directly first. Online payment opens after verification.")}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Tile big on={p.cash} onClick={() => tog("cash")} icon={<Banknote className="size-6" />} title={t("নগদ / কাউন্টারে", "Cash at the desk")} sub={t("সবসময় চালু থাকবে", "Always on")} />
-        <Tile big on={p.bkash} onClick={() => tog("bkash")} icon={<Smartphone className="size-6" />} title="bKash" sub={t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")} />
-        <Tile big on={p.nagad} onClick={() => tog("nagad")} icon={<Smartphone className="size-6" />} title="Nagad" sub={t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")} />
-        <Tile big on={p.bank} onClick={() => tog("bank")} icon={<Landmark className="size-6" />} title={t("ব্যাংক ট্রান্সফার", "Bank transfer")} sub={t("অগ্রিম টাকার জন্য", "For advance payments")} />
+    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} why={t("শুরুতে গেস্ট সরাসরি আপনাকে টাকা দেয়। অনলাইন পেমেন্ট (BinGi Payments) যাচাইয়ের পরে চালু হয়।", "Guests pay you directly first. BinGi Payments opens after verification.")}>
+      <div className="grid gap-2.5">
+        <Tile on={p.cash} onClick={() => tog("cash")} icon={<Banknote className="size-6" />} title={t("নগদ / কাউন্টারে", "Cash at the desk")} sub={t("সবসময় চালু থাকবে", "Always on")} />
+        <Tile on={p.bkash} onClick={() => tog("bkash")} icon={<Smartphone className="size-6" />} title="bKash" sub={p.bkash && p.bkashNo ? `${p.bkashNo} · ${t(types.find((x) => x[0] === (p.bkashType ?? "personal"))![1], types.find((x) => x[0] === (p.bkashType ?? "personal"))![2])}` : t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <In id="bk-no" lab={t("bKash নম্বর", "bKash number")} value={p.bkashNo} set={(v) => setP((x) => { x.bkashNo = v; })} ph="01712 345678" mode="tel" />
+            <div><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{types.map(([v, bn, en]) => <Chip key={v} on={(p.bkashType ?? "personal") === v} onClick={() => setP((x) => { x.bkashType = v; })}>{t(bn, en)}</Chip>)}</div></div>
+          </div>
+        </Tile>
+        <Tile on={p.nagad} onClick={() => tog("nagad")} icon={<Smartphone className="size-6" />} title="Nagad" sub={p.nagad && p.nagadNo ? p.nagadNo : t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <In id="ng-no" lab={t("Nagad নম্বর", "Nagad number")} value={p.nagadNo} set={(v) => setP((x) => { x.nagadNo = v; })} ph="01812 345678" mode="tel" />
+            <div><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{types.map(([v, bn, en]) => <Chip key={v} on={(p.nagadType ?? "personal") === v} onClick={() => setP((x) => { x.nagadType = v; })}>{t(bn, en)}</Chip>)}</div></div>
+          </div>
+        </Tile>
+        <Tile on={p.bank} onClick={() => tog("bank")} icon={<Landmark className="size-6" />} title={t("ব্যাংক ট্রান্সফার", "Bank transfer")} sub={p.bank && p.bankName ? `${p.bankName} · ${p.bankAcc ?? ""}` : t("অগ্রিম টাকার জন্য", "For advance payments")}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><label htmlFor="bk-bank" className={label}>{t("ব্যাংক", "Bank")}</label><select id="bk-bank" value={p.bankName ?? ""} onChange={(e) => setP((x) => { x.bankName = e.target.value; })} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{BANKS.map((b) => <option key={b}>{b}</option>)}</select></div>
+            <In id="bk-holder" lab={t("অ্যাকাউন্টের নাম", "Account name")} value={p.bankHolder} set={(v) => setP((x) => { x.bankHolder = v; })} />
+            <In id="bk-acc" lab={t("অ্যাকাউন্ট নম্বর", "Account number")} value={p.bankAcc} set={(v) => setP((x) => { x.bankAcc = v.replace(/[^\d]/g, ""); })} mode="numeric" />
+            <In id="bk-branch" lab={t("শাখা", "Branch")} value={p.bankBranch} set={(v) => setP((x) => { x.bankBranch = v; })} />
+          </div>
+        </Tile>
       </div>
-      <div className="mt-3"><Toggle on={p.bingi === "later"} onClick={() => edit((x) => { x.pay.bingi = x.pay.bingi === "later" ? "" : "later"; })} icon={<Wallet className="size-5" />} title={t("BinGi Payments — অনলাইনে কার্ড/ওয়ালেট (যাচাইয়ের পর আবেদন)", "BinGi Payments — online cards/wallets (apply after verification)")} /></div>
+
+      <h2 className="mt-9 text-[18px] font-semibold">{t("BinGi Payments — অনলাইনে কার্ড ও ওয়ালেট", "BinGi Payments — online cards & wallets")}</h2>
+      <p className="mt-1 text-[14.5px] text-[#5b6170]">{t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে, টাকা আপনার সেটেলমেন্ট অ্যাকাউন্টে যাবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website; money settles to your account. Goes live after verification and approval.")}</p>
+      <div role="radiogroup" aria-label="BinGi Payments" className="mt-4 grid gap-2.5">
+        <Tile role="radio" on={p.bingi === "apply"} onClick={() => setP((x) => { x.bingi = "apply"; })} icon={<Wallet className="size-6" />} title={t("এখনই আবেদন করুন", "Apply now")} sub={t("সেটেলমেন্ট অ্যাকাউন্ট দিন", "Add your settlement account")}>
+          <div role="radiogroup" aria-label={t("সেটেলমেন্ট কোথায়", "Settle to")} className="flex flex-wrap gap-2">
+            <Chip on={st.method === "bank"} onClick={() => setS("method", "bank")}>{t("ব্যাংক অ্যাকাউন্ট", "Bank account")}</Chip>
+            <Chip on={st.method === "bkash"} onClick={() => setS("method", "bkash")}>{t("bKash মার্চেন্ট", "bKash merchant")}</Chip>
+          </div>
+          {st.method === "bank" ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <In id="st-holder" lab={t("অ্যাকাউন্টের নাম (ব্যবসার নামে)", "Account name (business)")} value={st.holder} set={(v) => setS("holder", v)} />
+              <div><label htmlFor="st-bank" className={label}>{t("ব্যাংক", "Bank")}</label><select id="st-bank" value={st.bank} onChange={(e) => setS("bank", e.target.value)} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{BANKS.map((b) => <option key={b}>{b}</option>)}</select></div>
+              <In id="st-acc" lab={t("অ্যাকাউন্ট নম্বর", "Account number")} value={st.acc} set={(v) => setS("acc", v.replace(/\D/g, ""))} mode="numeric" />
+              <In id="st-branch" lab={t("শাখা", "Branch")} value={st.branch} set={(v) => setS("branch", v)} />
+              <In id="st-routing" lab={t("রাউটিং নম্বর", "Routing number")} value={st.routing} set={(v) => setS("routing", v.replace(/\D/g, ""))} mode="numeric" hint={t("৯ সংখ্যা — চেক বই বা ব্যাংকের অ্যাপে আছে", "9 digits — on your cheque book or bank app")} />
+            </div>
+          ) : (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <In id="st-holder2" lab={t("মার্চেন্টের নাম", "Merchant name")} value={st.holder} set={(v) => setS("holder", v)} />
+              <In id="st-wallet" lab={t("bKash মার্চেন্ট নম্বর", "bKash merchant number")} value={st.wallet} set={(v) => setS("wallet", v)} mode="tel" />
+            </div>
+          )}
+          <p className="mt-3 text-[12.5px] text-[#5b6170]">{t("প্রোটোটাইপ: তথ্য শুধু এই ব্রাউজারে থাকে, কোথাও পাঠানো হয় না।", "Prototype: kept in this browser only, not sent anywhere.")}</p>
+        </Tile>
+        <Tile role="radio" on={p.bingi === "later"} onClick={() => setP((x) => { x.bingi = "later"; })} icon={<Clock className="size-6" />} title={t("পরে সেটআপ করবো", "Set up later")} sub={t("HMS → সেটিংস → কানেক্টিভিটি থেকে পরে আবেদন", "Apply later in HMS → Settings → Connectivity")} />
+      </div>
     </Q>
   );
 }
@@ -349,7 +407,7 @@ function Payments({ d }: { d: Draft }) {
 function Website({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
-  const plan: PlanId = d.planPicked ? d.plan : recommend(d.units, d.extras);
+  const plan: PlanId = d.planPicked ? d.plan : recommend(d);
   const rank = (p: string) => PLAN_ORDER.indexOf(p as (typeof PLAN_ORDER)[number]);
   const old = hotelOf(d).propertyType;
   const fits = (x: (typeof MASTER_LIST)[number]) => x.bestFor.includes(old);
@@ -361,9 +419,9 @@ function Website({ d }: { d: Draft }) {
           const on = d.site.theme === x.id;
           return (
             <button key={x.id} role="radio" aria-checked={on} onClick={() => edit((y) => { y.site.theme = x.id; y.site.later = false; })}
-              className={clsx("relative overflow-hidden rounded-[20px] border-2 text-left transition-colors", on ? "border-[#ef6b62]" : "border-[#e6e8ee] hover:border-[#d5d8e0]")}>
+              className={clsx("relative overflow-hidden rounded-xl border text-left transition-colors", on ? "border-[#ef6b62]" : "border-[#dcdfe5] hover:border-[#d5d8e0]")}>
               <Image src={`/themes/${x.id}.jpg`} alt="" width={520} height={260} className="aspect-[16/8] w-full object-cover object-top" />
-              <span className="flex flex-wrap items-center gap-2 bg-white p-3"><span className="text-[15.5px] font-bold">{x.name}</span>{fits(x) && <span className="rounded-full bg-[#e9f6ee] px-2 py-0.5 text-[11.5px] font-semibold text-[#1c6b3c]">{t("আপনার জন্য মানানসই", "Good fit")}</span>}</span>
+              <span className="flex flex-wrap items-center gap-2 bg-white p-3"><span className="text-[15.5px] font-semibold">{x.name}</span>{fits(x) && <span className="rounded-full bg-[#e9f6ee] px-2 py-0.5 text-[11.5px] font-semibold text-[#1c6b3c]">{t("আপনার জন্য মানানসই", "Good fit")}</span>}</span>
               {on && <span className="onb-pop absolute right-3 top-3 grid size-7 place-items-center rounded-full bg-[#d8372e] text-white shadow"><Check className="size-4" /></span>}
             </button>
           );
@@ -378,41 +436,51 @@ function Website({ d }: { d: Draft }) {
 function Plan({ d, units }: { d: Draft; units: number }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
-  const [open, setOpen] = useState<PlanId | null>(null);
-  const rec = recommend(units, d.extras);
+  const rec = recommend(d);
+  const n = (v: number) => num(money(v), lang);
   return (
-    <Q title={t("আপনার প্ল্যান বাছাই করুন", "Choose your plan")} sub={t(`${num(TRIAL_DAYS, lang)} দিন ফ্রি। আজ কোনো টাকা লাগবে না। দাম আপনার ${num(units, lang)}টা রুম ধরে।`, `${TRIAL_DAYS} days free. Nothing to pay today. Priced on your ${units} rooms.`)}>
-      <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="grid gap-3">
+    <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms. ${TRIAL_DAYS} days free.`)}>
+      <div role="radiogroup" aria-label={t("বিলিং", "Billing")} className="inline-flex rounded-lg border border-[#cfd3db] bg-white p-1">
+        {([1, 6, 12] as Cycle[]).map((c) => <button key={c} role="radio" aria-checked={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })} className={clsx("h-9 rounded-md px-3.5 text-[14px] font-semibold", d.cycle === c ? "bg-[#1d1f24] text-white" : "text-[#4b5160] hover:bg-[#f4f5f7]")}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className={clsx("ml-1.5 text-[12.5px]", d.cycle === c ? "text-[#ffb4ad]" : "text-[#c8232e]")}>−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</button>)}
+      </div>
+      <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="mt-5 grid gap-3 md:grid-cols-3">
         {(Object.keys(PLANS) as PlanId[]).map((p) => {
           const P = PLANS[p]; const on = d.planPicked && d.plan === p; const q = quote(p, units, d.cycle);
+          const low = planRank(p) < planRank(rec);
           return (
-            <div key={p} className={clsx("rounded-[22px] border-2 transition-colors", on ? "border-[#ef6b62] bg-[#fff6f5]" : "border-[#e6e8ee] bg-white")}>
-              <button role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })} className="flex w-full items-center gap-4 p-4 text-left">
-                <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full border-2", on ? "border-[#d8372e] bg-[#d8372e] text-white" : "border-[#d5d8e0]")}>{on && <Check className="size-4" />}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2 text-[18px] font-bold">{P.label}{rec === p && <span className="rounded-full bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য ভালো", "Recommended")}</span>}</span>
-                  <span className="block text-[13.5px] text-[#5b6170]">{t(p === "starter" ? "ছোট গেস্ট হাউস ও বাড়ি" : p === "business" ? "হোটেল ও রিসোর্ট, পুরো HMS" : "পুরো HMS + রেস্টুরেন্ট ও বার", P.for)}</span>
-                </span>
-                <span className="shrink-0 text-right"><span className="block text-[20px] font-bold">৳{num(money(q.monthly), lang)}</span><span className="text-[12.5px] text-[#5b6170]">{t("মাসে", "/ month")}</span></span>
-              </button>
-              <button onClick={() => setOpen(open === p ? null : p)} aria-expanded={open === p} className="mx-4 mb-3 text-[13.5px] font-semibold text-[#c8232e]">{open === p ? t("হিসাব লুকান", "Hide details") : t("হিসাব দেখুন", "See details")}</button>
-              {open === p && (
-                <dl className="onb-in mx-4 mb-4 grid gap-1.5 rounded-2xl bg-white p-3 text-[14px] ring-1 ring-[#e6e8ee]">
-                  <Row k={t(`${num(q.billed, lang)}টা রুম × ৳${num(P.perUnit, lang)}`, `${q.billed} units × ৳${P.perUnit}`)} v={`৳${num(money(q.monthly), lang)}`} />
-                  {units < MIN_BILLED && <p className="text-[12.5px] text-[#5b6170]">{t(`কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল হয়`, `Billing starts at ${MIN_BILLED} units`)}</p>}
-                  <Row k={t("অ্যাক্টিভেশন (একবার)", "Activation (one time)")} v={P.activation ? `৳${num(money(P.activation), lang)}` : t("নেই", "None")} />
-                </dl>
-              )}
-            </div>
+            <button key={p} role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })}
+              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "border-[#c8232e] shadow-[inset_0_0_0_1px_#c8232e]" : "border-[#dcdfe5] hover:border-[#9aa0ac]")}>
+              <span className="flex items-center justify-between gap-2"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#c8232e] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
+              <span className="mt-1 text-[13.5px] text-[#5b6170]">{t(P.forBn, P.for)}</span>
+              <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#b11c29]">{t(bn, en)}</span>)}</span>
+              <span className="mt-3 text-[28px] font-semibold leading-none">৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#5b6170]"> /{t("রুম/মাস", "room/month")}</span></span>
+              <span className="mt-3 space-y-1.5 border-t border-[#eceef2] pt-3 text-[13px] text-[#4b5160]">
+                <span className="block">{t(`${num(q.billed, lang)} রুম · ৳${n(q.monthly)}/মাস`, `${q.billed} rooms · ৳${n(q.monthly)}/month`)}</span>
+                <span className="block">{t(`বুকিং ফি: মার্কেটপ্লেস ${num(P.fees[0], lang)}% · ওয়েব ${num(P.fees[1], lang)}% · ওয়াক-ইন ${num(P.fees[2], lang)}%`, `Booking fees: Marketplace ${P.fees[0]}% · Web ${P.fees[1]}% · Walk-in ${P.fees[2]}%`)}</span>
+                <span className="block">{P.activation ? <>{t("অ্যাক্টিভেশন", "Activation")} {P.activationRegular && <s>৳{n(P.activationRegular)}</s>} ৳{n(P.activation)}</> : t("অ্যাক্টিভেশন ফি নেই", "No activation fee")}</span>
+              </span>
+              <span className="mt-3 border-t border-[#eceef2] pt-3 text-[12.5px] font-semibold">{t(...P.includesTitle)}</span>
+              <span className="mt-1.5 space-y-1">{P.includes.map(([bn, en]) => <span key={en} className="flex items-start gap-1.5 text-[13px] text-[#4b5160]"><Check className="mt-0.5 size-3.5 shrink-0 text-[#c8232e]" strokeWidth={3} />{t(bn, en)}</span>)}</span>
+              {low && <span className="mt-3 rounded bg-[#fdf6e7] px-2 py-1 text-[12px] text-[#7a4a0b]">{t("আপনার বাছাই করা কিছু টুল এতে নেই", "Some tools you picked aren't in this plan")}</span>}
+              <span aria-hidden className={clsx("absolute right-4 top-4 grid size-5 place-items-center rounded-full border", on ? "border-[#c8232e] bg-[#c8232e]" : "hidden")}><span className="size-2 rounded-full bg-white" /></span>
+            </button>
           );
         })}
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="text-[14.5px] font-semibold">{t("বিল", "Billing")}</span>
-        {([1, 6, 12] as Cycle[]).map((c) => <Chip key={c} on={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className="text-[#1c7d45]">−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</Chip>)}
+      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-[#cfd3db] bg-white px-4 py-3">
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Custom</span><span className="text-[13.5px] text-[#5b6170]">{t("একাধিক property, হোটেল গ্রুপ — কোটেশন রিভিউর পরে", "Hotel groups and chains — quotation after review")}</span></span>
+        <span className="text-[13.5px] font-semibold text-[#4b5160]">{t("সাহায্য চাপুন → কল", "Tap Help → call")}</span>
       </div>
       {d.planPicked && (() => { const q = quote(d.plan, units, d.cycle); return (
-        <p className="mt-4 rounded-2xl bg-[#f4f5f7] px-4 py-3 text-[14.5px]">{t("ট্রায়ালের পর", "After the trial")}: <b>৳{num(money(q.total), lang)}</b> {q.off ? <span className="text-[#1c7d45]">({t("ছাড়", "saved")} ৳{num(money(q.off), lang)})</span> : null} · <span className="text-[#5b6170]">{t("ভ্যাট থাকলে ইনভয়েসে যোগ হবে", "VAT, if any, on the invoice")}</span></p>
+        <div className="mt-5 grid gap-1.5 rounded-xl border border-[#e6e8ec] bg-white p-4 text-[14.5px]"><dl className="grid gap-1.5">
+          <Row k={t(`${num(q.billed, lang)} রুম × ৳${num(PLANS[d.plan].perUnit, lang)} × ${num(d.cycle, lang)} মাস`, `${q.billed} rooms × ৳${PLANS[d.plan].perUnit} × ${d.cycle} mo`)} v={`৳${n(q.gross)}`} />
+          {q.off > 0 && <Row k={t("ছাড়", "Discount")} v={`−৳${n(q.off)}`} />}
+          <Row k={t("অ্যাক্টিভেশন (একবার)", "Activation (one time)")} v={`৳${n(q.activation)}`} />
+          <div className="mt-1 flex justify-between border-t border-[#eceef2] pt-2 font-semibold"><dt>{t("ট্রায়ালের পর", "After the trial")}</dt><dd>৳{n(q.total)}</dd></div>
+          </dl>
+          {units < MIN_BILLED && <p className="text-[12.5px] text-[#5b6170]">{t(`কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল হয়`, `Billing starts at ${MIN_BILLED} rooms`)}</p>}
+          <p className="text-[12.5px] text-[#5b6170]">{t("ট্যাক্স প্রযোজ্য হলে আলাদা", "Taxes extra where applicable")}</p>
+        </div>
       ); })()}
     </Q>
   );
@@ -422,14 +490,14 @@ function Row({ k, v }: { k: string; v: string }) { return <div className="flex j
 function Verify({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
-  const docs = [["nid", "🪪", "মালিকের NID (সামনে ও পেছনে)", "Owner NID (front & back)", true], ["trade", "📄", "ট্রেড লাইসেন্স", "Trade licence", true], ["tin", "🧾", "TIN সার্টিফিকেট", "TIN certificate", false]] as const;
+  const docs = [["nid", IdCard, "মালিকের NID (সামনে ও পেছনে)", "Owner NID (front & back)", true], ["trade", FileText, "ট্রেড লাইসেন্স", "Trade licence", true], ["tin", Receipt, "TIN সার্টিফিকেট", "TIN certificate", false]] as const;
   return (
     <Q title={t("কাগজপত্র", "Documents")} why={t("ওয়েবসাইট পাবলিক আর অনলাইন পেমেন্টের আগে লাগবে। এখন না দিলেও HMS চালাতে পারবেন।", "Needed before going public and online payment. You can use HMS meanwhile.")}>
       <div className="grid gap-3">
-        {docs.map(([k, em, bn, en, req]) => (
-          <label key={k} className={clsx("flex cursor-pointer items-center gap-3 rounded-[20px] border-2 p-4 focus-within:ring-4 focus-within:ring-[#ef6b62]/15", d.verify[k] ? "border-[#bfe0cb] bg-[#f4fbf6]" : "border-[#e6e8ee] bg-white")}>
-            <span className="grid size-12 place-items-center rounded-2xl bg-[#fdeceb] text-[24px]" aria-hidden>{d.verify[k] ? "✅" : em}</span>
-            <span className="min-w-0 flex-1"><span className="block text-[16px] font-bold">{t(bn, en)}{!req && <span className="font-normal text-[#5b6170]"> ({t("ঐচ্ছিক", "optional")})</span>}</span><span className="block truncate text-[13.5px] text-[#5b6170]">{d.verify[k] || t("ছবি বা PDF", "Photo or PDF")}</span></span>
+        {docs.map(([k, DocIcon, bn, en, req]) => (
+          <label key={k} className={clsx("flex cursor-pointer items-center gap-3 rounded-xl border p-4 focus-within:ring-4 focus-within:ring-[#ef6b62]/15", d.verify[k] ? "border-[#bfe0cb] bg-[#f4fbf6]" : "border-[#dcdfe5] bg-white")}>
+            <span className={clsx("grid size-10 place-items-center", d.verify[k] ? "text-[#1c7d45]" : "text-[#1d1f24]")} aria-hidden>{d.verify[k] ? <CircleCheck className="size-6" /> : <DocIcon className="size-6" />}</span>
+            <span className="min-w-0 flex-1"><span className="block text-[16px] font-semibold">{t(bn, en)}{!req && <span className="font-normal text-[#5b6170]"> ({t("ঐচ্ছিক", "optional")})</span>}</span><span className="block truncate text-[13.5px] text-[#5b6170]">{d.verify[k] || t("ছবি বা PDF", "Photo or PDF")}</span></span>
             <span className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-[#c8232e]"><FileUp className="size-4" />{d.verify[k] ? t("বদলান", "Replace") : t("আপলোড", "Upload")}</span>
             <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) edit((x) => { x.verify[k] = f.name; x.verify.later = false; }); }} />
           </label>
@@ -447,16 +515,16 @@ function Ready({ d, counts, go }: { d: Draft; counts: { total: number; published
   const q = d.planPicked ? quote(d.plan, counts.total, d.cycle) : null;
   return (
     <Q title={t("সব ঠিক আছে?", "All good?")} why={t("জমা দিলে HMS সেটআপ মোডে খুলবে। BinGi যাচাই করে অনুমোদন দেবে।", "After submitting, HMS opens in setup mode while BinGi reviews.")}>
-      <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-br from-[#fff5f4] to-[#f4f5f7] p-4">
+      <div className="flex items-center gap-4 rounded-xl bg-gradient-to-br from-[#fff5f4] to-[#f4f5f7] p-4">
         <Ring v={sc} lang={lang} />
         <div className="min-w-0">
-          <p className="truncate text-[18px] font-bold">{d.name || t("নাম নেই", "Untitled")}</p>
+          <p className="truncate text-[18px] font-semibold">{d.name || t("নাম নেই", "Untitled")}</p>
           <p className="text-[14px] text-[#5b6170]">{num(counts.total, lang)} {t("টা রুম", "rooms")} · {d.city || "—"} · {d.planPicked ? PLANS[d.plan].label : "—"}{q ? ` · ৳${num(money(q.monthly), lang)}/${t("মাস", "mo")}` : ""}</p>
         </div>
       </div>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {cs.map((c) => (
-          <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-2xl border-2 px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#e6e8ee] bg-white")}>
+          <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-xl border px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#dcdfe5] bg-white")}>
             <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#d8372e] text-white" : "bg-[#e6e8ee] text-[#5b6170]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
             <span className="min-w-0 flex-1 text-[14.5px] font-medium">{t(c.bn, c.label)}{c.level !== "required" && !c.ok && <span className="text-[12.5px] text-[#5b6170]"> · {t("পরে করা যাবে", "can wait")}</span>}</span>
             {!c.ok && <button onClick={() => go(c.step)} className="text-[13.5px] font-semibold text-[#c8232e]">{t("ঠিক করুন", "Fix")}</button>}
@@ -482,14 +550,13 @@ function Done({ d }: { d: Draft }) {
   const router = useRouter();
   return (
     <Canvas>
-      <Header />
-      <Card aside={<KeyCard d={d} step="done" rooms={d.units} />} bar={<KeyCard compact d={d} step="done" rooms={d.units} />} footer={<Foot><Ghost onClick={() => router.push("/onboarding/status")}>{t("স্ট্যাটাস দেখুন", "View status")}</Ghost><Primary onClick={() => router.push("/hms")}>{t("ড্যাশবোর্ডে যান", "Go to dashboard")}</Primary></Foot>}>
-        <div className="onb-in pt-6 text-center lg:pt-16">
-          <p className="text-[56px] leading-none" aria-hidden>🎉</p>
-          <h1 className="mt-4 text-[30px] font-bold leading-tight">{t("অভিনন্দন! সেটআপ জমা হয়েছে", "Congratulations! Setup submitted")}</h1>
-          <p className="mx-auto mt-3 max-w-[440px] text-[16px] leading-relaxed text-[#5b6170]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
-        </div>
-      </Card>
+      <Header title={d.name} />
+      <main className="mx-auto max-w-[620px] px-4 py-14 text-center">
+        <span className="onb-in mx-auto grid size-16 place-items-center rounded-full bg-[#e9f7ef] text-[#1c7d45]"><CircleCheck className="size-9" /></span>
+        <h1 className="mt-5 text-[28px] font-semibold leading-tight">{t("সেটআপ জমা হয়েছে", "Setup submitted")}</h1>
+        <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#5b6170]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
+        <div className="mt-8 flex flex-wrap justify-center gap-2"><Ghost onClick={() => router.push("/onboarding/status")}>{t("স্ট্যাটাস দেখুন", "View status")}</Ghost><Primary onClick={() => router.push("/hms")}>{t("ড্যাশবোর্ডে যান", "Go to dashboard")}</Primary></div>
+      </main>
     </Canvas>
   );
 }

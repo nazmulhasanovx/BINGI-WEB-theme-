@@ -15,6 +15,7 @@ import { MOTION_LABEL, STORE, TIER, TIER_PRICE, fallbackMaster, isPaid, motionLe
 import { formatMoney } from "@/lib/data";
 import { useWM } from "./WebsiteModule";
 import { Badge, Btn, Card } from "./ui";
+import { FittedDevice, SiteNotReady, siteReady } from "./devices";
 
 const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const priceText = (t: StoreTheme) => (TIER_PRICE[t.tier] === null ? "Price not set yet" : `${formatMoney(TIER_PRICE[t.tier]!)} / month`);
@@ -182,8 +183,8 @@ function TryPreview({ theme, onClose }: { theme: StoreTheme; onClose: () => void
   const [phone, setPhone] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const w = phone ? 390 : 1440;
-  useEffect(() => { const fit = () => box.current && setScale(Math.min(1, (box.current.clientWidth - 32) / w)); fit(); window.addEventListener("resize", fit); return () => window.removeEventListener("resize", fit); }, [w]);
+  const w = 1440;
+  useEffect(() => { const fit = () => box.current && setScale(Math.min(1, (box.current.clientWidth - 32) / w)); fit(); window.addEventListener("resize", fit); return () => window.removeEventListener("resize", fit); }, [w, phone]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
   return (
     <div className="fixed inset-0 z-[90] flex flex-col bg-[#eef0f4]" role="dialog" aria-label={`Preview of ${theme.name}`} onClick={(e) => e.stopPropagation()}>
@@ -192,17 +193,24 @@ function TryPreview({ theme, onClose }: { theme: StoreTheme; onClose: () => void
         <span className="hidden text-[13px] text-hms-muted md:inline">Only you see this · not on your live site</span>
         <div className="mx-auto flex rounded-full border border-hms-line bg-hms-hover p-0.5">
           <button onClick={() => setPhone(false)} aria-pressed={!phone} className={clsx("flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium", !phone ? "bg-white shadow-sm" : "text-hms-muted")}><Monitor className="size-4" /> <span className="hidden md:inline">Desktop</span></button>
-          <button onClick={() => setPhone(true)} aria-pressed={phone} className={clsx("flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium", phone ? "bg-white shadow-sm" : "text-hms-muted")}><Smartphone className="size-4" /> <span className="hidden md:inline">Phone</span></button>
+          <button onClick={() => setPhone(true)} aria-pressed={phone} className={clsx("flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium", phone ? "bg-white shadow-sm" : "text-hms-muted")}><Smartphone className="size-4" /> <span className="hidden md:inline">iPhone 16 Pro Max</span></button>
         </div>
         <Btn variant="outline" onClick={onClose} className="h-8 px-3"><X className="size-4" /> Close</Btn>
       </div>
-      <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-4">
-        <div style={{ width: w * scale, height: "100%" }}>
-          <div style={{ width: w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className={clsx("overflow-hidden bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]", phone ? "rounded-[36px] border-[10px] border-[#1d1f24]" : "rounded-xl")}>
-            <iframe title={`${theme.name} preview`} src={hrefFor(`/hotel/${hotel.slug}?preview=try&try=${theme.id}`)} className="size-full border-0" />
+      {(() => {
+        const frame = siteReady(hotel.slug)
+          ? <iframe title={`${theme.name} preview`} src={hrefFor(`/hotel/${hotel.slug}?preview=try&try=${theme.id}`)} className="size-full border-0" />
+          : <SiteNotReady name={hotel.name} />;
+        return phone ? (
+          <div className="min-h-0 flex-1"><FittedDevice kind="iphone">{frame}</FittedDevice></div>
+        ) : (
+          <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-hidden p-4">
+            <div style={{ width: w * scale, height: "100%" }}>
+              <div style={{ width: w, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }} className="overflow-hidden rounded-xl bg-white shadow-[0_20px_60px_-20px_rgb(0_0_0/0.35)]">{frame}</div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 }

@@ -30,15 +30,15 @@ export function AddressSheet({ d, onClose }: { d: Draft; onClose: () => void }) 
   );
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1d1f24]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={t("ঠিকানা নিশ্চিত করুন", "Confirm the address")} onClick={(e) => e.stopPropagation()} className="onb-in max-h-[94dvh] w-full max-w-[860px] overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
+      <div role="dialog" aria-modal="true" aria-label={t("ঠিকানা নিশ্চিত করুন", "Confirm the address")} onClick={(e) => e.stopPropagation()} className="onb-in max-h-[94dvh] w-full max-w-[860px] overflow-y-auto rounded-t-xl bg-white shadow-2xl sm:rounded-xl">
         <div className="flex items-center justify-between border-b border-[#eef0f3] px-5 py-4">
-          <h2 className="text-[18px] font-bold">{t("ঠিকানাটি নিশ্চিত করুন", "Confirm the address")}</h2>
-          <button onClick={onClose} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#e6e8ee] hover:bg-[#f4f5f7]"><X className="size-5" /></button>
+          <h2 className="text-[18px] font-semibold">{t("ঠিকানাটি নিশ্চিত করুন", "Confirm the address")}</h2>
+          <button onClick={onClose} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#dcdfe5] hover:bg-[#f4f5f7]"><X className="size-5" /></button>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-[1.1fr_1fr]">
           <div>
             <div ref={box} onPointerDown={(e) => { drag.current = true; (e.target as HTMLElement).setPointerCapture?.(e.pointerId); move(e); }} onPointerMove={(e) => drag.current && move(e)} onPointerUp={() => { drag.current = false; }}
-              className="relative aspect-[4/3] cursor-crosshair touch-none overflow-hidden rounded-[20px] bg-[#e8f3ea]" aria-label={t("ম্যাপে ট্যাপ করে পিন সরান", "Tap the map to move the pin")} role="application">
+              className="relative aspect-[4/3] cursor-crosshair touch-none overflow-hidden rounded-xl bg-[#e8f3ea]" aria-label={t("ম্যাপে ট্যাপ করে পিন সরান", "Tap the map to move the pin")} role="application">
               <svg viewBox="0 0 400 300" className="absolute inset-0 h-full w-full" aria-hidden>
                 <path d="M0 110 L400 80 M0 220 L400 240 M120 0 L150 300 M280 0 L260 300" stroke="#fff" strokeWidth="14" />
                 <path d="M0 160 Q 200 120 400 170" stroke="#cfe3f6" strokeWidth="22" fill="none" />
