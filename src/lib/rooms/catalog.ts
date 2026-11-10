@@ -56,6 +56,9 @@ export const PROPERTY_TYPES: { slug: string; code: string; label: string; sugges
   { slug: "other", code: "OTHER_CUSTOM", label: "Other / Custom Property", suggest: [...CORE_TYPES] },
 ];
 /** The demo hotel records use the website's older property list; map them onto the backend's 10 codes. */
+export function propertyTypeFor(h: { propertyType: PropertyType; propertyCode?: string }) {
+  return PROPERTY_TYPES.find((p) => p.slug === h.propertyCode) ?? propertyTypeOf(h.propertyType);
+}
 export function propertyTypeOf(t: PropertyType) {
   const map: Record<PropertyType, string> = { hotel: "hotel", resort: "resort", "guest-house": "guest-house", home: "homestay", "serviced-apartment": "serviced-apartment", hostel: "hostel", cottage: "lodge", villa: "vacation-rental", other: "other" };
   return PROPERTY_TYPES.find((p) => p.slug === map[t]) ?? PROPERTY_TYPES[PROPERTY_TYPES.length - 1];

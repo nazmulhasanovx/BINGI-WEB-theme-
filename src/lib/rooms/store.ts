@@ -133,6 +133,8 @@ const coreFor = (r: RoomCategory): CoreType => (r.kind === "dorm" ? "OTHER" : ({
 /** Demo backfill: every website room category becomes an APPROVED category with PUBLISHED units.
  *  Pod dorms become Capsule/Pod whole units (one unit per pod). Bunk-bed dorms sell single beds — out of this release, listed as excluded. */
 export function seed(h: Hotel): RoomsState {
+  // New property from onboarding: nothing set up yet.
+  if (!h.rooms.length) return { v: 2, config: emptyConfig(), categories: [], units: [], drafts: [], activity: [] } as RoomsState;
   const c: Config = { ...emptyConfig(), configured: true, version: 1, savedAt: "2026-11-01T10:00" };
   const cats: Category[] = [];
   const units: Unit[] = [];
@@ -217,6 +219,9 @@ const sub = (l: () => void) => {
   window.addEventListener("storage", s);
   return () => { listeners.delete(l); window.removeEventListener("storage", s); };
 };
+
+/** Outside React: has this property finished the one-time setup? */
+export function roomsConfigured(h: Hotel) { try { return read(h).config.configured; } catch { return false; } }
 
 export type CreateResult = { ok: true; ids: string[] } | { ok: false; conflicts: string[] };
 

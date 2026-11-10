@@ -2,7 +2,7 @@
 // Rooms / Accommodations — shared frame and pieces. Visual language follows the HRM module (same kit).
 import Link from "next/link";
 import clsx from "clsx";
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   BedDouble, Box, Building2, Castle, Check, House, Mountain, Plus, Search, Sailboat, Sparkles, Tent, TreePine, Trees, Warehouse, Home,
 } from "lucide-react";
@@ -31,6 +31,11 @@ let toastText: string | null = null;
 const subs = new Set<() => void>();
 const showToast = (t: string | null) => { toastText = t; subs.forEach((f) => f()); };
 export const useToast = () => showToast as (t: string) => void;
+
+/** Where the Rooms screens live: HMS (/hms/rooms) or onboarding (/onboarding/rooms). */
+const BaseCtx = createContext("/hms/rooms");
+export const RoomsBase = BaseCtx.Provider;
+export const useRoomsBase = () => useContext(BaseCtx);
 
 export type RoomsTab = "units" | "categories" | "setup";
 const TABS: { id: RoomsTab; label: string; href: string }[] = [
@@ -87,20 +92,21 @@ function SetupIntro() {
           <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#f2f3f6] text-[13px] font-semibold">{i + 1}</span>{s}</li>
         ))}
       </ol>
-      <Link href="/hms/rooms/setup" className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#d8372e] px-5 text-[15px] font-medium text-white hover:bg-[#c4302a]">Start setup</Link>
+      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#d8372e] px-5 text-[15px] font-medium text-white hover:bg-[#c4302a]">Start setup</Link>
     </div>
   );
 }
 
 /** Full-page step layout: stepper on top, sticky footer with Back left and actions right. */
 export function Steps({ title, steps, step, onStep, children, footer, maxDone }: { title: string; steps: string[]; step: number; onStep: (i: number) => void; children: ReactNode; footer: ReactNode; maxDone: number }) {
+  const base = useRoomsBase();
   return (
     <div className="flex h-full flex-col bg-[#fafafb]">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] px-4 pb-8 pt-5 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{title}</h1>
-            <Link href="/hms/rooms" className="text-[14.5px] font-medium text-[#5b6170] hover:text-[#1d1f24]">Cancel</Link>
+            <Link href={base} className="text-[14.5px] font-medium text-[#5b6170] hover:text-[#1d1f24]">Cancel</Link>
           </div>
           <ol className="mt-4 hidden gap-2 lg:flex" aria-label="Steps">
             {steps.map((s, i) => {

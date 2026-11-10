@@ -13,7 +13,7 @@ import {
 import { CODE_RE, CORE, PRESETS, coreChoices, preset as presetOf, youtubeId, type CoreType, type Preset, type PresetSlug } from "@/lib/rooms/catalog";
 import { Btn, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, ChoiceCard, PRESET_ICON, Section, Steps, money, useToast } from "./parts";
-import { Hydrated } from "./parts";
+import { Hydrated, useRoomsBase } from "./parts";
 
 const STEPS = ["Type", "Category", "Location & units", "Details & pricing", "Review"];
 type Over = { rate?: number; video?: Unit["video"]; videoUrl?: string; note?: string };
@@ -25,6 +25,7 @@ export function AddPage() {
 }
 
 function AddPageInner() {
+  const base = useRoomsBase();
   const ready = useSyncExternalStore(noop, () => true, () => false);
   const h = useProperty();
   const { st } = useRooms(h);
@@ -34,7 +35,7 @@ function AddPageInner() {
       <div className="grid h-full place-items-center p-6 text-center">
         <div>
           <p className="text-[18px] font-semibold">Finish the one-time setup first</p>
-          <Link href="/hms/rooms/setup" className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#d8372e] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
+          <Link href={`${base}/setup`} className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#d8372e] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
         </div>
       </div>
     );
@@ -49,6 +50,7 @@ const blankCat = (core: CoreType, p: PresetSlug): Category => ({
 });
 
 function Wizard({ draftId, type, category }: { draftId: string | null; type: string | null; category: string | null }) {
+  const base = useRoomsBase();
   const h = useProperty();
   const { st, update, createUnits } = useRooms(h);
   const router = useRouter();
@@ -130,7 +132,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
     if (!r.ok) { setConflicts(r.conflicts); return; }
     if (draft) update((s) => { s.drafts = s.drafts.filter((d) => d.id !== draft.id); });
     toast(`${picks.length} ${picks.length === 1 ? "unit" : "units"} ${status === "published" ? "published" : "saved as draft (not bookable)"}`);
-    router.push("/hms/rooms");
+    router.push(base);
   };
   const saveSetupDraft = () => {
     if (!p || !core) { setTried(true); setStep(0); return; }
@@ -141,7 +143,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
       s.drafts = [d, ...s.drafts.filter((x) => x.id !== d.id)];
     }, `Setup draft saved · ${presetOf(p).label}${picks.length ? ` (${picks.length} numbers, not reserved)` : ""}`);
     toast("Setup draft saved — numbers are not reserved");
-    router.push("/hms/rooms");
+    router.push(base);
   };
 
   return (
