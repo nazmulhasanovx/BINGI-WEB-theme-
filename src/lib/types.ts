@@ -2,7 +2,9 @@ import type { ThemeId } from "./theme";
 
 /** Included masters come with the plan; paid masters (drift, canopy, pod, orbit) are bought in the Theme Store. */
 export type MasterTheme = "nest" | "city" | "grand" | "cottage" | "villa" | "flat" | "escape" | "bunk" | PaidTheme;
-export type PaidTheme = "drift" | "canopy" | "pod" | "orbit";
+export type PaidTheme = "drift" | "canopy" | "pod" | "orbit" | LuxTheme;
+/** Luxury Collection (5★–7★) — paid themes in the Theme Store. drift, canopy and orbit were rebuilt into it. */
+export type LuxTheme = "isle" | "zamindar" | "maison" | "noir" | "haven" | "summit" | "estate";
 export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "cottage" | "villa" | "other";
 
 export type Money = number; // in hotel currency units (BDT)
@@ -148,6 +150,8 @@ export interface Hotel {
   faq?: { q: string; a: string }[];
   /** Optional "a day here" plan (houseboats, retreats). Themes hide the section when empty. */
   dayPlan?: { time: string; title: string; text: string }[];
+  /** Heritage timeline (ZAMINDAR). Website content field — not in the HMS backend yet. Hidden when empty. */
+  story?: { time: string; title: string; text: string }[];
   /** Extra house rules beyond the policies (quiet hours, parties, lockers…). */
   houseRules?: { title: string; text: string }[];
   flags: { packages: boolean; events: boolean };

@@ -46,7 +46,7 @@ export function Sheet({
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={title}>
           <motion.button
             aria-label="Close"
-            className="absolute inset-0 bg-ink/25 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-[#16181d]/25 backdrop-blur-[2px]"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

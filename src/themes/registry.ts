@@ -15,6 +15,13 @@ import { DriftHome } from "./drift/Home";
 import { CanopyHome } from "./canopy/Home";
 import { PodHome } from "./pod/Home";
 import { OrbitHome } from "./orbit/Home";
+import { IsleHome } from "./isle/Home";
+import { EstateHome } from "./estate/Home";
+import { SummitHome } from "./summit/Home";
+import { HavenHome } from "./haven/Home";
+import { NoirHome } from "./noir/Home";
+import { MaisonHome } from "./maison/Home";
+import { ZamindarHome } from "./zamindar/Home";
 
 export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> = {
   grand: GrandHome,
@@ -29,6 +36,13 @@ export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> =
   canopy: CanopyHome,
   pod: PodHome,
   orbit: OrbitHome,
+  isle: IsleHome,
+  estate: EstateHome,
+  summit: SummitHome,
+  haven: HavenHome,
+  noir: NoirHome,
+  maison: MaisonHome,
+  zamindar: ZamindarHome,
 };
 
 export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
@@ -48,4 +62,11 @@ export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?:
   { id: "canopy", name: "CANOPY", plan: "Paid", demo: "canopy-nest" },
   { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
   { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
+  { id: "isle", name: "ISLE", plan: "Luxury", demo: "nila-island" },
+  { id: "estate", name: "ESTATE", plan: "Luxury", demo: "bonolota-estate" },
+  { id: "summit", name: "SUMMIT", plan: "Luxury", demo: "meghchura" },
+  { id: "haven", name: "HAVEN", plan: "Luxury", demo: "haven-lalakhal" },
+  { id: "noir", name: "NOIR", plan: "Luxury", demo: "obsidian-gulshan" },
+  { id: "maison", name: "MAISON", plan: "Luxury", demo: "maison-gulshan" },
+  { id: "zamindar", name: "ZAMINDAR", plan: "Luxury", demo: "shonali-rajbari" },
 ];

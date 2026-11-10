@@ -209,3 +209,55 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .hms-page-in, .hms-fade, .hms-drawer-r, .hms-drawer-l, .hms-pop, .hms-up { animation: none; }
 }
+
+/* ================= BinGi Luxury Collection (themes/lux) ================= */
+/* Each luxury master sets its own canvas, ink, accent, heading font and radius for the whole hotel site. */
+#hotel-theme[data-master="isle"], #hotel-theme[data-master="zamindar"], #hotel-theme[data-master="maison"], #hotel-theme[data-master="noir"],
+#hotel-theme[data-master="orbit"], #hotel-theme[data-master="haven"], #hotel-theme[data-master="summit"], #hotel-theme[data-master="canopy"],
+#hotel-theme[data-master="drift"], #hotel-theme[data-master="estate"] {
+  --font-cormorant: "Cormorant Garamond Variable", Georgia, serif;
+  --font-playfair: "Playfair Display Variable", Georgia, serif;
+  --lux-r: 0px;
+  --lux-btn-r: 999px;
+  --lux-dw: 400;
+  --lux-dt: -0.015em;
+  --lux-lh: 1.04;
+  background: var(--canvas);
+  color: var(--ink);
+  min-height: 100svh;
+}
+#hotel-theme[data-master="isle"] { --canvas:#F7F5F0; --surface:#FFFFFF; --ink:#10252B; --muted:#4A5D62; --line:#E4E0D6; --lux-accent:#2A9D9A; --lux-accent-ink:#0E6866; --font-heading:var(--font-cormorant); --lux-r:22px; --lux-dw:450; }
+#hotel-theme[data-master="zamindar"] { --canvas:#F6F0E4; --surface:#FFFBF3; --ink:#2A1612; --muted:#664E43; --line:#E3D6BE; --lux-accent:#A8823A; --lux-accent-ink:#7A1F2B; --font-heading:var(--font-cormorant); --lux-r:0px; --lux-btn-r:0px; --lux-dw:500; }
+#hotel-theme[data-master="maison"] { --canvas:#F8F5EF; --surface:#FFFFFF; --ink:#111111; --muted:#55514C; --line:#E2DDD3; --lux-accent:#9C7C48; --lux-accent-ink:#6B5124; --font-heading:var(--font-playfair); --lux-r:0px; --lux-btn-r:0px; --lux-dt:-0.02em; }
+#hotel-theme[data-master="noir"] { --canvas:#0B0B0D; --surface:#17171A; --ink:#F3EEE4; --muted:#ABA598; --line:#2C2C31; --lux-accent:#C9A96E; --lux-accent-ink:#DCC08A; --font-heading:var(--font-playfair); --lux-r:2px; --lux-btn-r:2px; --brand-soft:#1E1C19 !important; --brand-soft-2:#26231F !important; --brand-ring:#5C4D33 !important; --brand:#C9A96E !important; --action:#D2B47C !important; --action-hover:#E0C796 !important; --action-pressed:#BFA068 !important; --on-action:#14120E !important; color-scheme: dark; }
+#hotel-theme[data-master="orbit"] { --canvas:#0A1020; --surface:#131B30; --ink:#EEF2F8; --muted:#A5B0C4; --line:#26324C; --lux-accent:#9FB4D6; --lux-accent-ink:#BCCBE6; --font-heading:"Instrument Sans Variable", system-ui, sans-serif; --lux-r:6px; --lux-btn-r:6px; --lux-dw:300; --lux-dt:-0.035em; --lux-lh:1; --brand-soft:#16203A !important; --brand-soft-2:#1C2846 !important; --brand-ring:#3A4D73 !important; --brand:#9FB4D6 !important; --action:#C9D6EC !important; --action-hover:#DCE5F4 !important; --action-pressed:#B3C3DF !important; --on-action:#0A1020 !important; font-family:"Instrument Sans Variable", "Hind Siliguri", system-ui, sans-serif; color-scheme: dark; }
+#hotel-theme[data-master="haven"] { --canvas:#F3F1EA; --surface:#FBFAF6; --ink:#1E2A22; --muted:#525E56; --line:#DCDBCF; --lux-accent:#7D9A80; --lux-accent-ink:#46664C; --font-heading:var(--font-serif-stack); --lux-r:32px; --lux-dw:330; --lux-dt:-0.02em; }
+#hotel-theme[data-master="summit"] { --canvas:#F2F0EC; --surface:#FFFFFF; --ink:#1B1F22; --muted:#53595E; --line:#DDD9D2; --lux-accent:#9A6B3F; --lux-accent-ink:#784D26; --font-heading:var(--font-serif-stack); --lux-r:6px; --lux-btn-r:6px; --lux-dw:420; --lux-dt:-0.025em; }
+#hotel-theme[data-master="canopy"] { --canvas:#F1F2EC; --surface:#FAFBF6; --ink:#13241A; --muted:#4A5A4F; --line:#D8DCCF; --lux-accent:#A88A4A; --lux-accent-ink:#3B6744; --font-heading:var(--font-cormorant); --lux-r:14px; --lux-dw:500; }
+#hotel-theme[data-master="drift"] { --canvas:#F5F2EA; --surface:#FFFDF8; --ink:#0F1E33; --muted:#4C5868; --line:#E0DACB; --lux-accent:#8C6A43; --lux-accent-ink:#1F3D66; --font-heading:var(--font-cormorant); --lux-r:4px; --lux-btn-r:4px; --lux-dw:500; }
+#hotel-theme[data-master="estate"] { --canvas:#EFEDE7; --surface:#F8F7F3; --ink:#22241F; --muted:#55584E; --line:#D7D4C9; --lux-accent:#6F7653; --lux-accent-ink:#4D5437; --font-heading:var(--font-cormorant); --lux-r:0px; --lux-btn-r:0px; --lux-dw:500; font-family:"Instrument Sans Variable", "Hind Siliguri", system-ui, sans-serif; }
+
+.lux-eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: var(--lux-accent-ink, var(--action)); }
+.lux-rule { display: block; width: 44px; height: 1px; background: var(--lux-accent, var(--action)); }
+.lux-display { font-family: var(--font-heading); font-weight: var(--lux-dw, 400); letter-spacing: var(--lux-dt, -0.015em); line-height: var(--lux-lh, 1.04); text-wrap: balance; }
+.lux-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--lux-accent, currentColor); padding-bottom: 3px; transition: gap .3s ease; }
+.lux-link:hover { gap: 12px; }
+.lux-btn { display: inline-flex; align-items: center; gap: 8px; height: 50px; padding: 0 26px; border-radius: var(--lux-btn-r, 999px); background: var(--action); color: var(--on-action); font-size: 14px; font-weight: 600; letter-spacing: 0.05em; transition: background .25s ease; }
+.lux-btn:hover { background: var(--action-hover); }
+.lux-btn-ghost { display: inline-flex; align-items: center; gap: 8px; height: 50px; padding: 0 22px; border-radius: var(--lux-btn-r, 999px); border: 1px solid var(--line); color: var(--ink); font-size: 14px; font-weight: 600; letter-spacing: 0.04em; transition: border-color .25s ease, background .25s ease; }
+.lux-btn-ghost:hover { border-color: var(--lux-accent, var(--ink)); }
+.lux-btn-ghost-light { color: #fff; border-color: rgb(255 255 255 / 0.55); }
+.lux-btn-ghost-light:hover { background: rgb(255 255 255 / 0.12); border-color: #fff; }
+.lux-search > * { box-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.45); }
+/* HAVEN breathing circle + NOIR light sweep + ISLE water shimmer (signature motion, calm) */
+@keyframes lux-breathe { 0%,100% { transform: scale(0.82); opacity: .55 } 50% { transform: scale(1); opacity: .9 } }
+.lux-breathe { animation: lux-breathe 9s ease-in-out infinite; }
+@keyframes lux-sweep { 0% { transform: translateX(-60%) } 100% { transform: translateX(160%) } }
+.lux-sweep { animation: lux-sweep 9s linear infinite; }
+@keyframes lux-drift { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+.lux-float { animation: lux-drift 7s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .lux-breathe, .lux-sweep, .lux-float { animation: none; } }
+.lux-arch { border-radius: 999px 999px 0 0 / 46% 46% 0 0; }
+#hotel-theme[data-master="noir"] .lux-card:hover img, #hotel-theme[data-master="orbit"] .lux-card:hover img { filter: brightness(1.08); }
+#hotel-theme[data-master="noir"] .lux-display { font-style: normal; }
+#hotel-theme[data-master="noir"] main img { filter: brightness(0.8) contrast(1.08) saturate(0.85); }

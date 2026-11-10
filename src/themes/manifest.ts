@@ -66,6 +66,34 @@ const commonPages: PageDef[] = [
   { id: "my-trip", name: "My Trip", path: "/my-trip", system: true },
 ];
 
+/* ---------- Luxury Collection (5★–7★): one section library, each theme picks its order ---------- */
+const t = (fallback: string): FieldDef[] => [{ key: "title", label: "Section title", type: "text", max: 60, fallback: () => fallback }];
+const LUX_SECTIONS: Record<string, SectionDef> = {
+  hero: { id: "hero", name: "Hero", description: "Large photo, headline, intro and booking bar.", required: true, fields: heroFields },
+  facts: { id: "facts", name: "Key facts", description: "Category, check-in/out and guest rating.", source: "facilities" },
+  rooms: { id: "rooms", name: "Rooms & suites", description: "Every room or suite with photo and price.", source: "rooms", fields: t("Rooms & suites") },
+  signature: { id: "signature", name: "Signature section", description: "The theme's own section (see theme description).", source: "rooms" },
+  amenities: { id: "amenities", name: "Amenities", description: "Facilities with one large photo.", source: "facilities", fields: t("Every comfort, quietly done") },
+  experiences: { id: "experiences", name: "Experiences", description: "Activities, spa and celebrations with photos.", source: "services", fields: t("Days worth remembering") },
+  dining: { id: "dining", name: "Dining", description: "Restaurants and bars (or dining services).", source: "outlets", fields: t("At the table") },
+  journey: { id: "journey", name: "The day here", description: "Timeline from Property Info › Day plan (hidden when empty).", source: "contact", fields: t("A day here") },
+  story: { id: "story", name: "The story", description: "Heritage timeline (website field; hidden when empty).", source: "contact", fields: t("The house through time") },
+  gallery: { id: "gallery", name: "Gallery", description: "Five photos from your gallery.", source: "gallery", fields: t("A closer look") },
+  offers: { id: "offers", name: "Offers", description: "Direct-booking offers.", source: "offers", fields: t("Privileges for direct guests") },
+  reviews: { id: "reviews", name: "Guest words", description: "One large quote plus three more (rating shows from 5 reviews).", source: "reviews" },
+  arrival: { id: "arrival", name: "Arrival", description: "Address, travel times, transfer and directions.", source: "nearby" },
+  faq: { id: "faq", name: "Good to know", description: "Questions from Property Info › FAQ (hidden when empty).", source: "contact", fields: t("Before you arrive") },
+  reserve: { id: "reserve", name: "Reserve band", description: "Closing photo with Reserve, WhatsApp concierge and call.", source: "contact", fields: [{ key: "title", label: "Headline", type: "text", max: 60, fallback: () => "Your stay begins here" }] },
+};
+function lux(id: MasterTheme, name: string, tagline: string, description: string, bestFor: PropertyType[], demo: string, order: string[], signature: string, heading: "sans" | "serif" = "serif"): ThemeManifest {
+  return {
+    id, name, version: "2.0", tagline, description, minPlan: "starter", paid: true, bestFor, demo, defaultHeading: heading,
+    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
+    pages: commonPages,
+    sections: order.map((s) => (s === "signature" ? { ...LUX_SECTIONS.signature, name: signature.split(":")[0], description: signature.split(":")[1]?.trim() ?? signature } : LUX_SECTIONS[s])),
+  };
+}
+
 export const MANIFESTS: Record<MasterTheme, ThemeManifest> = {
   nest: {
     id: "nest",
@@ -252,54 +280,6 @@ export const MANIFESTS: Record<MasterTheme, ThemeManifest> = {
       { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
     ],
   },
-  drift: {
-    id: "drift",
-    name: "DRIFT",
-    version: "1.0",
-    tagline: "Life on the water",
-    description: "Paid theme for houseboats and river stays: living water on your photo, cabins as depth cards, a day on board.",
-    minPlan: "starter",
-    paid: true,
-    bestFor: ["other", "resort", "villa"],
-    demo: "haor-bilash",
-    defaultHeading: "serif",
-    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
-    pages: commonPages,
-    sections: [
-      { id: "hero", name: "Hero", description: "Your photo with moving water, headline and booking bar.", required: true, fields: heroFields },
-      { id: "cabins", name: "Cabins", description: "Every cabin as a depth card with price.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Choose your cabin" }] },
-      { id: "day", name: "A day on board", description: "Timeline from Property Info › Day plan (hidden when empty).", source: "contact", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "A day on the water" }] },
-      { id: "life", name: "On the boat", description: "Facilities with a living photo.", source: "facilities" },
-      { id: "extras", name: "Add to your trip", description: "Canoe, pickup and other extras.", source: "services" },
-      { id: "faq", name: "Questions", description: "Boarding, season and network.", source: "contact" },
-      { id: "getting-here", name: "Getting here", description: "Boarding point and travel times.", source: "nearby" },
-      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
-      { id: "book-band", name: "Closing band", description: "Sunset photo with Book and WhatsApp.", source: "contact", fields: [{ key: "title", label: "Headline", type: "text", max: 60, fallback: () => "Your cabin is waiting on the water" }] },
-    ],
-  },
-  canopy: {
-    id: "canopy",
-    name: "CANOPY",
-    version: "1.0",
-    tagline: "Up in the trees",
-    description: "Paid theme for treehouses and eco stays: 3D photo with fireflies and a height ruler from your treehouses.",
-    minPlan: "starter",
-    paid: true,
-    bestFor: ["cottage", "other", "resort"],
-    demo: "canopy-nest",
-    defaultHeading: "serif",
-    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
-    pages: commonPages,
-    sections: [
-      { id: "hero", name: "Hero", description: "3D photo, fireflies, headline and booking bar.", required: true, fields: heroFields },
-      { id: "treehouses", name: "Treehouses", description: "Height ruler (from room details like “6 m up”) and depth cards.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 50, fallback: () => "How high would you like to sleep?" }] },
-      { id: "forest", name: "Life in the forest", description: "Facilities on a dark forest band.", source: "facilities" },
-      { id: "experiences", name: "Experiences", description: "Guided walks and activities with photos.", source: "services" },
-      { id: "faq", name: "Good to know", description: "Stairs, children, power, wildlife.", source: "contact" },
-      { id: "getting-here", name: "Getting here", description: "Travel times and directions.", source: "nearby" },
-      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
-    ],
-  },
   pod: {
     id: "pod",
     name: "POD",
@@ -323,34 +303,21 @@ export const MANIFESTS: Record<MasterTheme, ThemeManifest> = {
       { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
     ],
   },
-  orbit: {
-    id: "orbit",
-    name: "ORBIT",
-    version: "1.0",
-    tagline: "Every floor, at a glance",
-    description: "Paid theme for city and tower hotels: 3D photo of the building and a 3D floor stack from your Rooms setup.",
-    minPlan: "starter",
-    paid: true,
-    bestFor: ["hotel", "serviced-apartment"],
-    demo: "altura",
-    defaultHeading: "sans",
-    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
-    pages: commonPages,
-    sections: [
-      { id: "hero", name: "Hero", description: "Tower in 3D photo, headline, highlights and booking bar.", required: true, fields: heroFields },
-      { id: "floors", name: "Floor by floor", description: "3D floor stack from HMS › Rooms floors and units.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Find your floor" }] },
-      { id: "rooms", name: "Rooms & suites", description: "Room cards with size and price.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Rooms with a view" }] },
-      { id: "amenities", name: "In the building", description: "Pool, lobby and facilities bento.", source: "facilities" },
-      { id: "location", name: "Location", description: "Walk and drive times.", source: "nearby" },
-      { id: "offers", name: "Offers", description: "Direct-booking discounts.", source: "offers" },
-      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
-    ],
-  },
+  isle: lux("isle", "ISLE", "Villas on the lagoon", "Luxury Collection — island and overwater villa resorts.", ["resort", "villa"], "nila-island", ["hero", "facts", "signature", "rooms", "journey", "experiences", "dining", "gallery", "reviews", "arrival", "reserve"], "Over water / on the beach: villas grouped by where they stand"),
+  zamindar: lux("zamindar", "ZAMINDAR", "A house with a story", "Luxury Collection — heritage palaces and rajbaris.", ["hotel", "guest-house", "resort"], "shonali-rajbari", ["hero", "story", "rooms", "amenities", "dining", "experiences", "gallery", "reviews", "faq", "arrival", "reserve"], "The house through time: heritage timeline"),
+  maison: lux("maison", "MAISON", "Grand hotel, classic manners", "Luxury Collection — grand classic city hotels.", ["hotel"], "maison-gulshan", ["hero", "facts", "rooms", "signature", "dining", "amenities", "offers", "reviews", "arrival", "reserve"], "Salons: the public rooms in a three-photo spread"),
+  noir: lux("noir", "NOIR", "After dark", "Luxury Collection — rooftop and night luxury hotels.", ["hotel"], "obsidian-gulshan", ["hero", "rooms", "signature", "journey", "dining", "amenities", "gallery", "offers", "reviews", "arrival", "reserve"], "The rooftop: big night photo with venues and hours"),
+  orbit: lux("orbit", "ORBIT", "Above the city", "Luxury Collection — sky towers and 6–7★ vertical hotels.", ["hotel", "serviced-apartment"], "altura", ["hero", "facts", "signature", "amenities", "experiences", "dining", "gallery", "offers", "reviews", "arrival", "reserve"], "Altitude rail: rooms from the highest floor down", "sans"),
+  haven: lux("haven", "HAVEN", "Breathe slower", "Luxury Collection — wellness and spa retreats.", ["resort", "villa"], "haven-lalakhal", ["hero", "signature", "journey", "rooms", "experiences", "dining", "amenities", "gallery", "reviews", "arrival", "reserve"], "Breathe: breathing circle with the retreat's promise"),
+  summit: lux("summit", "SUMMIT", "Above the clouds", "Luxury Collection — hill and mountain lodges.", ["resort", "cottage"], "meghchura", ["hero", "facts", "rooms", "signature", "experiences", "dining", "amenities", "gallery", "reviews", "arrival", "reserve"], "Fireside: the evening at the lodge"),
+  canopy: lux("canopy", "CANOPY", "Living in the canopy", "Luxury Collection — rainforest and treehouse retreats.", ["cottage", "other", "resort"], "canopy-nest", ["hero", "signature", "rooms", "journey", "experiences", "amenities", "gallery", "reviews", "faq", "arrival", "reserve"], "Height scale: treehouses by how high they sit"),
+  drift: lux("drift", "DRIFT", "A voyage, slowly", "Luxury Collection — luxury houseboats and river cruises.", ["other", "resort", "villa"], "haor-bilash", ["hero", "facts", "signature", "rooms", "amenities", "experiences", "gallery", "reviews", "faq", "arrival", "reserve"], "Voyage line: the day on board along the river"),
+  estate: lux("estate", "ESTATE", "The whole place is yours", "Luxury Collection — private villa estates and exclusive-use houses.", ["villa", "home", "resort"], "bonolota-estate", ["hero", "signature", "rooms", "experiences", "dining", "amenities", "gallery", "reviews", "faq", "arrival", "reserve"], "The whole estate: sleeps, bedrooms, staff and pools"),
 };
 
 export const MASTER_LIST: ThemeManifest[] = [MANIFESTS.nest, MANIFESTS.cottage, MANIFESTS.bunk, MANIFESTS.city, MANIFESTS.villa, MANIFESTS.flat, MANIFESTS.escape, MANIFESTS.grand];
 /** Paid themes (Theme Store). */
-export const PAID_LIST: ThemeManifest[] = [MANIFESTS.drift, MANIFESTS.canopy, MANIFESTS.pod, MANIFESTS.orbit];
+export const PAID_LIST: ThemeManifest[] = [MANIFESTS.isle, MANIFESTS.zamindar, MANIFESTS.maison, MANIFESTS.noir, MANIFESTS.orbit, MANIFESTS.haven, MANIFESTS.summit, MANIFESTS.canopy, MANIFESTS.drift, MANIFESTS.estate, MANIFESTS.pod];
 
 export const planAllows = (plan: Plan, min?: Plan) => !min || PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(min);
 

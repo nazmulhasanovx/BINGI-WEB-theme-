@@ -41,7 +41,7 @@ export function Gallery({ photos, alt, layout = "hero" }: { photos: string[]; al
               </button>
             ))}
           </div>
-          <span className="absolute bottom-3 right-3 rounded-full bg-ink/60 px-2.5 py-1 text-xs font-semibold text-white md:hidden">{photos.length} photos</span>
+          <span className="absolute bottom-3 right-3 rounded-full bg-[#16181d]/60 px-2.5 py-1 text-xs font-semibold text-white md:hidden">{photos.length} photos</span>
           {/* tablet/desktop: 1 big + up to 2 small */}
           <div className="hidden gap-2 overflow-hidden rounded-[28px] md:grid md:h-[420px] md:grid-cols-[2fr_1fr] md:grid-rows-2">
             {photos.slice(0, 3).map((p, i) => (
@@ -66,7 +66,7 @@ export function Gallery({ photos, alt, layout = "hero" }: { photos: string[]; al
 
       <AnimatePresence>
         {open !== null && (
-          <motion.div className="fixed inset-0 z-[80] flex flex-col bg-ink/95" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Photos">
+          <motion.div className="fixed inset-0 z-[80] flex flex-col bg-[#16181d]/95" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Photos">
             <div className="flex items-center justify-between p-3 text-white">
               <span className="pl-2 text-sm">{open + 1} / {photos.length}</span>
               <button onClick={close} aria-label="Close" className="grid size-11 place-items-center rounded-full bg-white/10 hover:bg-white/20"><X className="size-5" /></button>

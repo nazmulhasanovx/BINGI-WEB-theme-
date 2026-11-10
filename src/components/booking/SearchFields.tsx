@@ -15,7 +15,6 @@ export function DateTrigger({ which, compact, onOpen, active }: { which: "checkI
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${label}: ${value ? shortDate(value) : t("Add date")}`}
       className={clsx("flex w-full min-w-0 items-center gap-3 rounded-2xl text-left transition-colors", compact ? "px-3 py-2.5" : "px-4 py-3", active ? "bg-brand-soft" : "hover:bg-canvas")}
     >
       <CalendarDays className={clsx("size-5 shrink-0", active ? "text-action" : "text-muted")} />
