@@ -6,6 +6,7 @@ import { availablePages, getHotel, visibleOffers } from "@/lib/data";
 import { PageHero } from "@/components/site/PageHero";
 import { OpenSearchButton } from "@/components/booking/OpenSearchButton";
 import { Reveal } from "@/components/motion/Reveal";
+import { SiteVisible } from "@/components/site-draft/Draft";
 
 export const metadata: Metadata = { title: "Offers" };
 
@@ -24,7 +25,7 @@ export default async function OffersPage(props: PageProps<"/hotel/[slug]/offers"
         </p>
         <ul className="grid gap-4 md:grid-cols-2 md:gap-5">
           {offers.map((o, i) => (
-            <li key={o.id}>
+            <SiteVisible key={o.id} slug={hotel.slug} kind="offers" id={o.id}><li>
             <Reveal delay={i * 0.08} className="flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-card">
               {o.photo && (
                 <div className="relative aspect-[16/8]">
@@ -41,7 +42,7 @@ export default async function OffersPage(props: PageProps<"/hotel/[slug]/offers"
                 </div>
               </div>
             </Reveal>
-            </li>
+            </li></SiteVisible>
           ))}
         </ul>
       </div>

@@ -138,7 +138,7 @@ export function RoomsPage() {
     <>
       <PageHead title="Rooms" desc="Choose which rooms guests see." actions={<SourceLink href="/hms/rooms" label="Edit rooms & rates" />} />
       <Card pad={false}>
-        <div className="grid grid-cols-[1fr_110px_90px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-hms-muted">
+        <div className="hidden grid-cols-[1fr_110px_90px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] md:grid font-semibold uppercase tracking-wider text-hms-muted">
           <span>Room type</span><span>Rate / night</span><span>Units</span><span>Visible</span><span>Featured</span>
         </div>
         {hotel.rooms.length === 0 && <Empty icon={<BedDouble className="size-6" />} title="No room types yet" desc="Add room types in Rooms. They show here automatically." action={<SourceLink href="/hms/rooms" label="Add in Rooms" />} />}
@@ -146,18 +146,19 @@ export function RoomsPage() {
           const st = d.rooms[r.id] ?? { visible: true, featured: false };
           const reason = r.photos.length === 0 ? "Add a photo in Rooms to show it" : !st.visible ? "Hidden from the website" : null;
           return (
-            <div key={r.id} className="grid grid-cols-[1fr_110px_90px_80px_80px] items-center gap-4 border-b border-hms-line px-5 py-3 last:border-b-0">
+            <div key={r.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-1 border-b border-hms-line px-4 py-3 last:border-b-0 md:grid-cols-[1fr_110px_90px_80px_80px] md:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-hms-hover">{r.photos[0] && <Image src={r.photos[0]} alt="" fill sizes="48px" className="object-cover" />}</span>
                 <div className="min-w-0">
                   <p className="truncate text-[14px] font-medium">{r.name}</p>
+                  <p className="text-[12px] tabular-nums text-hms-muted md:hidden">{formatMoney(r.fromPrice)} · {r.units} units</p>
                   <p className={clsx("text-[12px]", reason ? "text-hms-amber" : "text-hms-green")}>{reason ?? "On the website"}</p>
                 </div>
               </div>
-              <span className="text-[14px] tabular-nums">{formatMoney(r.fromPrice)}</span>
-              <span className="text-[14px] tabular-nums text-hms-muted">{r.units}</span>
-              <Toggle label={`${r.name} visible`} on={st.visible} onChange={(v) => set(r.id, "visible", v)} />
-              <Toggle label={`${r.name} featured`} on={st.featured} disabled={!st.visible} onChange={(v) => set(r.id, "featured", v)} />
+              <span className="hidden text-[14px] tabular-nums md:block">{formatMoney(r.fromPrice)}</span>
+              <span className="hidden text-[14px] tabular-nums text-hms-muted md:block">{r.units}</span>
+              <span className="flex flex-col items-center gap-1"><span className="text-[11px] text-hms-muted md:hidden">Show</span><Toggle label={`${r.name} visible`} on={st.visible} onChange={(v) => set(r.id, "visible", v)} /></span>
+              <span className="flex flex-col items-center gap-1"><span className="text-[11px] text-hms-muted md:hidden">Featured</span><Toggle label={`${r.name} featured`} on={st.featured} disabled={!st.visible} onChange={(v) => set(r.id, "featured", v)} /></span>
             </div>
           );
         })}
@@ -219,19 +220,19 @@ export function OffersPage() {
       <PageHead title="Offers" desc="Direct-booking deals and promo codes." actions={<SourceLink href="/hms/discounts" label="Create in Discounts" />} />
       <div className="mb-4"><Segmented value={f} onChange={setF} options={[{ v: "all", label: "All" }, { v: "active", label: "Active" }, { v: "expired", label: "Expired" }]} /></div>
       <Card pad={false} className="mb-5">
-        <div className="grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-hms-muted"><span>Offer</span><span>Status</span><span>Visible</span><span>Featured</span></div>
+        <div className="hidden grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-hms-line px-5 py-2.5 text-[12px] md:grid font-semibold uppercase tracking-wider text-hms-muted"><span>Offer</span><span>Status</span><span>Visible</span><span>Featured</span></div>
         {rows.length === 0 && <Empty icon={<Plus className="size-6" />} title="No offers here" desc="Create a discount in Discounts and it appears here." />}
         {rows.map((o) => {
           const st = d.offers[o.id] ?? { visible: true, featured: false };
           return (
-            <div key={o.id} className="grid grid-cols-[1fr_100px_80px_80px] items-center gap-4 border-b border-hms-line px-5 py-3 last:border-b-0">
+            <div key={o.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-1 border-b border-hms-line px-4 py-3 last:border-b-0 md:grid-cols-[1fr_100px_80px_80px] md:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-hms-hover">{o.photo && <Image src={o.photo} alt="" fill sizes="44px" className="object-cover" />}</span>
-                <div className="min-w-0"><p className="truncate text-[14px] font-medium">{o.title} <span className="font-normal text-hms-coral">· {o.value}</span></p><p className="truncate text-[12px] text-hms-muted">{o.conditions}</p></div>
+                <div className="min-w-0"><p className="truncate text-[14px] font-medium">{o.title} <span className="font-normal text-hms-coral">· {o.value}</span></p><p className="truncate text-[12px] text-hms-muted">{o.conditions}</p><span className="mt-1 inline-block md:hidden"><Badge tone={o.expired || o.planned ? "gray" : "green"}>{o.planned ? "Packages: planned" : o.expired ? "Expired" : "Active"}</Badge></span></div>
               </div>
-              <Badge tone={o.expired || o.planned ? "gray" : "green"}>{o.planned ? "Packages: planned" : o.expired ? "Expired" : "Active"}</Badge>
-              <Toggle label={`${o.title} visible`} on={!o.expired && !o.planned && st.visible} disabled={o.expired || o.planned} onChange={(v) => set(o.id, "visible", v)} />
-              <Toggle label={`${o.title} featured`} on={!o.expired && !o.planned && st.featured} disabled={o.expired || o.planned || !st.visible} onChange={(v) => set(o.id, "featured", v)} />
+              <span className="hidden md:block"><Badge tone={o.expired || o.planned ? "gray" : "green"}>{o.planned ? "Packages: planned" : o.expired ? "Expired" : "Active"}</Badge></span>
+              <span className="flex flex-col items-center gap-1"><span className="text-[11px] text-hms-muted md:hidden">Show</span><Toggle label={`${o.title} visible`} on={!o.expired && !o.planned && st.visible} disabled={o.expired || o.planned} onChange={(v) => set(o.id, "visible", v)} /></span>
+              <span className="flex flex-col items-center gap-1"><span className="text-[11px] text-hms-muted md:hidden">Featured</span><Toggle label={`${o.title} featured`} on={!o.expired && !o.planned && st.featured} disabled={o.expired || o.planned || !st.visible} onChange={(v) => set(o.id, "featured", v)} /></span>
             </div>
           );
         })}
