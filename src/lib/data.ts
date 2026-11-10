@@ -11,9 +11,10 @@ import { haorBilash } from "@/data/haor-bilash";
 import { canopyNest } from "@/data/canopy-nest";
 import { skypod } from "@/data/skypod";
 import { altura } from "@/data/altura";
+import { nilaIsland } from "@/data/nila-island";
 import type { Hotel } from "./types";
 
-const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [mistwood.slug]: mistwood, [shalbon.slug]: shalbon, [lakeview.slug]: lakeview, [coralCove.slug]: coralCove, [waveBunk.slug]: waveBunk, [haorBilash.slug]: haorBilash, [canopyNest.slug]: canopyNest, [skypod.slug]: skypod, [altura.slug]: altura, [azureBayPaused.slug]: azureBayPaused };
+const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [mistwood.slug]: mistwood, [shalbon.slug]: shalbon, [lakeview.slug]: lakeview, [coralCove.slug]: coralCove, [waveBunk.slug]: waveBunk, [haorBilash.slug]: haorBilash, [canopyNest.slug]: canopyNest, [skypod.slug]: skypod, [altura.slug]: altura, [nilaIsland.slug]: nilaIsland, [azureBayPaused.slug]: azureBayPaused };
 
 export async function getHotel(slug: string): Promise<Hotel | null> {
   return HOTELS[slug] ?? null;

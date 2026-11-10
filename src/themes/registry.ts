@@ -15,8 +15,9 @@ import { DriftHome } from "./drift/Home";
 import { CanopyHome } from "./canopy/Home";
 import { PodHome } from "./pod/Home";
 import { OrbitHome } from "./orbit/Home";
+import { IsleHome } from "./isle/Home";
 
-export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> = {
+export const THEME_HOMES: Partial<Record<MasterTheme, ComponentType<{ hotel: Hotel }>>> = {
   grand: GrandHome,
   city: CityHome,
   nest: NestHome,
@@ -29,6 +30,7 @@ export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> =
   canopy: CanopyHome,
   pod: PodHome,
   orbit: OrbitHome,
+  isle: IsleHome,
 };
 
 export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
@@ -48,4 +50,5 @@ export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?:
   { id: "canopy", name: "CANOPY", plan: "Paid", demo: "canopy-nest" },
   { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
   { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
+  { id: "isle", name: "ISLE", plan: "Luxury", demo: "nila-island" },
 ];

@@ -4,6 +4,8 @@ import "@fontsource-variable/fraunces";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/instrument-sans";
 import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/cormorant-garamond";
+import "@fontsource-variable/playfair-display";
 import "@fontsource/hind-siliguri/400.css";
 import "@fontsource/hind-siliguri/600.css";
 import "./globals.css";

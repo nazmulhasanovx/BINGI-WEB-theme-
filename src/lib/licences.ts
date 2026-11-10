@@ -17,7 +17,7 @@ export type Licence = {
 };
 
 /** Demo properties show their paid theme because BinGi licensed it for the demo. */
-export const DEMO_LICENCES: Record<string, PaidTheme[]> = { "haor-bilash": ["drift"], "canopy-nest": ["canopy"], skypod: ["pod"], altura: ["orbit"] };
+export const DEMO_LICENCES: Record<string, PaidTheme[]> = { "haor-bilash": ["drift"], "canopy-nest": ["canopy"], skypod: ["pod"], altura: ["orbit"], "nila-island": ["isle"], "shonali-rajbari": ["zamindar"], "maison-gulshan": ["maison"], "obsidian-gulshan": ["noir"], "haven-lalakhal": ["haven"], meghchura: ["summit"], "bonolota-estate": ["estate"] };
 
 const KEY = "bingi-theme-licences-v1";
 const listeners = new Set<() => void>();

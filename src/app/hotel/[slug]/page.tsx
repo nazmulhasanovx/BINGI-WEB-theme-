@@ -13,9 +13,9 @@ export default async function HotelHome(props: PageProps<"/hotel/[slug]">) {
   if (!hotel) notFound();
   const allowed = [...(PLAN_RULES[hotel.plan].masters as readonly MasterTheme[]), ...PAID_IDS];
   const homes = Object.fromEntries(
-    allowed.map((m) => {
+    allowed.flatMap((m) => {
       const Home = THEME_HOMES[m];
-      return [m, <Home key={m} hotel={hotel} />];
+      return Home ? [[m, <Home key={m} hotel={hotel} />]] : [];
     }),
   );
   return <MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={homes} />;
