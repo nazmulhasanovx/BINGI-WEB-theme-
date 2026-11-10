@@ -1,4 +1,4 @@
-// DEMO DATA — Canopy Nest is a fictional treehouse stay used to design the paid CANOPY theme.
+// DEMO DATA — Canopy Nest (upgraded 2026-11-10 to a luxury treehouse retreat for the CANOPY luxury theme) is a fictional treehouse stay used to design the paid CANOPY theme.
 // Photos: Unsplash (free licence), demo only.
 import type { Hotel } from "@/lib/types";
 
@@ -6,11 +6,11 @@ const P = "/demo/canopy-nest";
 
 export const canopyNest: Hotel = {
   slug: "canopy-nest",
-  name: "Canopy Nest Treehouses",
-  type: "Treehouses",
-  stars: 0,
-  tagline: "Sleep where the gibbons sing.",
-  intro: "Seven wooden treehouses at the edge of the Lawachara forest — rope bridges, forest sounds and tea gardens on every side.",
+  name: "Canopy Nest Treehouse Retreat",
+  type: "Luxury treehouse retreat",
+  stars: 5,
+  tagline: "Sleep where the gibbons sing",
+  intro: "Seven hand-built treehouses high in the canopy at the edge of Lawachara forest — rope bridges, a forest kitchen and a guide who knows every bird call.",
   logoText: "Canopy Nest",
   heroPhoto: `${P}/hero.jpg`,
   area: "Kamalganj",
@@ -45,8 +45,8 @@ export const canopyNest: Hotel = {
       id: "t1", slug: "canopy-treehouse", name: "Canopy Treehouse", kind: "cottage",
       short: "Six metres up, a deck in the leaves.",
       description: "A one-room treehouse six metres up a jackfruit tree, with a queen bed, a wide deck and a small bathroom at the foot of the stairs.",
-      fromPrice: 8500, maxAdults: 2, maxChildren: 0, bed: "1 Queen bed", sizeSqft: 180, view: "Forest",
-      units: 3, specs: ["6 m up", "Private deck", "Bathroom at the base"],
+      fromPrice: 28000, maxAdults: 2, maxChildren: 0, bed: "1 Queen bed", sizeSqft: 180, view: "Forest",
+      units: 3, specs: ["12 m up", "Private deck", "Bathroom at the base"],
       amenities: ["Hot water", "Mosquito net", "Fan", "Deck"],
       photos: [`${P}/tree-2.jpg`, `${P}/inside-2.jpg`], featured: true,
     },
@@ -54,8 +54,8 @@ export const canopyNest: Hotel = {
       id: "t2", slug: "bridge-treehouse", name: "Bridge Treehouse", kind: "cottage",
       short: "Two rooms joined by a rope bridge.",
       description: "Two small houses linked by a rope bridge — one for parents, one for kids — with an attached bathroom in the bigger house.",
-      fromPrice: 11000, maxAdults: 4, maxChildren: 2, bed: "1 Queen + 2 Single", sizeSqft: 260, bedrooms: 2, view: "Forest",
-      units: 2, specs: ["4 m up", "Rope bridge", "Attached bathroom"],
+      fromPrice: 36000, maxAdults: 4, maxChildren: 2, bed: "1 Queen + 2 Single", sizeSqft: 260, bedrooms: 2, view: "Forest",
+      units: 2, specs: ["9 m up", "Rope bridge", "Attached bathroom"],
       amenities: ["Hot water", "Mosquito net", "Fan", "Two decks"],
       photos: [`${P}/bridge.jpg`, `${P}/inside-1.jpg`], featured: true,
     },
@@ -63,8 +63,8 @@ export const canopyNest: Hotel = {
       id: "t3", slug: "round-window-house", name: "Round Window House", kind: "cottage",
       short: "A big round window onto the trees.",
       description: "A modern treehouse with a round window over the bed and an attached bathroom. Lowest of the houses — easiest stairs.",
-      fromPrice: 7000, maxAdults: 2, maxChildren: 0, bed: "1 Double bed", sizeSqft: 150, view: "Forest",
-      units: 2, specs: ["3 m up", "Round window", "Attached bathroom"],
+      fromPrice: 22000, maxAdults: 2, maxChildren: 0, bed: "1 Double bed", sizeSqft: 150, view: "Forest",
+      units: 2, specs: ["7 m up", "Round window", "Attached bathroom"],
       amenities: ["Hot water", "Mosquito net", "Fan"],
       photos: [`${P}/round.jpg`, `${P}/window.jpg`],
     },
@@ -74,7 +74,9 @@ export const canopyNest: Hotel = {
     { id: "s2", name: "Tea garden morning", category: "activity", short: "Walk the tea estate at 7 AM, tea at the end.", price: 500, unit: "per person", photo: `${P}/forest.jpg`, addToStay: true },
     { id: "s3", name: "Birding with a guide", category: "activity", short: "Two hours at dawn, binoculars included.", price: 1200, unit: "per person", photo: `${P}/leaves.jpg`, addToStay: true },
   ],
-  outlets: [],
+  outlets: [
+    { id: "d1", name: "The Forest Kitchen", kind: "restaurant", short: "Local food cooked over wood: forest-garden greens, Khasi-style pork, tea-leaf salads.", hours: "7 AM – 10 PM", location: "Ground lodge", photo: `${P}/forest.jpg`, tableRequest: true },
+  ],
   menu: [],
   offers: [
     { id: "o1", title: "Weekday in the trees", short: "Sunday to Wednesday.", kind: "discount", value: "15% off", conditions: "Check-in Sun–Wed.", photo: `${P}/tree-4.jpg` },
@@ -102,6 +104,12 @@ export const canopyNest: Hotel = {
   ],
   taxes: { vatPercent: 0, serviceChargePercent: 0, inclusive: true },
   social: { facebook: "#", instagram: "#" },
+  dayPlan: [
+    { time: "5:30", title: "The gibbons call", text: "From the trees around you. No alarm needed." },
+    { time: "7:00", title: "Tea garden morning", text: "A walk through the estate, tea at the end." },
+    { time: "13:00", title: "Forest kitchen lunch", text: "Long and slow, under the big jackfruit tree." },
+    { time: "19:00", title: "Night forest walk", text: "Torches, a guide, and the forest waking up." },
+  ],
   faq: [
     { q: "Are the stairs hard?", a: "Canopy Treehouse has steep wooden stairs. The Round Window House is the easiest (3 m)." },
     { q: "Is there electricity?", a: "Yes, lights, a fan and a charging point in every treehouse." },
