@@ -226,7 +226,8 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
   color: var(--ink);
   min-height: 100svh;
 }
-#hotel-theme[data-master="isle"] { --canvas:#F7F5F0; --surface:#FFFFFF; --ink:#10252B; --muted:#4A5D62; --line:#E4E0D6; --lux-accent:#2A9D9A; --lux-accent-ink:#0E6866; --font-heading:var(--font-cormorant); --lux-r:22px; --lux-dw:450; }
+#hotel-theme[data-master="isle"] { --canvas:#F6F2EA; --surface:#FFFFFF; --ink:#0E2A30; --muted:#465B60; --line:#E2DCCF; --lux-accent:#2A9D9A; --lux-accent-ink:#0E6866; --font-heading:"Italiana", Georgia, serif; --lux-r:28px; --lux-dw:400; --lux-dt:0; --lux-lh:1.02; --isle-accent:"Bodoni Moda Variable", Georgia, serif; font-family:"Manrope Variable", "Hind Siliguri", system-ui, sans-serif; }
+.isle-accent { font-family: var(--isle-accent); font-style: italic; }
 #hotel-theme[data-master="zamindar"] { --canvas:#F6F0E4; --surface:#FFFBF3; --ink:#2A1612; --muted:#664E43; --line:#E3D6BE; --lux-accent:#A8823A; --lux-accent-ink:#7A1F2B; --font-heading:var(--font-cormorant); --lux-r:0px; --lux-btn-r:0px; --lux-dw:500; }
 #hotel-theme[data-master="maison"] { --canvas:#F8F5EF; --surface:#FFFFFF; --ink:#111111; --muted:#55514C; --line:#E2DDD3; --lux-accent:#9C7C48; --lux-accent-ink:#6B5124; --font-heading:var(--font-playfair); --lux-r:0px; --lux-btn-r:0px; --lux-dt:-0.02em; }
 #hotel-theme[data-master="noir"] { --canvas:#0B0B0D; --surface:#17171A; --ink:#F3EEE4; --muted:#ABA598; --line:#2C2C31; --lux-accent:#C9A96E; --lux-accent-ink:#DCC08A; --font-heading:var(--font-playfair); --lux-r:2px; --lux-btn-r:2px; --brand-soft:#1E1C19 !important; --brand-soft-2:#26231F !important; --brand-ring:#5C4D33 !important; --brand:#C9A96E !important; --action:#D2B47C !important; --action-hover:#E0C796 !important; --action-pressed:#BFA068 !important; --on-action:#14120E !important; color-scheme: dark; }

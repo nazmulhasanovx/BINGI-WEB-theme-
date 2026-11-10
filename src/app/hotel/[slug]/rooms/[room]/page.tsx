@@ -10,6 +10,11 @@ import { RatePicker } from "@/components/rooms/RatePicker";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { Skel } from "@/components/ui/Skeleton";
 import { Reveal } from "@/components/motion/Reveal";
+import { MasterSwitch } from "@/components/site-draft/Draft";
+import { PLAN_RULES } from "@/lib/data";
+import { PAID_IDS, fallbackMaster } from "@/themes/paid";
+import { THEME_ROOM } from "@/themes/pages";
+import type { MasterTheme } from "@/lib/types";
 
 export async function generateStaticParams() {
   const out: { slug: string; room: string }[] = [];
@@ -40,7 +45,7 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
     room.view && { icon: Eye, label: `${room.view} view` },
   ].filter(Boolean) as { icon: typeof Users; label: string }[];
 
-  return (
+  const shared = (
     <div className="pb-28 md:pb-20">
       <div className="mx-auto max-w-[1240px] md:px-6 md:pt-6">
         <Link href={`/hotel/${slug}/rooms`} className="hidden items-center gap-1 text-sm font-semibold text-muted hover:text-ink md:mb-4 md:inline-flex">
@@ -100,4 +105,7 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
       )}
     </div>
   );
+  const masters = [...(PLAN_RULES[hotel.plan].masters as readonly MasterTheme[]), ...PAID_IDS];
+  const views = Object.fromEntries(masters.map((m) => { const V = THEME_ROOM[m]; return [m, V ? <V key={m} hotel={hotel} room={room} /> : shared]; }));
+  return <MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={views} />;
 }
