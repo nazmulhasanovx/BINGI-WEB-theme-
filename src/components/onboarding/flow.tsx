@@ -5,14 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
-  CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck,
+  CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck, Globe, CalendarCheck, ImageIcon,
 } from "lucide-react";
 import {
-  CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
+  CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
   type Cycle, type Draft, type PlanId, type StepId,
 } from "@/lib/onboarding/store";
 import { SUGGEST, configFrom } from "@/lib/onboarding/rooms-easy";
@@ -21,6 +21,7 @@ import { MASTER_LIST, PLAN_ORDER } from "@/themes/manifest";
 import { setProperty } from "../hms/property";
 import { money } from "../hms/rooms/parts";
 import { MobileSteps, Sidebar } from "./sidebar";
+import { GuestPreview } from "./preview";
 import { AddressSheet } from "./address";
 import { FormSlot, RoomsWhat, RoomsWhere, RoomTypes } from "./rooms-easy";
 import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Primary, Q, Stepper, Tile, field, label } from "./shell";
@@ -54,7 +55,8 @@ function Flow({ d }: { d: Draft }) {
   const counts = { total: live.length, published: 0, categories: rooms.st.categories.filter((c) => !c.archived).length };
 
   const go = (s: StepId) => { setTried(false); edit((x) => { x.step = s; if (!x.seen.includes(s)) x.seen.push(s); }); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const i = ORDER.indexOf(d.step);
+  const i = ORDER.indexOf(stepOf(d.step));
+  useEffect(() => { if (stepOf(d.step) !== d.step) edit((x) => { x.step = stepOf(x.step); }); }, [d.step, edit]);
   const next = () => go(ORDER[Math.min(ORDER.length - 1, i + 1)]);
   const back = i > 0 ? () => go(ORDER[i - 1]) : () => router.push("/onboarding");
   const errs = errorsFor(d, counts.total, t);
@@ -77,7 +79,7 @@ function Flow({ d }: { d: Draft }) {
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />,
     "2.1": <RoomsWhat d={d} />, "2.2": <RoomsWhere d={d} st={rooms.st} />, "2.3": <RoomTypes d={d} rooms={rooms} />,
-    "3.1": <Rates d={d} />, "3.2": <Policy d={d} />,
+    "3.1": <BookingRules d={d} />,
     "4.1": <Modules d={d} />, "4.2": <Team d={d} />,
     "5.1": <Payments d={d} />, "5.2": <Website d={d} />,
     "6.1": <Plan d={d} units={counts.total} />, "6.2": <Verify d={d} />, "6.3": <Ready d={d} counts={counts} go={go} />,
@@ -91,7 +93,9 @@ function Flow({ d }: { d: Draft }) {
     <FormSlot.Provider value={{ slot, setOpen: setFormOpen }}>
     <Canvas>
       <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e5ea]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
-      <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={((i + 1) / ORDER.length) * 100}
+      <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={pct}
+        wide={d.step === "6.1"}
+        aside={d.step === "6.1" || d.step === "6.3" ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
           {!formOpen && <Foot back={back}>
@@ -101,7 +105,7 @@ function Flow({ d }: { d: Draft }) {
         </>}>
         <div>
           {tried && <Errors list={d.step === "6.3" ? required : errs} />}
-          <div key={d.step + lang} className="onb-in">{body[d.step]}</div>
+          <div key={d.step + lang} className="onb-in">{body[stepOf(d.step)]}</div>
         </div>
       </Card>
     </Canvas>
@@ -122,7 +126,7 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
     if (zone && !d.zones.length) e.push(t("কটেজ/ভিলা কোন জায়গায় আছে বাছাই করুন।", "Choose where the cottages/villas are."));
   }
   if (d.step === "2.3" && !units) e.push(t("কমপক্ষে একটা রুমের ধরন যোগ করুন।", "Add at least one room type."));
-  if (d.step === "3.2" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
+  if (d.step === "3.1" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
   if (d.step === "4.2" && d.team.some((x) => !validPhone(x.phone))) e.push(t("প্রত্যেকের সঠিক মোবাইল নম্বর দিন।", "Each invite needs a valid mobile number."));
   if (d.step === "5.1") {
     const p = d.pay;
@@ -207,7 +211,14 @@ function Address({ d }: { d: Draft }) {
 function Extras({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
-  const tog = (e: string) => edit((x) => { x.extras = x.extras.includes(e) ? x.extras.filter((y) => y !== e) : [...x.extras, e]; });
+  const food = (l: string[]) => l.some((e) => e === "Restaurant" || e === "Bar");
+  const tog = (e: string) => edit((x) => {
+    const had = food(x.extras);
+    x.extras = x.extras.includes(e) ? x.extras.filter((y) => y !== e) : [...x.extras, e];
+    // Restaurant/Bar here = the Restaurant & meals tool in part 4 (asked once, not twice).
+    if (!had && food(x.extras) && !x.modules.includes("restaurant")) x.modules = [...x.modules, "restaurant"];
+    if (had && !food(x.extras)) x.modules = x.modules.filter((y) => y !== "restaurant");
+  });
   return (
     <Q title={t("আর কী কী আছে?", "What else is there?")} why={t("এগুলো দেখে মডিউল আর ওয়েবসাইটের অংশ ঠিক হয়।", "This decides which tools and website sections you get.")}>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -218,13 +229,24 @@ function Extras({ d }: { d: Draft }) {
 }
 
 // ---------------- Part 3 ----------------
+function BookingRules({ d }: { d: Draft }) {
+  const { t } = useL();
+  return (
+    <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} why={t("দাম, বাতিল আর চেক-ইনের সময় — গেস্ট বুক করার আগে এগুলো দেখে।", "Prices, cancellation and times — guests see these before they book.")}>
+      <h2 className="mb-3 text-[17px] font-semibold">{t("দামের নিয়ম", "Price rules")}</h2>
+      <Rates d={d} />
+      <h2 className="mb-3 mt-9 border-t border-[#e6e8ec] pt-7 text-[17px] font-semibold">{t("বাতিল ও সময়", "Cancellation & times")}</h2>
+      <Policy d={d} />
+    </Q>
+  );
+}
 function Rates({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
   const r = d.rates;
   const set = (fn: (x: Draft["rates"]) => void) => edit((x) => { fn(x.rates); x.rates.done = true; });
   return (
-    <Q title={t("দামের নিয়ম", "Price rules")} why={t("রুমের দাম আপনি আগের ধাপে দিয়েছেন। এখানে শুধু সহজ কিছু নিয়ম।", "Room prices are set. These are simple extra rules.")}>
+    <div>
       <div className="space-y-3">
         <Toggle on={r.weekendPct > 0} onClick={() => set((x) => { x.weekendPct = x.weekendPct > 0 ? 0 : 10; })} icon={<CalendarDays className="size-5" />} title={t("শুক্র–শনি দাম একটু বেশি", "Higher price on Fri–Sat")}>
           {r.weekendPct > 0 && <div className="mt-3 flex flex-wrap gap-2">{[10, 15, 20, 30].map((p) => <Chip key={p} on={r.weekendPct === p} onClick={() => set((x) => { x.weekendPct = p; })}>+{num(p, lang)}%</Chip>)}</div>}
@@ -234,7 +256,7 @@ function Rates({ d }: { d: Draft }) {
         </Toggle>
       </div>
       <button onClick={() => set(() => {})} className="mt-4 text-[14.5px] font-medium text-[#5b6170] underline underline-offset-4">{t("কোনো নিয়ম নেই — সব দিন এক দাম", "No rules — same price every day")}</button>
-    </Q>
+    </div>
   );
 }
 function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: () => void; icon: ReactNode; title: string; children?: ReactNode }) {
@@ -264,7 +286,7 @@ function Policy({ d }: { d: Draft }) {
   const p = d.policy;
   const [tax, setTax] = useState(false);
   return (
-    <Q title={t("বাতিলের নিয়ম ও সময়", "Cancellation & times")} why={t("গেস্ট বুক করার আগে এটা দেখে।", "Guests see this before they book.")}>
+    <div>
       <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-2.5">
         {POLICIES.map((x) => <Tile key={x.id} role="radio" on={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })} icon={<x.icon className="size-6" />} title={t(x.bn, x.en)} sub={t(x.subBn, x.subEn)} />)}
       </div>
@@ -280,7 +302,7 @@ function Policy({ d }: { d: Draft }) {
           <div><p className="text-[13px] text-[#5b6170]">{t("সার্ভিস চার্জ", "Service")}</p><div className="mt-1 flex gap-2">{[0, 5, 10].map((v) => <Chip key={v} on={p.sc === v} onClick={() => edit((y) => { y.policy.sc = v; })}>{num(v, lang)}%</Chip>)}</div></div>
         </div>}
       </div>
-    </Q>
+    </div>
   );
 }
 
@@ -304,7 +326,7 @@ function Modules({ d }: { d: Draft }) {
           const on = m.locked || d.modules.includes(m.id);
           const pl = MODULE_PLAN[m.id];
           return <Tile key={m.id} on={on} locked={m.locked} onClick={() => edit((x) => { x.modules = x.modules.includes(m.id) ? x.modules.filter((y) => y !== m.id) : [...x.modules, m.id]; })}
-            icon={<m.icon className="size-6" />} title={t(m.bn, m.en)} badge={m.locked ? t("সবসময় চালু", "Always on") : pl === "starter" ? undefined : t(`${PLANS[pl].label} থেকে`, `From ${PLANS[pl].label}`)} />;
+            icon={<m.icon className="size-6" />} title={t(m.bn, m.en)} sub={m.id === "restaurant" && d.extras.some((e) => e === "Restaurant" || e === "Bar") ? t("আপনি বলেছেন রেস্টুরেন্ট/বার আছে, তাই চালু করা আছে", "On because you said you have a restaurant/bar") : undefined} badge={m.locked ? t("সবসময় চালু", "Always on") : pl === "starter" ? undefined : t(`${PLANS[pl].label} থেকে`, `From ${PLANS[pl].label}`)} />;
         })}
       </div>
       <p className="mt-4 rounded-lg border border-[#e6e8ec] bg-white px-4 py-3 text-[14px] text-[#4b5160]">{t("আপনার বাছাই অনুযায়ী মানানসই প্ল্যান:", "Plan that fits your choices:")} <b className="text-[#1d1f24]">{PLANS[need].label}</b> · {t("শেষ ধাপে বদলাতে পারবেন", "you can change it in the last part")}</p>
@@ -546,15 +568,40 @@ function Ring({ v, lang }: { v: number; lang: "bn" | "en" }) {
 }
 
 function Done({ d }: { d: Draft }) {
-  const { t } = useL();
+  const { t, lang } = useL();
   const router = useRouter();
+  const steps = [
+    { icon: ShieldCheck, bn: "BinGi যাচাই করবে", en: "BinGi reviews your setup", subBn: "সাধারণত ১ কার্যদিবসের মধ্যে। কিছু লাগলে ফোন করবে।", subEn: "Usually within 1 working day. We call if anything is needed.", now: true },
+    { icon: Globe, bn: "ওয়েবসাইট তৈরি হবে", en: "Your website is created", subBn: "বাছাই করা থিমে, আপনার রুম আর দাম দিয়ে।", subEn: "In the theme you chose, with your rooms and prices." },
+    { icon: CalendarCheck, bn: "অনলাইন বুকিং চালু", en: "Online booking opens", subBn: "ওয়েবসাইট ও মার্কেটপ্লেস থেকে বুকিং আসবে।", subEn: "Bookings come from your website and the marketplace." },
+  ];
   return (
     <Canvas>
       <Header title={d.name} />
-      <main className="mx-auto max-w-[620px] px-4 py-14 text-center">
-        <span className="onb-in mx-auto grid size-16 place-items-center rounded-full bg-[#e9f7ef] text-[#1c7d45]"><CircleCheck className="size-9" /></span>
-        <h1 className="mt-5 text-[28px] font-semibold leading-tight">{t("সেটআপ জমা হয়েছে", "Setup submitted")}</h1>
-        <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#5b6170]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
+      <main className="mx-auto max-w-[620px] px-4 py-12">
+        <div className="text-center">
+          <span className="onb-in mx-auto grid size-16 place-items-center rounded-full bg-[#e9f7ef] text-[#1c7d45]"><CircleCheck className="size-9" /></span>
+          <h1 className="mt-5 text-[28px] font-semibold leading-tight">{t("সেটআপ জমা হয়েছে", "Setup submitted")}</h1>
+          <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#5b6170]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
+        </div>
+        <section className="mt-9 rounded-xl border border-[#e6e8ec] bg-white p-5">
+          <h2 className="text-[16px] font-semibold">{t("এরপর কী হবে", "What happens next")}</h2>
+          <ol className="mt-4 space-y-4">
+            {steps.map((s, i) => (
+              <li key={s.en} className="flex gap-3">
+                <span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", s.now ? "bg-[#1d1f24] text-white" : "bg-[#f1f2f5] text-[#5b6170]")}><s.icon className="size-[18px]" /></span>
+                <span className="min-w-0"><span className="block text-[15px] font-semibold">{num(i + 1, lang)}. {t(s.bn, s.en)}{s.now && <span className="ml-2 rounded-md bg-[#fff4e5] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8a5300]">{t("এখন চলছে", "In progress")}</span>}</span><span className="text-[14px] text-[#5b6170]">{t(s.subBn, s.subEn)}</span></span>
+              </li>
+            ))}
+          </ol>
+        </section>
+        <section className="mt-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
+          <h2 className="text-[16px] font-semibold">{t("ততক্ষণে যা করতে পারেন", "Meanwhile you can")}</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Link href="/hms/rooms" className="flex items-center gap-3 rounded-lg border border-[#e6e8ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#1d1f24]"><ImageIcon className="size-5 text-[#5b6170]" />{t("রুমের ছবি দিন", "Add room photos")}</Link>
+            <Link href="/hms/staff" className="flex items-center gap-3 rounded-lg border border-[#e6e8ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#1d1f24]"><UsersRound className="size-5 text-[#5b6170]" />{t("টিম যোগ করুন", "Add your team")}</Link>
+          </div>
+        </section>
         <div className="mt-8 flex flex-wrap justify-center gap-2"><Ghost onClick={() => router.push("/onboarding/status")}>{t("স্ট্যাটাস দেখুন", "View status")}</Ghost><Primary onClick={() => router.push("/hms")}>{t("ড্যাশবোর্ডে যান", "Go to dashboard")}</Primary></div>
       </main>
     </Canvas>

@@ -5,13 +5,13 @@ import { useState } from "react";
 import { BedDouble, Building2, CalendarCheck, Check, ChevronDown, Circle, CircleDot, LayoutGrid, Send, Wallet, type LucideIcon } from "lucide-react";
 
 const ICON: Record<string, LucideIcon> = { s1: Building2, s2: BedDouble, s3: CalendarCheck, s4: LayoutGrid, s5: Wallet, s6: Send };
-import { ORDER, SECTIONS, STEP_TITLE, num, sectionOf, useL, type Check as C, type Draft, type StepId } from "@/lib/onboarding/store";
+import { ORDER, SECTIONS, STEP_TITLE, minutesLeft, num, sectionOf, stepOf, useL, type Check as C, type Draft, type StepId } from "@/lib/onboarding/store";
 
 /** A step is done when the owner has moved past it (or, for required data, when the check passes). */
 function stepDone(d: Draft, s: StepId, cs: C[]) {
   const req = cs.find((c) => c.step === s && c.level === "required");
   if (req) return req.ok;
-  return d.seen.includes(s) && ORDER.indexOf(s) < ORDER.indexOf(d.step);
+  return d.seen.includes(s) && ORDER.indexOf(s) < ORDER.indexOf(stepOf(d.step));
 }
 
 export function Sidebar({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number; go: (s: StepId) => void }) {
@@ -24,7 +24,8 @@ export function Sidebar({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number; go
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eceef2]"><div className="h-full rounded-full bg-[#1c7d45] transition-[width] duration-500" style={{ width: `${pct}%` }} /></div>
         <span className="text-[13px] font-semibold tabular-nums">{num(pct, lang)}%</span>
       </div>
-      <ol className="mt-6 space-y-1">
+      <p className="mt-1.5 text-[12.5px] text-[#5b6170]">{t(`বাকি প্রায় ${num(minutesLeft(d.step), lang)} মিনিট`, `About ${minutesLeft(d.step)} min left`)}</p>
+      <ol className="mt-5 space-y-1">
         {SECTIONS.map((s, i) => {
           const cur = sectionOf(d.step) === i;
           const done = s.steps.every((x) => stepDone(d, x, cs));
@@ -45,7 +46,7 @@ export function Sidebar({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number; go
                 <ol className="mb-2 ml-[26px] mt-1 space-y-0.5 border-l border-[#e6e8ec] pl-4">
                   {s.steps.map((x) => {
                     const ok = stepDone(d, x, cs);
-                    const here = x === d.step;
+                    const here = x === stepOf(d.step);
                     return (
                       <li key={x}>
                         <button onClick={() => go(x)} disabled={!d.seen.includes(x)} aria-current={here ? "step" : undefined}
@@ -76,7 +77,7 @@ export function MobileSteps({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number
     <div>
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <span className="text-[13px] font-semibold text-[#5b6170]">{lang === "bn" ? `ধাপ ${num(i + 1, lang)}/৬` : `Part ${i + 1}/6`}</span>
-        <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{t(SECTIONS[i].bn, SECTIONS[i].label)} · {t(...STEP_TITLE[d.step])}</span>
+        <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{t(SECTIONS[i].bn, SECTIONS[i].label)} · {t(...STEP_TITLE[stepOf(d.step)])}</span>
         <span className="text-[13px] font-semibold tabular-nums">{num(pct, lang)}%</span>
         <ChevronDown className={clsx("size-4 transition-transform", open && "rotate-180")} />
       </button>
