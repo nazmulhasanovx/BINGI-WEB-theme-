@@ -130,8 +130,9 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 
 /* ---------- HMS (BinGi Hotel Management) shell — matches the live HMS ---------- */
 @theme {
-  --color-hms-red: #b91c2c;
-  --color-hms-coral: #d73838;
+  --color-hms-red: #c8232e; /* buttons, red text, active nav (5.6:1) — hover #b11c29, pressed #8f1520 */
+  --color-hms-coral: #c8232e; /* same as red: used on filled buttons/avatars with white text */
+  --color-hms-brand: #fd413f; /* logo coral — logo, icon tiles, large surfaces only (never small text) */
   --color-hms-coral-soft: #fdecec;
   --color-hms-canvas: #f6f6f9;
   --color-hms-nav: #f5f5fa;

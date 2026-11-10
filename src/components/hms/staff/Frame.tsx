@@ -78,7 +78,7 @@ export function StaffFrame({
               {more && (
                 <div className="hms-pop absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
                   {MORE.map((m) => (
-                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#c72f26]")}>{m.label}</Link>
+                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#c8232e]")}>{m.label}</Link>
                   ))}
                 </div>
               )}
@@ -95,14 +95,14 @@ export function StaffFrame({
                 {right}
                 {filters && (
                   <div className="relative">
-                    <button onClick={() => setFOpen((o) => !o)} aria-expanded={fOpen} className={clsx("inline-flex h-11 items-center gap-2 rounded-xl border bg-white px-4 text-[15px] font-medium hover:bg-[#f6f7f9]", activeFilters ? "border-[#ef6f68] text-[#c72f26]" : "border-[#dfe2e8]")}>
-                      <Filter className="size-[18px]" /> Filters{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-[#d8372e] text-[12px] text-white">{activeFilters}</span>}
+                    <button onClick={() => setFOpen((o) => !o)} aria-expanded={fOpen} className={clsx("inline-flex h-11 items-center gap-2 rounded-xl border bg-white px-4 text-[15px] font-medium hover:bg-[#f6f7f9]", activeFilters ? "border-[#ef6f68] text-[#c8232e]" : "border-[#dfe2e8]")}>
+                      <Filter className="size-[18px]" /> Filters{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-[#c8232e] text-[12px] text-white">{activeFilters}</span>}
                     </button>
                     {fOpen && (
                       <div role="dialog" aria-label="Filters" className="absolute right-0 top-full z-40 mt-2 w-[300px] space-y-3 rounded-2xl border border-[#e6e8ee] bg-white p-4 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.3)]">
                         {filters}
                         <div className="flex justify-between pt-1">
-                          <button onClick={() => onClearFilters?.()} disabled={!activeFilters} className="text-[14px] font-medium text-[#c72f26] disabled:text-[#8a8f9c]">Clear all</button>
+                          <button onClick={() => onClearFilters?.()} disabled={!activeFilters} className="text-[14px] font-medium text-[#c8232e] disabled:text-[#8a8f9c]">Clear all</button>
                           <button onClick={() => setFOpen(false)} className="rounded-lg bg-[#f2f3f6] px-3 py-1.5 text-[14px] font-medium">Done</button>
                         </div>
                       </div>
@@ -137,7 +137,7 @@ export function FilterSelect({ label, value, onChange, options }: { label: strin
   return (
     <label className="block">
       <span className="mb-1 block text-[13.5px] font-medium text-[#4b5160]">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px] outline-none focus:border-[#d8372e]">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px] outline-none focus:border-[#c8232e]">
         <option value="all">All</option>
         {options.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
       </select>

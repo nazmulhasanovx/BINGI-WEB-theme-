@@ -65,7 +65,7 @@ export function UnitsPage() {
             {st.drafts.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14.5px]">
                 <span className="min-w-0 flex-1"><b>{presetOf(d.preset).label}</b>{d.category && ` · ${cat(d.category)?.name ?? ""}`} · {d.picks.length} numbers picked (not reserved) · saved {fmtStamp(d.savedAt)}</span>
-                <Link href={`/hms/rooms/new?draft=${d.id}`} className="font-medium text-[#c72f26]">Continue</Link>
+                <Link href={`/hms/rooms/new?draft=${d.id}`} className="font-medium text-[#c8232e]">Continue</Link>
                 <button onClick={() => update((s) => { s.drafts = s.drafts.filter((x) => x.id !== d.id); }, "Setup draft discarded")} className="text-[#5b6170] hover:text-[#1d1f24]">Discard</button>
               </li>
             ))}
@@ -88,7 +88,7 @@ export function UnitsPage() {
       </div>
 
       <div className="mt-4 space-y-4">
-        {!st.units.length && <div className="rounded-2xl border border-[#eceef2] bg-white"><Empty icon={<Building2 className="size-6" />} title="No units yet" text="Add your first rooms, cottages or beds." action={<Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#d8372e] px-4 text-[14.5px] font-medium text-white"><Plus className="size-4" /> Add accommodation</Link>} /></div>}
+        {!st.units.length && <div className="rounded-2xl border border-[#eceef2] bg-white"><Empty icon={<Building2 className="size-6" />} title="No units yet" text="Add your first rooms, cottages or beds." action={<Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white"><Plus className="size-4" /> Add accommodation</Link>} /></div>}
         {st.units.length > 0 && !list.length && <p className="rounded-2xl border border-[#eceef2] bg-white p-6 text-center text-[15px] text-[#5b6170]">No unit matches these filters.</p>}
         {groups.map(([nid, us]) => (
           <section key={nid} className="rounded-2xl border border-[#eceef2] bg-white p-4">
@@ -164,7 +164,7 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
           <dt className="text-[#5b6170]">Price</dt><dd className="font-semibold">৳{money(unitRate(u, cat))} / night{u.rate !== undefined && <span className="ml-1.5 text-[12.5px] font-normal text-[#5b6170]">(own price)</span>}</dd>
         </dl>
         {u.status === "draft" && issues.length > 0 && (
-          <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
+          <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
         )}
         <div className="space-y-3 border-t border-[#eceef2] pt-4">
           <p className="text-[14px] font-semibold">Only for this unit</p>
@@ -249,7 +249,7 @@ function CategoryDrawer({ st, c, onClose }: { st: RoomsState; c: Category; onClo
     </>}>
       <div className="space-y-4">
         <p className="rounded-xl bg-[#f6f7f9] px-3.5 py-2.5 text-[14px] text-[#4b5160]">{n} units use this category. Changes apply to all of them{own ? `; ${own} with their own price keep it` : ""}. Bookings already made keep their price.</p>
-        {errs.length > 0 && <div role="alert" className="text-[14px] text-[#c33029]">{errs.map((e) => <p key={e}>{e}</p>)}</div>}
+        {errs.length > 0 && <div role="alert" className="text-[14px] text-[#c8232e]">{errs.map((e) => <p key={e}>{e}</p>)}</div>}
         <Field label="Name"><Input value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Base price (৳ / night)"><Input type="number" min={0} value={d.baseRate || ""} onChange={(e) => setD({ ...d, baseRate: Number(e.target.value) })} /></Field>

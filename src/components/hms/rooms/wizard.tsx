@@ -35,7 +35,7 @@ function AddPageInner() {
       <div className="grid h-full place-items-center p-6 text-center">
         <div>
           <p className="text-[18px] font-semibold">Finish the one-time setup first</p>
-          <Link href={`${base}/setup`} className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#d8372e] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
+          <Link href={`${base}/setup`} className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
         </div>
       </div>
     );
@@ -159,7 +159,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
         </>}
       </>}>
       {(err.length > 0 || conflicts.length > 0) && (
-        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-4 py-3 text-[14.5px] text-[#a3261f]">
+        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-4 py-3 text-[14.5px] text-[#a3261f]">
           {conflicts.length > 0 && <p className="font-semibold">Nothing was created. Fix these and try again:</p>}
           {[...err, ...conflicts].map((e) => <p key={e}>{e}</p>)}
         </div>
@@ -249,13 +249,13 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
         <div role="radiogroup" aria-label="Category" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((x) => (
             <button key={x.id} role="radio" aria-checked={catId === x.id} onClick={() => setCatId(x.id)}
-              className={clsx("rounded-2xl border p-3.5 text-left", catId === x.id ? "border-[#e2574e] bg-[#fdf3f2] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
+              className={clsx("rounded-2xl border p-3.5 text-left", catId === x.id ? "border-[#c8232e] bg-[#fdecec] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
               <span className="block text-[15px] font-semibold">{x.name}</span>
               <span className="mt-0.5 block text-[13.5px] text-[#5b6170]">৳{money(x.baseRate)} / night · {count(x.id)} units · {presetOf(x.preset).label}{x.approval !== "approved" ? " · waiting for approval" : ""}</span>
             </button>
           ))}
           <button role="radio" aria-checked={catId === "new"} onClick={() => { setCatId("new"); if (!cat) setCat(blankCat(core, p)); }}
-            className={clsx("flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-left", catId === "new" ? "border-[#e2574e] bg-[#fdf3f2]" : "border-[#cfd3db] bg-white hover:bg-[#fafafb]")}>
+            className={clsx("flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-left", catId === "new" ? "border-[#c8232e] bg-[#fdecec]" : "border-[#cfd3db] bg-white hover:bg-[#fafafb]")}>
             <span className="grid size-9 place-items-center rounded-xl bg-[#f2f3f6]"><Plus className="size-5" /></span>
             <span><span className="block text-[15px] font-semibold">Create new category</span><span className="block text-[13.5px] text-[#5b6170]">e.g. {pod ? "Single Pod" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : "Deluxe Twin"}</span></span>
           </button>
@@ -386,12 +386,12 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
       </Section>
 
       <aside className="lg:sticky lg:top-0 lg:self-start">
-        <Section title={`Selected (${picks.length})`} right={picks.length > 0 ? <button onClick={() => { setPicks([]); setNote(null); }} className="text-[14px] font-medium text-[#c72f26]">Clear</button> : undefined}>
+        <Section title={`Selected (${picks.length})`} right={picks.length > 0 ? <button onClick={() => { setPicks([]); setNote(null); }} className="text-[14px] font-medium text-[#c8232e]">Clear</button> : undefined}>
           {!picks.length ? <p className="text-[14px] text-[#5b6170]">Nothing selected yet.</p> : (
             <>
               <ul className="flex max-h-[280px] flex-wrap gap-1.5 overflow-y-auto" aria-label="Selected units">
                 {picks.map((k) => (
-                  <li key={k.code} className="inline-flex items-center gap-1 rounded-lg bg-[#fdf3f2] py-1 pl-2.5 pr-1 font-mono text-[13.5px] font-medium text-[#b12a22]">
+                  <li key={k.code} className="inline-flex items-center gap-1 rounded-lg bg-[#fdecec] py-1 pl-2.5 pr-1 font-mono text-[13.5px] font-medium text-[#b11c29]">
                     {k.code}<button aria-label={`Remove ${k.code}`} onClick={() => setPicks(picks.filter((x) => x.code !== k.code))} className="grid size-5 place-items-center rounded hover:bg-white"><X className="size-3" /></button>
                   </li>
                 ))}
@@ -420,7 +420,7 @@ function LeafGrid({ c, core, p, leaf, startOpen, q, taken, picked, toggle }: { c
     <div className="rounded-xl border border-[#e6e8ee]">
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open || !!q} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[14.5px] font-medium">
         <ChevronDown className={clsx("size-4 transition-transform", !(open || q) && "-rotate-90")} />{nodePath(c, leaf.id)}
-        {sel > 0 && <span className="ml-auto rounded-md bg-[#fde8e7] px-2 py-0.5 text-[12.5px] text-[#b12a22]">{sel} selected</span>}
+        {sel > 0 && <span className="ml-auto rounded-md bg-[#fdecec] px-2 py-0.5 text-[12.5px] text-[#b11c29]">{sel} selected</span>}
       </button>
       {(open || q) && (
         <div className="border-t border-[#eceef2] p-3">
@@ -433,13 +433,13 @@ function LeafGrid({ c, core, p, leaf, startOpen, q, taken, picked, toggle }: { c
                 <button key={s.code} type="button" disabled={disabled} aria-pressed={!!pk && !elsewhere} onClick={() => toggle({ node: leaf.id, local: s.local, code: s.code })}
                   title={s.unit ? `${s.code} exists (${s.unit.status})` : elsewhere ? `Picked in ${nodePath(c, pk.node)}` : undefined}
                   className={clsx("inline-flex min-w-[64px] items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 font-mono text-[13.5px]",
-                    s.unit ? "border-[#eceef2] bg-[#f4f5f7] text-[#80869a]" : elsewhere ? "border-dashed border-[#d6d9e0] text-[#80869a]" : pk ? "border-[#d8372e] bg-[#d8372e] font-semibold text-white" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
+                    s.unit ? "border-[#eceef2] bg-[#f4f5f7] text-[#80869a]" : elsewhere ? "border-dashed border-[#d6d9e0] text-[#80869a]" : pk ? "border-[#c8232e] bg-[#c8232e] font-semibold text-white" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
                   {s.unit && <Lock className="size-3" />}{s.code}
                 </button>
               );
             })}
           </div>
-          {!q && count < 99 && <button onClick={() => setCount((x) => Math.min(99, x + 12))} className="mt-2.5 text-[13.5px] font-medium text-[#c72f26]">Show more numbers</button>}
+          {!q && count < 99 && <button onClick={() => setCount((x) => Math.min(99, x + 12))} className="mt-2.5 text-[13.5px] font-medium text-[#c8232e]">Show more numbers</button>}
           <p className="mt-2 flex flex-wrap gap-3 text-[12px] text-[#5b6170]"><span className="inline-flex items-center gap-1"><Lock className="size-3" /> exists</span><span>Dashed = picked in another location</span></p>
         </div>
       )}
@@ -502,12 +502,12 @@ function DetailsStep({ st, cat, picks, over, setOver, editCat }: { st: RoomsStat
                 <span className="font-mono text-[14.5px] font-semibold">{k.code}</span>
                 <span className="text-[14px] text-[#5b6170]">{nodePath(st.config, k.node)}</span>
                 <label className="text-[12.5px] font-medium text-[#5b6170] lg:hidden" htmlFor={`rate-${k.code}`}>Own price (optional)</label>
-                <input id={`rate-${k.code}`} type="number" min={0} aria-label={`Price for ${k.code}`} placeholder={String(cat.baseRate)} value={o.rate ?? ""} onChange={(e) => set(k.code, { rate: e.target.value === "" ? undefined : Number(e.target.value) })} className="h-9 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#d8372e]" />
+                <input id={`rate-${k.code}`} type="number" min={0} aria-label={`Price for ${k.code}`} placeholder={String(cat.baseRate)} value={o.rate ?? ""} onChange={(e) => set(k.code, { rate: e.target.value === "" ? undefined : Number(e.target.value) })} className="h-9 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />
                 <div className="space-y-1.5">
                   <select aria-label={`Video for ${k.code}`} value={o.video ?? "inherit"} onChange={(e) => set(k.code, { video: e.target.value as Unit["video"] })} className="h-9 w-full rounded-lg border border-[#dfe2e8] px-2 text-[14px]">
                     <option value="inherit">Same as category</option><option value="replace">This unit&apos;s own video</option><option value="hide">No video</option>
                   </select>
-                  {o.video === "replace" && <input aria-label={`Video link for ${k.code}`} placeholder="https://youtu.be/…" value={o.videoUrl ?? ""} onChange={(e) => set(k.code, { videoUrl: e.target.value })} className="h-9 w-full rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#d8372e]" />}
+                  {o.video === "replace" && <input aria-label={`Video link for ${k.code}`} placeholder="https://youtu.be/…" value={o.videoUrl ?? ""} onChange={(e) => set(k.code, { videoUrl: e.target.value })} className="h-9 w-full rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />}
                 </div>
               </li>
             );
@@ -566,5 +566,5 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
   );
 }
 function Check({ ok, text }: { ok: boolean; text: string }) {
-  return <li className={clsx("flex items-start gap-2", ok ? "text-[#1c7d45]" : "text-[#c33029]")}><span aria-hidden className="mt-0.5">{ok ? "✓" : "!"}</span><span className="text-[#1d1f24]">{text}</span></li>;
+  return <li className={clsx("flex items-start gap-2", ok ? "text-[#1c7d45]" : "text-[#c8232e]")}><span aria-hidden className="mt-0.5">{ok ? "✓" : "!"}</span><span className="text-[#1d1f24]">{text}</span></li>;
 }

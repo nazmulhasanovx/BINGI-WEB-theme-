@@ -59,7 +59,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
               <p className="mt-0.5 text-[15.5px] text-[#5b6170]">{h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#d8372e] px-4 text-[14.5px] font-medium text-white hover:bg-[#c4302a]"><Plus className="size-[18px]" /> Add accommodation</Link>}
+              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white hover:bg-[#b11c29]"><Plus className="size-[18px]" /> Add accommodation</Link>}
               <Menu label="More actions" items={[
                 { label: "Reset demo data", onClick: () => { reset(); showToast("Demo data reset"); } },
                 { label: "Start setup from scratch (demo)", onClick: () => { startFresh(); showToast("Setup cleared — start again"); }, danger: true },
@@ -84,7 +84,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
 function SetupIntro() {
   return (
     <div className="mx-auto mt-6 max-w-[640px] rounded-2xl border border-[#eceef2] bg-white p-6 text-center sm:p-8">
-      <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#fde8e7] text-[#c72f26]"><Building2 className="size-6" /></span>
+      <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#fdecec] text-[#c8232e]"><Building2 className="size-6" /></span>
       <h2 className="mt-4 text-[22px] font-semibold">Set up your accommodation once</h2>
       <p className="mx-auto mt-2 max-w-[460px] text-[15px] text-[#5b6170]">Tell BinGi what you sell (rooms, cottages, villas…), where they are, and how you number them. After this, adding units takes a few clicks.</p>
       <ol className="mx-auto mt-5 grid max-w-[420px] gap-2 text-left text-[14.5px]">
@@ -92,7 +92,7 @@ function SetupIntro() {
           <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#f2f3f6] text-[13px] font-semibold">{i + 1}</span>{s}</li>
         ))}
       </ol>
-      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#d8372e] px-5 text-[15px] font-medium text-white hover:bg-[#c4302a]">Start setup</Link>
+      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#c8232e] px-5 text-[15px] font-medium text-white hover:bg-[#b11c29]">Start setup</Link>
     </div>
   );
 }
@@ -114,8 +114,8 @@ export function Steps({ title, steps, step, onStep, children, footer, maxDone }:
               return (
                 <li key={s} className="min-w-0 flex-1">
                   <button disabled={!can} onClick={() => onStep(i)} aria-current={i === step ? "step" : undefined}
-                    className={clsx("flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[14px] font-medium transition-colors", i === step ? "border-[#ef8f89] bg-[#fdf1f0] text-[#b12a22]" : can ? "border-[#e6e8ee] bg-white hover:bg-[#f6f7f9]" : "border-[#eceef2] bg-white text-[#80869a]")}>
-                    <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full text-[12.5px]", i < step ? "bg-[#1c7d45] text-white" : i === step ? "bg-[#d8372e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{i < step ? <Check className="size-3.5" /> : i + 1}</span>
+                    className={clsx("flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[14px] font-medium transition-colors", i === step ? "border-[#ef8f89] bg-[#fdecec] text-[#b11c29]" : can ? "border-[#e6e8ee] bg-white hover:bg-[#f6f7f9]" : "border-[#eceef2] bg-white text-[#80869a]")}>
+                    <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full text-[12.5px]", i < step ? "bg-[#1c7d45] text-white" : i === step ? "bg-[#c8232e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{i < step ? <Check className="size-3.5" /> : i + 1}</span>
                     <span className="truncate">{s}</span>
                   </button>
                 </li>
@@ -152,14 +152,14 @@ export function Section({ title, desc, children, right }: { title: string; desc?
 export function ChoiceCard({ on, onClick, icon: Icon, title, sub, badge, disabled }: { on: boolean; onClick: () => void; icon: typeof BedDouble; title: string; sub?: string; badge?: string; disabled?: boolean }) {
   return (
     <button type="button" aria-pressed={on} disabled={disabled} onClick={onClick}
-      className={clsx("relative flex min-h-[76px] items-start sm:min-h-[92px] gap-3 rounded-2xl border p-3.5 text-left transition-[border,background,box-shadow] disabled:opacity-50", on ? "border-[#e2574e] bg-[#fdf3f2] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
-      <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-[#d8372e] text-white" : "bg-[#f2f3f6] text-[#4b5160]")}><Icon className="size-5" /></span>
+      className={clsx("relative flex min-h-[76px] items-start sm:min-h-[92px] gap-3 rounded-2xl border p-3.5 text-left transition-[border,background,box-shadow] disabled:opacity-50", on ? "border-[#c8232e] bg-[#fdecec] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
+      <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-[#c8232e] text-white" : "bg-[#f2f3f6] text-[#4b5160]")}><Icon className="size-5" /></span>
       <span className="min-w-0">
         <span className="block text-[15px] font-semibold">{title}</span>
         {sub && <span className="mt-0.5 block text-[13px] leading-snug text-[#5b6170]">{sub}</span>}
       </span>
       {badge && <span className="absolute right-2.5 top-2.5 rounded-md bg-[#eef0f3] px-1.5 py-0.5 text-[11.5px] font-medium text-[#4b5160]">{badge}</span>}
-      {on && <span className="absolute bottom-2.5 right-2.5 grid size-5 place-items-center rounded-full bg-[#d8372e] text-white"><Check className="size-3.5" /></span>}
+      {on && <span className="absolute bottom-2.5 right-2.5 grid size-5 place-items-center rounded-full bg-[#c8232e] text-white"><Check className="size-3.5" /></span>}
     </button>
   );
 }
@@ -191,7 +191,7 @@ export function AmenityPicker({ value, onChange }: { value: string[]; onChange: 
               {g.items.map((a) => {
                 const on = value.includes(a);
                 return (
-                  <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[13.5px]", on ? "border-[#e2574e] bg-[#fdf3f2] font-medium text-[#b12a22]" : "border-[#e3e6eb] bg-white hover:bg-[#f6f7f9]")}>
+                  <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[13.5px]", on ? "border-[#c8232e] bg-[#fdecec] font-medium text-[#b11c29]" : "border-[#e3e6eb] bg-white hover:bg-[#f6f7f9]")}>
                     {on && <Check className="size-3.5" />}{a}
                   </button>
                 );
@@ -202,7 +202,7 @@ export function AmenityPicker({ value, onChange }: { value: string[]; onChange: 
         {!groups.length && <p className="text-[14px] text-[#5b6170]">No amenity matches “{q}”.</p>}
       </div>
       <div className="flex gap-2 border-t border-[#eceef2] p-2.5">
-        <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#d8372e]" />
+        <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />
         <Btn type="button" className="h-9" disabled={!custom.trim()} onClick={() => { const c = custom.trim(); if (!value.includes(c)) onChange([...value, c]); setCustom(""); }}>Add</Btn>
       </div>
     </div>

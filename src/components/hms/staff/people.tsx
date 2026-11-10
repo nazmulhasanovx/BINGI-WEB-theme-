@@ -94,7 +94,7 @@ export function PeoplePage() {
         {tab === "join" && (
           <Table cols={[{ label: "Person" }, { label: "What" }, { label: "Date" }, { label: "Action", w: "160px" }]}>
             {st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId).map((c) => (
-              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#c72f26]">Open joining</Link></td></tr>
+              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#c8232e]">Open joining</Link></td></tr>
             ))}
             {st.employees.filter((e) => e.probationEnd && e.probationEnd >= TODAY).map((e) => (
               <tr key={e.id}><td><Person name={e.name} id={e.id} /></td><td>Probation review</td><td>{fmt(e.probationEnd!)}</td><td><Btn onClick={() => { update((s) => { const x = emp(s, e.id)!; delete x.probationEnd; x.reviews.unshift({ date: TODAY, by: s.settings.approver, score: 4, note: "Probation completed — confirmed." }); }, `${e.name} confirmed after probation`); toast(`${e.name} confirmed`); }}>Confirm</Btn></td></tr>
@@ -117,14 +117,14 @@ export function EmployeePage({ id }: { id: string }) {
   const [tab, setTab] = useState<ETab>("profile");
   const [more, setMore] = useState(false);
   const [edit, setEdit] = useState(false);
-  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#c72f26]">Back to People</Link>} /></Card></StaffFrame>;
+  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#c8232e]">Back to People</Link>} /></Card></StaffFrame>;
   const moreItems: { v: ETab; label: string; icon: typeof Briefcase }[] = [{ v: "assets", label: "Assets & benefits", icon: Briefcase }, { v: "reviews", label: "Reviews & training", icon: GraduationCap }, { v: "joining", label: "Joining & exit", icon: LogIn }, { v: "history", label: "History", icon: History }];
   return (
     <StaffFrame tab="people" search={find} onSearch={setFind} onSubmit={(v) => v.trim() && router.push(`/hms/staff/people?q=${encodeURIComponent(v.trim())}`)} action={<Btn kind="primary" onClick={() => setEdit(true)}><Pencil className="size-4" /> Edit employee</Btn>}>
       <Card>
-        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#c72f26]"><ArrowLeft className="size-[18px]" /> People</Link>
+        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#c8232e]"><ArrowLeft className="size-[18px]" /> People</Link>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <span className="grid size-16 place-items-center rounded-full bg-[#fde8e7] text-[22px] font-semibold text-[#c33029]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
+          <span className="grid size-16 place-items-center rounded-full bg-[#fdecec] text-[22px] font-semibold text-[#c8232e]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
           <div><p className="text-[24px] font-semibold leading-tight">{e.name}</p><p className="text-[15px] text-[#5b6170]">{e.id}</p></div>
           <span className="h-8 w-px bg-[#e6e8ee]" />
           <Chip tone={STATUS[e.status][1]}>{STATUS[e.status][0]}</Chip>
@@ -133,9 +133,9 @@ export function EmployeePage({ id }: { id: string }) {
         </div>
         <div className="relative mt-5 flex items-center gap-1 border-b border-[#eceef2] pb-2.5">
           {(["profile", "work", "attendance", "pay"] as ETab[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>
+            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#fdecec] text-[#c8232e]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>
           ))}
-          <button onClick={() => setMore((m) => !m)} aria-label="More employee sections" aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#fde8e7] text-[#c72f26]" : "border-[#dfe2e8]")}>
+          <button onClick={() => setMore((m) => !m)} aria-label="More employee sections" aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#fdecec] text-[#c8232e]" : "border-[#dfe2e8]")}>
             {moreItems.find((m) => m.v === tab)?.label ?? "More"} {more ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </button>
           {more && (
@@ -185,7 +185,7 @@ function WorkTab({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Work"><Row icon={Network} label="Department" value={e.dept} /><Row icon={Briefcase} label="Position" value={e.position} /><Row icon={User} label="Reports to" value={e.manager} /><Row icon={FileText} label="Employment" value={e.type} /><Row icon={CalendarDays} label="Probation" value={e.probationEnd ? `Until ${fmt(e.probationEnd)}` : "Completed"} /></Card>
-      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#c72f26]">Schedule</Link>}>
+      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#c8232e]">Schedule</Link>}>
         <ul className="divide-y divide-[#eceef2]">{week.map(([d, s]) => <li key={d} className="flex justify-between py-2 text-[15px]"><span>{fmt(d)}</span><Chip tone={s === "Off" ? "gray" : s === "Leave" ? "red" : s === "Evening" ? "amber" : "blue"}>{s}</Chip></li>)}</ul>
       </Card>
     </div>
@@ -222,7 +222,7 @@ function EmpPay({ e }: { e: Employee }) {
       <Card title="Payslips">
         {lines.length === 0 ? <p className="text-[14.5px] text-[#6b7180]">No payroll run yet.</p> : (
           <Table cols={[{ label: "Month" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Status" }, { label: "" }]}>
-            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#c72f26]">Open</Link></td></tr>)}
+            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#c8232e]">Open</Link></td></tr>)}
           </Table>
         )}
       </Card>
@@ -237,7 +237,7 @@ function AssetsTab({ e }: { e: Employee }) {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Assets issued">
         {e.assets.length === 0 && <p className="mb-3 text-[14.5px] text-[#6b7180]">No assets issued.</p>}
-        <ul className="divide-y divide-[#eceef2]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#6b7180]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#6b7180]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#c72f26]">Return</button></span></li>)}</ul>
+        <ul className="divide-y divide-[#eceef2]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#6b7180]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#6b7180]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#c8232e]">Return</button></span></li>)}</ul>
         <div className="mt-3 flex gap-2"><Input value={name} onChange={(ev) => setName(ev.target.value)} placeholder="e.g. Uniform set" /><Btn disabled={!name.trim()} onClick={() => { update((s) => { emp(s, e.id)!.assets.push({ name: name.trim(), tag: `AS-${Math.floor(Math.random() * 900 + 100)}`, since: TODAY }); }, `${name} issued to ${e.name}`); setName(""); }}>Issue</Btn></div>
       </Card>
       <Card title="Benefits">
@@ -263,7 +263,7 @@ function ReviewsTab({ e }: { e: Employee }) {
         </div>
       </Card>
       <Card title="Training">
-        <ul className="divide-y divide-[#eceef2]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#6b7180]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#c72f26]">Mark done</button>}</li>)}</ul>
+        <ul className="divide-y divide-[#eceef2]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#6b7180]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#c8232e]">Mark done</button>}</li>)}</ul>
         {e.trainings.length === 0 && <p className="text-[14.5px] text-[#6b7180]">No training planned.</p>}
       </Card>
     </div>
@@ -280,7 +280,7 @@ function JoiningTab({ e }: { e: Employee }) {
         {e.exit ? (
           <>
             <p className="text-[15px]">{e.exit.reason} · last day {fmt(e.exit.lastDay)}</p>
-                        <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#c72f26]">Open offboarding</Link>
+                        <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#c8232e]">Open offboarding</Link>
           </>
         ) : (
           <>

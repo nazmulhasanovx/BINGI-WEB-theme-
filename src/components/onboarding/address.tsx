@@ -60,7 +60,7 @@ export function AddressSheet({ d, onClose }: { d: Draft; onClose: () => void }) 
               <div><label htmlFor="a-div" className="block text-[13.5px] font-semibold">{t("বিভাগ", "Division")}</label><select id="a-div" value={f.division} onChange={(e) => setF((s) => ({ ...s, division: e.target.value }))} className={field + " mt-1 h-11 text-[15px]"}>{DIVISIONS.map(([en, bn]) => <option key={en} value={en}>{t(bn, en)}</option>)}</select></div>
             </div>
             {inp("postcode", t("পোস্টকোড", "Postcode"), "4700", { inputMode: "numeric", maxLength: 4 })}
-            {err && <p role="alert" className="text-[14px] font-medium text-[#b12a22]">{t("রাস্তা আর শহর দিন।", "Add the road and city.")}</p>}
+            {err && <p role="alert" className="text-[14px] font-medium text-[#b11c29]">{t("রাস্তা আর শহর দিন।", "Add the road and city.")}</p>}
           </div>
         </div>
         <div className="border-t border-[#eef0f3] p-4"><Primary onClick={save} className="w-full">{t("এই ঠিকানা ব্যবহার করুন", "Use this address")}</Primary></div>

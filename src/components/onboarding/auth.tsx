@@ -77,7 +77,7 @@ function Auth() {
                 <span className="grid h-12 place-items-center rounded-xl border border-[#dcdfe5] bg-[#f8f9fb] px-3 text-[15px] font-semibold">🇧🇩 +880</span>
                 <input id="ph" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01712 345678" className={field + " flex-1 text-[17px]"} aria-invalid={!!err} aria-describedby={err ? "pherr" : undefined} />
               </div>
-              {err && <p id="pherr" role="alert" className="mt-2 text-[14px] font-medium text-[#b12a22]">{err}</p>}
+              {err && <p id="pherr" role="alert" className="mt-2 text-[14px] font-medium text-[#b11c29]">{err}</p>}
               <Primary type="submit" className="mt-6 w-full">{t("কোড পাঠান", "Send code")}</Primary>
               <p className="mt-4 text-[13px] text-[#5b6170]">{t("চালিয়ে গেলে আপনি BinGi-র শর্ত ও গোপনীয়তা নীতিতে রাজি।", "By continuing you agree to BinGi's Terms and Privacy Policy.")}</p>
             </form>
@@ -87,7 +87,7 @@ function Auth() {
               <p className="mt-2 text-[16px] text-[#5b6170]">{t(`${phone} নম্বরে পাঠানো হয়েছে।`, `Sent to ${phone}.`)} <button type="button" onClick={() => { setSent(false); setCode(""); setErr(""); }} className="font-semibold text-[#c8232e]">{t("নম্বর বদলান", "Change")}</button></p>
               <label className="mt-7 block text-[15px] font-semibold" htmlFor="otp">{t("৬ সংখ্যার কোড", "6-digit code")}</label>
               <input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={field + " mt-2 h-14 text-center font-mono text-[26px] tracking-[0.45em]"} aria-invalid={!!err} />
-              {err && <p role="alert" className="mt-2 text-[14px] font-medium text-[#b12a22]">{err}</p>}
+              {err && <p role="alert" className="mt-2 text-[14px] font-medium text-[#b11c29]">{err}</p>}
               <p className="mt-3 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13.5px] text-[#7a4a0b]">{t(`প্রোটোটাইপ: SMS যায় না। কোড ${DEMO_OTP} দিন।`, `Prototype: no SMS is sent. Use code ${DEMO_OTP}.`)}</p>
               <Primary type="submit" className="mt-6 w-full" disabled={code.length !== 6}>{t("যাচাই করুন", "Verify")}</Primary>
             </form>
@@ -126,7 +126,7 @@ function MyProperties() {
             const submitted = d.status !== "draft";
             return (
               <li key={d.id} className="flex flex-wrap items-center gap-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-[#e8e9ee]">
-                <span className="grid size-12 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]"><I className="size-6" /></span>
+                <span className="grid size-12 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]"><I className="size-6" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[17px] font-semibold">{d.name || t("নাম নেই", "Untitled property")}</span>
                   <span className="text-[14px] text-[#5b6170]">{[ty ? t(ty.bn, ty.en) : null, d.city].filter(Boolean).join(" · ") || t("শুরু হয়নি", "Not started")}</span>

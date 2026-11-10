@@ -104,7 +104,7 @@ function PublishBar() {
       <div className="ml-auto flex items-center gap-2">
         {n > 0 && <span className="hidden text-[13px] text-hms-amber sm:inline">{n} change{n > 1 ? "s" : ""} not published</span>}
         <Btn variant="outline" onClick={() => openPreview()} className="h-8 px-3.5 text-[13px]">Preview</Btn>
-        {n > 0 && <Link href="/hms/website/publish" className="inline-flex h-8 items-center rounded-full bg-hms-coral px-3.5 text-[13px] font-medium text-white hover:bg-[#c93030]">Publish</Link>}
+        {n > 0 && <Link href="/hms/website/publish" className="inline-flex h-8 items-center rounded-full bg-hms-coral px-3.5 text-[13px] font-medium text-white hover:bg-[#b11c29]">Publish</Link>}
       </div>
     </div>
   );

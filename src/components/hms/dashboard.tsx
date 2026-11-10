@@ -122,7 +122,7 @@ export function Dashboard() {
               <Link href="/hms/bookings" className="text-[13.5px] font-semibold text-hms-red">View all</Link>
             </div>
             {arriving.length ? (
-              <div className="overflow-x-auto px-2 pb-3">
+              <><div className="hidden overflow-x-auto px-2 pb-3 lg:block">
                 <table className="w-full min-w-[540px] text-[14px]">
                   <thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="px-2.5 py-2 font-medium">Guest</th><th className="px-2.5 py-2 font-medium">Room</th><th className="px-2.5 py-2 font-medium">Stay</th><th className="px-2.5 py-2 font-medium">Booking</th><th className="px-2.5 py-2 font-medium">Payment</th><th className="px-2.5 py-2 text-right font-medium"><span className="sr-only">Action</span></th></tr></thead>
                   <tbody>
@@ -139,6 +139,14 @@ export function Dashboard() {
                   </tbody>
                 </table>
               </div>
+              <ul className="divide-y divide-hms-line border-t border-hms-line lg:hidden">
+                {arriving.map((b) => { const guest = names.get(b.guestId) ?? "Guest"; return (
+                  <li key={b.code}><Link href="/hms/bookings" className="flex items-center gap-3 px-4 py-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-hms-coral-soft text-[12px] font-bold text-hms-red">{guest.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{guest}</span><span className="block text-[12.5px] text-hms-muted">Room {b.room} · {stay(b.from, b.to)}</span></span>
+                    <span className="text-right text-[12.5px]">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</span>
+                  </Link></li>); })}
+              </ul></>
             ) : <p className="px-5 pb-5 text-[14px] text-hms-muted">No arrivals today. Add rooms and publish them to start taking bookings.</p>}
           </section>
           <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} />

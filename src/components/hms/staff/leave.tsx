@@ -26,7 +26,7 @@ export function LeavePage() {
   return (
     <StaffFrame tab="leave" search={q} onSearch={setQ} activeFilters={(ft !== "all" ? 1 : 0) + (fd !== "all" ? 1 : 0)} onClearFilters={() => { setFt("all"); setFd("all"); }} filters={<><FilterSelect label="Leave type" value={ft} onChange={setFt} options={st.settings.leaveTypes.map((t) => ({ v: t.name, label: t.name }))} /><FilterSelect label="Department" value={fd} onChange={setFd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} /></>} searchPlaceholder="Search leave (name, ID, type)" action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add leave</Btn>} right={<DateBox value={date} onChange={setDate} label={fmt(date)} />}>
       <Card>
-        <h2 className="flex items-center gap-3 text-[22px] font-semibold text-[#c72f26]"><CalendarDays className="size-6" /> Leave</h2>
+        <h2 className="flex items-center gap-3 text-[22px] font-semibold text-[#c8232e]"><CalendarDays className="size-6" /> Leave</h2>
         <div className="mt-4 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
           {([["req", `Requests (${st.leaves.length})`], ["bal", "Balances"], ["cal", "Calendar & holidays"]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[16px]", tab === v ? "bg-[#f2f3f6] font-semibold" : "hover:bg-[#f6f7f9]")}>{l}</button>
@@ -79,7 +79,7 @@ function Balances({ q }: { q: string }) {
         {list.map((e) => (
           <tr key={e.id}>
             <td><Person name={e.name} id={e.id} /></td>
-            {types.map((t) => { const b = st.balances[e.id]?.[t.name] ?? t.days; return <td key={t.name} className={clsx("text-right", b <= 2 && "font-medium text-[#c33029]")}>{b} / {t.days}</td>; })}
+            {types.map((t) => { const b = st.balances[e.id]?.[t.name] ?? t.days; return <td key={t.name} className={clsx("text-right", b <= 2 && "font-medium text-[#c8232e]")}>{b} / {t.days}</td>; })}
             <td className="text-right">{st.leaves.filter((l) => l.emp === e.id && l.status === "pending").reduce((t, l) => t + l.days, 0) || "—"}</td>
           </tr>
         ))}
@@ -108,7 +108,7 @@ function Calendar({ month }: { month: string }) {
             const ls = on(day);
             const hol = st.holidays.find((h) => h.date === day);
             return (
-              <div key={day} className={clsx("min-h-[78px] rounded-xl border p-1.5", day === TODAY ? "border-[#e63b31]" : "border-[#eceef2]", hol && "bg-[#fff6e5]")}>
+              <div key={day} className={clsx("min-h-[78px] rounded-xl border p-1.5", day === TODAY ? "border-[#c8232e]" : "border-[#eceef2]", hol && "bg-[#fff6e5]")}>
                 <span className="text-[13px] font-medium">{+day.slice(8)}</span>
                 {hol && <span className="block truncate text-[12px] text-[#8a5a00]">{hol.name}</span>}
                 {ls.slice(0, 2).map((l) => <span key={l.id} className={clsx("mt-0.5 block truncate rounded px-1 text-[12px]", l.status === "approved" ? "bg-[#e7effc] text-[#2554a8]" : "bg-[#fdf1e3] text-[#8a5a00]")}>{emp(st, l.emp)?.name.split(" ")[0]}</span>)}
@@ -123,7 +123,7 @@ function Calendar({ month }: { month: string }) {
         <ul className="divide-y divide-[#eceef2]">
           {[...st.holidays].sort((a, b) => a.date.localeCompare(b.date)).map((h) => (
             <li key={h.date} className="flex items-center justify-between py-2.5 text-[15px]"><span>{h.name}<span className="block text-[13.5px] text-[#6b7180]">{dayName(h.date)}, {fmt(h.date)}</span></span>
-              <button onClick={() => update((s) => { s.holidays = s.holidays.filter((x) => x.date !== h.date); }, `Holiday removed: ${h.name}`)} aria-label={`Remove ${h.name}`} className="grid size-8 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#c33029]"><Trash2 className="size-4" /></button></li>
+              <button onClick={() => update((s) => { s.holidays = s.holidays.filter((x) => x.date !== h.date); }, `Holiday removed: ${h.name}`)} aria-label={`Remove ${h.name}`} className="grid size-8 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#c8232e]"><Trash2 className="size-4" /></button></li>
           ))}
         </ul>
         <div className="mt-3 space-y-2 rounded-xl bg-[#f6f7f9] p-3">
@@ -162,9 +162,9 @@ function AddLeave({ onClose }: { onClose: () => void }) {
         <p><b>{days}</b> working day{days === 1 ? "" : "s"} · balance {bal} → <b>{Math.max(0, bal - days)}</b> days</p>
         <p className="text-[13.5px] text-[#6b7180]">Roster days off are not counted.</p>
       </div>
-      {err && <p className="text-[14px] text-[#c33029]">{err}</p>}
+      {err && <p className="text-[14px] text-[#c8232e]">{err}</p>}
       <Field label="Note"><Area value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" /></Field>
-      <label className="flex items-center gap-3 text-[15px]"><input type="checkbox" checked={approve} onChange={(e) => setApprove(e.target.checked)} className="size-5 accent-[#e63b31]" /> Approve now (I am the approver)</label>
+      <label className="flex items-center gap-3 text-[15px]"><input type="checkbox" checked={approve} onChange={(e) => setApprove(e.target.checked)} className="size-5 accent-[#c8232e]" /> Approve now (I am the approver)</label>
     </Drawer>
   );
 }
@@ -191,7 +191,7 @@ function ReviewLeave({ id, onClose }: { id: string; onClose: () => void }) {
       </div>
       {l.note && <p className="rounded-xl bg-[#f6f7f9] px-4 py-3 text-[14.5px]">Note: {l.note}</p>}
       {clash.length > 0 && <p className="rounded-xl bg-[#fff6e5] px-4 py-3 text-[14px] text-[#8a5a00]">Also on leave in {e?.dept}: {clash.map((x) => emp(st, x.emp)?.name).join(", ")}.</p>}
-      {l.status === "pending" && l.days > bal && <p className="text-[14px] text-[#c33029]">Not enough balance to approve.</p>}
+      {l.status === "pending" && l.days > bal && <p className="text-[14px] text-[#c8232e]">Not enough balance to approve.</p>}
       {l.status === "pending" && <p className="text-[13.5px] text-[#6b7180]">Approving deducts the balance and marks the roster and attendance as Leave.</p>}
     </Drawer>
   );

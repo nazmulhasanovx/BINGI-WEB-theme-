@@ -327,7 +327,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         ))}
       </nav>
       <span className="ml-1 hidden rounded-full bg-hms-amber-soft px-2 py-0.5 text-[11px] font-semibold text-hms-amber lg:inline">Prototype · demo data</span>
-      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#d8372e] hover:to-[#b11c29] sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
+      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#c8232e] hover:to-[#b11c29] sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
       <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
         <SearchBox items={SEARCH_TARGETS} />
         <span className="hidden sm:block"><LanguageMenu /></span>

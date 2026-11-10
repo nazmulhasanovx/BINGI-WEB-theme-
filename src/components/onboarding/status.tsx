@@ -47,7 +47,7 @@ function Body() {
         <ol className="mt-6 flex items-center gap-1.5 sm:gap-2" aria-label={t("অনুমোদনের ধাপ", "Approval progress")}>
           {steps.map((s, i) => (
             <li key={s.en} className="flex flex-1 items-center gap-1.5 sm:gap-2">
-              <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full text-[12.5px] font-semibold", s.ok ? "bg-[#1c7d45] text-white" : s.now ? "bg-[#d8372e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{s.ok ? <Check className="size-4" /> : num(i + 1, lang)}</span>
+              <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full text-[12.5px] font-semibold", s.ok ? "bg-[#1c7d45] text-white" : s.now ? "bg-[#c8232e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{s.ok ? <Check className="size-4" /> : num(i + 1, lang)}</span>
               <span className="whitespace-nowrap text-[13.5px] font-semibold sm:text-[14.5px]">{t(s.bn, s.en)}</span>
               {i < steps.length - 1 && <span className="h-px flex-1 bg-[#e3e5ea]" />}
             </li>

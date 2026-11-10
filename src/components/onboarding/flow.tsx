@@ -193,7 +193,7 @@ function Address({ d }: { d: Draft }) {
     <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests use the map to find you.")}>
       {has ? (
         <div className="flex items-start gap-3 rounded-xl border border-[#dcdfe5] bg-white p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]"><MapPin className="size-6" /></span>
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]"><MapPin className="size-6" /></span>
           <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#5b6170]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
           <Ghost onClick={() => setOpen(true)} className="h-10">{t("বদলান", "Change")}</Ghost>
         </div>
@@ -263,9 +263,9 @@ function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: 
   return (
     <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#1d1f24] bg-white shadow-[inset_0_0_0_1px_#1d1f24]" : "border-[#dcdfe5] bg-white")}>
       <button type="button" role="switch" aria-checked={on} onClick={onClick} className="flex w-full items-center gap-3 text-left">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#fdeceb] text-[#d8372e]">{icon}</span>
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]">{icon}</span>
         <span className="flex-1 text-[16px] font-semibold">{title}</span>
-        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#d8372e]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
+        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#c8232e]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
       </button>
       {children}
     </div>
@@ -444,7 +444,7 @@ function Website({ d }: { d: Draft }) {
               className={clsx("relative overflow-hidden rounded-xl border text-left transition-colors", on ? "border-[#ef6b62]" : "border-[#dcdfe5] hover:border-[#d5d8e0]")}>
               <Image src={`/themes/${x.id}.jpg`} alt="" width={520} height={260} className="aspect-[16/8] w-full object-cover object-top" />
               <span className="flex flex-wrap items-center gap-2 bg-white p-3"><span className="text-[15.5px] font-semibold">{x.name}</span>{fits(x) && <span className="rounded-full bg-[#e9f6ee] px-2 py-0.5 text-[11.5px] font-semibold text-[#1c6b3c]">{t("আপনার জন্য মানানসই", "Good fit")}</span>}</span>
-              {on && <span className="onb-pop absolute right-3 top-3 grid size-7 place-items-center rounded-full bg-[#d8372e] text-white shadow"><Check className="size-4" /></span>}
+              {on && <span className="onb-pop absolute right-3 top-3 grid size-7 place-items-center rounded-full bg-[#c8232e] text-white shadow"><Check className="size-4" /></span>}
             </button>
           );
         })}
@@ -547,7 +547,7 @@ function Ready({ d, counts, go }: { d: Draft; counts: { total: number; published
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {cs.map((c) => (
           <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-xl border px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#dcdfe5] bg-white")}>
-            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#d8372e] text-white" : "bg-[#e6e8ee] text-[#5b6170]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
+            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#c8232e] text-white" : "bg-[#e6e8ee] text-[#5b6170]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
             <span className="min-w-0 flex-1 text-[14.5px] font-medium">{t(c.bn, c.label)}{c.level !== "required" && !c.ok && <span className="text-[12.5px] text-[#5b6170]"> · {t("পরে করা যাবে", "can wait")}</span>}</span>
             {!c.ok && <button onClick={() => go(c.step)} className="text-[13.5px] font-semibold text-[#c8232e]">{t("ঠিক করুন", "Fix")}</button>}
           </li>
@@ -561,7 +561,7 @@ function Ring({ v, lang }: { v: number; lang: "bn" | "en" }) {
   return (
     <svg width="68" height="68" viewBox="0 0 64 64" role="img" aria-label={`${v}%`} className="shrink-0">
       <circle cx="32" cy="32" r={r} fill="none" stroke="#fff" strokeWidth="7" />
-      <circle cx="32" cy="32" r={r} fill="none" stroke={v >= 80 ? "#1c7d45" : "#d8372e"} strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v / 100)} transform="rotate(-90 32 32)" style={{ transition: "stroke-dashoffset 500ms ease" }} />
+      <circle cx="32" cy="32" r={r} fill="none" stroke={v >= 80 ? "#1c7d45" : "#c8232e"} strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v / 100)} transform="rotate(-90 32 32)" style={{ transition: "stroke-dashoffset 500ms ease" }} />
       <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="700" fill="#1d1f24">{num(v, lang)}%</text>
     </svg>
   );
