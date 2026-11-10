@@ -16,6 +16,7 @@ import { useHrm, TODAY as HRM_TODAY } from "@/lib/hrm/store";
 import { useSite } from "@/lib/site";
 import { PLANS } from "@/lib/onboarding/store";
 import { useProperty } from "./property";
+import { statusOf, useInventory } from "@/lib/inventory/store";
 import { DEMO_GUESTS, demoStays, type BookingStatus } from "@/lib/bookings/demo";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -29,6 +30,8 @@ export function Dashboard() {
   const { st } = useRooms(h);
   const { st: hrm } = useHrm();
   const site = useSite(h);
+  const inv = useInventory(h);
+  const lowStock = inv.items.filter((i) => statusOf(i) !== "In stock").length;
 
   const rooms = useMemo(() => {
     const cat = new Map(st.categories.map((c) => [c.id, c]));
@@ -138,7 +141,7 @@ export function Dashboard() {
               </div>
             ) : <p className="px-5 pb-5 text-[14px] text-hms-muted">No arrivals today. Add rooms and publish them to start taking bookings.</p>}
           </section>
-          <PlanCard onDuty={onDuty} hasHrm={hasHrm} hasRestaurant={hasRestaurant} />
+          <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} />
         </div>
       </div>
     </div>
@@ -173,9 +176,9 @@ function WebsiteCard({ h, published, domain }: { h: Hotel; published: boolean; d
 }
 
 /** Third card by plan: Ultra = team & inventory · Business = restaurant today · Starter = upgrade. */
-function PlanCard({ onDuty, hasHrm, hasRestaurant }: { onDuty: number; hasHrm: boolean; hasRestaurant: boolean }) {
+function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant }: { onDuty: number; lowStock: number; hasHrm: boolean; hasRestaurant: boolean }) {
   if (hasHrm) {
-    const rows: [typeof UsersRound, string, string][] = [[UsersRound, "Staff on duty", String(onDuty)], [Boxes, "Low stock", "3 items"], [ChefHat, "Menu items", "48"]];
+    const rows: [typeof UsersRound, string, string][] = [[UsersRound, "Staff on duty", String(onDuty)], [Boxes, "Low stock", `${lowStock} item${lowStock === 1 ? "" : "s"}`], [ChefHat, "Menu items", "48"]];
     return <Rows title="Team & inventory" rows={rows} cta="View operations" href="/hms/operations" />;
   }
   if (hasRestaurant) {
