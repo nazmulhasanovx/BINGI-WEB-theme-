@@ -7,9 +7,13 @@ import { shalbon } from "@/data/shalbon";
 import { lakeview } from "@/data/lakeview";
 import { coralCove } from "@/data/coral-cove";
 import { waveBunk } from "@/data/wave-bunk";
+import { haorBilash } from "@/data/haor-bilash";
+import { canopyNest } from "@/data/canopy-nest";
+import { skypod } from "@/data/skypod";
+import { altura } from "@/data/altura";
 import type { Hotel } from "./types";
 
-const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [mistwood.slug]: mistwood, [shalbon.slug]: shalbon, [lakeview.slug]: lakeview, [coralCove.slug]: coralCove, [waveBunk.slug]: waveBunk, [azureBayPaused.slug]: azureBayPaused };
+const HOTELS: Record<string, Hotel> = { [azureBay.slug]: azureBay, [seaPearl.slug]: seaPearl, [teaValley.slug]: teaValley, [mistwood.slug]: mistwood, [shalbon.slug]: shalbon, [lakeview.slug]: lakeview, [coralCove.slug]: coralCove, [waveBunk.slug]: waveBunk, [haorBilash.slug]: haorBilash, [canopyNest.slug]: canopyNest, [skypod.slug]: skypod, [altura.slug]: altura, [azureBayPaused.slug]: azureBayPaused };
 
 export async function getHotel(slug: string): Promise<Hotel | null> {
   return HOTELS[slug] ?? null;

@@ -12,7 +12,7 @@ export function TopBar({ hotel }: { hotel: Hotel }) {
         </span>
         <span className="flex items-center gap-3">
           {!!hotel.stars && (
-            <span className="flex items-center gap-0.5 text-brand" aria-label={`${hotel.stars} star`}>
+            <span className="flex items-center gap-0.5 text-brand" role="img" aria-label={`${hotel.stars} star`}>
               {Array.from({ length: hotel.stars }).map((_, i) => (
                 <Star key={i} className="size-3 fill-current" />
               ))}

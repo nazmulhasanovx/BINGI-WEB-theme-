@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import { useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowRight, Check, CircleAlert, ExternalLink, Eye, MessageSquare } from "lucide-react";
 import { THEMES, themeById } from "@/lib/theme";
 import { hrefFor } from "@/lib/href";
@@ -15,6 +15,11 @@ import { PagesPage, SectionsPage } from "./design";
 import { MediaPage, OffersPage, ReviewsPage, RoomsPage, ServicesPage } from "./content";
 import { BookingPage, DomainPage, LanguagesPage, OnlinePage, PublishPage, SeoPage } from "./settings";
 import { InfoPage } from "./content";
+import { LicenceNotice, MotionCard, MyThemesTab, StoreTab } from "./store";
+import { isPaid } from "@/themes/paid";
+import { MANIFESTS } from "@/themes/manifest";
+import { currentSearch } from "@/lib/href";
+import { useLicences } from "@/lib/licences";
 
 function Title({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
@@ -31,7 +36,7 @@ function Tabs({ tabs }: { tabs: { id: string; label: string; el: ReactNode }[] }
     <>
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-hms-line" role="tablist">
         {tabs.map((x) => (
-          <button key={x.id} role="tab" aria-selected={t === x.id} onClick={() => setT(x.id)} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", t === x.id ? "border-hms-coral text-hms-coral" : "border-transparent text-hms-muted hover:text-hms-ink")}>
+          <button key={x.id} role="tab" aria-selected={t === x.id} onClick={() => setT(x.id)} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", t === x.id ? "border-hms-coral text-[#c42f2f]" : "border-transparent text-hms-muted hover:text-hms-ink")}>
             {x.label}
           </button>
         ))}
@@ -55,6 +60,7 @@ export function OverviewSimple() {
   return (
     <>
       <Title>Website</Title>
+      <LicenceNotice />
       <Card pad={false} className="overflow-hidden">
         <div className="grid md:grid-cols-[320px_1fr]">
           <div className="relative aspect-[16/10] md:aspect-auto"><Image src={`/themes/${manifest.id}.jpg`} alt={`${manifest.name} theme`} fill sizes="320px" className="object-cover object-top" /></div>
@@ -133,15 +139,37 @@ function Tiles() {
 }
 
 /* ---------- Design: theme, colour, font ---------- */
+const noSub = () => () => {};
+type DesignTab = "included" | "store" | "mine";
 export function DesignSimple() {
   const { hotel, site } = useWM();
   const d = site.draft;
   const live = site.rec.published?.master;
+  const lic = useLicences(hotel.slug);
+  const q = useSyncExternalStore(noSub, () => currentSearch().get("tab"), () => null);
+  const [pick, setPick] = useState<DesignTab | null>(null);
+  const tab: DesignTab = pick ?? (q === "store" || q === "mine" ? q : "included");
+  const owned = lic.list.length;
   return (
     <>
       <Title>Theme & Style</Title>
+      <LicenceNotice />
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-hms-line" role="tablist" aria-label="Themes">
+        {([["included", "Included themes"], ["store", "Theme Store"], ["mine", `My themes${owned ? ` (${owned})` : ""}`]] as const).map(([id, label]) => (
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setPick(id)} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", tab === id ? "border-hms-coral text-[#c42f2f]" : "border-transparent text-hms-muted hover:text-hms-ink")}>{label}</button>
+        ))}
+      </div>
+      {tab === "store" && <StoreTab />}
+      {tab === "mine" && <MyThemesTab />}
+      {tab === "included" && (
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="space-y-6">
+          {isPaid(d.master) && (
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e3dcf7] bg-[#f6f3ff] px-4 py-3 text-[14px]">
+              <span className="flex-1">Your draft uses <b>{MANIFESTS[d.master].name}</b>, a paid theme. Pick an included theme below to switch back.</span>
+              <button onClick={() => setPick("mine")} className="font-semibold text-[#5b3fb5]">My themes</button>
+            </div>
+          )}
           <section>
             <h2 className="mb-3 text-[15px] font-semibold">Theme</h2>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -193,9 +221,11 @@ export function DesignSimple() {
               ))}
             </div>
           </section>
+          <MotionCard />
         </div>
         <Phone />
       </div>
+      )}
     </>
   );
 }

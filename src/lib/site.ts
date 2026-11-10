@@ -26,6 +26,8 @@ export type SiteDoc = {
   booking: { payAtHotel: boolean; bkash: boolean; advance: boolean; advancePercent: number; extras: boolean; promo: boolean; guestAccount: "optional" | "required"; note: string };
   seo: { titleTemplate: string; description: string; shareImage: string; noindex: boolean };
   languages: { bn: boolean; defaultLang: "en" | "bn" };
+  /** Paid themes only: how much 3D/motion the site uses (devices that can't, or guests who ask for less motion, get Calm). */
+  motion?: "calm" | "lively" | "immersive";
 };
 export type Version = { id: string; at: string; note: string; doc: SiteDoc };
 export type MediaItem = { id: string; src: string; name: string; uploaded: boolean; alt: string };
@@ -133,6 +135,7 @@ function readRecord(slug: string): SiteRecord | null {
   } catch {
     rec = null;
   }
+  if (rec) for (const d of [rec.draft, rec.published]) if (d) fillSections(d);
   cache.set(slug, { raw, rec });
   return rec;
 }
@@ -180,6 +183,11 @@ export function useSite(h: Hotel) {
   return { ready, rec, draft: rec.draft, changes: diff(rec.draft, rec.published), edit, mutate, publish, discard, restore, reset };
 }
 
+/** Records saved before a theme existed get that theme's default section order. */
+function fillSections(d: SiteDoc) {
+  for (const m of Object.keys(MANIFESTS) as MasterTheme[]) d.sections[m] ??= { order: MANIFESTS[m].sections.map((s) => s.id), hidden: [] };
+}
+
 const defaults = new Map<string, SiteRecord>();
 function defaultRecordCached(h: Hotel) {
   if (!defaults.has(h.slug)) defaults.set(h.slug, defaultRecord(h));
@@ -217,6 +225,7 @@ const LABELS: Record<keyof SiteDoc, string> = {
   booking: "Booking engine",
   seo: "SEO & sharing",
   languages: "Languages",
+  motion: "Motion & 3D",
 };
 export function diff(a: SiteDoc, b: SiteDoc | null): string[] {
   if (!b) return ["Everything (never published)"];

@@ -1,6 +1,8 @@
 import type { ThemeId } from "./theme";
 
-export type MasterTheme = "nest" | "city" | "grand" | "cottage" | "villa" | "flat" | "escape" | "bunk";
+/** Included masters come with the plan; paid masters (drift, canopy, pod, orbit) are bought in the Theme Store. */
+export type MasterTheme = "nest" | "city" | "grand" | "cottage" | "villa" | "flat" | "escape" | "bunk" | PaidTheme;
+export type PaidTheme = "drift" | "canopy" | "pod" | "orbit";
 export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "cottage" | "villa" | "other";
 
 export type Money = number; // in hotel currency units (BDT)
@@ -142,6 +144,8 @@ export interface Hotel {
   host?: { name: string; role: string; since: string; note: string; languages: string[] };
   /** Property-specific questions (HMS → Website → Pages & Content). Themes show only what is filled in. */
   faq?: { q: string; a: string }[];
+  /** Optional "a day here" plan (houseboats, retreats). Themes hide the section when empty. */
+  dayPlan?: { time: string; title: string; text: string }[];
   /** Extra house rules beyond the policies (quiet hours, parties, lockers…). */
   houseRules?: { title: string; text: string }[];
   flags: { packages: boolean; events: boolean };

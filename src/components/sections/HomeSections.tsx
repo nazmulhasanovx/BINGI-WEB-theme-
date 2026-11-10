@@ -26,7 +26,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
   return (
     <Reveal delay={0.45} className="mx-auto mt-5 max-w-[1240px] md:mt-12 md:px-6">
       {/* phone: one swipe row of compact chips · tablet: 2×2 · desktop: 4 in a row */}
-      <ul className="no-scrollbar flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 md:grid md:grid-cols-2 md:gap-3 md:overflow-visible md:px-0 lg:grid-cols-4">
+      <ul tabIndex={0} aria-label="Key facts" className="no-scrollbar flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 md:grid md:grid-cols-2 md:gap-3 md:overflow-visible md:px-0 lg:grid-cols-4">
         {facts.map((f) => (
           <li key={f.title} className="flex shrink-0 snap-start items-center gap-3 rounded-2xl border border-line bg-surface p-3 pr-4 md:p-4">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-action md:size-11">
@@ -205,7 +205,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
             </p>
             <p className="mt-1 text-[15px] text-muted">{hotel.reviewCount} reviews</p>
           </div>
-          <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
+          <div tabIndex={0} role="region" aria-label="Guest reviews" className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
             {hotel.reviews.map((r) => (
               <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}><figure className="flex w-[82%] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-line bg-surface p-5 md:w-auto md:max-w-none">
                 <Quote className="size-6 text-brand" />

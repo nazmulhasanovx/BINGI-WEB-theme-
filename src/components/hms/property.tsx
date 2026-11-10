@@ -10,8 +10,12 @@ import { shalbon } from "@/data/shalbon";
 import { lakeview } from "@/data/lakeview";
 import { coralCove } from "@/data/coral-cove";
 import { waveBunk } from "@/data/wave-bunk";
+import { haorBilash } from "@/data/haor-bilash";
+import { canopyNest } from "@/data/canopy-nest";
+import { skypod } from "@/data/skypod";
+import { altura } from "@/data/altura";
 
-export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley, mistwood, shalbon, lakeview, coralCove, waveBunk];
+export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley, mistwood, shalbon, lakeview, coralCove, waveBunk, haorBilash, canopyNest, skypod, altura];
 const KEY = "hms-property";
 const listeners = new Set<() => void>();
 const sub = (l: () => void) => (listeners.add(l), () => void listeners.delete(l));

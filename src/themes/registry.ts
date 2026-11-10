@@ -11,6 +11,10 @@ import { VillaHome } from "./villa/Home";
 import { FlatHome } from "./flat/Home";
 import { EscapeHome } from "./escape/Home";
 import { BunkHome } from "./bunk/Home";
+import { DriftHome } from "./drift/Home";
+import { CanopyHome } from "./canopy/Home";
+import { PodHome } from "./pod/Home";
+import { OrbitHome } from "./orbit/Home";
 
 export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> = {
   grand: GrandHome,
@@ -21,6 +25,10 @@ export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> =
   flat: FlatHome,
   escape: EscapeHome,
   bunk: BunkHome,
+  drift: DriftHome,
+  canopy: CanopyHome,
+  pod: PodHome,
+  orbit: OrbitHome,
 };
 
 export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
@@ -32,4 +40,12 @@ export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: stri
   { id: "flat", name: "FLAT", plan: "Business", demo: "lakeview" },
   { id: "escape", name: "ESCAPE", plan: "Business", demo: "coral-cove" },
   { id: "grand", name: "GRAND", plan: "Ultra", demo: "azure-bay" },
+];
+
+/** Paid themes (Theme Store) with their demo properties. */
+export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
+  { id: "drift", name: "DRIFT", plan: "Paid", demo: "haor-bilash" },
+  { id: "canopy", name: "CANOPY", plan: "Paid", demo: "canopy-nest" },
+  { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
+  { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
 ];
