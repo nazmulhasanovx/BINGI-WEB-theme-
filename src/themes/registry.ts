@@ -16,6 +16,7 @@ import { CanopyHome } from "./canopy/Home";
 import { PodHome } from "./pod/Home";
 import { OrbitHome } from "./orbit/Home";
 import { IsleHome } from "./isle/Home";
+import { NoirHome } from "./noir/Home";
 import { MaisonHome } from "./maison/Home";
 import { ZamindarHome } from "./zamindar/Home";
 
@@ -33,6 +34,7 @@ export const THEME_HOMES: Partial<Record<MasterTheme, ComponentType<{ hotel: Hot
   pod: PodHome,
   orbit: OrbitHome,
   isle: IsleHome,
+  noir: NoirHome,
   maison: MaisonHome,
   zamindar: ZamindarHome,
 };
@@ -55,6 +57,7 @@ export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?:
   { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
   { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
   { id: "isle", name: "ISLE", plan: "Luxury", demo: "nila-island" },
+  { id: "noir", name: "NOIR", plan: "Luxury", demo: "obsidian-gulshan" },
   { id: "maison", name: "MAISON", plan: "Luxury", demo: "maison-gulshan" },
   { id: "zamindar", name: "ZAMINDAR", plan: "Luxury", demo: "shonali-rajbari" },
 ];

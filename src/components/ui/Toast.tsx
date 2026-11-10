@@ -27,7 +27,7 @@ export function useToast() {
             initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 16, opacity: 0 }}
-            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-[15px] text-white shadow-float"
+            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl bg-[#16181d] px-4 py-3 text-[15px] text-white shadow-float"
           >
             {msg.tone === "info" ? <Info className="size-5 shrink-0" /> : <CheckCircle2 className="size-5 shrink-0 text-emerald-300" />}
             <span>{msg.text}</span>

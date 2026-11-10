@@ -148,7 +148,7 @@ export function LangToggle({ className = "" }: { className?: string }): ReactNod
           key={l}
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
-          className={`h-7 rounded-full px-2.5 ${lang === l ? "bg-ink text-white" : "text-muted hover:text-ink"}`}
+          className={`h-7 rounded-full px-2.5 ${lang === l ? "bg-ink text-canvas" : "text-muted hover:text-ink"}`}
         >
           {l === "en" ? "EN" : "বাং"}
         </button>
