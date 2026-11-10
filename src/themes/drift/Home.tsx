@@ -49,7 +49,7 @@ function Voyage({ hotel }: { hotel: Hotel }) {
         <Reveal className="mx-auto mb-10 max-w-[760px] text-center md:mb-16">
           <Eyebrow>The voyage</Eyebrow>
           <span aria-hidden className="lux-rule mx-auto mt-4" />
-          <h2 className="lux-display mt-5 text-[34px] md:text-[60px]"><DraftText slug={hotel.slug} k="signature.title" fallback="A day on the water" /></h2>
+          <h2 className="lux-display mt-5 text-[34px] md:text-[48px] lg:text-[60px]"><DraftText slug={hotel.slug} k="signature.title" fallback="A day on the water" /></h2>
         </Reveal>
         <div className="relative">
           <svg aria-hidden viewBox="0 0 1200 80" preserveAspectRatio="none" className="absolute inset-x-0 top-[34px] hidden h-[80px] w-full lg:block">

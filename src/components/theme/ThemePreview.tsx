@@ -172,7 +172,7 @@ function LayoutSwitch({ master }: { master: MasterTheme }) {
     <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Layout">
       {ALL_MASTERS.map((m) =>
         m.demo ? (
-          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={m.plan === "Paid" ? "Paid theme (Theme Store)" : m.plan === "Luxury" ? "Luxury Collection (Theme Store)" : `${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-2", m.id === master ? "bg-white text-[#16181d]" : m.plan === "Paid" ? "text-[#e9d5ff] hover:text-white" : m.plan === "Luxury" ? "text-[#f1dfb6] hover:text-white" : "text-white/80 hover:text-white")}>
+          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={m.plan === "Paid" ? "Paid theme (Theme Store)" : m.plan === "Luxury" ? "Luxury Collection (Theme Store)" : m.plan === "Signature" ? "Signature Collection (Theme Store)" : `${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-2", m.id === master ? "bg-white text-[#16181d]" : m.plan === "Paid" ? "text-[#e9d5ff] hover:text-white" : m.plan === "Luxury" ? "text-[#f1dfb6] hover:text-white" : m.plan === "Signature" ? "text-[#b9f3d0] hover:text-white" : "text-white/80 hover:text-white")}>
             {m.name}
           </Link>
         ) : (

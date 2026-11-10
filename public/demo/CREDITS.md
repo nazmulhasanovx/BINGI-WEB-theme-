@@ -15,3 +15,4 @@ Nila Island (ISLE): Pexels 9482124 (hero), 3293187, 9215861, 9482127, 1320686, 1
 Shonali Rajbari (ZAMINDAR): Pexels 31990282 (hero), 31990279, 31990286, 31990285, 31990281, 31990284, 5747029.
 Maison Gulshan (MAISON): Pexels 8798233 (hero), 3697742, 13413966, 13413971, 13413990, 13425925.
 Other Luxury demos reuse the existing demo photos above.
+Matir (MATIR): Pexels 1838552, 235731, 247616, 1509607, 12348729, 6129072.

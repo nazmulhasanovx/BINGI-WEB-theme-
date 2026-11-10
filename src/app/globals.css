@@ -262,3 +262,34 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 #hotel-theme[data-master="noir"] .lux-card:hover img, #hotel-theme[data-master="orbit"] .lux-card:hover img { filter: brightness(1.08); }
 #hotel-theme[data-master="noir"] .lux-display { font-style: normal; }
 #hotel-theme[data-master="noir"] main img { filter: brightness(0.8) contrast(1.08) saturate(0.85); }
+
+/* ================= Signature Collection (themes/sig) — every theme has its own type pairing ================= */
+#hotel-theme[data-master="aurel"], #hotel-theme[data-master="courtyard"], #hotel-theme[data-master="axis"], #hotel-theme[data-master="waypoint"], #hotel-theme[data-master="shanti"],
+#hotel-theme[data-master="reside"], #hotel-theme[data-master="commons"], #hotel-theme[data-master="roots"], #hotel-theme[data-master="morning"], #hotel-theme[data-master="matir"] {
+  background: var(--canvas); color: var(--ink); min-height: 100svh; --lux-dw: 400; --lux-dt: 0; --lux-lh: 1.02; --lux-btn-r: 0px;
+}
+#hotel-theme[data-master="aurel"] { --canvas:#F6F1EB; --surface:#FFFFFF; --ink:#1C1714; --muted:#5C534C; --line:#E5DDD3; --lux-accent:#C8452B; --lux-accent-ink:#A33620; --font-heading:"Anton", Impact, sans-serif; --lux-lh:0.95; --lux-r:0px; --action:#B83A22 !important; --action-hover:#9C301C !important; --on-action:#fff !important; font-family:"Archivo Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="courtyard"] { --canvas:#F5ECE0; --surface:#FBF6EF; --ink:#2A1A16; --muted:#5F4B42; --line:#E3D3C0; --lux-accent:#7A1F2B; --lux-accent-ink:#6E1A26; --font-heading:"DM Serif Display", Georgia, serif; --lux-r:0px; --action:#6E1A26 !important; --action-hover:#58141E !important; --on-action:#fff !important; font-family:"Montserrat Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="axis"] { --canvas:#FFFFFF; --surface:#F4F7FD; --ink:#0B1530; --muted:#4A5675; --line:#DFE5F1; --lux-accent:#1447E6; --lux-accent-ink:#1240CF; --font-heading:"Montserrat Variable", system-ui, sans-serif; --lux-dw:800; --lux-dt:-0.03em; --lux-r:4px; --action:#1447E6 !important; --action-hover:#0F38B8 !important; --on-action:#fff !important; font-family:"Inter Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="waypoint"] { --canvas:#F7EFE3; --surface:#FFF9F0; --ink:#3A2117; --muted:#6B4E3F; --line:#E8D6C0; --lux-accent:#E0622A; --lux-accent-ink:#B4461A; --font-heading:"Alfa Slab One", Rockwell, serif; --lux-r:16px; --lux-btn-r:12px; --action:#A94215 !important; --action-hover:#8C3611 !important; --on-action:#fff !important; font-family:"Nunito Sans Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="shanti"] { --canvas:#F8F2E8; --surface:#FFFCF6; --ink:#2C3326; --muted:#5A6152; --line:#E5DFCF; --lux-accent:#C4693F; --lux-accent-ink:#A65430; --font-heading:"Spectral", Georgia, serif; --lux-dw:500; --lux-r:20px; --lux-btn-r:999px; --action:#55673A !important; --action-hover:#46552F !important; --on-action:#fff !important; font-family:"Nunito Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="reside"] { --canvas:#F3EEE7; --surface:#FBF9F5; --ink:#1E1B18; --muted:#5B544C; --line:#E2DAD0; --lux-accent:#8C7663; --lux-accent-ink:#6B5847; --font-heading:"Gilda Display", Georgia, serif; --lux-r:4px; --action:#1E1B18 !important; --action-hover:#3A342E !important; --on-action:#fff !important; font-family:"Karla Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="commons"] { --canvas:#FFFFFF; --surface:#F3F4FF; --ink:#0C0C14; --muted:#3F4152; --line:#E0E2F0; --lux-accent:#1F2BD8; --lux-accent-ink:#1A24B8; --font-heading:"Archivo Black", Impact, sans-serif; --lux-dt:-0.01em; --lux-lh:0.92; --lux-r:6px; --action:#1F2BD8 !important; --action-hover:#1822AE !important; --on-action:#fff !important; font-family:"Space Grotesk Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="roots"] { --canvas:#F7F0E3; --surface:#FFFAF1; --ink:#2B211A; --muted:#5E5045; --line:#E5D9C4; --lux-accent:#A5352A; --lux-accent-ink:#8E2C22; --font-heading:"Literata Variable", Georgia, serif; --lux-r:10px; --lux-btn-r:6px; --action:#8E2C22 !important; --action-hover:#74231B !important; --on-action:#fff !important; font-family:"Nunito Sans Variable", "Hind Siliguri", system-ui, sans-serif; }
+#hotel-theme[data-master="morning"] { --canvas:#FFF9EC; --surface:#FFFFFF; --ink:#3A2414; --muted:#6A5341; --line:#F0E2C4; --lux-accent:#F2B705; --lux-accent-ink:#8A5A00; --font-heading:"Fraunces Variable", Georgia, serif; --lux-dw:800; --lux-dt:-0.02em; --lux-r:22px; --lux-btn-r:999px; --action:#3A2414 !important; --action-hover:#22150b !important; --on-action:#fff !important; font-family:"Nunito Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="morning"] .lux-display { font-style: italic; }
+#hotel-theme[data-master="matir"] { --canvas:#F5EEDF; --surface:#FFFAF0; --ink:#3A2216; --muted:#62503F; --line:#E2D4BB; --lux-accent:#B5532C; --lux-accent-ink:#953F1E; --font-heading:"Young Serif", Georgia, serif; --lux-r:12px; --lux-btn-r:6px; --action:#A5461F !important; --action-hover:#8A3918 !important; --on-action:#fff !important; font-family:"Nunito Sans Variable", system-ui, sans-serif; }
+.sig-script { font-family: "Caveat Variable", cursive; }
+.sig-marker { font-family: "Permanent Marker", cursive; }
+.sig-satisfy { font-family: "Satisfy", cursive; }
+.sig-caps { text-transform: uppercase; letter-spacing: 0.22em; font-size: 11.5px; font-weight: 600; }
+
+/* Luxury v1 — unique body fonts per theme (audit A2) */
+#hotel-theme[data-master="zamindar"] { --font-heading:"Rozha One", Georgia, serif; --lux-dw:400; font-family:"Nunito Sans Variable", "Hind Siliguri", system-ui, sans-serif; }
+#hotel-theme[data-master="maison"] { font-family:"Montserrat Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="noir"] { --font-heading:"Marcellus", Georgia, serif; --lux-dw:400; font-family:"Space Grotesk Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="haven"] { --font-heading:"Lora Variable", Georgia, serif; font-family:"Karla Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="summit"] { --font-heading:"Bricolage Grotesque Variable", system-ui, sans-serif; font-family:"Archivo Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="canopy"] { --font-heading:"Libre Baskerville", Georgia, serif; --lux-dw:400; font-family:"Nunito Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="drift"] { font-family:"Karla Variable", system-ui, sans-serif; }
+#hotel-theme[data-master="estate"] { --font-heading:"Prata", Georgia, serif; --lux-dw:400; }

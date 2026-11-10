@@ -4,15 +4,16 @@
 import type { Hotel, MasterTheme, PaidTheme, PropertyType } from "@/lib/types";
 import { PLAN_RULES } from "@/lib/data";
 
-export type Tier = "A" | "B" | "C" | "L";
+export type Tier = "A" | "B" | "C" | "L" | "S";
 export const TIER: Record<Tier, { name: string; desc: string }> = {
   A: { name: "Aesthetic", desc: "Depth cards and 3D photo" },
   B: { name: "Living", desc: "+ live backgrounds (water, light, sky)" },
   C: { name: "Immersive", desc: "+ interactive 3D built from your own data" },
   L: { name: "Luxury", desc: "Editorial design for 5★–7★ hotels and resorts" },
+  S: { name: "Signature", desc: "A complete look for one property type" },
 };
 /** Monthly price per property, from Super Admin pricing. null until BinGi sets it. */
-export const TIER_PRICE: Record<Tier, number | null> = { A: null, B: null, C: null, L: null };
+export const TIER_PRICE: Record<Tier, number | null> = { A: null, B: null, C: null, L: null, S: null };
 
 export type Motion = "calm" | "lively" | "immersive";
 export const MOTION_LABEL: Record<Motion, { name: string; desc: string }> = {
@@ -39,7 +40,7 @@ export type StoreTheme = {
   fallback?: MasterTheme;
   demo?: string;
   /** Luxury Collection (5★–7★). */
-  collection?: "luxury";
+  collection?: "luxury" | "signature";
 };
 
 export const STORE: StoreTheme[] = [
@@ -54,6 +55,17 @@ export const STORE: StoreTheme[] = [
   { id: "canopy", name: "CANOPY", tier: "L", collection: "luxury", status: "available", tagline: "Living in the canopy", description: "For rainforest and treehouse retreats: deep green and brass, treehouses on a height scale and the forest by day and night.", bestFor: "Treehouses, rainforest lodges, eco-luxury", propertyTypes: ["cottage", "other", "resort"], fx: ["Height scale", "Forest typography"], maxMotion: "calm", fallback: "cottage", demo: "canopy-nest" },
   { id: "drift", name: "DRIFT", tier: "L", collection: "luxury", status: "available", tagline: "A voyage, slowly", description: "For luxury houseboats and river cruises: ivory and river navy, cabins like a ship's plan and the voyage drawn as a river line.", bestFor: "Luxury houseboats, river cruises", propertyTypes: ["other", "resort", "villa"], fx: ["Voyage line", "Cabin plan"], maxMotion: "calm", fallback: "escape", demo: "haor-bilash" },
   { id: "estate", name: "ESTATE", tier: "L", collection: "luxury", status: "available", tagline: "The whole place is yours", description: "For private villa estates and exclusive-use houses: stone and olive, the estate at a glance (sleeps, bedrooms, staff) and villas as large rows.", bestFor: "Private estates, exclusive-use villas", propertyTypes: ["villa", "home", "resort"], fx: ["Whole-estate panel", "Butler services"], maxMotion: "calm", fallback: "villa", demo: "bonolota-estate" },
+  // ---- Signature Collection (property types) · plan: claude/design/Signature_Collection_and_Theme_Audit_Plan_2026-11-10.md ----
+  { id: "aurel", name: "AUREL", tier: "S", collection: "signature", status: "available", tagline: "The city. Your sanctuary.", description: "For contemporary city hotels: condensed headlines, a real 3D floor cutaway (lobby → suites → rooftop), rooms, a dark dining band and the city at your door.", bestFor: "City hotels, urban 4–5★", propertyTypes: ["hotel"], fx: [], maxMotion: "immersive", fallback: "city", demo: "aurel-banani" },
+  { id: "courtyard", name: "COURTYARD", tier: "S", collection: "signature", status: "available", tagline: "Stay somewhere with soul.", description: "For boutique and heritage townhouses: a numbered story, arched suites, courtyard dining and local culture.", bestFor: "Boutique hotels, townhouses", propertyTypes: ["hotel"], fx: [], maxMotion: "calm", fallback: "city", demo: "the-courtyard" },
+  { id: "axis", name: "AXIS", tier: "S", collection: "signature", status: "available", tagline: "Make room for your next move.", description: "For business hotels: a 3D suite that shows work, rest and recharge, meeting rooms with an enquiry page and city access.", bestFor: "Business hotels, corporate stays", propertyTypes: ["hotel"], fx: [], maxMotion: "immersive", fallback: "city", demo: "axis-gulshan" },
+  { id: "waypoint", name: "WAYPOINT", tier: "S", collection: "signature", status: "available", tagline: "Good roads. Great rest.", description: "For highway inns and motels: the road-trip flow (rest, refuel, explore), easy parking and 24-hour check-in up front.", bestFor: "Motels, highway inns, transit stays", propertyTypes: ["hotel"], fx: [], maxMotion: "calm", fallback: "city", demo: "waypoint-inn" },
+  { id: "shanti", name: "SHANTI", tier: "S", collection: "signature", status: "available", tagline: "A slower, warmer kind of stay.", description: "For guest houses: soft shapes, handwritten accents, the host, home breakfast and the garden.", bestFor: "Guest houses, small B&Bs", propertyTypes: ["guest-house"], fx: [], maxMotion: "calm", fallback: "nest", demo: "shanti-guest-house" },
+  { id: "reside", name: "RESIDE", tier: "S", collection: "signature", status: "available", tagline: "Space to settle in.", description: "For serviced apartments: nightly or monthly, a 3D apartment plan (live, cook, rest, work), included services and the neighbourhood.", bestFor: "Serviced apartments, long stays", propertyTypes: ["serviced-apartment"], fx: [], maxMotion: "immersive", fallback: "flat", demo: "haven-residences" },
+  { id: "commons", name: "COMMONS", tier: "S", collection: "signature", status: "available", tagline: "Come for a bed. Stay for the people.", description: "For social hostels: loud type, stickers, beds vs private rooms, social spaces and this week's events.", bestFor: "Hostels, social stays", propertyTypes: ["hostel"], fx: [], maxMotion: "calm", fallback: "bunk", demo: "common-ground" },
+  { id: "roots", name: "ROOTS", tier: "S", collection: "signature", status: "available", tagline: "A new place. A familiar feeling.", description: "For homestays: torn-paper warmth, the hosts, home-cooked food and village life, Bangla first.", bestFor: "Homestays, host families", propertyTypes: ["home"], fx: [], maxMotion: "calm", fallback: "nest", demo: "roots-homestay" },
+  { id: "morning", name: "MORNING", tier: "S", collection: "signature", status: "available", tagline: "Stay for the night. Love the morning.", description: "For bed & breakfasts: sunny type, breakfast up front with its own page, three rooms and the neighbourhood.", bestFor: "B&Bs, small inns", propertyTypes: ["guest-house"], fx: [], maxMotion: "calm", fallback: "nest", demo: "morning-house" },
+  { id: "matir", name: "MATIR", tier: "S", collection: "signature", status: "available", tagline: "Let the countryside wake you.", description: "For farm stays: a 3D farm diorama, cottages, field-to-table food and hands-on rural life.", bestFor: "Farm stays, eco cottages", propertyTypes: ["cottage", "resort"], fx: [], maxMotion: "immersive", fallback: "cottage", demo: "matir-farm" },
   // ---- other paid themes ----
   { id: "pod", name: "POD", tier: "B", status: "available", tagline: "Sleep in the future", description: "For capsule hotels and pod hostels: a glowing capsule wall built from your real bed data, so guests see pod types, levels and prices at a glance.", bestFor: "Capsule hotels, pod hostels, transit stays", propertyTypes: ["hostel", "other"], fx: ["Capsule wall from your beds", "Neon light field", "Depth cards"], maxMotion: "immersive", fallback: "bunk", demo: "skypod" },
   { id: "starcamp", name: "STARCAMP", tier: "A", status: "coming-soon", tagline: "Nights under the stars", description: "Glamping and camping with a live night sky and a day/night switch.", bestFor: "Glamping, tents, camps", propertyTypes: ["other", "cottage"], fx: ["Starfield", "Day / night"], maxMotion: "lively" },
@@ -63,7 +75,8 @@ export const STORE: StoreTheme[] = [
 ];
 
 export const LUX_IDS: PaidTheme[] = ["isle", "zamindar", "maison", "noir", "orbit", "haven", "summit", "canopy", "drift", "estate"];
-export const PAID_IDS: PaidTheme[] = [...LUX_IDS, "pod"];
+export const SIG_IDS: PaidTheme[] = ["aurel", "courtyard", "axis", "waypoint", "shanti", "reside", "commons", "roots", "morning", "matir"];
+export const PAID_IDS: PaidTheme[] = [...LUX_IDS, ...SIG_IDS, "pod"];
 export const isPaid = (m: string): m is PaidTheme => (PAID_IDS as string[]).includes(m);
 export const storeTheme = (id: string) => STORE.find((t) => t.id === id);
 
