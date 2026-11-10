@@ -16,40 +16,13 @@ import { useHrm, TODAY as HRM_TODAY } from "@/lib/hrm/store";
 import { useSite } from "@/lib/site";
 import { PLANS } from "@/lib/onboarding/store";
 import { useProperty } from "./property";
+import { DEMO_GUESTS, demoStays, type BookingStatus } from "@/lib/bookings/demo";
 
-type Status = "Confirmed" | "Checked in" | "Payment due";
-type Booking = { id: string; guest: string; room: string; type: string; from: string; to: string; status: Status; total: number; due: number; channel: "Walk-in" | "Website" | "Marketplace" };
-
-const GUESTS = ["Mira Ahmed", "Tanvir Islam", "Saba Noor", "Rafi Karim", "Nusrat Jahan", "Arif Hossain", "Lamia Chowdhury", "Sakib Rahman", "Farhana Akter", "Imtiaz Ali", "Tahmid Hasan", "Jannat Ara", "Rakib Uddin", "Sadia Islam", "Mahin Alam", "Priya Das"];
-const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const short = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]}`;
 /** "10–12 Nov" in one month, "30 Nov – 02 Dec" across months. */
 const stay = (a: string, b: string) => (a.slice(0, 7) === b.slice(0, 7) ? `${a.slice(8, 10)}–${short(b)}` : `${short(a)} – ${short(b)}`);
 const bdt = (n: number) => `BDT ${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
-const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
-
-/** Deterministic demo bookings for this property: ~75% in house, 4 arrivals, a few departures. */
-function demoBookings(slug: string, rooms: { code: string; type: string; rate: number }[]): Booking[] {
-  if (!rooms.length) return [];
-  let seed = hash(slug);
-  const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 2 ** 32);
-  const out: Booking[] = [];
-  const arrivals = Math.min(4, rooms.length);
-  const occupied = Math.min(rooms.length, Math.round(rooms.length * 0.75));
-  rooms.slice(0, occupied).forEach((r, i) => {
-    const arriving = i < arrivals;
-    const from = arriving ? TODAY : addDays(TODAY, -1 - Math.floor(rnd() * 3));
-    const nights = 1 + Math.floor(rnd() * 3);
-    const to = arriving ? addDays(TODAY, nights) : i % 4 === 0 ? TODAY : addDays(TODAY, nights);
-    const n = Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 864e5));
-    const total = r.rate * n;
-    const status: Status = arriving ? (i === 2 ? "Payment due" : "Confirmed") : "Checked in";
-    const paidAll = !arriving || i === 1 || i === 3;
-    out.push({ id: `BK-${String(2401 + i)}`, guest: GUESTS[(hash(slug) + i) % GUESTS.length], room: r.code, type: r.type, from, to, status, total, due: paidAll ? 0 : total, channel: (["Website", "Walk-in", "Marketplace"] as const)[i % 3] });
-  });
-  return out;
-}
 
 export function Dashboard() {
   const h = useProperty();
@@ -63,14 +36,15 @@ export function Dashboard() {
     const list = (live.length ? live : st.units.filter((u) => u.status !== "archived"));
     return list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 }));
   }, [st]);
-  const bookings = useMemo(() => demoBookings(h.slug, rooms), [h.slug, rooms]);
+  const bookings = useMemo(() => demoStays(h.slug, rooms), [h.slug, rooms]);
+  const names = useMemo(() => new Map(DEMO_GUESTS.map((g) => [g.id, g.name])), []);
 
-  const arriving = bookings.filter((b) => b.from === TODAY);
-  const inHouse = bookings.filter((b) => b.from <= TODAY && b.to > TODAY);
-  const departing = bookings.filter((b) => b.to === TODAY);
+  const arriving = bookings.filter((b) => b.status === "Confirmed" && b.from === TODAY);
+  const inHouse = bookings.filter((b) => b.status !== "Checked out" && b.from <= TODAY && b.to > TODAY);
+  const departing = bookings.filter((b) => b.status === "Checked in" && b.to === TODAY);
   const occupancy = rooms.length ? Math.round((inHouse.length / rooms.length) * 100) : 0;
   const available = rooms.length - inHouse.length;
-  const revenue = inHouse.reduce((s, b) => s + b.total / Math.max(1, Math.round((new Date(b.to).getTime() - new Date(b.from).getTime()) / 864e5)), 0);
+  const revenue = inHouse.reduce((s, b) => s + b.total / b.nights, 0);
 
   const plan = h.plan;
   const hasRestaurant = plan !== "starter";
@@ -147,18 +121,18 @@ export function Dashboard() {
             {arriving.length ? (
               <div className="overflow-x-auto px-2 pb-3">
                 <table className="w-full min-w-[540px] text-[14px]">
-                  <thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="px-2.5 py-2 font-medium">Guest</th><th className="px-2.5 py-2 font-medium">Room</th><th className="px-2.5 py-2 font-medium">Stay</th><th className="px-2.5 py-2 font-medium">Status</th><th className="px-2.5 py-2 font-medium">Due</th><th className="px-2.5 py-2 text-right font-medium"><span className="sr-only">Action</span></th></tr></thead>
+                  <thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="px-2.5 py-2 font-medium">Guest</th><th className="px-2.5 py-2 font-medium">Room</th><th className="px-2.5 py-2 font-medium">Stay</th><th className="px-2.5 py-2 font-medium">Booking</th><th className="px-2.5 py-2 font-medium">Payment</th><th className="px-2.5 py-2 text-right font-medium"><span className="sr-only">Action</span></th></tr></thead>
                   <tbody>
-                    {arriving.map((b) => (
-                      <tr key={b.id} className="border-t border-hms-line">
-                        <td className="px-2.5 py-2.5"><span className="flex items-center gap-2.5"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-hms-coral-soft text-[11px] font-bold text-hms-red">{b.guest.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span><span className="block max-w-[130px] truncate font-semibold" title={b.guest}>{b.guest}</span></span></td>
+                    {arriving.map((b) => { const guest = names.get(b.guestId) ?? "Guest"; return (
+                      <tr key={b.code} className="border-t border-hms-line">
+                        <td className="px-2.5 py-2.5"><span className="flex items-center gap-2.5"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-hms-coral-soft text-[11px] font-bold text-hms-red">{guest.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span><span className="block max-w-[130px] truncate font-semibold" title={guest}>{guest}</span></span></td>
                         <td className="px-2.5 py-2.5"><span className="font-medium tabular-nums">{b.room}</span><span className="block max-w-[100px] truncate text-[12px] text-hms-muted" title={b.type}>{b.type}</span></td>
                         <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{stay(b.from, b.to)}</td>
                         <td className="px-2.5 py-2.5"><StatusChip s={b.status} /></td>
-                        <td className={clsx("px-2.5 py-2.5 whitespace-nowrap tabular-nums", b.due > 0 && "font-semibold text-hms-red")}>{bdt(b.due)}</td>
-                        <td className="px-2.5 py-2.5 text-right"><Link href="/hms/bookings" aria-label={`Open booking for ${b.guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
+                        <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</td>
+                        <td className="px-2.5 py-2.5 text-right"><Link href="/hms/bookings" aria-label={`Open booking for ${guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
                       </tr>
-                    ))}
+                    ); })}
                   </tbody>
                 </table>
               </div>
@@ -171,8 +145,8 @@ export function Dashboard() {
   );
 }
 
-function StatusChip({ s }: { s: Status }) {
-  const c = s === "Confirmed" ? "bg-[#e5f5ec] text-[#16693a]" : s === "Checked in" ? "bg-[#e8f0fe] text-[#1d4ed8]" : "bg-[#fdf3d9] text-[#7a5200]";
+function StatusChip({ s }: { s: BookingStatus }) {
+  const c = s === "Confirmed" ? "bg-[#e5f5ec] text-[#16693a]" : s === "Checked in" ? "bg-[#e8f0fe] text-[#1d4ed8]" : "bg-hms-hover text-[#4b5160]";
   return <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-[12.5px] font-semibold", c)}>{s === "Confirmed" && "✓ "}{s}</span>;
 }
 

@@ -28,7 +28,6 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { id: "guests", label: "Guests", icon: UserPlus, href: "/hms/guests" },
       { id: "chat", label: "Chat", icon: MessageSquare, href: "/hms/chat" },
       { id: "meals", label: "Meals", icon: ChefHat, href: "/hms/meals", badge: 2 },
-      { id: "guest-reviews", label: "Guest Reviews", icon: Star, href: "/hms/guest-reviews" },
     ],
   },
   {
@@ -278,6 +277,10 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { categories: "Categories", configuration: "Setup", setup: "Edit setup", new: "Add accommodation" };
     return [{ label: "Rooms", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+  }
+  if (path.startsWith("/hms/guests") || path === "/hms/guest-reviews") {
+    const seg = path === "/hms/guest-reviews" ? "reviews" : path.split("/")[3];
+    return [{ label: "Guests", href: seg ? "/hms/guests" : undefined }, ...(seg ? [{ label: seg === "reviews" ? "Reviews" : decodeURIComponent(seg) }] : [])];
   }
   if (path.startsWith("/hms/staff/")) {
     const seg = path.split("/")[3];
