@@ -45,7 +45,6 @@ import { AddPage as RoomsAdd } from "@/components/hms/rooms/wizard";
 import { OnboardingHome } from "@/components/onboarding/auth";
 import { OnboardingFlow } from "@/components/onboarding/flow";
 import { OnboardingStatus } from "@/components/onboarding/status";
-import { OnbRooms, OnbRoomsHome } from "@/components/onboarding/rooms";
 const STAFF: Record<string, () => ReactNode> = { "": () => <StaffOverview />, people: () => <PeoplePage />, attendance: () => <AttendancePage />, schedule: () => <SchedulePage />, leave: () => <LeavePage />, payroll: () => <PayrollPage />, hiring: () => <HiringPage />, operations: () => <OperationsPage />, settings: () => <StaffSettings /> };
 
 (window as unknown as { __BINGI_SPA__: boolean }).__BINGI_SPA__ = true;
@@ -64,7 +63,7 @@ async function resolve(route: string): Promise<ReactNode> {
   if (seg[0] === "theme-lab") return await (ThemeLab as Comp)({});
   if (seg[0] === "onboarding") {
     const key = seg.slice(1).join("/");
-    const O: Record<string, () => ReactNode> = { "": () => <OnboardingHome />, flow: () => <OnboardingFlow />, status: () => <OnboardingStatus />, rooms: () => <OnbRoomsHome />, "rooms/setup": () => <OnbRooms page="setup" />, "rooms/new": () => <OnbRooms page="new" /> };
+    const O: Record<string, () => ReactNode> = { "": () => <OnboardingHome />, flow: () => <OnboardingFlow />, status: () => <OnboardingStatus /> };
     return O[key] ? O[key]() : <RootNotFound />;
   }
   if (seg[0] === "hms") {

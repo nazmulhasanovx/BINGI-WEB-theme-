@@ -16,7 +16,10 @@ export type Draft = {
   step: StepId; seen: StepId[];
   // S1
   country: string; propertyType: string; name: string; area: string; city: string; address: string; phone: string;
+  road: string; division: string; postcode: string; pin: { x: number; y: number } | null;
   units: number; extras: string[]; staff: string;
+  // S2 (easy builder — presets only)
+  stay: string[]; buildings: string[]; floors: number[]; ground: "G" | "0"; zones: string[];
   plan: PlanId; planPicked: boolean; cycle: Cycle;
   // S3
   rates: { weekendPct: number; breakfast: boolean; breakfastPrice: number; minStay: number; done: boolean };
@@ -33,22 +36,22 @@ export type Draft = {
 };
 
 export const SECTIONS = [
-  { id: "s1", label: "Your property", steps: ["1.1", "1.2", "1.3", "1.4"] },
-  { id: "s2", label: "Accommodations", steps: ["2.1", "2.2", "2.3"] },
-  { id: "s3", label: "Booking ready", steps: ["3.1", "3.2", "3.3"] },
-  { id: "s4", label: "Operations", steps: ["4.1", "4.2"] },
-  { id: "s5", label: "Online & payments", steps: ["5.1", "5.2"] },
-  { id: "s6", label: "Review & confirm", steps: ["6.1", "6.2", "6.3"] },
+  { id: "s1", label: "Your property", bn: "আপনার property", steps: ["1.1", "1.2", "1.3", "1.4"] },
+  { id: "s2", label: "Rooms", bn: "রুম", steps: ["2.1", "2.2", "2.3"] },
+  { id: "s3", label: "Booking", bn: "বুকিং", steps: ["3.1", "3.2"] },
+  { id: "s4", label: "Team & tools", bn: "টিম ও টুলস", steps: ["4.1", "4.2"] },
+  { id: "s5", label: "Money & website", bn: "টাকা ও ওয়েবসাইট", steps: ["5.1", "5.2"] },
+  { id: "s6", label: "Finish", bn: "শেষ ধাপ", steps: ["6.1", "6.2", "6.3"] },
 ] as const;
 export type StepId = (typeof SECTIONS)[number]["steps"][number];
 export const ORDER: StepId[] = SECTIONS.flatMap((s) => [...s.steps]) as StepId[];
-export const STEP_TITLE: Record<StepId, string> = {
-  "1.1": "What do you run?", "1.2": "Name and location", "1.3": "What else is there?", "1.4": "Choose your plan",
-  "2.1": "Accommodation setup", "2.2": "Add your first units", "2.3": "Check your inventory",
-  "3.1": "Rates", "3.2": "Bookings you already have", "3.3": "Policies and taxes",
-  "4.1": "Modules", "4.2": "Invite your team",
-  "5.1": "How guests pay", "5.2": "Your website",
-  "6.1": "Your quote", "6.2": "Verification", "6.3": "Ready to submit",
+export const STEP_TITLE: Record<StepId, [string, string]> = {
+  "1.1": ["কী ধরনের property", "Property type"], "1.2": ["নাম", "Name"], "1.3": ["ঠিকানা", "Address"], "1.4": ["আর কী আছে", "Extras"],
+  "2.1": ["কী ভাড়া দেন", "What you rent"], "2.2": ["কোথায় আছে", "Where they are"], "2.3": ["রুমের ধরন", "Room types"],
+  "3.1": ["দামের নিয়ম", "Price rules"], "3.2": ["বাতিল ও সময়", "Policy & times"],
+  "4.1": ["কাজের টুলস", "Tools"], "4.2": ["টিম", "Team"],
+  "5.1": ["টাকা নেওয়া", "Payments"], "5.2": ["ওয়েবসাইট", "Website"],
+  "6.1": ["প্ল্যান", "Plan"], "6.2": ["কাগজপত্র", "Documents"], "6.3": ["জমা দিন", "Submit"],
 };
 export const sectionOf = (s: StepId) => SECTIONS.findIndex((x) => (x.steps as readonly string[]).includes(s));
 
@@ -81,7 +84,7 @@ export const STAFF = ["Just me", "2–5", "6–15", "16–50", "50+"];
 export const COUNTRIES = [{ code: "BD", label: "Bangladesh", currency: "BDT" }];
 
 // ---------- Store ----------
-type Root = { v: 1; phone: string; verified: boolean; current: string; drafts: Draft[] };
+type Root = { v: 1; phone: string; verified: boolean; current: string; drafts: Draft[]; lang?: "bn" | "en" };
 const KEY = "bingi-onb-v1";
 const empty: Root = { v: 1, phone: "", verified: false, current: "", drafts: [] };
 const listeners = new Set<() => void>();
@@ -138,6 +141,8 @@ export function newDraft(n: number): Draft {
   return {
     id, slug: id, created: t, updated: t, step: "1.1", seen: ["1.1"],
     country: "BD", propertyType: "", name: "", area: "", city: "", address: "", phone: "", units: 0, extras: [], staff: "",
+    road: "", division: "", postcode: "", pin: null,
+    stay: [], buildings: [], floors: [], ground: "G", zones: [],
     plan: "business", planPicked: false, cycle: 1,
     rates: { weekendPct: 0, breakfast: false, breakfastPrice: 0, minStay: 1, done: false },
     existing: { has: null, rows: [] },
@@ -176,20 +181,21 @@ export function hotelOf(d: Draft): Hotel {
 }
 
 // ---------- Readiness ----------
-export type Check = { id: string; label: string; level: "required" | "recommended" | "optional"; ok: boolean; step: StepId };
+export type Check = { id: string; label: string; bn: string; level: "required" | "recommended" | "optional"; ok: boolean; step: StepId };
 export function checks(d: Draft, units: { total: number; published: number; categories: number }): Check[] {
+  const c = (id: string, bn: string, label: string, level: Check["level"], ok: boolean, step: StepId): Check => ({ id, bn, label, level, ok, step });
   return [
-    { id: "type", label: "Property type", level: "required", ok: !!d.propertyType, step: "1.1" },
-    { id: "basics", label: "Name, location and phone", level: "required", ok: !!(d.name.trim() && d.city.trim() && d.address.trim() && validPhone(d.phone)), step: "1.2" },
-    { id: "plan", label: "Plan chosen", level: "required", ok: d.planPicked, step: "1.4" },
-    { id: "units", label: "At least one unit added", level: "required", ok: units.total > 0, step: "2.2" },
-    { id: "cash", label: "Pay at property (cash) on", level: "required", ok: d.pay.cash, step: "5.1" },
-    { id: "rates", label: "Rates checked", level: "recommended", ok: d.rates.done, step: "3.1" },
-    { id: "existing", label: "Existing bookings answered", level: "recommended", ok: d.existing.has !== null, step: "3.2" },
-    { id: "policy", label: "Cancellation policy", level: "recommended", ok: !!d.policy.preset, step: "3.3" },
-    { id: "verify", label: "Verification documents", level: "recommended", ok: !!(d.verify.nid && d.verify.trade), step: "6.2" },
-    { id: "team", label: "Team invited", level: "optional", ok: d.team.length > 0, step: "4.2" },
-    { id: "site", label: "Website theme chosen", level: "optional", ok: !!d.site.theme, step: "5.2" },
+    c("type", "Property-র ধরন", "Property type", "required", !!d.propertyType, "1.1"),
+    c("name", "নাম", "Name", "required", !!d.name.trim(), "1.2"),
+    c("address", "ঠিকানা", "Address", "required", !!(d.city.trim() && d.road.trim()), "1.3"),
+    c("units", "কমপক্ষে ১টা রুম", "At least one room", "required", units.total > 0, "2.3"),
+    c("plan", "প্ল্যান বাছাই", "Plan chosen", "required", d.planPicked, "6.1"),
+    c("cash", "নগদ টাকা নেওয়া চালু", "Pay at property on", "required", d.pay.cash, "5.1"),
+    c("rates", "দামের নিয়ম দেখা", "Price rules checked", "recommended", d.rates.done, "3.1"),
+    c("policy", "বাতিলের নিয়ম", "Cancellation policy", "recommended", !!d.policy.preset, "3.2"),
+    c("verify", "কাগজপত্র", "Documents", "recommended", !!(d.verify.nid && d.verify.trade), "6.2"),
+    c("team", "টিম", "Team invited", "optional", d.team.length > 0, "4.2"),
+    c("site", "ওয়েবসাইটের লুক", "Website look", "optional", !!d.site.theme, "5.2"),
   ];
 }
 export function score(cs: Check[]) {
@@ -204,3 +210,14 @@ export const trialLeft = (d: Draft) => {
   const used = Math.floor((Date.now() - new Date(d.submitted).getTime()) / 86400000);
   return Math.max(0, TRIAL_DAYS - used);
 };
+
+// ---------- Language (onboarding is Bangla-first) ----------
+export function useL() {
+  const st = useSyncExternalStore(sub, read, () => empty);
+  const lang = st.lang ?? "bn";
+  return { lang, t: (bn: string, en: string) => (lang === "bn" ? bn : en) };
+}
+export function setOnbLang(l: "bn" | "en") { const n = structuredClone(read()); n.lang = l; write(n); }
+const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
+/** Bangla digits when the onboarding is in Bangla. */
+export const num = (n: number | string, lang: "bn" | "en") => (lang === "bn" ? String(n).replace(/\d/g, (x) => BN_DIGITS[+x]) : String(n));

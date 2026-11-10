@@ -153,3 +153,11 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @keyframes onb-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .onb-in { animation: onb-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) { .onb-in { animation: none; } }
+
+@keyframes onb-pop { 0% { opacity: 0; transform: scale(0.6); } 70% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+.onb-pop { transform-box: fill-box; transform-origin: center; animation: onb-pop 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes onb-floor { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.onb-floor { animation: onb-floor 360ms ease-out both; }
+@keyframes onb-confetti { from { opacity: 0; transform: translateY(-30px); } 60% { opacity: 1; } to { opacity: 0.9; transform: translateY(40px); } }
+.onb-confetti { animation: onb-confetti 1200ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .onb-pop, .onb-floor, .onb-confetti { animation: none; } }

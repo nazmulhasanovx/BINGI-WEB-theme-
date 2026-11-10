@@ -29,6 +29,9 @@ export type Category = {
   /** Backend rule: BinGi (Superadmin) approves a category before its units can be published. */
   approval: "pending" | "approved";
   archived?: boolean;
+  /** From the easy room builder (live HMS fields): Single/Double/Twin… and meal setup. */
+  roomKind?: string;
+  meals?: { breakfast: "none" | "included" | "extra"; lunch: "none" | "included" | "extra" };
 };
 export type Unit = {
   id: string; code: string; local: string; node: string; category: string; core: CoreType; preset: PresetSlug;
