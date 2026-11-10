@@ -39,6 +39,9 @@ import { PayrollPage, PayrollRunPage } from "@/components/hms/staff/payroll";
 import { HiringPage, CandidatePage } from "@/components/hms/staff/hiring";
 import { OperationsPage } from "@/components/hms/staff/operations";
 import { SettingsPage as StaffSettings } from "@/components/hms/staff/settings";
+import { UnitsPage, CategoriesPage, ConfigurationPage } from "@/components/hms/rooms/pages";
+import { SetupPage as RoomsSetup } from "@/components/hms/rooms/setup";
+import { AddPage as RoomsAdd } from "@/components/hms/rooms/wizard";
 const STAFF: Record<string, () => ReactNode> = { "": () => <StaffOverview />, people: () => <PeoplePage />, attendance: () => <AttendancePage />, schedule: () => <SchedulePage />, leave: () => <LeavePage />, payroll: () => <PayrollPage />, hiring: () => <HiringPage />, operations: () => <OperationsPage />, settings: () => <StaffSettings /> };
 
 (window as unknown as { __BINGI_SPA__: boolean }).__BINGI_SPA__ = true;
@@ -68,6 +71,11 @@ async function resolve(route: string): Promise<ReactNode> {
         else if (id && sec === "hiring") page = <CandidatePage key={id} id={id} />;
         else if (STAFF[sec] && !id) page = STAFF[sec]();
         else throw new NotFoundError("not found");
+      } else if (seg[1] === "rooms") {
+        const R: Record<string, () => ReactNode> = { "": () => <UnitsPage />, categories: () => <CategoriesPage />, configuration: () => <ConfigurationPage />, setup: () => <RoomsSetup />, new: () => <RoomsAdd /> };
+        const sec = seg[2] ?? "";
+        if (!R[sec] || seg[3]) throw new NotFoundError("not found");
+        page = R[sec]();
       } else if (seg[1]) page = await (HmsModule as Comp)({ params: Promise.resolve({ module: seg[1] }) });
       else page = await (HmsHome as Comp)({});
     } catch (e) {
