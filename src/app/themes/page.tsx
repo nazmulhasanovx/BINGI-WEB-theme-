@@ -1,13 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MASTERS } from "@/themes/registry";
+import { MASTERS, PAID_MASTERS } from "@/themes/registry";
 import { MANIFESTS } from "@/themes/manifest";
 
 export default function Index() {
   return (
     <main className="mx-auto max-w-xl px-6 py-20">
       <Image src="/brand/bingi-logo.png" alt="BinGi" width={120} height={40} className="h-10 w-auto" priority />
-      <p className="mt-6 text-sm font-semibold text-action">Web Themes · {MASTERS.length} master themes</p>
+      <p className="mt-6 text-sm font-semibold text-action">Web Themes · {MASTERS.length} included + {PAID_MASTERS.length} paid</p>
       <h1 className="mt-2 text-3xl font-bold">Theme preview</h1>
       <ul className="mt-8 space-y-3">
         <li>
@@ -15,7 +15,7 @@ export default function Index() {
             /hms/website <span className="font-normal text-muted">— HMS · Website Management (manage any property, any theme)</span>
           </Link>
         </li>
-        {MASTERS.map((m) => (
+        {[...MASTERS, ...PAID_MASTERS].map((m) => (
           <li key={m.id}>
             <Link className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-3 shadow-card hover:border-brand-ring" href={`/hotel/${m.demo}`}>
               <Image src={`/themes/${m.id}.jpg`} alt="" width={96} height={60} className="h-[60px] w-24 shrink-0 rounded-lg object-cover object-top" />

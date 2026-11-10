@@ -45,6 +45,8 @@ export type ThemeManifest = {
   demo: string; // demo hotel slug, used for the preview
   defaultHeading: "sans" | "serif";
   features: { extras: boolean; promoCode: boolean; advance: boolean; diningPage: boolean; eventsPage: boolean };
+  /** Paid themes are bought in the Theme Store (any plan); they are not unlocked by the plan. */
+  paid?: boolean;
   pages: PageDef[];
   sections: SectionDef[];
 };
@@ -250,9 +252,105 @@ export const MANIFESTS: Record<MasterTheme, ThemeManifest> = {
       { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
     ],
   },
+  drift: {
+    id: "drift",
+    name: "DRIFT",
+    version: "1.0",
+    tagline: "Life on the water",
+    description: "Paid theme for houseboats and river stays: living water on your photo, cabins as depth cards, a day on board.",
+    minPlan: "starter",
+    paid: true,
+    bestFor: ["other", "resort", "villa"],
+    demo: "haor-bilash",
+    defaultHeading: "serif",
+    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
+    pages: commonPages,
+    sections: [
+      { id: "hero", name: "Hero", description: "Your photo with moving water, headline and booking bar.", required: true, fields: heroFields },
+      { id: "cabins", name: "Cabins", description: "Every cabin as a depth card with price.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Choose your cabin" }] },
+      { id: "day", name: "A day on board", description: "Timeline from Property Info › Day plan (hidden when empty).", source: "contact", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "A day on the water" }] },
+      { id: "life", name: "On the boat", description: "Facilities with a living photo.", source: "facilities" },
+      { id: "extras", name: "Add to your trip", description: "Canoe, pickup and other extras.", source: "services" },
+      { id: "faq", name: "Questions", description: "Boarding, season and network.", source: "contact" },
+      { id: "getting-here", name: "Getting here", description: "Boarding point and travel times.", source: "nearby" },
+      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
+      { id: "book-band", name: "Closing band", description: "Sunset photo with Book and WhatsApp.", source: "contact", fields: [{ key: "title", label: "Headline", type: "text", max: 60, fallback: () => "Your cabin is waiting on the water" }] },
+    ],
+  },
+  canopy: {
+    id: "canopy",
+    name: "CANOPY",
+    version: "1.0",
+    tagline: "Up in the trees",
+    description: "Paid theme for treehouses and eco stays: 3D photo with fireflies and a height ruler from your treehouses.",
+    minPlan: "starter",
+    paid: true,
+    bestFor: ["cottage", "other", "resort"],
+    demo: "canopy-nest",
+    defaultHeading: "serif",
+    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
+    pages: commonPages,
+    sections: [
+      { id: "hero", name: "Hero", description: "3D photo, fireflies, headline and booking bar.", required: true, fields: heroFields },
+      { id: "treehouses", name: "Treehouses", description: "Height ruler (from room details like “6 m up”) and depth cards.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 50, fallback: () => "How high would you like to sleep?" }] },
+      { id: "forest", name: "Life in the forest", description: "Facilities on a dark forest band.", source: "facilities" },
+      { id: "experiences", name: "Experiences", description: "Guided walks and activities with photos.", source: "services" },
+      { id: "faq", name: "Good to know", description: "Stairs, children, power, wildlife.", source: "contact" },
+      { id: "getting-here", name: "Getting here", description: "Travel times and directions.", source: "nearby" },
+      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
+    ],
+  },
+  pod: {
+    id: "pod",
+    name: "POD",
+    version: "1.0",
+    tagline: "Sleep in the future",
+    description: "Paid theme for capsule hotels: neon light field and a capsule wall built from your real bed setup.",
+    minPlan: "starter",
+    paid: true,
+    bestFor: ["hostel", "other"],
+    demo: "skypod",
+    defaultHeading: "sans",
+    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
+    pages: commonPages,
+    sections: [
+      { id: "hero", name: "Hero", description: "Neon field, capsule photo, pod price and booking bar.", required: true, fields: heroFields },
+      { id: "wall", name: "Capsule wall", description: "Pods drawn from HMS › Rooms beds; pick a pod type.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Pick your pod type" }] },
+      { id: "stays", name: "Pods and rooms", description: "Every stay type as a depth card.", source: "rooms" },
+      { id: "facilities", name: "Inside", description: "Showers, lockers, lounge.", source: "facilities" },
+      { id: "rules", name: "Good to know", description: "Check-in, house rules and questions.", source: "contact" },
+      { id: "getting-here", name: "Getting here", description: "Airport and travel times.", source: "nearby" },
+      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
+    ],
+  },
+  orbit: {
+    id: "orbit",
+    name: "ORBIT",
+    version: "1.0",
+    tagline: "Every floor, at a glance",
+    description: "Paid theme for city and tower hotels: 3D photo of the building and a 3D floor stack from your Rooms setup.",
+    minPlan: "starter",
+    paid: true,
+    bestFor: ["hotel", "serviced-apartment"],
+    demo: "altura",
+    defaultHeading: "sans",
+    features: { extras: true, promoCode: true, advance: true, diningPage: false, eventsPage: false },
+    pages: commonPages,
+    sections: [
+      { id: "hero", name: "Hero", description: "Tower in 3D photo, headline, highlights and booking bar.", required: true, fields: heroFields },
+      { id: "floors", name: "Floor by floor", description: "3D floor stack from HMS › Rooms floors and units.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Find your floor" }] },
+      { id: "rooms", name: "Rooms & suites", description: "Room cards with size and price.", source: "rooms", fields: [{ key: "title", label: "Section title", type: "text", max: 40, fallback: () => "Rooms with a view" }] },
+      { id: "amenities", name: "In the building", description: "Pool, lobby and facilities bento.", source: "facilities" },
+      { id: "location", name: "Location", description: "Walk and drive times.", source: "nearby" },
+      { id: "offers", name: "Offers", description: "Direct-booking discounts.", source: "offers" },
+      { id: "reviews", name: "Reviews", description: "Guest reviews (rating shows from 5 reviews).", source: "reviews" },
+    ],
+  },
 };
 
 export const MASTER_LIST: ThemeManifest[] = [MANIFESTS.nest, MANIFESTS.cottage, MANIFESTS.bunk, MANIFESTS.city, MANIFESTS.villa, MANIFESTS.flat, MANIFESTS.escape, MANIFESTS.grand];
+/** Paid themes (Theme Store). */
+export const PAID_LIST: ThemeManifest[] = [MANIFESTS.drift, MANIFESTS.canopy, MANIFESTS.pod, MANIFESTS.orbit];
 
 export const planAllows = (plan: Plan, min?: Plan) => !min || PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(min);
 

@@ -1,11 +1,13 @@
 "use client";
+import { useLicences } from "@/lib/licences";
+import { isPaid } from "@/themes/paid";
 import { hrefFor } from "@/lib/href";
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
 import { useState } from "react";
 import { BarChart3, Check, CircleCheck, Copy, ExternalLink, Eye, Inbox, MessageSquare, Phone, RotateCcw, Rocket } from "lucide-react";
-import { PLAN_LABEL, planAllows } from "@/themes/manifest";
+import { MANIFESTS, PLAN_LABEL, planAllows } from "@/themes/manifest";
 import { slotText, type Inquiry } from "@/lib/site";
 import { useWM } from "./WebsiteModule";
 import { MediaPicker } from "./content";
@@ -275,7 +277,9 @@ export function OnlinePage() {
 
 /* ================= Preview & Publish ================= */
 export function PublishPage() {
-  const { site, openPreview } = useWM();
+  const { hotel, site, openPreview } = useWM();
+  const lic = useLicences(hotel.slug);
+  const blocked = isPaid(site.draft.master) && !lic.has(site.draft.master) ? MANIFESTS[site.draft.master].name : null;
   const [note, setNote] = useState("");
   const [done, setDone] = useState(false);
   const n = site.changes.length;
@@ -290,8 +294,9 @@ export function PublishPage() {
               <>
                 <ul className="mb-4 flex flex-wrap gap-2">{site.changes.map((c) => <Badge key={c} tone="amber">{c}</Badge>)}</ul>
                 <Field label="Note (optional)"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. New winter photos" /></Field>
+                {blocked && <p role="alert" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[14px] text-[#7a4a0b]">Your draft uses {blocked}, a paid theme you haven&apos;t bought. <Link href="/hms/website/design?tab=store" className="font-semibold underline">Buy it</Link> or choose an included theme before publishing.</p>}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Btn onClick={() => { site.publish(note); setNote(""); setDone(true); setTimeout(() => setDone(false), 4000); }}><Rocket className="size-4" /> Publish now</Btn>
+                  <Btn disabled={!!blocked} onClick={() => { site.publish(note); setNote(""); setDone(true); setTimeout(() => setDone(false), 4000); }}><Rocket className="size-4" /> Publish now</Btn>
                   <Btn variant="ghost" onClick={() => confirm("Discard all unpublished changes?") && site.discard()}><RotateCcw className="size-4" /> Discard changes</Btn>
                 </div>
               </>

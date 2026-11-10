@@ -9,7 +9,8 @@ import { Check, Palette } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { THEMES, isThemeId, themeById, tokensFor, type ThemeId } from "@/lib/theme";
 import type { MasterTheme } from "@/lib/types";
-import { MASTERS } from "@/themes/registry";
+import { MASTERS, PAID_MASTERS } from "@/themes/registry";
+const ALL_MASTERS = [...MASTERS, ...PAID_MASTERS];
 import { useIsPreview, useSiteView } from "@/lib/site";
 
 /**
@@ -130,7 +131,7 @@ function PhoneThemeButton({ active, heading, master }: { active: ThemeId; headin
       <Sheet open={open} onClose={() => setOpen(false)} title="Theme (preview)">
         <p className="mb-2 text-sm font-semibold">Layout</p>
         <div className="mb-5 grid grid-cols-3 gap-2">
-          {MASTERS.map((m) => m.demo ? (
+          {ALL_MASTERS.map((m) => m.demo ? (
             <Link key={m.id} href={`/hotel/${m.demo}`} onClick={() => setOpen(false)} className={clsx("rounded-2xl border p-2.5 text-center", m.id === master ? "border-ink bg-ink text-white" : "border-line")}>
               <span className="block text-[14px] font-bold">{m.name}</span><span className="text-[11px] opacity-70">{m.plan}</span>
             </Link>
@@ -169,9 +170,9 @@ function PhoneThemeButton({ active, heading, master }: { active: ThemeId; headin
 function LayoutSwitch({ master }: { master: MasterTheme }) {
   return (
     <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 p-0.5 text-[12px] font-semibold" role="group" aria-label="Layout">
-      {MASTERS.map((m) =>
+      {ALL_MASTERS.map((m) =>
         m.demo ? (
-          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={`${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-2.5", m.id === master ? "bg-white text-ink" : "text-white/80 hover:text-white")}>
+          <Link key={m.id} href={`/hotel/${m.demo}`} aria-current={m.id === master ? "page" : undefined} title={m.plan === "Paid" ? "Paid theme (Theme Store)" : `${m.plan} plan`} className={clsx("flex h-7 items-center rounded-full px-2", m.id === master ? "bg-white text-ink" : m.plan === "Paid" ? "text-[#e9d5ff] hover:text-white" : "text-white/80 hover:text-white")}>
             {m.name}
           </Link>
         ) : (
