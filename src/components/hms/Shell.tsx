@@ -278,6 +278,11 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const names: Record<string, string> = { categories: "Categories", configuration: "Setup", setup: "Edit setup", new: "Add accommodation" };
     return [{ label: "Rooms", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
+  if (path.startsWith("/hms/other-services")) {
+    const seg = path.split("/")[3];
+    const names: Record<string, string> = { orders: "Order History", categories: "Categories" };
+    return [{ label: "Other Services", href: seg ? "/hms/other-services" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+  }
   if (path.startsWith("/hms/inventory")) {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { history: "History", reports: "Reports", setup: "Categories & Suppliers" };
