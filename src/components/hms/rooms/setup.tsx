@@ -5,15 +5,21 @@ import clsx from "clsx";
 import { useState } from "react";
 import { Building2, MapPin, Plus, X } from "lucide-react";
 import { useProperty } from "../property";
-import { codeFor, emptyConfig, leaves, nowStamp, prefixOf, uid, useRooms, type Config, type LocNode } from "@/lib/rooms/store";
-import { CORE, CORE_TYPES, PRESETS, TEMPLATES, propertyTypeOf, type CoreType } from "@/lib/rooms/catalog";
+import { codeFor, emptyConfig, isBuilding, isFloor, isZone, leaves, nowStamp, prefixOf, uid, useRooms, type Config, type LocNode } from "@/lib/rooms/store";
+import { BUILDING_KINDS, CORE, CORE_TYPES, PRESETS, TEMPLATES, ZONE_KINDS, kindLabel, propertyTypeOf, type CoreType, type LocKindCode } from "@/lib/rooms/catalog";
 import { Btn, Field, Input, Select } from "../staff/ui";
 import { CORE_ICON, ChoiceCard, Section, Steps, useToast } from "./parts";
+import { Hydrated } from "./parts";
 
 const STEPS = ["Types", "Locations", "Numbering", "Review"];
 const floorName = (l: number) => (l === 0 ? "Ground floor" : `Floor ${l}`);
 
 export function SetupPage() {
+  const h = useProperty();
+  return <Hydrated><SetupPageInner key={h.slug} /></Hydrated>;
+}
+
+function SetupPageInner() {
   const h = useProperty();
   const { st, update } = useRooms(h);
   const router = useRouter();
@@ -23,21 +29,24 @@ export function SetupPage() {
   const [step, setStep] = useState(0);
   const [maxDone, setMaxDone] = useState(st.config.configured ? 3 : 0);
   const [tried, setTried] = useState(false);
+  // Optimistic version: if someone else saved setup since this screen opened, saving is refused (backend returns a stale-version conflict).
+  const [loadedVersion, setLoadedVersion] = useState(st.config.version);
+  const [stale, setStale] = useState(false);
   const used = (core: CoreType) => st.units.filter((u) => u.core === core).length;
   const nodeUsed = (id: string) => st.units.some((u) => u.node === id || c.nodes.some((n) => n.parent === id && u.node === n.id));
   const needFloors = c.enabled.some((t) => CORE[t].strategy === "floor");
   const needZones = c.enabled.some((t) => CORE[t].strategy === "zone");
-  const buildings = c.nodes.filter((n) => n.kind === "building");
-  const zones = c.nodes.filter((n) => n.kind === "zone");
+  const buildings = c.nodes.filter(isBuilding);
+  const zones = c.nodes.filter(isZone);
 
   const errors = (i: number): string[] => {
     const e: string[] = [];
     if (i === 0 && !c.enabled.length) e.push("Choose at least one accommodation type.");
     if (i === 1) {
-      if (needFloors && !buildings.some((b) => c.nodes.some((f) => f.parent === b.id && f.kind === "floor"))) e.push("Add at least one building with a floor.");
+      if (needFloors && !buildings.some((b) => c.nodes.some((f) => f.parent === b.id && isFloor(f)))) e.push("Add at least one building with a floor.");
       if (needZones && !zones.length) e.push("Add at least one zone (for cottages, villas or other stays).");
       if (c.nodes.some((n) => !n.name.trim())) e.push("Every building, floor and zone needs a name.");
-      const codes = c.nodes.filter((n) => (n.kind === "building" || n.kind === "zone") && n.code).map((n) => n.code.toUpperCase());
+      const codes = c.nodes.filter((n) => (isBuilding(n) || isZone(n)) && n.code).map((n) => n.code.toUpperCase());
       if (new Set(codes).size !== codes.length) e.push("Two buildings or zones have the same code.");
       if (codes.some((k) => !/^[A-Z0-9]{1,4}$/.test(k))) e.push("Codes use 1–4 letters or numbers (e.g. TA, G).");
     }
@@ -53,6 +62,7 @@ export function SetupPage() {
   };
   const save = () => {
     for (let k = 0; k < 3; k++) if (errors(k).length) { setTried(true); setStep(k); return; }
+    if (st.config.version !== loadedVersion) { setStale(true); return; }
     const first = !st.config.configured;
     update((s) => { s.config = { ...c, configured: true, version: s.config.version + 1, savedAt: nowStamp() }; }, first ? "Accommodation setup saved" : `Accommodation setup updated (version ${st.config.version + 1})`);
     toast(first ? "Setup saved — now add your units" : "Setup updated");
@@ -68,6 +78,12 @@ export function SetupPage() {
         <span className="ml-auto" />
         {step < 3 ? <Btn kind="primary" onClick={() => go(step + 1)}>Continue</Btn> : <Btn kind="primary" onClick={save}>Save setup</Btn>}
       </>}>
+      {stale && (
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-4 py-3 text-[14.5px] text-[#a3261f]">
+          <span className="flex-1">Someone else saved the setup while you were editing (now version {st.config.version}). Nothing was saved. Reload to see the latest, then make your change again.</span>
+          <Btn onClick={() => { setC(structuredClone(st.config)); setLoadedVersion(st.config.version); setStale(false); }}>Reload latest</Btn>
+        </div>
+      )}
       {err.length > 0 && (
         <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-4 py-3 text-[14.5px] text-[#a3261f]">{err.map((e) => <p key={e}>{e}</p>)}</div>
       )}
@@ -97,7 +113,7 @@ export function SetupPage() {
           {!needFloors && !needZones && <p className="text-[15px] text-[#5b6170]">Choose a type first.</p>}
           {needFloors && (
             <Section title="Buildings & floors" desc={`For ${c.enabled.filter((t) => CORE[t].strategy === "floor").map((t) => CORE[t].plural.toLowerCase()).join(", ")}. A code like TA makes room numbers TA-101.`}
-              right={<Btn onClick={() => set((d) => { d.nodes.push({ id: uid("loc"), kind: "building", name: buildings.length ? `Building ${buildings.length + 1}` : "Main Building", code: "", active: true }); })}><Plus className="size-4" /> Add building</Btn>}>
+              right={<Btn onClick={() => set((d) => { d.nodes.push({ id: uid("loc"), kind: "BUILDING", name: buildings.length ? `Building ${buildings.length + 1}` : "Main Building", code: "", active: true }); })}><Plus className="size-4" /> Add building</Btn>}>
               <div className="space-y-3">
                 {!buildings.length && <p className="text-[14.5px] text-[#5b6170]">No building yet.</p>}
                 {buildings.map((b) => <BuildingRow key={b.id} b={b} c={c} set={set} used={nodeUsed} />)}
@@ -106,7 +122,7 @@ export function SetupPage() {
           )}
           {needZones && (
             <Section title="Zones & blocks" desc={`For ${c.enabled.filter((t) => CORE[t].strategy === "zone").map((t) => CORE[t].plural.toLowerCase()).join(", ")}. No floors needed. Blocks are optional.`}
-              right={<Btn onClick={() => set((d) => { d.nodes.push({ id: uid("loc"), kind: "zone", name: zones.length ? `Zone ${zones.length + 1}` : "Garden Zone", code: "", active: true }); })}><Plus className="size-4" /> Add zone</Btn>}>
+              right={<Btn onClick={() => set((d) => { d.nodes.push({ id: uid("loc"), kind: "ZONE", name: zones.length ? `Zone ${zones.length + 1}` : "Garden Zone", code: "", active: true }); })}><Plus className="size-4" /> Add zone</Btn>}>
               <div className="space-y-3">
                 {!zones.length && <p className="text-[14.5px] text-[#5b6170]">No zone yet.</p>}
                 {zones.map((z) => <ZoneRow key={z.id} z={z} c={c} set={set} used={nodeUsed} />)}
@@ -164,7 +180,7 @@ export function SetupPage() {
               {c.nodes.filter((n) => !n.parent).map((p) => (
                 <li key={p.id}>
                   <span className="font-medium">{p.name}</span>{p.code && <span className="ml-1.5 rounded bg-[#f2f3f6] px-1.5 font-mono text-[12.5px]">{p.code}</span>}
-                  <span className="text-[#5b6170]"> · {c.nodes.filter((n) => n.parent === p.id).map((n) => n.name).join(", ") || (p.kind === "zone" ? "no blocks" : "no floors")}</span>
+                  <span className="text-[#5b6170]"> · {c.nodes.filter((n) => n.parent === p.id).map((n) => n.name).join(", ") || (isZone(p) ? "no blocks" : "no floors")} <span className="text-[12px]">({kindLabel(p.kind)})</span></span>
                 </li>
               ))}
             </ul>
@@ -192,7 +208,7 @@ function BuildingRow({ b, c, set, used }: { b: LocNode; c: Config; set: (fn: (c:
     const a = Math.max(0, Number(from)), z = Math.min(150, Number(to));
     if (!(z >= a)) return;
     set((d) => {
-      for (let l = a; l <= z; l++) if (!d.nodes.some((n) => n.parent === b.id && n.level === l)) d.nodes.push({ id: uid("loc"), kind: "floor", name: floorName(l), code: String(l), parent: b.id, level: l, active: true });
+      for (let l = a; l <= z; l++) if (!d.nodes.some((n) => n.parent === b.id && n.level === l)) d.nodes.push({ id: uid("loc"), kind: "FLOOR", name: floorName(l), code: String(l), parent: b.id, level: l, active: true });
     });
     setFrom(String(z + 1)); setTo(String(z + 3));
   };
@@ -201,6 +217,7 @@ function BuildingRow({ b, c, set, used }: { b: LocNode; c: Config; set: (fn: (c:
       <div className="flex flex-wrap items-end gap-2.5">
         <Building2 className="mb-2.5 size-5 text-[#5b6170]" />
         <div className="min-w-[180px] flex-1"><Field label="Building name"><Input value={b.name} onChange={(e) => set((d) => { d.nodes.find((n) => n.id === b.id)!.name = e.target.value; })} /></Field></div>
+        <div className="w-[130px]"><Field label="Kind"><Select value={b.kind} onChange={(e) => set((d) => { d.nodes.find((n) => n.id === b.id)!.kind = e.target.value as LocKindCode; })}>{BUILDING_KINDS.map((k) => <option key={k} value={k}>{kindLabel(k)}</option>)}</Select></Field></div>
         <div className="w-[110px]"><Field label="Code (optional)"><Input value={b.code} maxLength={4} placeholder="TA" onChange={(e) => set((d) => { d.nodes.find((n) => n.id === b.id)!.code = e.target.value.toUpperCase(); })} /></Field></div>
         <Btn kind="ghost" aria-label={`Remove ${b.name}`} disabled={used(b.id)} title={used(b.id) ? "Has units" : undefined} onClick={() => set((d) => { d.nodes = d.nodes.filter((n) => n.id !== b.id && n.parent !== b.id); })}><X className="size-4" /></Btn>
       </div>
@@ -231,6 +248,7 @@ function ZoneRow({ z, c, set, used }: { z: LocNode; c: Config; set: (fn: (c: Con
       <div className="flex flex-wrap items-end gap-2.5">
         <MapPin className="mb-2.5 size-5 text-[#5b6170]" />
         <div className="min-w-[180px] flex-1"><Field label="Zone name"><Input value={z.name} onChange={(e) => set((d) => { d.nodes.find((n) => n.id === z.id)!.name = e.target.value; })} /></Field></div>
+        <div className="w-[130px]"><Field label="Kind"><Select value={z.kind} onChange={(e) => set((d) => { d.nodes.find((n) => n.id === z.id)!.kind = e.target.value as LocKindCode; })}>{ZONE_KINDS.map((k) => <option key={k} value={k}>{kindLabel(k)}</option>)}</Select></Field></div>
         <div className="w-[110px]"><Field label="Code (optional)"><Input value={z.code} maxLength={4} placeholder="G" onChange={(e) => set((d) => { d.nodes.find((n) => n.id === z.id)!.code = e.target.value.toUpperCase(); })} /></Field></div>
         <Btn kind="ghost" aria-label={`Remove ${z.name}`} disabled={used(z.id)} title={used(z.id) ? "Has units" : undefined} onClick={() => set((d) => { d.nodes = d.nodes.filter((n) => n.id !== z.id && n.parent !== z.id); })}><X className="size-4" /></Btn>
       </div>
@@ -241,7 +259,7 @@ function ZoneRow({ z, c, set, used }: { z: LocNode; c: Config; set: (fn: (c: Con
             <button aria-label={`Remove ${f.name}`} disabled={used(f.id)} onClick={() => set((d) => { d.nodes = d.nodes.filter((n) => n.id !== f.id); })} className="grid size-5 place-items-center rounded hover:bg-white disabled:opacity-30"><X className="size-3" /></button>
           </span>
         ))}
-        <form className={clsx("flex items-center gap-1.5")} onSubmit={(e) => { e.preventDefault(); const v = name.trim(); if (!v) return; set((d) => { d.nodes.push({ id: uid("loc"), kind: "block", name: v, code: "", parent: z.id, active: true }); }); setName(""); }}>
+        <form className={clsx("flex items-center gap-1.5")} onSubmit={(e) => { e.preventDefault(); const v = name.trim(); if (!v) return; set((d) => { d.nodes.push({ id: uid("loc"), kind: "BLOCK", name: v, code: "", parent: z.id, active: true }); }); setName(""); }}>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Add block (optional)" aria-label={`Add block to ${z.name}`} className="h-8 w-[170px] rounded-lg border border-[#dfe2e8] px-2.5 text-[13.5px] outline-none focus:border-[#d8372e]" />
           <Btn type="submit" className="h-8 px-3" disabled={!name.trim()}>Add</Btn>
         </form>

@@ -1,5 +1,5 @@
 "use client";
-// POD capsule wall (FX4): drawn from the property's real bed setup (HMS → Rooms → dormitory beds).
+// POD capsule wall (FX4): drawn from the property's real setup (HMS → Rooms → Capsule/Pod units; each pod is one whole unit).
 // It is an illustration of pod types and counts — guests book a pod type; the exact pod is assigned at check-in.
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { formatMoney } from "@/lib/data";
-import { useRooms } from "@/lib/rooms/store";
+import { nodePath, useRooms } from "@/lib/rooms/store";
 import { Tilt } from "@/fx/effects";
 import { useFx } from "@/fx/fx";
 import { T } from "@/lib/i18n";
@@ -18,11 +18,17 @@ const GLOW = ["#22d3ee", "#c084fc", "#f472b6", "#fbbf24"];
 export function CapsuleWall({ hotel }: { hotel: Hotel }) {
   const { st } = useRooms(hotel);
   const fx = useFx();
-  const bays = useMemo(() => st.units.filter((u) => u.core === "DORMITORY" && u.status === "published" && u.beds?.length).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })), [st.units]);
+  // A "bay" = one location (e.g. a pod room) holding published Capsule/Pod units.
+  const bays = useMemo(() => {
+    const pods = st.units.filter((u) => u.preset === "capsule" && u.status === "published").sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+    const by = new Map<string, typeof pods>();
+    pods.forEach((u) => by.set(`${u.node}|${u.category}`, [...(by.get(`${u.node}|${u.category}`) ?? []), u]));
+    return [...by.entries()].map(([key, units]) => ({ id: key, node: units[0].node, category: units[0].category, units }));
+  }, [st.units]);
   const cats = useMemo(() => [...new Set(bays.map((b) => b.category))].map((id, i) => {
     const c = st.categories.find((x) => x.id === id);
     const room = hotel.rooms.find((r) => `cat-${r.id}` === id);
-    return { id, name: c?.name ?? "Pods", price: c?.baseRate ?? room?.fromPrice ?? 0, room, glow: GLOW[i % GLOW.length], pods: bays.filter((b) => b.category === id).reduce((n, b) => n + (b.beds?.length ?? 0), 0) };
+    return { id, name: c?.name ?? "Pods", price: c?.baseRate ?? room?.fromPrice ?? 0, room, glow: GLOW[i % GLOW.length], pods: bays.filter((b) => b.category === id).reduce((n, b) => n + b.units.length, 0) };
   }), [bays, st.categories, hotel.rooms]);
   const [sel, setSel] = useState<string | null>(null);
   if (!bays.length) return null;
@@ -45,17 +51,17 @@ export function CapsuleWall({ hotel }: { hotel: Hotel }) {
           <div className="space-y-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm md:p-6">
             {bays.map((b) => {
               const c = cats.find((x) => x.id === b.category)!;
-              const beds = b.beds ?? [];
+              const beds = b.units;
               const cols = Math.ceil(beds.length / 2);
               return (
                 <div key={b.id}>
-                  <p className="mb-2 text-[12.5px] font-medium uppercase tracking-[0.14em] text-white/70">{b.code} · {c.name}</p>
+                  <p className="mb-2 text-[12.5px] font-medium uppercase tracking-[0.14em] text-white/70">{nodePath(st.config, b.node)} · {c.name}</p>
                   <div className="-mx-1 overflow-x-auto px-1 pb-1">
                     <div className="grid w-max gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoFlow: "column", gridTemplateRows: "repeat(2, auto)" }}>
                       {beds.map((bed, i) => {
                         const on = selected.id === c.id;
                         return (
-                          <button key={bed.code} onClick={() => setSel(c.id)} aria-label={`${c.name}, pod ${i + 1} in ${b.code}, ${formatMoney(c.price)} per night`}
+                          <button key={bed.code} onClick={() => setSel(c.id)} aria-label={`${c.name}, pod ${bed.code}, ${formatMoney(c.price)} per night`}
                             className={clsx("relative h-9 w-12 rounded-[12px] border transition-all duration-500 md:h-10 md:w-14", on ? "border-transparent" : "border-white/15 opacity-60 hover:opacity-100")}
                             style={on ? { background: `linear-gradient(180deg, ${c.glow}55, ${c.glow}22)`, boxShadow: `0 0 0 1px ${c.glow}, 0 0 18px -4px ${c.glow}`, transitionDelay: anim ? `${(i % 12) * 25}ms` : undefined } : { background: "rgb(255 255 255 / .04)" }}>
                             <span aria-hidden className="absolute inset-x-2 top-1.5 h-1 rounded-full bg-white/50" />
@@ -69,7 +75,7 @@ export function CapsuleWall({ hotel }: { hotel: Hotel }) {
             })}
           </div>
         </Tilt>
-        <p className="mt-3 flex items-center gap-1.5 text-[12.5px] text-white/70"><Sparkles className="size-3.5" aria-hidden /> <T>Illustration from our bed setup</T> · {total} pods. <T>Your exact pod is assigned at check-in.</T></p>
+        <p className="mt-3 flex items-center gap-1.5 text-[12.5px] text-white/70"><Sparkles className="size-3.5" aria-hidden /> <T>Illustration from our pod setup</T> · {total} pods. <T>Your exact pod is assigned at check-in.</T></p>
       </div>
 
       <aside aria-live="polite" className="overflow-hidden rounded-[24px] bg-white text-ink lg:self-start">

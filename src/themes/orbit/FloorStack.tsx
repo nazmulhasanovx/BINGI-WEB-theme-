@@ -20,7 +20,7 @@ export function FloorStack({ hotel }: { hotel: Hotel }) {
   const floors = useMemo(() => {
     const c = st.config;
     return c.nodes
-      .filter((n) => n.kind === "floor" && n.active)
+      .filter((n) => (n.kind === "FLOOR" || n.kind === "LEVEL") && n.active)
       .map((f) => {
         const units = st.units.filter((u) => u.node === f.id && u.status === "published");
         const byCat = new Map<string, number>();
