@@ -76,7 +76,7 @@ export function MotionCard() {
 export function StoreTab() {
   const { hotel, site } = useWM();
   const lic = useLicences(hotel.slug);
-  const [filter, setFilter] = useState<"all" | "fit" | "A" | "B" | "C">("all");
+  const [filter, setFilter] = useState<"all" | "fit" | "L" | "A" | "B" | "C">("all");
   const [open, setOpen] = useState<string | null>(null);
   const list = STORE.filter((t) => filter === "all" || (filter === "fit" ? t.propertyTypes.includes(hotel.propertyType) : t.tier === filter))
     .sort((a, b) => Number(b.status === "available") - Number(a.status === "available"));
@@ -87,7 +87,7 @@ export function StoreTab() {
         <p><b className="text-hms-ink">Paid themes</b> add depth, motion and 3D on top of your included themes. Bought per property as a monthly add-on on your BinGi bill. Prices come from BinGi and are <b className="text-hms-ink">not set yet</b> — this preview does not charge anything.</p>
       </div>
       <div role="group" aria-label="Filter themes" className="mb-4 flex flex-wrap gap-2">
-        {([["all", "All"], ["fit", "Fits your property"], ["A", `Tier A · ${TIER.A.name}`], ["B", `Tier B · ${TIER.B.name}`], ["C", `Tier C · ${TIER.C.name}`]] as const).map(([v, l]) => (
+        {([["all", "All"], ["fit", "Fits your property"], ["L", "Luxury Collection · 5★–7★"], ["A", `Tier A · ${TIER.A.name}`], ["B", `Tier B · ${TIER.B.name}`], ["C", `Tier C · ${TIER.C.name}`]] as const).map(([v, l]) => (
           <button key={v} onClick={() => setFilter(v)} aria-pressed={filter === v} className={clsx("rounded-full border px-3.5 py-1.5 text-[13.5px] font-medium", filter === v ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{l}</button>
         ))}
       </div>
@@ -100,7 +100,7 @@ export function StoreTab() {
               <div className="relative aspect-[16/10] overflow-hidden bg-[linear-gradient(135deg,#1d2433,#3b2f55)]">
                 {x.status === "available" ? <Image src={`/themes/${x.id}.jpg`} alt={`${x.name} theme`} fill sizes="(max-width: 768px) 100vw, 420px" className="object-cover object-top" /> : <div className="absolute inset-0 grid place-items-center"><span className="text-[30px] font-bold tracking-[0.2em] text-white/80">{x.name}</span></div>}
                 <div className="absolute left-3 top-3 flex gap-1.5">
-                  <Badge tone="purple">Tier {x.tier}</Badge>
+                  <Badge tone="purple">{x.tier === "L" ? "Luxury Collection" : `Tier ${x.tier}`}</Badge>
                   {x.status === "coming-soon" && <Badge tone="gray">Coming soon</Badge>}
                   {owned && <Badge tone="green">{live ? "Live" : "Owned"}</Badge>}
                 </div>

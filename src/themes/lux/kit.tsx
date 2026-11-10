@@ -180,7 +180,7 @@ export function RoomRows({ hotel, numbered, limit = 4 }: { hotel: Hotel; numbere
 /** Tall cards in a swipe row (phone) / grid (desktop). */
 export function RoomCards({ hotel, cols = 3, aspect = "aspect-[3/4]" }: { hotel: Hotel; cols?: 2 | 3; aspect?: string }) {
   return (
-    <RevealGroup className={clsx("no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:gap-7 md:overflow-visible md:px-0", cols === 2 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3")}>
+    <RevealGroup className={clsx("no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:gap-7 md:overflow-visible md:px-0", cols === 2 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3")}>
       {hotel.rooms.map((r) => (
         <SiteVisible key={r.id} slug={hotel.slug} kind="rooms" id={r.id}>
           <RevealItem className="w-[80%] max-w-[360px] shrink-0 snap-start md:w-auto md:max-w-none">
