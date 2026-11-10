@@ -80,13 +80,13 @@ function SetupPageInner() {
         {step < 3 ? <Btn kind="primary" onClick={() => go(step + 1)}>Continue</Btn> : <Btn kind="primary" onClick={save}>Save setup</Btn>}
       </>}>
       {stale && (
-        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-4 py-3 text-[14.5px] text-[#a3261f]">
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-4 py-3 text-[14.5px] text-[#a3261f]">
           <span className="flex-1">Someone else saved the setup while you were editing (now version {st.config.version}). Nothing was saved. Reload to see the latest, then make your change again.</span>
           <Btn onClick={() => { setC(structuredClone(st.config)); setLoadedVersion(st.config.version); setStale(false); }}>Reload latest</Btn>
         </div>
       )}
       {err.length > 0 && (
-        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-4 py-3 text-[14.5px] text-[#a3261f]">{err.map((e) => <p key={e}>{e}</p>)}</div>
+        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-4 py-3 text-[14.5px] text-[#a3261f]">{err.map((e) => <p key={e}>{e}</p>)}</div>
       )}
 
       {step === 0 && (
@@ -261,7 +261,7 @@ function ZoneRow({ z, c, set, used }: { z: LocNode; c: Config; set: (fn: (c: Con
           </span>
         ))}
         <form className={clsx("flex items-center gap-1.5")} onSubmit={(e) => { e.preventDefault(); const v = name.trim(); if (!v) return; set((d) => { d.nodes.push({ id: uid("loc"), kind: "BLOCK", name: v, code: "", parent: z.id, active: true }); }); setName(""); }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Add block (optional)" aria-label={`Add block to ${z.name}`} className="h-8 w-[170px] rounded-lg border border-[#dfe2e8] px-2.5 text-[13.5px] outline-none focus:border-[#d8372e]" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Add block (optional)" aria-label={`Add block to ${z.name}`} className="h-8 w-[170px] rounded-lg border border-[#dfe2e8] px-2.5 text-[13.5px] outline-none focus:border-[#c8232e]" />
           <Btn type="submit" className="h-8 px-3" disabled={!name.trim()}>Add</Btn>
         </form>
       </div>

@@ -28,7 +28,7 @@ export function OperationsPage() {
         <h2 className="text-[24px] font-semibold">Team Operations</h2>
         <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
           {([["app", "Approvals"], ["srv", "Services"], ["perf", "Performance & training"], ["comm", "Communication"], ["off", "Offboarding"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
         <div className="mt-4">
@@ -262,7 +262,7 @@ function Offboarding({ q, dept }: { q: string; dept: string }) {
                 <div className="flex items-center justify-between"><Person name={e.name} id={e.id} sub={`${e.position} · last day ${fmt(x.lastDay)}`} /><Chip tone={e.status === "former" ? "gray" : done ? "green" : "amber"}>{e.status === "former" ? "Left" : done ? "Cleared" : x.reason}</Chip></div>
                 <ul className="mt-3 space-y-2">
                   {CLEAR.map(([k, l]) => (
-                    <li key={k}><label className="flex items-center gap-3 text-[15px]"><input type="checkbox" disabled={e.status === "former"} checked={!!x.clearance[k]} onChange={() => update((s) => { const c = emp(s, e.id)!.exit!.clearance; c[k] = !c[k]; if (k === "access" && c[k]) emp(s, e.id)!.access = "disabled"; }, `${e.name}: ${l.toLowerCase()} ${x.clearance[k] ? "unchecked" : "done"}`)} className="size-5 accent-[#e63b31]" />{l}{k === "assets" && e.assets.length > 0 && <span className="text-[13.5px] text-[#b45309]">({e.assets.length} still issued)</span>}</label></li>
+                    <li key={k}><label className="flex items-center gap-3 text-[15px]"><input type="checkbox" disabled={e.status === "former"} checked={!!x.clearance[k]} onChange={() => update((s) => { const c = emp(s, e.id)!.exit!.clearance; c[k] = !c[k]; if (k === "access" && c[k]) emp(s, e.id)!.access = "disabled"; }, `${e.name}: ${l.toLowerCase()} ${x.clearance[k] ? "unchecked" : "done"}`)} className="size-5 accent-[#c8232e]" />{l}{k === "assets" && e.assets.length > 0 && <span className="text-[13.5px] text-[#b45309]">({e.assets.length} still issued)</span>}</label></li>
                   ))}
                 </ul>
                 {e.status !== "former" && (

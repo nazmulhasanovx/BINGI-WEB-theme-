@@ -33,7 +33,7 @@ export function PayrollPage() {
         <h2 className="text-[24px] font-semibold">Payroll &amp; Benefits</h2>
         <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
           {([["runs", "Payroll runs"], ["struct", "Salary structures"], ["adj", "Advances & adjustments"], ["ben", "Benefits"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[16px]", tab === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[16px]", tab === v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
         {tab === "runs" && (
@@ -44,7 +44,7 @@ export function PayrollPage() {
               const open = openRun === r.id;
               return (
                 <div key={r.id}>
-                  <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#fdf0ef] px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#fdecec] px-4 py-3">
                     <button onClick={() => setOpenRun(open ? null : r.id)} aria-label={open ? "Collapse" : "Expand"} className="grid size-8 place-items-center">{open ? <ChevronDown className="size-5" /> : <ChevronRight className="size-5" />}</button>
                     <span className="text-[21px] font-semibold">{monthLabel(r.month)}</span>
                     <Chip tone={RUN_ST[r.status][1]}>{RUN_ST[r.status][0]}</Chip>
@@ -146,7 +146,7 @@ function Adjustments() {
                 <td className="text-right">{a.kind === "Bonus" ? "+" : "−"}{money(a.amount)}</td>
                 <td>{monthLabel(a.month)}{locked(a.month) && <span className="block text-[13px] text-[#6b7180]">In prepared run</span>}</td>
                 <td>{a.note}</td>
-                <td>{!locked(a.month) && <button onClick={() => update((s) => { s.adjustments = s.adjustments.filter((x) => x.id !== a.id); }, `${a.kind} removed for ${emp(st, a.emp)?.name}`)} aria-label="Remove" className="grid size-9 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#c33029]"><Trash2 className="size-4" /></button>}</td>
+                <td>{!locked(a.month) && <button onClick={() => update((s) => { s.adjustments = s.adjustments.filter((x) => x.id !== a.id); }, `${a.kind} removed for ${emp(st, a.emp)?.name}`)} aria-label="Remove" className="grid size-9 place-items-center rounded-lg text-[#6b7180] hover:bg-[#f6f7f9] hover:text-[#c8232e]"><Trash2 className="size-4" /></button>}</td>
               </tr>
             ))}
           </Table>
@@ -174,7 +174,7 @@ function Benefits() {
       <ul className="grid content-start gap-3 sm:grid-cols-2">
         {st.benefits.map((b) => (
           <li key={b.name} className="rounded-xl border border-[#eceef2] p-4">
-            <div className="flex items-start justify-between gap-2"><Gift className="size-5 text-[#c72f26]" /><button onClick={() => update((s) => { s.benefits = s.benefits.filter((x) => x.name !== b.name); }, `Benefit removed: ${b.name}`)} aria-label={`Remove ${b.name}`} className="text-[#8a8f9c] hover:text-[#c33029]"><Trash2 className="size-4" /></button></div>
+            <div className="flex items-start justify-between gap-2"><Gift className="size-5 text-[#c8232e]" /><button onClick={() => update((s) => { s.benefits = s.benefits.filter((x) => x.name !== b.name); }, `Benefit removed: ${b.name}`)} aria-label={`Remove ${b.name}`} className="text-[#8a8f9c] hover:text-[#c8232e]"><Trash2 className="size-4" /></button></div>
             <p className="mt-2 text-[16px] font-semibold">{b.name}</p>
             <p className="text-[14.5px] text-[#4b5160]">{b.detail}</p>
             <p className="mt-2 text-[13.5px] text-[#6b7180]">{b.who}</p>
@@ -208,7 +208,7 @@ export function PayrollRunPage({ id }: { id: string }) {
   const pay = payState === undefined ? qPay : payState;
   const [hist, setHist] = useState(false);
   const r = st.runs.find((x) => x.id === id);
-  if (!r) return <StaffFrame tab="payroll" hideSearch><Card><Empty icon={<Coins className="size-6" />} title="Payroll run not found" action={<Link href="/hms/staff/payroll" className="font-medium text-[#c72f26]">Back to Payroll</Link>} /></Card></StaffFrame>;
+  if (!r) return <StaffFrame tab="payroll" hideSearch><Card><Empty icon={<Coins className="size-6" />} title="Payroll run not found" action={<Link href="/hms/staff/payroll" className="font-medium text-[#c8232e]">Back to Payroll</Link>} /></Card></StaffFrame>;
   const t = runTotals(r);
   const lines = r.lines.filter((l) => (fp === "all" || payStatus(l) === fp) && (!q || `${emp(st, l.emp)?.name} ${l.emp} ${emp(st, l.emp)?.dept}`.toLowerCase().includes(q.toLowerCase())));
   const advance = (step: 2 | 3 | 4, status: PayrollRun["status"], msg: string) => { update((s) => { const x = s.runs.find((y) => y.id === id)!; x.step = step; x.status = status; }, `${monthLabel(r.month)} payroll: ${msg}`); toast(msg); };
@@ -234,7 +234,7 @@ export function PayrollRunPage({ id }: { id: string }) {
             return (
               <li key={s} className="relative flex flex-col items-center gap-2">
                 {i > 0 && <span className={clsx("absolute right-1/2 top-[21px] h-0.5 w-full", n <= r.step ? "bg-[#f08b84]" : "bg-[#e6e8ee]")} />}
-                <span className={clsx("relative z-10 grid size-11 place-items-center rounded-full text-[17px] font-semibold", done ? "bg-[#e9564d] text-white" : cur ? "border-2 border-[#e63b31] bg-white text-[#c72f26]" : "border-2 border-[#d6d9e0] bg-white text-[#8a8f9c]")}>{done ? <Check className="size-5" /> : n}</span>
+                <span className={clsx("relative z-10 grid size-11 place-items-center rounded-full text-[17px] font-semibold", done ? "bg-[#e9564d] text-white" : cur ? "border-2 border-[#c8232e] bg-white text-[#c8232e]" : "border-2 border-[#d6d9e0] bg-white text-[#8a8f9c]")}>{done ? <Check className="size-5" /> : n}</span>
                 <span className={clsx("text-[17px]", cur && "font-semibold")}>{s}</span>
               </li>
             );
@@ -338,7 +338,7 @@ function PayDrawer({ run, empId, onClose }: { run: PayrollRun; empId: string; on
       {run.status !== "approved" && <p className="rounded-xl bg-[#fff6e5] px-4 py-3 text-[14.5px] text-[#8a5a00]">Approve the payroll first.</p>}
       <Field label="Employee"><Select value={who} onChange={(e) => { setWho(e.target.value); const x = run.lines.find((y) => y.emp === e.target.value)!; setAmount(lineNet(x) - x.paid); }}>{(unpaid.some((x) => x.emp === who) ? unpaid : [l!, ...unpaid]).map((x) => <option key={x.emp} value={x.emp}>{emp(st, x.emp)?.name} · due {money(lineNet(x) - x.paid)}</option>)}</Select></Field>
       <Field label={`Amount (BDT) · due ${money(due)}`}><Input type="number" min={1} max={due} value={amount || ""} onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))} /></Field>
-      {amount > due && <p className="text-[14px] text-[#c33029]">More than the amount due.</p>}
+      {amount > due && <p className="text-[14px] text-[#c8232e]">More than the amount due.</p>}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Method"><Select value={method} onChange={(e) => setMethod(e.target.value as Payment["method"])}><option>Cash</option><option>Bank</option><option>bKash</option></Select></Field>
         <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>

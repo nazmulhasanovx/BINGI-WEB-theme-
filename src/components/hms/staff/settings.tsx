@@ -60,14 +60,14 @@ export function SettingsPage() {
       <Card>
         <h2 className="text-[24px] font-semibold">Reports &amp; Settings</h2>
         <div className="mt-3 inline-flex flex-wrap gap-1 rounded-xl bg-[#f2f3f6] p-1">
-          {(["reports", "settings"] as const).map((v) => <button key={v} onClick={() => setView(v)} className={clsx("rounded-lg px-6 py-2 text-[16px] capitalize", view === v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "")}>{v}</button>)}
+          {(["reports", "settings"] as const).map((v) => <button key={v} onClick={() => setView(v)} className={clsx("rounded-lg px-6 py-2 text-[16px] capitalize", view === v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "")}>{v}</button>)}
         </div>
         <div className="mt-4 border-t border-[#eceef2] pt-4">
           {view === "reports" ? <Reports /> : (
             <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
               <nav className="space-y-1 lg:border-r lg:border-[#eceef2] lg:pr-5" aria-label="Settings sections">
                 {nav.map((n) => (
-                  <button key={n.v} onClick={() => setSec(n.v)} className={clsx("flex w-full items-center gap-4 rounded-xl px-4 py-3 text-[16.5px]", sec === n.v ? "bg-[#fde8e7] font-medium text-[#c72f26]" : "hover:bg-[#f6f7f9]")}><n.icon className="size-5" /> {n.label}</button>
+                  <button key={n.v} onClick={() => setSec(n.v)} className={clsx("flex w-full items-center gap-4 rounded-xl px-4 py-3 text-[16.5px]", sec === n.v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f6f7f9]")}><n.icon className="size-5" /> {n.label}</button>
                 ))}
               </nav>
               <div className="min-w-0">
@@ -111,8 +111,8 @@ function AttendanceSec({ d, set, eff, saved }: SP & { eff: string; saved: Settin
       </div>
       <div className="mt-5 space-y-3" role="radiogroup" aria-label="Attendance method">
         {MODES.map((m) => (
-          <button key={m.v} role="radio" aria-checked={d.attendance === m.v} onClick={() => set({ ...d, attendance: m.v })} className={clsx("flex w-full items-center gap-6 rounded-xl border-2 px-6 py-4 text-left", d.attendance === m.v ? "border-[#ef6f68] bg-[#fdf0ef]" : "border-[#eceef2] hover:bg-[#fafafb]")}>
-            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full border-2", d.attendance === m.v ? "border-[#e63b31]" : "border-[#8a8f9c]")}>{d.attendance === m.v && <span className="size-3 rounded-full bg-[#e63b31]" />}</span>
+          <button key={m.v} role="radio" aria-checked={d.attendance === m.v} onClick={() => set({ ...d, attendance: m.v })} className={clsx("flex w-full items-center gap-6 rounded-xl border-2 px-6 py-4 text-left", d.attendance === m.v ? "border-[#ef6f68] bg-[#fdecec]" : "border-[#eceef2] hover:bg-[#fafafb]")}>
+            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full border-2", d.attendance === m.v ? "border-[#c8232e]" : "border-[#8a8f9c]")}>{d.attendance === m.v && <span className="size-3 rounded-full bg-[#c8232e]" />}</span>
             <span><span className="block text-[17px] font-semibold">{m.title}</span><span className="text-[15.5px] text-[#3b404c]">{m.text}</span></span>
           </button>
         ))}

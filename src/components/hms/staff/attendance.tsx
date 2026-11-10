@@ -30,7 +30,7 @@ export function AttendancePage() {
   if (mode === "none")
     return (
       <StaffFrame tab="attendance" hideSearch>
-        <Card><Empty icon={<CalendarOff className="size-6" />} title="Attendance is off for this property" text="Staff, schedule, leave and fixed payroll still work. Turn attendance on any time." action={<Link href="/hms/staff/settings?s=attendance" className="font-medium text-[#c72f26]">Choose attendance method</Link>} /></Card>
+        <Card><Empty icon={<CalendarOff className="size-6" />} title="Attendance is off for this property" text="Staff, schedule, leave and fixed payroll still work. Turn attendance on any time." action={<Link href="/hms/staff/settings?s=attendance" className="font-medium text-[#c8232e]">Choose attendance method</Link>} /></Card>
       </StaffFrame>
     );
   return <ManualAttendance />;
@@ -62,10 +62,10 @@ function ManualAttendance() {
       filters={<><FilterSelect label="Department" value={fd} onChange={(v) => { setFd(v); setPage(1); }} options={st.settings.departments.map((d) => ({ v: d, label: d }))} /><FilterSelect label="Attendance" value={fs} onChange={(v) => { setFs(v); setPage(1); }} options={[{ v: "present", label: "Present" }, { v: "half", label: "Half day" }, { v: "absent", label: "Absent" }, { v: "leave", label: "On leave" }, { v: "off", label: "Day off" }, { v: "none", label: "Not marked" }]} /></>} action={<Btn kind="primary" onClick={() => setMark(sel.length ? sel : [])}><Plus className="size-[18px]" /> Mark attendance</Btn>}
       right={<><DateBox value={date} onChange={(v) => { setDate(v); setSel([]); }} label={fmt(date)} /><span className="rounded-lg bg-[#eef0f4] px-3 py-1.5 text-[15px] text-[#4b5160]">Asia/Dhaka</span></>}>
       <Card>
-        <span className="inline-block rounded-xl bg-[#fde8e7] px-4 py-2 text-[15.5px] font-medium text-[#c72f26]">Manual attendance</span>
+        <span className="inline-block rounded-xl bg-[#fdecec] px-4 py-2 text-[15.5px] font-medium text-[#c8232e]">Manual attendance</span>
         <div className="mt-3 flex flex-wrap gap-1 border-b border-[#eceef2]">
           {([["daily", "Daily"], ["corr", `Corrections${corr.some((r) => r.status === "pending") ? ` (${corr.filter((r) => r.status === "pending").length})` : ""}`], ["hist", "History"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap -mb-px rounded-t-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "border-b-2 border-[#e63b31] bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap -mb-px rounded-t-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "border-b-2 border-[#c8232e] bg-[#fdecec] text-[#c8232e]" : "hover:bg-[#f6f7f9]")}>{l}</button>
           ))}
         </div>
 
@@ -75,13 +75,13 @@ function ManualAttendance() {
               <Kpi icon={<User className="size-5 text-[#5b6170]" />} text={`${active.length} active`} />
               <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#e3f5e8]"><Check className="size-4 text-[#1f8f4a]" /></span>} text={`${c.present} present`} />
               <Kpi icon={<CalendarDays className="size-5 text-[#5b6170]" />} text={`${c.leave} leave`} />
-              <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#fde8e7]"><X className="size-4 text-[#c33029]" /></span>} text={`${c.absent} absent`} />
+              <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#fdecec]"><X className="size-4 text-[#c8232e]" /></span>} text={`${c.absent} absent`} />
               <Kpi icon={<span className="grid size-6 place-items-center rounded-full bg-[#eef0f4]"><Minus className="size-4" /></span>} text={`${c.nm} not marked`} />
             </div>
             <div className="mt-4 flex items-center gap-4">
-              <label className="flex items-center gap-3 text-[15px] text-[#4b5160]"><input type="checkbox" checked={allSel} onChange={() => setSel(allSel ? sel.filter((s) => !rows.some((r) => r.id === s)) : [...new Set([...sel, ...rows.map((r) => r.id)])])} className="size-5 accent-[#e63b31]" aria-label="Select page" /> {sel.length} selected</label>
+              <label className="flex items-center gap-3 text-[15px] text-[#4b5160]"><input type="checkbox" checked={allSel} onChange={() => setSel(allSel ? sel.filter((s) => !rows.some((r) => r.id === s)) : [...new Set([...sel, ...rows.map((r) => r.id)])])} className="size-5 accent-[#c8232e]" aria-label="Select page" /> {sel.length} selected</label>
               <Btn disabled={!sel.length} onClick={() => setMark(sel)} className={clsx(!sel.length && "border-transparent bg-[#eef0f4] text-[#8a8f9c]")}>Mark selected</Btn>
-              {c.nm > 0 && <button onClick={() => setMark(active.filter((e) => !day[e.id]).map((e) => e.id))} className="ml-auto text-[14.5px] font-medium text-[#c72f26]">Mark all not marked ({c.nm})</button>}
+              {c.nm > 0 && <button onClick={() => setMark(active.filter((e) => !day[e.id]).map((e) => e.id))} className="ml-auto text-[14.5px] font-medium text-[#c8232e]">Mark all not marked ({c.nm})</button>}
             </div>
             <div className="mt-3">
               <Table cols={[{ label: <span className="sr-only">Select</span>, w: "44px" }, { label: "Employee", w: "22%" }, { label: "Attendance" }, { label: "Check-in" }, { label: "Check-out" }, { label: "Remark" }, { label: "Actions", w: "270px", align: "right" }]}>
@@ -89,7 +89,7 @@ function ManualAttendance() {
                   const r = day[e.id];
                   return (
                     <tr key={e.id}>
-                      <td><input type="checkbox" checked={sel.includes(e.id)} onChange={() => setSel(sel.includes(e.id) ? sel.filter((s) => s !== e.id) : [...sel, e.id])} className="size-5 accent-[#e63b31]" aria-label={`Select ${e.name}`} /></td>
+                      <td><input type="checkbox" checked={sel.includes(e.id)} onChange={() => setSel(sel.includes(e.id) ? sel.filter((s) => s !== e.id) : [...sel, e.id])} className="size-5 accent-[#c8232e]" aria-label={`Select ${e.name}`} /></td>
                       <td><Person name={e.name} id={e.id} /></td>
                       <td><AttChip r={r} /></td>
                       <td>{r?.in ?? "—"}</td>
@@ -97,7 +97,7 @@ function ManualAttendance() {
                       <td><Remark r={r} /></td>
                       <td>
                         <div className="flex items-center justify-end gap-2">
-                          {!r && <button onClick={() => setMark([e.id])} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f3a9a3] px-4 text-[14.5px] font-medium text-[#c72f26] hover:bg-[#fdf0ef]"><Plus className="size-4" /> Mark</button>}
+                          {!r && <button onClick={() => setMark([e.id])} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f3a9a3] px-4 text-[14.5px] font-medium text-[#c8232e] hover:bg-[#fdecec]"><Plus className="size-4" /> Mark</button>}
                           <Link href={`/hms/staff/people/${e.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-4" /> Open</Link>
                           <Menu label={`Attendance actions for ${e.name}`} items={[
                             { label: r ? "Edit attendance" : "Mark attendance", onClick: () => setMark([e.id]) },
@@ -165,7 +165,7 @@ function AttHistory({ onDay }: { onDay: (d: string) => void }) {
               <td>{fmt(d)}{d === TODAY && <span className="ml-2 text-[13px] text-[#6b7180]">Today</span>}</td>
               <td className="text-right">{n("present") + n("half")}</td><td className="text-right">{n("leave")}</td><td className="text-right">{n("absent")}</td>
               <td className={clsx("text-right", nm && "font-medium text-[#b45309]")}>{nm}</td>
-              <td><button onClick={() => onDay(d)} className="font-medium text-[#c72f26]">Open day</button></td>
+              <td><button onClick={() => onDay(d)} className="font-medium text-[#c8232e]">Open day</button></td>
             </tr>
           );
         })}
@@ -216,7 +216,7 @@ function MarkDrawer({ ids, date, onClose }: { ids: string[]; date: string; onClo
           <Field label="Check-out" hint="Leave empty if still on duty"><Input type="time" value={tout} onChange={(e) => setOut(e.target.value)} /></Field>
         </div>
       )}
-      {bad && <p className="text-[14px] text-[#c33029]">Check-out must be after check-in.</p>}
+      {bad && <p className="text-[14px] text-[#c8232e]">Check-out must be after check-in.</p>}
       <Field label="Remark"><Input value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="e.g. Late 12m" /></Field>
       {onLeave.length > 0 && <p className="rounded-xl bg-[#fff6e5] px-3 py-2.5 text-[14px] text-[#8a5a00]">{onLeave.map((id) => emp(st, id)?.name).join(", ")} {onLeave.length > 1 ? "are" : "is"} on approved leave. Saving will replace the leave mark (the leave balance is not returned).</p>}
     </Drawer>
@@ -261,7 +261,7 @@ function MachineAttendance() {
         <Card className="min-w-0">
           <div className="flex flex-wrap gap-1">
             {([["daily", "Daily"], ["corr", "Corrections"], ["dev", "Devices & logs"]] as const).map(([v, l]) => (
-              <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+              <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2.5 text-[15.5px] font-medium", tab === v ? "bg-[#fdecec] text-[#c8232e]" : "hover:bg-[#f6f7f9]")}>{l}</button>
             ))}
           </div>
           <div className="mt-3 rounded-xl border border-[#e6e8ee] p-4">
@@ -269,7 +269,7 @@ function MachineAttendance() {
               <Fingerprint className="size-7" />
               <span className="text-[18px] font-semibold">{z.device}</span>
               <Chip tone="blue">Machine</Chip>
-              <Chip tone={z.online ? "green" : "red"}><span className={clsx("size-2.5 rounded-full", z.online ? "bg-[#1f8f4a]" : "bg-[#c33029]")} /> {z.online ? "Online" : "Offline"}</Chip>
+              <Chip tone={z.online ? "green" : "red"}><span className={clsx("size-2.5 rounded-full", z.online ? "bg-[#1f8f4a]" : "bg-[#c8232e]")} /> {z.online ? "Online" : "Offline"}</Chip>
               <span className="text-[15px] text-[#4b5160]">Last successful sync: {fmtStamp(z.lastSync)}</span>
             </div>
             {!z.online && <p className="mt-3 flex items-center gap-3 rounded-xl bg-[#fff1d6] px-4 py-3 text-[16px] text-[#8a5a00]"><AlertTriangle className="size-5" /> Device offline — attendance may be incomplete.</p>}
@@ -282,7 +282,7 @@ function MachineAttendance() {
                 {rows.length === 0 ? <Empty icon={<Check className="size-6" />} title="Nothing to review" text="All punches for this day are complete." /> : (
                   <Table cols={[{ label: "Employee", w: "24%" }, { label: "Department" }, { label: "In" }, { label: "Out" }, { label: "Status" }, { label: "Source" }, { label: "Actions", w: "150px" }]}>
                     {rows.map((r) => (
-                      <tr key={r.e.id} onClick={() => setOpen(r.e.id)} className={clsx("cursor-pointer", open === r.e.id && "[&>td]:bg-[#fdf0ef]")}>
+                      <tr key={r.e.id} onClick={() => setOpen(r.e.id)} className={clsx("cursor-pointer", open === r.e.id && "[&>td]:bg-[#fdecec]")}>
                         <td><Person name={r.e.name} id={r.e.id} /></td>
                         <td>{r.e.dept}</td>
                         <td>{r.in ?? "—"}</td>

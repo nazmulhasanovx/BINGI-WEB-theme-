@@ -6,7 +6,7 @@ import { SHIFT_TIME, addDays, dayName, emp, fmt, fmtShort, useHrm, weekDays, typ
 import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Person, Select } from "./ui";
 
-const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#eef0f4]", Leave: "bg-[#fde8e7] text-[#c33029]" };
+const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#eef0f4]", Leave: "bg-[#fdecec] text-[#c8232e]" };
 const EDITABLE: Shift[] = ["Morning", "Evening", "Night", "Off"];
 
 export function SchedulePage() {
@@ -51,14 +51,14 @@ export function SchedulePage() {
       }>
       <Card>
         <div className="flex flex-wrap items-center gap-4">
-          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#c72f26]")}>{status === "published" ? "Published" : "Draft"}</span>
+          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#c8232e]")}>{status === "published" ? "Published" : "Draft"}</span>
           <span className="hidden h-8 w-px bg-[#e6e8ee] sm:block" />
           <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-[#f2f3f6] px-4 py-2.5 text-[15.5px] text-[#4b5160]">
             <Info className="size-5 shrink-0" />
             {gaps.length ? (
               <span className="flex-1">Coverage gap: {gaps.length} shift{gaps.length > 1 ? "s are" : " is"} unassigned on {gaps.map((g) => `${dayName(g.date)} ${fmt(g.date)} (${g.shift})`).join(", ")}.</span>
             ) : <span className="flex-1">No coverage gaps this week.</span>}
-            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#c72f26]"><UserPlus className="size-4" /> Assign</button>}
+            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#c8232e]"><UserPlus className="size-4" /> Assign</button>}
           </div>
           <Btn onClick={() => setTpl(true)}><Layers className="size-[18px]" /> Shift templates</Btn>
         </div>
@@ -124,11 +124,11 @@ function EditShift({ emp: id, date, onClose }: { emp: string; date: string; onCl
     <Drawer title="Edit shift" onClose={onClose}>
       <Person name={e.name} id={e.id} sub={`${dayName(date)} ${fmt(date)}`} />
       {cur === "Leave" ? (
-        <p className="rounded-xl bg-[#fde8e7] px-4 py-3 text-[15px] text-[#9b2c24]">On approved leave this day. Change it from the Leave page.</p>
+        <p className="rounded-xl bg-[#fdecec] px-4 py-3 text-[15px] text-[#9b2c24]">On approved leave this day. Change it from the Leave page.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {EDITABLE.map((s) => (
-            <button key={s} onClick={() => pick(s)} className={clsx("rounded-xl border-2 px-4 py-3 text-left", cur === s ? "border-[#e63b31]" : "border-transparent", TONE[s])}>
+            <button key={s} onClick={() => pick(s)} className={clsx("rounded-xl border-2 px-4 py-3 text-left", cur === s ? "border-[#c8232e]" : "border-transparent", TONE[s])}>
               <span className="block text-[16px] font-medium">{s}</span>
               <span className="text-[14px] text-[#4b5160]">{SHIFT_TIME[s] || "Day off"}</span>
             </button>
