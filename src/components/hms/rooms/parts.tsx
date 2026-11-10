@@ -4,7 +4,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
-  BedDouble, Box, Users, Building2, Castle, Check, House, Mountain, Plus, Search, Sailboat, Sparkles, Tent, TreePine, Trees, Warehouse, Home,
+  BedDouble, Box, Building2, Castle, Check, House, Mountain, Plus, Search, Sailboat, Sparkles, Tent, TreePine, Trees, Warehouse, Home,
 } from "lucide-react";
 import { useProperty } from "../property";
 import { useRooms } from "@/lib/rooms/store";
@@ -12,17 +12,19 @@ import { AMENITIES, CORE, type CoreType, type PresetSlug } from "@/lib/rooms/cat
 import { Btn, Menu, Toast } from "../staff/ui";
 
 export const PRESET_ICON: Record<PresetSlug, typeof BedDouble> = {
-  room: BedDouble, cottage: House, villa: Castle, apartment: Building2, dormitory: Users,
+  room: BedDouble, cottage: House, villa: Castle, apartment: Building2,
   bungalow: Warehouse, cabin: Trees, chalet: Mountain, treehouse: TreePine, glamping: Tent, houseboat: Sailboat, capsule: Box, "holiday-home": Home, custom: Sparkles,
 };
-export const CORE_ICON: Record<CoreType, typeof BedDouble> = { ROOM: BedDouble, COTTAGE: House, VILLA: Castle, APARTMENT: Building2, DORMITORY: Users, OTHER: Sparkles };
+export const CORE_ICON: Record<CoreType, typeof BedDouble> = { ROOM: BedDouble, COTTAGE: House, VILLA: Castle, APARTMENT: Building2, OTHER: Sparkles };
 
-/** Staff wording from the spec: "Rooms" when the property only has rooms, otherwise "Accommodations". */
+/** Backend label policy: "Rooms" only when Room is the sole enabled AND represented type; "Accommodations" when any
+ *  non-Room type is enabled or any non-Room category/unit exists (even after its type is disabled), and before setup. */
 export function useTitle() {
   const h = useProperty();
   const { st } = useRooms(h);
   const en = st.config.enabled;
-  return en.length === 1 && en[0] === "ROOM" ? "Rooms" : "Accommodations";
+  const nonRoomData = st.categories.some((c) => c.core !== "ROOM") || st.units.some((u) => u.core !== "ROOM");
+  return st.config.configured && en.length === 1 && en[0] === "ROOM" && !nonRoomData ? "Rooms" : "Accommodations";
 }
 
 let toastText: string | null = null;
@@ -203,3 +205,10 @@ export function AmenityPicker({ value, onChange }: { value: string[]; onChange: 
 
 export const coreLabel = (c: CoreType) => CORE[c].label;
 export const money = (n: number) => new Intl.NumberFormat("en-IN").format(Math.round(n));
+
+const noop = () => () => {};
+/** Editors copy saved data into local state once; render them only after the browser store is read, so they never start from the server seed (that would trip the stale-version check or drop changes). */
+export function Hydrated({ children }: { children: ReactNode }) {
+  const ready = useSyncExternalStore(noop, () => true, () => false);
+  return ready ? <>{children}</> : <div className="p-8 text-[14px] text-[#5b6170]" role="status">Loading…</div>;
+}

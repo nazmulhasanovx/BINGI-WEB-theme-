@@ -23,7 +23,7 @@ export function UnitsPage() {
   const [open, setOpen] = useState<string | null>(null);
   const cat = (id: string) => st.categories.find((c) => c.id === id);
   const list = st.units.filter((u) =>
-    (core === "all" || u.core === core) && (status === "all" || u.status === status) &&
+    (core === "all" || u.core === core) && (status === "all" ? u.status !== "archived" : u.status === status) &&
     (!q || `${u.code} ${cat(u.category)?.name ?? ""} ${presetOf(u.preset).label}`.toLowerCase().includes(q.toLowerCase())));
   const groups = useMemo(() => {
     const g = new Map<string, Unit[]>();
@@ -31,7 +31,8 @@ export function UnitsPage() {
     return [...g.entries()].sort((a, b) => nodePath(st.config, a[0]).localeCompare(nodePath(st.config, b[0]), undefined, { numeric: true }));
   }, [list, st.config]);
   const drafts = st.units.filter((u) => u.status === "draft");
-  const beds = st.units.reduce((n, u) => n + (u.beds?.length ?? 0), 0);
+  const used = st.units.filter((u) => u.status !== "archived").length;
+  const archived = st.units.filter((u) => u.status === "archived").length;
   const cores = st.config.enabled.filter((t) => st.units.some((u) => u.core === t));
   const publishAll = () => {
     const ok = drafts.filter((u) => !publishIssues(st, u).length);
@@ -44,11 +45,18 @@ export function UnitsPage() {
   return (
     <RoomsFrame tab="units">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Units" value={st.units.length} />
-        <Stat label="Published" value={st.units.length - drafts.length} />
+        <Stat label="Units in use" value={used} sub="Count toward your package limit (shared by all types)" />
+        <Stat label="Published" value={st.units.filter((u) => u.status === "published").length} />
         <Stat label="Drafts (not bookable)" value={drafts.length} tone={drafts.length ? "amber" : undefined} />
-        {beds > 0 ? <Stat label="Dorm beds" value={beds} /> : <Stat label="Categories" value={st.categories.length} />}
+        <Stat label="Archived" value={archived} sub="Codes kept, no capacity used" />
       </div>
+      <p className="mt-2 text-[12.5px] text-[#5b6170]">Package unit limit and per-unit charge come from Billing (not connected in this prototype). Setup drafts and categories without units don&apos;t count.</p>
+      {(st.excluded?.length ?? 0) > 0 && (
+        <section role="status" className="mt-4 rounded-2xl border border-[#d8dcf0] bg-[#f5f6fd] p-4 text-[14px]">
+          <p className="font-semibold">Not in this release</p>
+          <ul className="mt-1 space-y-0.5 text-[#4b5160]">{st.excluded!.map((x) => <li key={x.name}><b>{x.name}</b> — {x.reason}</li>)}</ul>
+        </section>
+      )}
 
       {st.drafts.length > 0 && (
         <section className="mt-4 rounded-2xl border border-[#f1dfb8] bg-[#fffaf0] p-4">
@@ -74,7 +82,7 @@ export function UnitsPage() {
           <option value="all">All types</option>{cores.map((t) => <option key={t} value={t}>{CORE[t].plural}</option>)}
         </select>
         <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="h-11 rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px]">
-          <option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option>
+          <option value="all">Published & drafts</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option>
         </select>
         {drafts.length > 0 && <Btn className="sm:ml-auto" onClick={publishAll}>Publish all drafts ({drafts.length})</Btn>}
       </div>
@@ -84,7 +92,7 @@ export function UnitsPage() {
         {st.units.length > 0 && !list.length && <p className="rounded-2xl border border-[#eceef2] bg-white p-6 text-center text-[15px] text-[#5b6170]">No unit matches these filters.</p>}
         {groups.map(([nid, us]) => (
           <section key={nid} className="rounded-2xl border border-[#eceef2] bg-white p-4">
-            <h2 className="mb-3 flex items-center gap-2 text-[15.5px] font-semibold">{st.config.nodes.find((n) => n.id === nid)?.kind === "floor" ? <Building2 className="size-[18px] text-[#5b6170]" /> : <MapPin className="size-[18px] text-[#5b6170]" />}{nodePath(st.config, nid)}<span className="font-normal text-[#5b6170]">· {us.length}</span></h2>
+            <h2 className="mb-3 flex items-center gap-2 text-[15.5px] font-semibold">{["FLOOR", "LEVEL"].includes(st.config.nodes.find((n) => n.id === nid)?.kind ?? "") ? <Building2 className="size-[18px] text-[#5b6170]" /> : <MapPin className="size-[18px] text-[#5b6170]" />}{nodePath(st.config, nid)}<span className="font-normal text-[#5b6170]">· {us.length}</span></h2>
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
               {us.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })).map((x) => {
                 const Icon = PRESET_ICON[x.preset];
@@ -94,8 +102,7 @@ export function UnitsPage() {
                       <span className="flex items-center justify-between gap-2"><span className="font-mono text-[17px] font-semibold">{x.code}</span><Icon className="size-4 text-[#6b7180]" aria-label={presetOf(x.preset).label} /></span>
                       <span className="mt-0.5 block truncate text-[13.5px] text-[#4b5160]">{cat(x.category)?.name}</span>
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <Chip tone={x.status === "published" ? "green" : "amber"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "published" ? "Published" : "Draft"}</Chip>
-                        {x.beds && <span className="text-[12.5px] text-[#5b6170]">{x.beds.length} beds</span>}
+                        <Chip tone={x.status === "published" ? "green" : x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "published" ? "Published" : x.status === "draft" ? "Draft" : "Archived"}</Chip>
                       </span>
                     </button>
                   </li>
@@ -110,11 +117,12 @@ export function UnitsPage() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: "amber" }) {
+function Stat({ label, value, tone, sub }: { label: string; value: number; tone?: "amber"; sub?: string }) {
   return (
     <div className="rounded-2xl border border-[#eceef2] bg-white px-4 py-3">
       <p className="text-[13.5px] text-[#5b6170]">{label}</p>
       <p className={clsx("mt-0.5 text-[24px] font-bold", tone === "amber" && "text-[#9c5f0e]")}>{value}</p>
+      {sub && <p className="text-[12px] leading-snug text-[#6b7180]">{sub}</p>}
     </div>
   );
 }
@@ -138,33 +146,25 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
   };
   return (
     <Drawer title={`${presetOf(u.preset).label} ${u.code}`} onClose={onClose} footer={<>
-      {u.status === "draft" && <Btn kind="danger" onClick={() => { update((s) => { s.units = s.units.filter((x) => x.id !== u.id); }, `Draft ${u.code} deleted`); toast(`${u.code} deleted`); onClose(); }}>Delete draft</Btn>}
+      {u.status === "draft" && <Btn kind="danger" onClick={() => { if (!window.confirm(`Archive draft ${u.code}? It frees one unit of capacity; the code ${u.code} stays reserved.`)) return; update((s) => { s.units.find((x) => x.id === u.id)!.status = "archived"; }, `Draft ${u.code} archived (code kept)`); toast(`${u.code} archived`); onClose(); }}>Archive draft</Btn>}
       <span className="mr-auto" />
       {dirty && <Btn disabled={badRate || badUrl} onClick={save}>Save changes</Btn>}
-      {u.status === "draft"
+      {u.status === "archived" ? null : u.status === "draft"
         ? <Btn kind="primary" disabled={issues.length > 0 || dirty} onClick={() => { update((s) => { s.units.find((x) => x.id === u.id)!.status = "published"; }, `${u.code} published`); toast(`${u.code} published`); }}>Publish</Btn>
         : <Btn onClick={() => { update((s) => { s.units.find((x) => x.id === u.id)!.status = "draft"; }, `${u.code} moved to draft`); toast(`${u.code} is now a draft (not bookable)`); }}>Move to draft</Btn>}
     </>}>
       <div className="space-y-5">
         <dl className="grid grid-cols-[120px_1fr] gap-y-2 text-[14.5px]">
-          <dt className="text-[#5b6170]">Status</dt><dd><Chip tone={u.status === "published" ? "green" : "amber"}>{u.status === "published" ? "Published — can be sold" : "Draft — not bookable"}</Chip></dd>
+          <dt className="text-[#5b6170]">Status</dt><dd><Chip tone={u.status === "published" ? "green" : u.status === "draft" ? "amber" : "gray"}>{u.status === "published" ? "Published — can be sold" : u.status === "draft" ? "Draft — not bookable" : "Archived — history only"}</Chip></dd>
           <dt className="text-[#5b6170]">Unit code</dt><dd className="font-mono font-semibold">{u.code}</dd>
           <dt className="text-[#5b6170]">Door number</dt><dd className="font-mono">{u.local}</dd>
           <dt className="text-[#5b6170]">Location</dt><dd>{nodePath(st.config, u.node)}</dd>
           <dt className="text-[#5b6170]">Category</dt><dd>{cat?.name ?? "—"}</dd>
           <dt className="text-[#5b6170]">Sold as</dt><dd>{CORE[u.core].label} · {CORE[u.core].inventory.toLowerCase()}</dd>
-          <dt className="text-[#5b6170]">Price</dt><dd className="font-semibold">৳{money(unitRate(u, cat))} / {u.core === "DORMITORY" ? "bed / night" : "night"}{u.rate !== undefined && <span className="ml-1.5 text-[12.5px] font-normal text-[#5b6170]">(own price)</span>}</dd>
+          <dt className="text-[#5b6170]">Price</dt><dd className="font-semibold">৳{money(unitRate(u, cat))} / night{u.rate !== undefined && <span className="ml-1.5 text-[12.5px] font-normal text-[#5b6170]">(own price)</span>}</dd>
         </dl>
         {u.status === "draft" && issues.length > 0 && (
           <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#fdf0ef] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
-        )}
-        {u.beds && (
-          <div>
-            <p className="mb-2 text-[14px] font-semibold">Beds ({u.beds.length}) — each is booked on its own</p>
-            <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {u.beds.map((b) => <li key={b.code} className="rounded-lg border border-[#e6e8ee] px-2 py-1.5 text-center"><span className="block font-mono text-[13px] font-semibold">{b.code.split("-").pop()}</span><span className="block text-[11.5px] text-[#5b6170]">{b.label}</span></li>)}
-            </ul>
-          </div>
         )}
         <div className="space-y-3 border-t border-[#eceef2] pt-4">
           <p className="text-[14px] font-semibold">Only for this unit</p>
@@ -182,14 +182,15 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
 // ---------------- Categories ----------------
 export function CategoriesPage() {
   const h = useProperty();
-  const { st } = useRooms(h);
+  const { st, update } = useRooms(h);
+  const toast = useToast();
   const [edit, setEdit] = useState<string | null>(null);
   const c = edit ? st.categories.find((x) => x.id === edit) : undefined;
   return (
     <RoomsFrame tab="categories">
       {!st.categories.length && <div className="rounded-2xl border border-[#eceef2] bg-white"><Empty icon={<Building2 className="size-6" />} title="No categories yet" text="Categories are created while adding units." /></div>}
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {st.categories.map((x) => {
+        {st.categories.filter((x) => !x.archived).map((x) => {
           const us = st.units.filter((u) => u.category === x.id);
           const Icon = PRESET_ICON[x.preset];
           return (
@@ -206,9 +207,16 @@ export function CategoriesPage() {
                 <div><dt className="text-[#5b6170]">Units</dt><dd className="font-semibold">{us.length}{us.some((u) => u.status === "draft") && <span className="font-normal text-[#9c5f0e]"> ({us.filter((u) => u.status === "draft").length} draft)</span>}</dd></div>
                 <div><dt className="text-[#5b6170]">Guests</dt><dd className="font-semibold">{x.maxAdults}{x.maxChildren ? `+${x.maxChildren}` : ""}</dd></div>
               </dl>
-              <p className="mt-2 line-clamp-2 text-[13px] text-[#5b6170]">{x.core === "DORMITORY" ? `${x.bedsPerRoom} beds per room · ` : ""}{x.amenities.join(" · ")}</p>
+              <p className="mt-2 line-clamp-2 text-[13px] text-[#5b6170]">{x.amenities.join(" · ")}</p>
+              {x.approval !== "approved" && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13px] text-[#7a4a0b]">
+                  <span className="flex-1">Waiting for BinGi approval — units stay drafts until approved.</span>
+                  <button onClick={() => { update((s) => { s.categories.find((y) => y.id === x.id)!.approval = "approved"; }, `Category ${x.name} approved (demo of Superadmin approval)`); toast(`${x.name} approved (demo)`); }} className="font-semibold underline">Approve (BinGi demo)</button>
+                </div>
+              )}
               <div className="mt-auto flex gap-2 pt-3">
                 <Btn className="h-9 flex-1" onClick={() => setEdit(x.id)}>Edit</Btn>
+                {us.length > 0 && us.every((u) => u.status === "archived") && <Btn kind="danger" className="h-9" onClick={() => { update((s) => { s.categories.find((y) => y.id === x.id)!.archived = true; }, `Category ${x.name} archived`); toast(`${x.name} archived`); }}>Archive</Btn>}
                 <Link href={`/hms/rooms/new?category=${x.id}`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#dfe2e8] bg-white text-[14px] font-medium hover:bg-[#f6f7f9]"><Plus className="size-4" /> Add units</Link>
               </div>
             </li>
@@ -244,12 +252,11 @@ function CategoryDrawer({ st, c, onClose }: { st: RoomsState; c: Category; onClo
         {errs.length > 0 && <div role="alert" className="text-[14px] text-[#c33029]">{errs.map((e) => <p key={e}>{e}</p>)}</div>}
         <Field label="Name"><Input value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={`Base price (৳ / ${d.core === "DORMITORY" ? "bed / night" : "night"})`}><Input type="number" min={0} value={d.baseRate || ""} onChange={(e) => setD({ ...d, baseRate: Number(e.target.value) })} /></Field>
+          <Field label="Base price (৳ / night)"><Input type="number" min={0} value={d.baseRate || ""} onChange={(e) => setD({ ...d, baseRate: Number(e.target.value) })} /></Field>
           <Field label="Beds"><Input value={d.bed} onChange={(e) => setD({ ...d, bed: e.target.value })} /></Field>
           <Field label="Max adults"><Input type="number" min={1} value={d.maxAdults} onChange={(e) => setD({ ...d, maxAdults: Number(e.target.value) })} /></Field>
           <Field label="Max children"><Input type="number" min={0} value={d.maxChildren} onChange={(e) => setD({ ...d, maxChildren: Number(e.target.value) })} /></Field>
         </div>
-        {d.core === "DORMITORY" && <p className="text-[13.5px] text-[#5b6170]">Beds per room ({d.bedsPerRoom}) can&apos;t be changed here — rooms with bookings would lose beds. Add a new category instead.</p>}
         <Field label="YouTube video (optional)"><Input value={d.video ?? ""} onChange={(e) => setD({ ...d, video: e.target.value || undefined })} placeholder="https://youtu.be/…" /></Field>
         <Field label="Amenities" group><AmenityPicker value={d.amenities} onChange={(a) => setD({ ...d, amenities: a })} /></Field>
       </div>

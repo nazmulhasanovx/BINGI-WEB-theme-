@@ -7,18 +7,24 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { ChevronDown, Lock, Plus, Search, X } from "lucide-react";
 import { useProperty } from "../property";
 import {
-  bedCodes, codeFor, leaves, node, nodePath, nowStamp, sameCode, uid, useRooms,
+  BATCH_MAX, codeFor, leaves, node, nodePath, nowStamp, sameCode, uid, useRooms,
   type Category, type Config, type LocNode, type Pick, type RoomsState, type Unit,
 } from "@/lib/rooms/store";
 import { CODE_RE, CORE, PRESETS, coreChoices, preset as presetOf, youtubeId, type CoreType, type Preset, type PresetSlug } from "@/lib/rooms/catalog";
 import { Btn, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, ChoiceCard, PRESET_ICON, Section, Steps, money, useToast } from "./parts";
+import { Hydrated } from "./parts";
 
 const STEPS = ["Type", "Category", "Location & units", "Details & pricing", "Review"];
 type Over = { rate?: number; video?: Unit["video"]; videoUrl?: string; note?: string };
 
 const noop = () => () => {};
 export function AddPage() {
+  const h = useProperty();
+  return <Hydrated><AddPageInner key={h.slug} /></Hydrated>;
+}
+
+function AddPageInner() {
   const ready = useSyncExternalStore(noop, () => true, () => false);
   const h = useProperty();
   const { st } = useRooms(h);
@@ -38,8 +44,7 @@ export function AddPage() {
 }
 
 const blankCat = (core: CoreType, p: PresetSlug): Category => ({
-  id: uid("cat"), name: "", core, preset: p, bed: core === "DORMITORY" ? "1 Bunk bed" : "1 King bed", maxAdults: core === "DORMITORY" ? 1 : 2, maxChildren: 0,
-  bedsPerRoom: core === "DORMITORY" ? 8 : undefined, bedStyle: core === "DORMITORY" ? "bunk" : undefined, occupancy: core === "DORMITORY" ? "mixed" : undefined, bathroom: core === "DORMITORY" ? "shared" : undefined,
+  id: uid("cat"), name: "", core, preset: p, bed: p === "capsule" ? "1 Pod bed" : "1 King bed", maxAdults: p === "capsule" ? 1 : 2, maxChildren: 0, approval: "pending",
   amenities: ["Free Wi-Fi"], baseRate: 0, created: nowStamp(),
 });
 
@@ -91,8 +96,6 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
         if (!cat.bed.trim()) e.push("Bed setup is required.");
         if (!(cat.maxAdults >= 1)) e.push("Max adults must be at least 1.");
         if (!(cat.baseRate > 0)) e.push("Base price is required.");
-        if (cat.core === "DORMITORY" && !(cat.bedsPerRoom && cat.bedsPerRoom >= 1 && cat.bedsPerRoom <= 40)) e.push("Beds per room must be 1–40.");
-        if (cat.core === "DORMITORY" && cat.bedStyle === "bunk" && (cat.bedsPerRoom ?? 0) % 2) e.push("Bunk beds come in pairs — use an even number of beds.");
         if (cat.video && !youtubeId(cat.video)) e.push("Video link must be a YouTube link (or leave it empty).");
       }
     }
@@ -147,10 +150,10 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
         <Btn disabled={step === 0} onClick={() => go(step - 1)}>Back</Btn>
         {step === 2 && <span className="text-[14px] font-medium text-[#4b5160] lg:hidden" aria-live="polite">{picks.length} selected</span>}
         <span className="ml-auto" />
-        {step > 0 && <Btn kind="ghost" className="px-3 sm:px-4" aria-label="Save setup draft" onClick={saveSetupDraft}>Save<span className="hidden sm:inline">&nbsp;setup draft</span></Btn>}
+        {step > 0 && <Btn kind="ghost" className="px-3 sm:px-4" aria-label="Save setup draft" onClick={saveSetupDraft}><span>Save<span className="hidden sm:inline"> setup draft</span></span></Btn>}
         {step < 4 ? <Btn kind="primary" onClick={() => go(step + 1)}>Continue</Btn> : <>
           <Btn disabled={busy} onClick={() => finish("draft")}>Create as draft</Btn>
-          <Btn kind="primary" disabled={busy} onClick={() => finish("published")}>Publish {picks.length} {picks.length === 1 ? "unit" : "units"}</Btn>
+          <Btn kind="primary" disabled={busy || active?.approval !== "approved"} title={active?.approval !== "approved" ? "Category waits for BinGi approval" : undefined} onClick={() => finish("published")}>Publish {picks.length} {picks.length === 1 ? "unit" : "units"}</Btn>
         </>}
       </>}>
       {(err.length > 0 || conflicts.length > 0) && (
@@ -234,7 +237,7 @@ function TypeStep({ p, core, choose, setCore, st, enable }: { p?: PresetSlug; co
 function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: RoomsState; core: CoreType; p: PresetSlug; catId?: string; setCatId: (v: string | "new") => void; cat?: Category; setCat: (c: Category) => void }) {
   const list = st.categories.filter((c) => c.core === core).sort((a, b) => Number(b.preset === p) - Number(a.preset === p));
   const count = (id: string) => st.units.filter((u) => u.category === id).length;
-  const dorm = core === "DORMITORY";
+  const pod = p === "capsule";
   const c = cat ?? blankCat(core, p);
   const set = (patch: Partial<Category>) => setCat({ ...c, ...patch });
   const vid = c.video ? youtubeId(c.video) : null;
@@ -246,13 +249,13 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
             <button key={x.id} role="radio" aria-checked={catId === x.id} onClick={() => setCatId(x.id)}
               className={clsx("rounded-2xl border p-3.5 text-left", catId === x.id ? "border-[#e2574e] bg-[#fdf3f2] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
               <span className="block text-[15px] font-semibold">{x.name}</span>
-              <span className="mt-0.5 block text-[13.5px] text-[#5b6170]">৳{money(x.baseRate)} / {x.core === "DORMITORY" ? "bed / night" : "night"} · {count(x.id)} units · {presetOf(x.preset).label}</span>
+              <span className="mt-0.5 block text-[13.5px] text-[#5b6170]">৳{money(x.baseRate)} / night · {count(x.id)} units · {presetOf(x.preset).label}{x.approval !== "approved" ? " · waiting for approval" : ""}</span>
             </button>
           ))}
           <button role="radio" aria-checked={catId === "new"} onClick={() => { setCatId("new"); if (!cat) setCat(blankCat(core, p)); }}
             className={clsx("flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-left", catId === "new" ? "border-[#e2574e] bg-[#fdf3f2]" : "border-[#cfd3db] bg-white hover:bg-[#fafafb]")}>
             <span className="grid size-9 place-items-center rounded-xl bg-[#f2f3f6]"><Plus className="size-5" /></span>
-            <span><span className="block text-[15px] font-semibold">Create new category</span><span className="block text-[13.5px] text-[#5b6170]">e.g. {dorm ? "AC Dormitory" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : "Deluxe Twin"}</span></span>
+            <span><span className="block text-[15px] font-semibold">Create new category</span><span className="block text-[13.5px] text-[#5b6170]">e.g. {pod ? "Single Pod" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : "Deluxe Twin"}</span></span>
           </button>
         </div>
       </Section>
@@ -260,8 +263,8 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
       {catId === "new" && (
         <Section title="New category" desc="Saved together with the units in the last step.">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Category name"><Input value={c.name} onChange={(e) => set({ name: e.target.value })} placeholder={`e.g. ${dorm ? "AC Dormitory" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : core === "OTHER" ? "Canopy Treehouse" : "Deluxe Twin"}`} /></Field>
-            <Field label={dorm ? "Bed type in room" : "Beds"}><Input value={c.bed} onChange={(e) => set({ bed: e.target.value })} placeholder="1 King bed" /></Field>
+            <Field label="Category name"><Input value={c.name} onChange={(e) => set({ name: e.target.value })} placeholder={`e.g. ${pod ? "Single Pod" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : core === "OTHER" ? "Canopy Treehouse" : "Deluxe Twin"}`} /></Field>
+            <Field label="Beds"><Input value={c.bed} onChange={(e) => set({ bed: e.target.value })} placeholder="1 King bed" /></Field>
             <div className="grid grid-cols-3 gap-3">
               <Field label="Max adults"><Input type="number" min={1} value={c.maxAdults} onChange={(e) => set({ maxAdults: Number(e.target.value) })} /></Field>
               <Field label="Max children"><Input type="number" min={0} value={c.maxChildren} onChange={(e) => set({ maxChildren: Number(e.target.value) })} /></Field>
@@ -270,18 +273,8 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
             {(core === "VILLA" || core === "APARTMENT" || core === "COTTAGE") && (
               <Field label="Bedrooms"><Input type="number" min={0} value={c.bedrooms ?? ""} onChange={(e) => set({ bedrooms: e.target.value ? Number(e.target.value) : undefined })} placeholder="0 = studio" /></Field>
             )}
-            {dorm && <>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Beds per room"><Input type="number" min={1} max={40} value={c.bedsPerRoom ?? ""} onChange={(e) => set({ bedsPerRoom: Number(e.target.value) })} /></Field>
-                <Field label="Bed style"><Select value={c.bedStyle} onChange={(e) => set({ bedStyle: e.target.value as Category["bedStyle"] })}><option value="single">Single beds</option><option value="bunk">Bunk beds</option><option value="mixed">Mixed</option></Select></Field>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Who can stay"><Select value={c.occupancy} onChange={(e) => set({ occupancy: e.target.value as Category["occupancy"] })}><option value="mixed">Mixed</option><option value="female">Women only</option><option value="male">Men only</option></Select></Field>
-                <Field label="Bathroom"><Select value={c.bathroom} onChange={(e) => set({ bathroom: e.target.value as Category["bathroom"] })}><option value="shared">Shared</option><option value="attached">Attached</option></Select></Field>
-              </div>
-            </>}
-            <Field label={dorm ? "Base price per bed / night (৳)" : "Base price per night (৳)"} hint="Starting price. Date-wise rates and offers come from Rate Plans.">
-              <Input type="number" min={0} value={c.baseRate || ""} onChange={(e) => set({ baseRate: Number(e.target.value) })} placeholder={dorm ? "e.g. 900" : "e.g. 6500"} />
+            <Field label="Base price per night (৳)" hint="Starting price. Date-wise rates and offers come from Rate Plans.">
+              <Input type="number" min={0} value={c.baseRate || ""} onChange={(e) => set({ baseRate: Number(e.target.value) })} placeholder={pod ? "e.g. 1200" : "e.g. 6500"} />
             </Field>
             <Field label="YouTube video (optional)" hint={c.video ? (vid ? "Valid YouTube video" : "Only YouTube links (youtube.com/watch, youtu.be, shorts)") : "Never required. Plays only when a guest taps it."}>
               <Input value={c.video ?? ""} onChange={(e) => set({ video: e.target.value || undefined })} placeholder="https://youtu.be/…" aria-invalid={!!c.video && !vid} />
@@ -323,6 +316,8 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
     return out;
   };
   const add = (more: Pick[], skipped: string[] = []) => {
+    const room = Math.max(0, BATCH_MAX - picks.length);
+    if (more.length > room) { skipped = [...skipped, `${more.length - room} more (max ${BATCH_MAX} in one batch)`]; more = more.slice(0, room); }
     setPicks([...picks, ...more]);
     setNote(skipped.length ? `Not added (already exist or already selected): ${skipped.join(", ")}` : more.length ? `Added ${more.length}: ${more.map((m) => m.code).slice(0, 8).join(", ")}${more.length > 8 ? "…" : ""}` : "Nothing new to add.");
   };
@@ -399,12 +394,6 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
                   </li>
                 ))}
               </ul>
-              {core === "DORMITORY" && (
-                <div className="mt-3 rounded-xl bg-[#f6f7f9] p-3 text-[13.5px]">
-                  <p className="font-medium">{picks.length} rooms × {cat.bedsPerRoom} beds = {picks.length * (cat.bedsPerRoom ?? 0)} bookable beds</p>
-                  <p className="mt-1 font-mono text-[12.5px] text-[#5b6170]">{bedCodes(picks[0].code, Math.min(3, cat.bedsPerRoom ?? 0), cat.bedStyle).map((b) => b.code).join(", ")}{(cat.bedsPerRoom ?? 0) > 3 && " …"}</p>
-                </div>
-              )}
               <p className="mt-3 text-[12.5px] text-[#5b6170]">Not reserved until you create them. Another staff member can still use these numbers before you finish.</p>
             </>
           )}
@@ -459,7 +448,7 @@ function LeafGrid({ c, core, p, leaf, startOpen, q, taken, picked, toggle }: { c
 /** Focused "add a location" panel when the type has nowhere to go yet. Selections stay in the wizard. */
 function AddLocation({ c, core, addNode }: { c: Config; core: CoreType; addNode: (n: LocNode) => void }) {
   const floor = CORE[core].strategy === "floor";
-  const buildings = c.nodes.filter((n) => n.kind === "building" && n.active);
+  const buildings = c.nodes.filter((n) => ["BUILDING", "TOWER", "WING"].includes(n.kind) && n.active);
   const [b, setB] = useState(buildings[0]?.id ?? "new");
   const [bName, setBName] = useState("Main Building");
   const [level, setLevel] = useState("1");
@@ -470,10 +459,10 @@ function AddLocation({ c, core, addNode }: { c: Config; core: CoreType; addNode:
         e.preventDefault();
         if (floor) {
           let bid = b;
-          if (b === "new") { bid = uid("loc"); addNode({ id: bid, kind: "building", name: bName.trim() || "Main Building", code: "", active: true }); }
+          if (b === "new") { bid = uid("loc"); addNode({ id: bid, kind: "BUILDING", name: bName.trim() || "Main Building", code: "", active: true }); }
           const l = Math.max(0, Number(level));
-          addNode({ id: uid("loc"), kind: "floor", name: l === 0 ? "Ground floor" : `Floor ${l}`, code: String(l), parent: bid, level: l, active: true });
-        } else addNode({ id: uid("loc"), kind: "zone", name: zone.trim() || "Zone", code: "", active: true });
+          addNode({ id: uid("loc"), kind: "FLOOR", name: l === 0 ? "Ground floor" : `Floor ${l}`, code: String(l), parent: bid, level: l, active: true });
+        } else addNode({ id: uid("loc"), kind: "ZONE", name: zone.trim() || "Zone", code: "", active: true });
       }}>
         {floor ? <>
           <div className="w-[220px]"><Field label="Building"><Select value={b} onChange={(e) => setB(e.target.value)}>{buildings.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}<option value="new">+ New building</option></Select></Field></div>
@@ -489,14 +478,14 @@ function AddLocation({ c, core, addNode }: { c: Config; core: CoreType; addNode:
 // ---------------- 4. Details & pricing ----------------
 function DetailsStep({ st, cat, picks, over, setOver, editCat }: { st: RoomsState; cat: Category; picks: Pick[]; over: Record<string, Over>; setOver: (o: Record<string, Over>) => void; editCat: () => void }) {
   const set = (code: string, patch: Over) => setOver({ ...over, [code]: { ...over[code], ...patch } });
-  const unit = cat.core === "DORMITORY" ? "bed / night" : "night";
+  const unit = "night";
   return (
     <div className="space-y-4">
       <Section title={`From the category: ${cat.name}`} desc="Every unit gets these. You don&apos;t enter them again." right={<Btn onClick={editCat}>Edit category</Btn>}>
         <dl className="grid gap-x-6 gap-y-2 text-[14.5px] sm:grid-cols-2 lg:grid-cols-4">
           <div><dt className="text-[#5b6170]">Base price</dt><dd className="font-semibold">৳{money(cat.baseRate)} / {unit}</dd></div>
           <div><dt className="text-[#5b6170]">Guests</dt><dd className="font-medium">{cat.maxAdults} {cat.maxAdults === 1 ? "adult" : "adults"}{cat.maxChildren ? ` + ${cat.maxChildren} children` : ""}</dd></div>
-          <div><dt className="text-[#5b6170]">Beds</dt><dd className="font-medium">{cat.core === "DORMITORY" ? `${cat.bedsPerRoom} per room · ${cat.bedStyle}` : cat.bed}</dd></div>
+          <div><dt className="text-[#5b6170]">Beds</dt><dd className="font-medium">{cat.bed}{cat.bedrooms !== undefined ? ` · ${cat.bedrooms === 0 ? "studio" : `${cat.bedrooms} bedroom${cat.bedrooms > 1 ? "s" : ""}`}` : ""}</dd></div>
           <div><dt className="text-[#5b6170]">Video</dt><dd className="font-medium">{cat.video ? "YouTube video" : "None (optional)"}</dd></div>
           <div className="sm:col-span-2 lg:col-span-4"><dt className="text-[#5b6170]">Amenities</dt><dd className="font-medium">{cat.amenities.join(", ") || "—"}</dd></div>
         </dl>
@@ -531,7 +520,6 @@ function DetailsStep({ st, cat, picks, over, setOver, editCat }: { st: RoomsStat
 function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; cat: Category; core: CoreType; p: PresetSlug; picks: Pick[]; over: Record<string, Over>; isNew: boolean }) {
   const byNode = picks.reduce<Record<string, Pick[]>>((a, k) => ((a[k.node] ??= []).push(k), a), {});
   const rates = picks.map((k) => over[k.code]?.rate ?? cat.baseRate);
-  const beds = core === "DORMITORY" ? picks.length * (cat.bedsPerRoom ?? 0) : 0;
   const live = picks.filter((k) => st.units.some((u) => sameCode(u.code, k.code)));
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
@@ -539,8 +527,8 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
         <dl className="grid grid-cols-[130px_1fr] gap-y-2.5 text-[14.5px]">
           <dt className="text-[#5b6170]">Type</dt><dd className="font-medium">{presetOf(p).label}{presetOf(p).group !== "standard" && ` · works as ${CORE[core].label}`}</dd>
           <dt className="text-[#5b6170]">Category</dt><dd className="font-medium">{cat.name}{isNew && <span className="ml-2 rounded-md bg-[#e6efff] px-1.5 py-0.5 text-[12px] text-[#2457c5]">New</span>}</dd>
-          <dt className="text-[#5b6170]">Units</dt><dd className="font-medium">{picks.length}{beds > 0 && ` rooms · ${beds} bookable beds`}</dd>
-          <dt className="text-[#5b6170]">Price</dt><dd className="font-medium">৳{money(Math.min(...rates))}{Math.max(...rates) !== Math.min(...rates) && ` – ৳${money(Math.max(...rates))}`} / {core === "DORMITORY" ? "bed / night" : "night"}</dd>
+          <dt className="text-[#5b6170]">Units</dt><dd className="font-medium">{picks.length}</dd>
+          <dt className="text-[#5b6170]">Price</dt><dd className="font-medium">৳{money(Math.min(...rates))}{Math.max(...rates) !== Math.min(...rates) && ` – ৳${money(Math.max(...rates))}`} / night</dd>
           <dt className="text-[#5b6170]">Video</dt><dd className="font-medium">{cat.video ? "Category video" : "None — that's fine"}</dd>
         </dl>
         <div className="mt-5 space-y-3">
@@ -558,7 +546,9 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
             <Check ok={!live.length} text={live.length ? `Already exist now: ${live.map((k) => k.code).join(", ")}` : "Every code is unique in this property"} />
             <Check ok={cat.baseRate > 0} text="Price is set" />
             <Check ok text="Locations exist" />
-            <Check ok text={core === "DORMITORY" ? "Each bed gets its own code" : "Each unit is sold as a whole"} />
+            <Check ok text="Each unit is sold as a whole" />
+            <Check ok={cat.approval === "approved"} text={cat.approval === "approved" ? "Category approved by BinGi" : "Category waits for BinGi approval — you can create drafts now, publish after approval"} />
+            <Check ok={picks.length <= BATCH_MAX} text={`${picks.length} of max ${BATCH_MAX} units in one batch`} />
             <li className="text-[13px] text-[#5b6170]">Subscription unit limit is checked by the HMS backend when it is connected.</li>
           </ul>
         </Section>
