@@ -12,6 +12,8 @@ import {
   UserPlus, Users, Wallet,
 } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
+import { SetupModeBanner } from "./setup-mode";
+import { useSubmittedHotels } from "@/lib/onboarding/store";
 import { WM_PAGES } from "./website/pages";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
@@ -95,6 +97,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
+        <SetupModeBanner />
         <main className="min-h-0 flex-1">{children}</main>
       </div>
     </div>
@@ -106,9 +109,11 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
   return (
     <aside className={clsx("hidden shrink-0 flex-col border-r border-hms-line bg-white transition-[width] duration-300 ease-out md:flex", collapsed ? "w-[68px]" : "w-[224px]")}>
       <div className="flex h-14 shrink-0 items-center px-4">
-        <span className="relative size-9 overflow-hidden rounded-md">
-          <Image src={hotel.heroPhoto} alt={hotel.name} fill sizes="36px" className="object-cover" />
-        </span>
+        {hotel.propertyCode !== undefined || hotel.slug.startsWith("onb-")
+          ? <span className="grid size-9 place-items-center rounded-md bg-hms-coral-soft text-[13px] font-semibold text-hms-red" aria-label={hotel.name}>{hotel.name.slice(0, 2).toUpperCase()}</span>
+          : <span className="relative size-9 overflow-hidden rounded-md">
+              <Image src={hotel.heroPhoto} alt={hotel.name} fill sizes="36px" className="object-cover" />
+            </span>}
       </div>
       <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="HMS">
         {GROUPS.map((g) => (
@@ -168,6 +173,7 @@ function NavItem({ item, active, collapsed }: { item: Item; active: boolean; col
 /** Live HMS shows the workspace card here; in this prototype it also switches the demo property. */
 function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
   const hotel = useProperty();
+  const mine = useSubmittedHotels();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -187,6 +193,14 @@ function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
       </button>
       {open && (
         <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[min(70vh,560px)] w-[260px] overflow-y-auto rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">
+          {mine.length > 0 && <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-hms-muted">Your properties</p>}
+          {mine.length > 0 && mine.map((p) => (
+            <button key={p.slug} onClick={() => { setProperty(p.slug); setOpen(false); }} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-hms-hover">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-hms-coral-soft text-[12px] font-semibold text-hms-red">{p.name.slice(0, 2).toUpperCase()}</span>
+              <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{p.name}</span>
+              {p.slug === hotel.slug && <Check className="size-4 text-hms-red" />}
+            </button>
+          ))}
           <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-hms-muted">Demo properties</p>
           {PROPERTIES.map((p) => (
             <button

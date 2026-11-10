@@ -140,6 +140,8 @@ export interface Hotel {
   theme: { master: MasterTheme; id: ThemeId; heading: "sans" | "serif" };
   /** From onboarding step 1 — drives the category preset (labels, sections). */
   propertyType: PropertyType;
+  /** Backend property-type code slug from onboarding (motel, lodge…). Overrides propertyType for accommodation suggestions. */
+  propertyCode?: string;
   /** Guest houses / homes: the person guests deal with (HMS → Property → Host). Initials only, no photo needed. */
   host?: { name: string; role: string; since: string; note: string; languages: string[] };
   /** Property-specific questions (HMS → Website → Pages & Content). Themes show only what is filled in. */

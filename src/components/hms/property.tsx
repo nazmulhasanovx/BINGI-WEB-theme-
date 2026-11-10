@@ -14,6 +14,7 @@ import { haorBilash } from "@/data/haor-bilash";
 import { canopyNest } from "@/data/canopy-nest";
 import { skypod } from "@/data/skypod";
 import { altura } from "@/data/altura";
+import { useSubmittedHotels } from "@/lib/onboarding/store";
 
 export const PROPERTIES: Hotel[] = [azureBay, seaPearl, teaValley, mistwood, shalbon, lakeview, coralCove, waveBunk, haorBilash, canopyNest, skypod, altura];
 const KEY = "hms-property";
@@ -36,7 +37,12 @@ export function setProperty(slug: string) {
 const Ctx = createContext<Hotel>(PROPERTIES[0]);
 export function PropertyProvider({ children }: { children: ReactNode }) {
   const slug = useSyncExternalStore(sub, read, () => "");
-  const hotel = PROPERTIES.find((p) => p.slug === slug) ?? PROPERTIES[0];
+  const mine = useSubmittedHotels();
+  const hotel = mine.find((p) => p.slug === slug) ?? PROPERTIES.find((p) => p.slug === slug) ?? PROPERTIES[0];
   return <Ctx.Provider value={hotel}>{children}</Ctx.Provider>;
 }
 export const useProperty = () => useContext(Ctx);
+/** Onboarding runs the Rooms screens on the property being set up. */
+export function PropertyOverride({ hotel, children }: { hotel: Hotel; children: ReactNode }) {
+  return <Ctx.Provider value={hotel}>{children}</Ctx.Provider>;
+}

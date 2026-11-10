@@ -6,10 +6,10 @@ import { useState } from "react";
 import { Building2, MapPin, Plus, X } from "lucide-react";
 import { useProperty } from "../property";
 import { codeFor, emptyConfig, isBuilding, isFloor, isZone, leaves, nowStamp, prefixOf, uid, useRooms, type Config, type LocNode } from "@/lib/rooms/store";
-import { BUILDING_KINDS, CORE, CORE_TYPES, PRESETS, TEMPLATES, ZONE_KINDS, kindLabel, propertyTypeOf, type CoreType, type LocKindCode } from "@/lib/rooms/catalog";
+import { BUILDING_KINDS, CORE, CORE_TYPES, PRESETS, TEMPLATES, ZONE_KINDS, kindLabel, propertyTypeFor, type CoreType, type LocKindCode } from "@/lib/rooms/catalog";
 import { Btn, Field, Input, Select } from "../staff/ui";
 import { CORE_ICON, ChoiceCard, Section, Steps, useToast } from "./parts";
-import { Hydrated } from "./parts";
+import { Hydrated, useRoomsBase } from "./parts";
 
 const STEPS = ["Types", "Locations", "Numbering", "Review"];
 const floorName = (l: number) => (l === 0 ? "Ground floor" : `Floor ${l}`);
@@ -20,11 +20,12 @@ export function SetupPage() {
 }
 
 function SetupPageInner() {
+  const base = useRoomsBase();
   const h = useProperty();
   const { st, update } = useRooms(h);
   const router = useRouter();
   const toast = useToast();
-  const pt = propertyTypeOf(h.propertyType);
+  const pt = propertyTypeFor(h);
   const [c, setC] = useState<Config>(() => (st.config.configured ? structuredClone(st.config) : { ...emptyConfig(), enabled: pt.suggest.slice(0, 1) }));
   const [step, setStep] = useState(0);
   const [maxDone, setMaxDone] = useState(st.config.configured ? 3 : 0);
@@ -66,7 +67,7 @@ function SetupPageInner() {
     const first = !st.config.configured;
     update((s) => { s.config = { ...c, configured: true, version: s.config.version + 1, savedAt: nowStamp() }; }, first ? "Accommodation setup saved" : `Accommodation setup updated (version ${st.config.version + 1})`);
     toast(first ? "Setup saved — now add your units" : "Setup updated");
-    router.push(first ? "/hms/rooms/new" : "/hms/rooms/configuration");
+    router.push(first ? `${base}/new` : base === "/hms/rooms" ? `${base}/configuration` : base);
   };
   const set = (fn: (c: Config) => void) => setC((old) => { const n = structuredClone(old); fn(n); return n; });
   const err = tried ? errors(step) : [];

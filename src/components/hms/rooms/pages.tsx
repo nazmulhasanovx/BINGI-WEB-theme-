@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { Building2, MapPin, Plus, Search } from "lucide-react";
 import { useProperty } from "../property";
 import { leaves, nodePath, publishIssues, unitRate, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
-import { CORE, TEMPLATES, preset as presetOf, propertyTypeOf, youtubeId, type CoreType } from "@/lib/rooms/catalog";
+import { CORE, TEMPLATES, preset as presetOf, propertyTypeFor, youtubeId, type CoreType } from "@/lib/rooms/catalog";
 import { Btn, Chip, Drawer, Empty, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
 
@@ -275,7 +275,7 @@ export function ConfigurationPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Section title="Setup" desc={`Version ${c.version} · saved ${fmtStamp(c.savedAt)}`} right={<Link href="/hms/rooms/setup" className="inline-flex h-10 items-center rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]">Edit setup</Link>}>
           <dl className="grid grid-cols-[130px_1fr] gap-y-2 text-[14.5px]">
-            <dt className="text-[#5b6170]">Property type</dt><dd className="font-medium">{propertyTypeOf(h.propertyType).label}</dd>
+            <dt className="text-[#5b6170]">Property type</dt><dd className="font-medium">{propertyTypeFor(h).label}</dd>
             <dt className="text-[#5b6170]">Types on</dt><dd className="font-medium">{c.enabled.map((t) => CORE[t].plural).join(", ")}</dd>
           </dl>
         </Section>

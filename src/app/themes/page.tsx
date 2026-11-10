@@ -15,6 +15,11 @@ export default function Index() {
             /hms/website <span className="font-normal text-muted">— HMS · Website Management (manage any property, any theme)</span>
           </Link>
         </li>
+        <li>
+          <Link className="block rounded-2xl border-2 border-brand bg-surface p-4 font-semibold shadow-card" href="/onboarding">
+            /onboarding <span className="font-normal text-muted">— Owner onboarding (6 parts → HMS setup mode)</span>
+          </Link>
+        </li>
         {[...MASTERS, ...PAID_MASTERS].map((m) => (
           <li key={m.id}>
             <Link className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-3 shadow-card hover:border-brand-ring" href={`/hotel/${m.demo}`}>
