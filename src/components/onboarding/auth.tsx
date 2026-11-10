@@ -7,7 +7,7 @@ import { ArrowRight, Building2, Clock, Plus, ShieldCheck } from "lucide-react";
 import { setProperty } from "../hms/property";
 import { Canvas, Ghost, Header, Primary, field } from "./shell";
 
-import { SECTIONS, STEP_TITLE, newDraft, num, useL, useOnboarding, validPhone } from "@/lib/onboarding/store";
+import { SECTIONS, STEP_TITLE, newDraft, num, stepOf, useL, useOnboarding, validPhone } from "@/lib/onboarding/store";
 
 const INTRO: [string, string][] = [["ধরন, নাম, ঠিকানা", "Type, name, address"], ["রুম, তলা, রুম নম্বর, দাম", "Rooms, floors, numbers, prices"], ["দামের নিয়ম, বাতিলের নিয়ম", "Price rules, cancellation"], ["কোন কোন কাজ, টিম", "Tools and team"], ["গেস্ট পেমেন্ট, ওয়েবসাইট", "Guest payments, website"], ["প্ল্যান, কাগজপত্র, জমা", "Plan, documents, submit"]];
 import { TYPE_META as TYPES } from "./types";
@@ -133,7 +133,7 @@ function MyProperties() {
                 </span>
                 {submitted
                   ? <span className="rounded-full bg-[#fdf6e7] px-3 py-1 text-[13px] font-semibold text-[#7a4a0b]">{d.status === "approved" ? t("অনুমোদিত", "Approved") : d.status === "needs-changes" ? t("ঠিক করতে হবে", "Needs changes") : t("অনুমোদনের অপেক্ষায়", "Waiting for approval")}</span>
-                  : <span className="inline-flex items-center gap-1 text-[13.5px] text-[#5b6170]"><Clock className="size-4" /> {t("পরের ধাপ", "Next")}: {t(...STEP_TITLE[d.step])}</span>}
+                  : <span className="inline-flex items-center gap-1 text-[13.5px] text-[#5b6170]"><Clock className="size-4" /> {t("পরের ধাপ", "Next")}: {t(...STEP_TITLE[stepOf(d.step)])}</span>}
                 <Ghost onClick={() => open(d.id, submitted)} className="h-10">{submitted ? t("স্ট্যাটাস", "Status") : t("চালিয়ে যান", "Continue")}</Ghost>
                 {submitted && <Link href="/hms" onClick={() => { update((s) => { s.current = d.id; }); setProperty(d.slug); }} className="inline-flex h-10 items-center rounded-xl bg-[#1d1f24] px-4 text-[14.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>}
               </li>

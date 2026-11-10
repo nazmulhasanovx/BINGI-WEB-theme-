@@ -57,16 +57,21 @@ export function Canvas({ children }: { children: ReactNode }) {
 }
 
 /** Workspace: sidebar (steps) + main question + bottom bar with a progress line. */
-export function Card({ sidebar, mobileNav, progress, children, footer }: { sidebar: ReactNode; mobileNav?: ReactNode; progress: number; children: ReactNode; footer: ReactNode }) {
+export function Card({ sidebar, mobileNav, progress, children, footer, aside, wide }: { sidebar: ReactNode; mobileNav?: ReactNode; progress: number; children: ReactNode; footer: ReactNode; aside?: ReactNode; wide?: boolean }) {
   return (
     <div className="flex min-h-[calc(100dvh-64px)]">
       <aside className="hidden w-[300px] shrink-0 border-r border-[#e6e8ec] bg-white lg:block"><div className="sticky top-16 max-h-[calc(100dvh-64px)] overflow-y-auto">{sidebar}</div></aside>
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileNav && <div className="border-b border-[#e6e8ec] bg-white lg:hidden">{mobileNav}</div>}
-        <main className="flex-1 px-4 pb-10 pt-6 sm:px-10 sm:pt-10"><div className="mx-auto max-w-[680px]">{children}</div></main>
+        <main className="flex-1 px-4 pb-10 pt-6 sm:px-10 sm:pt-10">
+          <div className={clsx("mx-auto", wide ? "max-w-[1040px]" : aside ? "max-w-[680px] xl:grid xl:max-w-[1040px] xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-12" : "max-w-[680px]")}>
+            <div className="min-w-0">{children}</div>
+            {aside && <aside className="hidden xl:block"><div className="sticky top-[104px]">{aside}</div></aside>}
+          </div>
+        </main>
         <div className="sticky bottom-0 z-20 bg-white">
           <div className="h-1 bg-[#eceef2]" aria-hidden><div className="h-full bg-[#1d1f24] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
-          <div className="mx-auto max-w-[760px] px-4 py-3 sm:px-10">{footer}</div>
+          <div className={clsx("mx-auto px-4 py-3 sm:px-10", wide || aside ? "max-w-[760px] xl:max-w-[1120px]" : "max-w-[760px]")}>{footer}</div>
         </div>
       </div>
     </div>

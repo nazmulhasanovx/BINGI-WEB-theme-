@@ -43,7 +43,7 @@ export type Draft = {
 export const SECTIONS = [
   { id: "s1", label: "Your property", bn: "আপনার property", steps: ["1.1", "1.2", "1.3", "1.4"] },
   { id: "s2", label: "Rooms", bn: "রুম", steps: ["2.1", "2.2", "2.3"] },
-  { id: "s3", label: "Booking", bn: "বুকিং", steps: ["3.1", "3.2"] },
+  { id: "s3", label: "Booking", bn: "বুকিং", steps: ["3.1"] },
   { id: "s4", label: "Team & tools", bn: "টিম ও টুলস", steps: ["4.1", "4.2"] },
   { id: "s5", label: "Money & website", bn: "টাকা ও ওয়েবসাইট", steps: ["5.1", "5.2"] },
   { id: "s6", label: "Finish", bn: "শেষ ধাপ", steps: ["6.1", "6.2", "6.3"] },
@@ -53,12 +53,16 @@ export const ORDER: StepId[] = SECTIONS.flatMap((s) => [...s.steps]) as StepId[]
 export const STEP_TITLE: Record<StepId, [string, string]> = {
   "1.1": ["কী ধরনের property", "Property type"], "1.2": ["নাম", "Name"], "1.3": ["ঠিকানা", "Address"], "1.4": ["আর কী আছে", "Extras"],
   "2.1": ["কী ভাড়া দেন", "What you rent"], "2.2": ["কোথায় আছে", "Where they are"], "2.3": ["রুমের ধরন", "Room types"],
-  "3.1": ["দামের নিয়ম", "Price rules"], "3.2": ["বাতিল ও সময়", "Policy & times"],
+  "3.1": ["বুকিংয়ের নিয়ম", "Booking rules"],
   "4.1": ["কাজের টুলস", "Tools"], "4.2": ["টিম", "Team"],
   "5.1": ["টাকা নেওয়া", "Payments"], "5.2": ["ওয়েবসাইট", "Website"],
   "6.1": ["প্ল্যান", "Plan"], "6.2": ["কাগজপত্র", "Documents"], "6.3": ["রিভিউ ও জমা", "Review & submit"],
 };
-export const sectionOf = (s: StepId) => SECTIONS.findIndex((x) => (x.steps as readonly string[]).includes(s));
+/** "3.2" was merged into "3.1" (v7.4); old drafts may still point at it. */
+export const stepOf = (s: StepId): StepId => (ORDER.includes(s) ? s : (s as string) === "3.2" ? "3.1" : ORDER[0]);
+export const sectionOf = (s: StepId) => SECTIONS.findIndex((x) => (x.steps as readonly string[]).includes(stepOf(s)));
+/** Rough minutes left: ~40 s per remaining step. */
+export const minutesLeft = (s: StepId) => Math.max(1, Math.ceil((ORDER.length - ORDER.indexOf(stepOf(s)) - 1) * 0.7));
 
 // ---------- Pricing (confirmed by Nazmul 9–10 Nov 2026) ----------
 // Public site pricing ("Pay per room. Nothing hidden", Nazmul 10 Nov 2026).
@@ -221,7 +225,7 @@ export function checks(d: Draft, units: { total: number; published: number; cate
     c("plan", "প্ল্যান বাছাই", "Plan chosen", "required", d.planPicked, "6.1"),
     c("cash", "নগদ টাকা নেওয়া চালু", "Pay at property on", "required", d.pay.cash, "5.1"),
     c("rates", "দামের নিয়ম দেখা", "Price rules checked", "recommended", d.rates.done, "3.1"),
-    c("policy", "বাতিলের নিয়ম", "Cancellation policy", "recommended", !!d.policy.preset, "3.2"),
+    c("policy", "বাতিলের নিয়ম", "Cancellation policy", "recommended", !!d.policy.preset, "3.1"),
     c("verify", "কাগজপত্র", "Documents", "recommended", !!(d.verify.nid && d.verify.trade), "6.2"),
     c("team", "টিম", "Team invited", "optional", d.team.length > 0, "4.2"),
     c("site", "ওয়েবসাইটের লুক", "Website look", "optional", !!d.site.theme, "5.2"),
