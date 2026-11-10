@@ -92,12 +92,16 @@ export function Q({ title, sub, children }: { title: string; sub?: ReactNode; ch
   );
 }
 
-export function Footer({ back, children }: { back?: () => void; children: ReactNode }) {
+export function Footer({ back, children, rail = true }: { back?: () => void; children: ReactNode; rail?: boolean }) {
   return (
     <div className="sticky bottom-0 z-20 border-t border-[#eceef2] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1080px] items-center gap-2 px-4 py-3 sm:px-6">
-        {back ? <button onClick={back} className="h-11 rounded-xl px-4 text-[15px] font-medium text-[#1d1f24] underline-offset-4 hover:underline">Back</button> : <span />}
-        <div className="ml-auto flex items-center gap-2">{children}</div>
+      {/* Same columns as the page, so Back / Continue line up with the question, not the window edges. */}
+      <div className="mx-auto flex max-w-[1080px] gap-10 px-4 py-3 sm:px-6">
+        {rail && <div className="hidden w-[248px] shrink-0 lg:block" />}
+        <div className={clsx("flex min-w-0 flex-1 items-center gap-2", rail && "lg:max-w-[720px]")}>
+          {back ? <button onClick={back} className="-ml-3 h-11 rounded-xl px-3 text-[15px] font-medium text-[#1d1f24] underline-offset-4 hover:underline">Back</button> : <span />}
+          <div className="ml-auto flex items-center gap-2">{children}</div>
+        </div>
       </div>
     </div>
   );
@@ -110,9 +114,9 @@ export function Later({ children = "I'll do this later", ...p }: React.ButtonHTM
   return <button {...p} className="h-11 rounded-xl px-3 text-[14.5px] font-medium text-[#4b5160] hover:bg-[#f2f3f6]">{children}</button>;
 }
 
-export function Tile({ on, onClick, title, sub, icon, badge, disabled, role = "button" }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; disabled?: boolean; role?: "button" | "radio" }) {
+export function Tile({ on, onClick, title, sub, icon, badge, disabled, locked, role = "button" }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; disabled?: boolean; locked?: boolean; role?: "button" | "radio" }) {
   return (
-    <button type="button" role={role === "radio" ? "radio" : undefined} aria-checked={role === "radio" ? on : undefined} aria-pressed={role === "button" ? on : undefined} onClick={onClick} disabled={disabled}
+    <button type="button" role={role === "radio" ? "radio" : undefined} aria-checked={role === "radio" ? on : undefined} aria-pressed={role === "button" ? on : undefined} aria-disabled={locked || undefined} onClick={locked ? undefined : onClick} disabled={disabled}
       className={clsx("relative flex min-h-[64px] items-center gap-3 rounded-2xl border p-3.5 text-left transition-[border,background,box-shadow] duration-200 disabled:opacity-50", on ? "border-[#e2574e] bg-[#fdf3f2] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
       {icon && <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl transition-colors", on ? "bg-[#d8372e] text-white" : "bg-[#f2f3f6] text-[#4b5160]")}>{icon}</span>}
       <span className="min-w-0 flex-1 pr-5">
