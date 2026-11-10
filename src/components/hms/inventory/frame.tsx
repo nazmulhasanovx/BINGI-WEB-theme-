@@ -91,7 +91,7 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
       {o?.k === "move" && <MoveSheet inv={inv} type={o.type} itemId={o.item} onClose={() => setO(null)} onDone={setToast} />}
       {o?.k === "cat" && <CategorySheet inv={inv} cat={o.cat} onClose={() => setO(null)} />}
       {o?.k === "sup" && <SupplierSheet inv={inv} sup={o.sup} onClose={() => setO(null)} />}
-      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
+      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
     </C.Provider>
   );
 }

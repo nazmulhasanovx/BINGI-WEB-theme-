@@ -187,7 +187,7 @@ function TryPreview({ theme, onClose }: { theme: StoreTheme; onClose: () => void
   useEffect(() => { const fit = () => box.current && setScale(Math.min(1, (box.current.clientWidth - 32) / w)); fit(); window.addEventListener("resize", fit); return () => window.removeEventListener("resize", fit); }, [w, phone]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-[#eef0f4]" role="dialog" aria-label={`Preview of ${theme.name}`} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[90] flex flex-col bg-[#e9edf2]" role="dialog" aria-label={`Preview of ${theme.name}`} onClick={(e) => e.stopPropagation()}>
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
         <p className="min-w-0 truncate text-[15px] font-semibold">{theme.name} with {hotel.name}</p>
         <span className="hidden text-[13px] text-hms-muted md:inline">Only you see this · not on your live site</span>

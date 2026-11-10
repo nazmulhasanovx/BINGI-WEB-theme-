@@ -6,7 +6,7 @@ import { SHIFT_TIME, addDays, dayName, emp, fmt, fmtShort, useHrm, weekDays, typ
 import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Person, Select } from "./ui";
 
-const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#eef0f4]", Leave: "bg-[#fdecec] text-[#c8232e]" };
+const TONE: Record<Shift, string> = { Morning: "bg-[#eef3fb]", Evening: "bg-[#fdf1e3]", Night: "bg-[#efeafb]", Off: "bg-[#e9edf2]", Leave: "bg-[#ffe7e4] text-[#b11c29]" };
 const EDITABLE: Shift[] = ["Morning", "Evening", "Night", "Off"];
 
 export function SchedulePage() {
@@ -43,22 +43,22 @@ export function SchedulePage() {
   return (
     <StaffFrame tab="schedule" search={q} onSearch={setQ} activeFilters={fd !== "all" ? 1 : 0} onClearFilters={() => setFd("all")} filters={<FilterSelect label="Department" value={fd} onChange={setFd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} />} action={<Btn kind="primary" onClick={publish} disabled={status === "published" && isCurrent}>{status === "published" && isCurrent ? "Published" : "Publish roster"}</Btn>}
       right={
-        <div className="flex h-11 items-center gap-1 rounded-xl border border-[#dfe2e8] bg-white px-1.5 text-[16px] font-medium">
-          <button onClick={() => setWeek(addDays(week, -7))} aria-label="Previous week" className="grid size-8 place-items-center rounded-lg hover:bg-[#f2f3f6]"><ChevronLeft className="size-4" /></button>
+        <div className="flex h-11 items-center gap-1 rounded-xl border border-[#d3d8df] bg-white px-1.5 text-[16px] font-medium">
+          <button onClick={() => setWeek(addDays(week, -7))} aria-label="Previous week" className="grid size-8 place-items-center rounded-lg hover:bg-[#e9edf2]"><ChevronLeft className="size-4" /></button>
           <span className="min-w-[170px] px-2 text-center">{label}</span>
-          <button onClick={() => setWeek(addDays(week, 7))} aria-label="Next week" className="grid size-8 place-items-center rounded-lg hover:bg-[#f2f3f6]"><ChevronRight className="size-4" /></button>
+          <button onClick={() => setWeek(addDays(week, 7))} aria-label="Next week" className="grid size-8 place-items-center rounded-lg hover:bg-[#e9edf2]"><ChevronRight className="size-4" /></button>
         </div>
       }>
       <Card>
         <div className="flex flex-wrap items-center gap-4">
-          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#c8232e]")}>{status === "published" ? "Published" : "Draft"}</span>
-          <span className="hidden h-8 w-px bg-[#e6e8ee] sm:block" />
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-[#f2f3f6] px-4 py-2.5 text-[15.5px] text-[#4b5160]">
+          <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#b11c29]")}>{status === "published" ? "Published" : "Draft"}</span>
+          <span className="hidden h-8 w-px bg-[#e3e7ec] sm:block" />
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-[#e9edf2] px-4 py-2.5 text-[15.5px] text-[#4d5664]">
             <Info className="size-5 shrink-0" />
             {gaps.length ? (
               <span className="flex-1">Coverage gap: {gaps.length} shift{gaps.length > 1 ? "s are" : " is"} unassigned on {gaps.map((g) => `${dayName(g.date)} ${fmt(g.date)} (${g.shift})`).join(", ")}.</span>
             ) : <span className="flex-1">No coverage gaps this week.</span>}
-            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#c8232e]"><UserPlus className="size-4" /> Assign</button>}
+            {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#b11c29]"><UserPlus className="size-4" /> Assign</button>}
           </div>
           <Btn onClick={() => setTpl(true)}><Layers className="size-[18px]" /> Shift templates</Btn>
         </div>
@@ -66,28 +66,28 @@ export function SchedulePage() {
         {!hasWeek ? (
           <Empty icon={<Copy className="size-6" />} title={`No roster for ${label}`} text="Start from last week's pattern, then adjust shifts." action={<Btn kind="primary" onClick={copyPrev}>Copy previous week</Btn>} />
         ) : (
-          <div className="mt-5 overflow-x-auto rounded-xl border border-[#eceef2]">
+          <div className="mt-5 overflow-x-auto rounded-xl border border-[#e3e7ec]">
             <table className="w-full min-w-[960px] border-collapse text-[15px]">
               <thead>
-                <tr className="bg-[#f6f7f9]">
+                <tr className="bg-[#f4f6f8]">
                   <th className="w-[190px] px-3 py-3 text-left text-[16px] font-semibold">Employee</th>
-                  {days.map((d) => <th key={d} className="border-l border-[#eceef2] px-2 py-2.5 text-center font-normal"><span className="block text-[16px] font-semibold">{dayName(d)}</span><span className="text-[#4b5160]">{fmt(d)}</span></th>)}
+                  {days.map((d) => <th key={d} className="border-l border-[#e3e7ec] px-2 py-2.5 text-center font-normal"><span className="block text-[16px] font-semibold">{dayName(d)}</span><span className="text-[#4d5664]">{fmt(d)}</span></th>)}
                 </tr>
               </thead>
               <tbody>
                 {staff.map((e) => (
-                  <tr key={e.id} className="border-t border-[#eceef2]">
+                  <tr key={e.id} className="border-t border-[#e3e7ec]">
                     <td className="px-3 py-3"><Person name={e.name} id={e.id} /></td>
                     {days.map((d) => {
                       const s = st.roster.cells[e.id]?.[d];
                       return (
-                        <td key={d} className="border-l border-[#eceef2] px-1.5 py-2.5">
+                        <td key={d} className="border-l border-[#e3e7ec] px-1.5 py-2.5">
                           <div className="flex items-center gap-1.5">
-                            <div className={clsx("flex h-[50px] min-w-0 flex-1 flex-col justify-center rounded-xl px-2.5 leading-tight", s ? TONE[s] : "border border-dashed border-[#d6d9e0]")}>
+                            <div className={clsx("flex h-[50px] min-w-0 flex-1 flex-col justify-center rounded-xl px-2.5 leading-tight", s ? TONE[s] : "border border-dashed border-[#d3d8df]")}>
                               <span className="text-[15px]">{s ?? "—"}</span>
-                              {s && SHIFT_TIME[s] && <span className="text-[14.5px] text-[#4b5160]">{SHIFT_TIME[s]}</span>}
+                              {s && SHIFT_TIME[s] && <span className="text-[14.5px] text-[#4d5664]">{SHIFT_TIME[s]}</span>}
                             </div>
-                            <button onClick={() => setEdit({ emp: e.id, date: d })} aria-label={`Edit ${e.name} ${fmtShort(d)}`} className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#dfe2e8] bg-white hover:bg-[#f6f7f9]"><Pencil className="size-3.5" /></button>
+                            <button onClick={() => setEdit({ emp: e.id, date: d })} aria-label={`Edit ${e.name} ${fmtShort(d)}`} className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#d3d8df] bg-white hover:bg-[#f4f6f8]"><Pencil className="size-3.5" /></button>
                           </div>
                         </td>
                       );
@@ -104,10 +104,10 @@ export function SchedulePage() {
       {assign !== null && <AssignOpen i={assign} onClose={() => setAssign(null)} />}
       {tpl && (
         <Drawer title="Shift templates" onClose={() => setTpl(false)} footer={<><Btn onClick={() => setTpl(false)}>Close</Btn><Btn kind="primary" onClick={() => { copyPrev(); setTpl(false); }}>Copy previous week</Btn></>}>
-          <p className="text-[15px] text-[#4b5160]">Default shift times (Asia/Dhaka).</p>
-          <ul className="divide-y divide-[#eceef2] rounded-xl border border-[#eceef2]">
-            {(["Morning", "Evening", "Night"] as Shift[]).map((s) => <li key={s} className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE[s])} /><span className="flex-1 text-[15.5px] font-medium">{s}</span><span className="text-[15px] text-[#4b5160]">{SHIFT_TIME[s]}</span></li>)}
-            <li className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE.Off)} /><span className="flex-1 text-[15.5px] font-medium">Off</span><span className="text-[15px] text-[#4b5160]">Weekly day off</span></li>
+          <p className="text-[15px] text-[#4d5664]">Default shift times (Asia/Dhaka).</p>
+          <ul className="divide-y divide-[#e3e7ec] rounded-xl border border-[#e3e7ec]">
+            {(["Morning", "Evening", "Night"] as Shift[]).map((s) => <li key={s} className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE[s])} /><span className="flex-1 text-[15.5px] font-medium">{s}</span><span className="text-[15px] text-[#4d5664]">{SHIFT_TIME[s]}</span></li>)}
+            <li className="flex items-center gap-3 px-4 py-3"><span className={clsx("size-4 rounded", TONE.Off)} /><span className="flex-1 text-[15.5px] font-medium">Off</span><span className="text-[15px] text-[#4d5664]">Weekly day off</span></li>
           </ul>
         </Drawer>
       )}
@@ -124,13 +124,13 @@ function EditShift({ emp: id, date, onClose }: { emp: string; date: string; onCl
     <Drawer title="Edit shift" onClose={onClose}>
       <Person name={e.name} id={e.id} sub={`${dayName(date)} ${fmt(date)}`} />
       {cur === "Leave" ? (
-        <p className="rounded-xl bg-[#fdecec] px-4 py-3 text-[15px] text-[#9b2c24]">On approved leave this day. Change it from the Leave page.</p>
+        <p className="rounded-xl bg-[#ffe7e4] px-4 py-3 text-[15px] text-[#9b2c24]">On approved leave this day. Change it from the Leave page.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {EDITABLE.map((s) => (
-            <button key={s} onClick={() => pick(s)} className={clsx("rounded-xl border-2 px-4 py-3 text-left", cur === s ? "border-[#c8232e]" : "border-transparent", TONE[s])}>
+            <button key={s} onClick={() => pick(s)} className={clsx("rounded-xl border-2 px-4 py-3 text-left", cur === s ? "border-[#b11c29]" : "border-transparent", TONE[s])}>
               <span className="block text-[16px] font-medium">{s}</span>
-              <span className="text-[14px] text-[#4b5160]">{SHIFT_TIME[s] || "Day off"}</span>
+              <span className="text-[14px] text-[#4d5664]">{SHIFT_TIME[s] || "Day off"}</span>
             </button>
           ))}
         </div>

@@ -36,8 +36,8 @@ export function OnboardingFlow() {
   const ready = useSyncExternalStore(noop, () => true, () => false);
   const { draft } = useOnboarding();
   const { t } = useL();
-  if (!ready) return <Canvas><Header /><p className="p-8 text-[15px] text-[#5b6170]" role="status">{t("লোড হচ্ছে…", "Loading…")}</p></Canvas>;
-  if (!draft) return <Canvas><Header /><div className="p-8"><p className="text-[17px] font-semibold">{t("কোনো property বাছাই করা নেই।", "No property selected.")}</p><Link className="mt-3 inline-block font-semibold text-[#c8232e]" href="/onboarding">{t("আমার property", "My properties")}</Link></div></Canvas>;
+  if (!ready) return <Canvas><Header /><p className="p-8 text-[15px] text-[#4d5664]" role="status">{t("লোড হচ্ছে…", "Loading…")}</p></Canvas>;
+  if (!draft) return <Canvas><Header /><div className="p-8"><p className="text-[17px] font-semibold">{t("কোনো property বাছাই করা নেই।", "No property selected.")}</p><Link className="mt-3 inline-block font-semibold text-[#b11c29]" href="/onboarding">{t("আমার property", "My properties")}</Link></div></Canvas>;
   return <Flow key={draft.id} d={draft} />;
 }
 
@@ -92,7 +92,7 @@ function Flow({ d }: { d: Draft }) {
   return (
     <FormSlot.Provider value={{ slot, setOpen: setFormOpen }}>
     <Canvas>
-      <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e5ea]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
+      <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e7ec]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
       <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={pct}
         wide={d.step === "6.1"}
         aside={d.step === "6.1" || d.step === "6.3" ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
@@ -167,8 +167,8 @@ function PropertyType({ d }: { d: Draft }) {
       <div role="radiogroup" aria-label={t("Property-র ধরন", "Property type")} className="grid gap-3 sm:grid-cols-2">
         {list.map((p) => <Tile key={p.slug} big role="radio" on={d.propertyType === p.slug} onClick={() => pick(p.slug)} icon={<p.icon className="size-6" />} title={t(p.bn, p.en)} sub={t(p.subBn, p.subEn)} />)}
       </div>
-      {!more && <button onClick={() => setMore(true)} className="mt-3 text-[15px] font-semibold text-[#c8232e]">+ {t("আরও ধরন দেখুন", "More types")}</button>}
-      <p className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#f1f2f5] px-3 py-1.5 text-[13.5px] text-[#4b5160]"><MapPin className="size-4" /> {t("বাংলাদেশ · টাকা (৳)", "Bangladesh · Taka (৳)")}</p>
+      {!more && <button onClick={() => setMore(true)} className="mt-3 text-[15px] font-semibold text-[#b11c29]">+ {t("আরও ধরন দেখুন", "More types")}</button>}
+      <p className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#e9edf2] px-3 py-1.5 text-[13.5px] text-[#4d5664]"><MapPin className="size-4" /> {t("বাংলাদেশ · টাকা (৳)", "Bangladesh · Taka (৳)")}</p>
     </Q>
   );
 }
@@ -180,7 +180,7 @@ function Name({ d }: { d: Draft }) {
     <Q title={t("আপনার property-র নাম কী?", "What is your property called?")} why={t("গেস্টরা এই নাম ওয়েবসাইট আর বুকিং কনফার্মেশনে দেখবে।", "Guests see this on your website and confirmations.")}>
       <label htmlFor="pname" className="sr-only">{t("Property-র নাম", "Property name")}</label>
       <input id="pname" value={d.name} onChange={(e) => edit((x) => { x.name = e.target.value; })} placeholder={t("যেমন: সী ব্রিজ হোটেল", "e.g. Sea Breeze Hotel")} className={field + " h-14 text-[19px] font-semibold"} maxLength={60} />
-      <p className="mt-3 text-[14px] text-[#5b6170]">{t("ছবির সাইনবোর্ডে নামটা দেখুন", "See it on the sign in the picture")}</p>
+      <p className="mt-3 text-[14px] text-[#4d5664]">{t("ছবির সাইনবোর্ডে নামটা দেখুন", "See it on the sign in the picture")}</p>
     </Q>
   );
 }
@@ -192,15 +192,15 @@ function Address({ d }: { d: Draft }) {
   return (
     <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests use the map to find you.")}>
       {has ? (
-        <div className="flex items-start gap-3 rounded-xl border border-[#dcdfe5] bg-white p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]"><MapPin className="size-6" /></span>
-          <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#5b6170]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
+        <div className="flex items-start gap-3 rounded-xl border border-[#c6ccd4] bg-white p-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#ffe7e4] text-[#b11c29]"><MapPin className="size-6" /></span>
+          <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#4d5664]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
           <Ghost onClick={() => setOpen(true)} className="h-10">{t("বদলান", "Change")}</Ghost>
         </div>
       ) : (
         <button onClick={() => setOpen(true)} className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] p-5 text-left hover:bg-[#fff4f3]">
-          <span className="grid size-14 place-items-center rounded-xl bg-[#c8232e] text-white"><MapPin className="size-7" /></span>
-          <span><span className="block text-[18px] font-semibold">{t("ম্যাপে পিন দিন", "Drop a pin on the map")}</span><span className="text-[14.5px] text-[#5b6170]">{t("তারপর ঠিকানা নিশ্চিত করুন", "Then confirm the address")}</span></span>
+          <span className="grid size-14 place-items-center rounded-xl bg-[#b11c29] text-white"><MapPin className="size-7" /></span>
+          <span><span className="block text-[18px] font-semibold">{t("ম্যাপে পিন দিন", "Drop a pin on the map")}</span><span className="text-[14.5px] text-[#4d5664]">{t("তারপর ঠিকানা নিশ্চিত করুন", "Then confirm the address")}</span></span>
         </button>
       )}
       {open && <AddressSheet d={d} onClose={() => setOpen(false)} />}
@@ -235,7 +235,7 @@ function BookingRules({ d }: { d: Draft }) {
     <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} why={t("দাম, বাতিল আর চেক-ইনের সময় — গেস্ট বুক করার আগে এগুলো দেখে।", "Prices, cancellation and times — guests see these before they book.")}>
       <h2 className="mb-3 text-[17px] font-semibold">{t("দামের নিয়ম", "Price rules")}</h2>
       <Rates d={d} />
-      <h2 className="mb-3 mt-9 border-t border-[#e6e8ec] pt-7 text-[17px] font-semibold">{t("বাতিল ও সময়", "Cancellation & times")}</h2>
+      <h2 className="mb-3 mt-9 border-t border-[#e3e7ec] pt-7 text-[17px] font-semibold">{t("বাতিল ও সময়", "Cancellation & times")}</h2>
       <Policy d={d} />
     </Q>
   );
@@ -255,17 +255,17 @@ function Rates({ d }: { d: Draft }) {
           {r.minStay > 1 && <div className="mt-3"><Stepper label={t("রাত", "Nights")} value={r.minStay} set={(n) => set((x) => { x.minStay = n; })} min={1} max={14} /></div>}
         </Toggle>
       </div>
-      <button onClick={() => set(() => {})} className="mt-4 text-[14.5px] font-medium text-[#5b6170] underline underline-offset-4">{t("কোনো নিয়ম নেই — সব দিন এক দাম", "No rules — same price every day")}</button>
+      <button onClick={() => set(() => {})} className="mt-4 text-[14.5px] font-medium text-[#4d5664] underline underline-offset-4">{t("কোনো নিয়ম নেই — সব দিন এক দাম", "No rules — same price every day")}</button>
     </div>
   );
 }
 function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: () => void; icon: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#1d1f24] bg-white shadow-[inset_0_0_0_1px_#1d1f24]" : "border-[#dcdfe5] bg-white")}>
+    <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#0f1720] bg-white shadow-[inset_0_0_0_1px_#0f1720]" : "border-[#c6ccd4] bg-white")}>
       <button type="button" role="switch" aria-checked={on} onClick={onClick} className="flex w-full items-center gap-3 text-left">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]">{icon}</span>
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#ffe7e4] text-[#b11c29]">{icon}</span>
         <span className="flex-1 text-[16px] font-semibold">{title}</span>
-        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#c8232e]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
+        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#b11c29]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
       </button>
       {children}
     </div>
@@ -294,12 +294,12 @@ function Policy({ d }: { d: Draft }) {
         <div><p className="text-[15px] font-semibold">{t("চেক-ইন", "Check-in")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_IN.map((v) => <Chip key={v} on={p.checkIn === v} onClick={() => edit((y) => { y.policy.checkIn = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
         <div><p className="text-[15px] font-semibold">{t("চেক-আউট", "Check-out")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_OUT.map((v) => <Chip key={v} on={p.checkOut === v} onClick={() => edit((y) => { y.policy.checkOut = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
       </div>
-      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-lg border border-[#e6e8ec] bg-white px-4 py-3 text-[14.5px]">
+      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-lg border border-[#e3e7ec] bg-white px-4 py-3 text-[14.5px]">
         <span>{t("ভ্যাট", "VAT")} {num(p.vat, lang)}% · {t("সার্ভিস চার্জ", "Service")} {num(p.sc, lang)}%</span>
-        <button onClick={() => setTax((x) => !x)} aria-expanded={tax} className="ml-auto font-semibold text-[#c8232e]">{t("বদলান", "Change")}</button>
+        <button onClick={() => setTax((x) => !x)} aria-expanded={tax} className="ml-auto font-semibold text-[#b11c29]">{t("বদলান", "Change")}</button>
         {tax && <div className="flex w-full flex-wrap gap-4 pt-2">
-          <div><p className="text-[13px] text-[#5b6170]">{t("ভ্যাট", "VAT")}</p><div className="mt-1 flex gap-2">{[0, 5, 7.5, 15].map((v) => <Chip key={v} on={p.vat === v} onClick={() => edit((y) => { y.policy.vat = v; })}>{num(v, lang)}%</Chip>)}</div></div>
-          <div><p className="text-[13px] text-[#5b6170]">{t("সার্ভিস চার্জ", "Service")}</p><div className="mt-1 flex gap-2">{[0, 5, 10].map((v) => <Chip key={v} on={p.sc === v} onClick={() => edit((y) => { y.policy.sc = v; })}>{num(v, lang)}%</Chip>)}</div></div>
+          <div><p className="text-[13px] text-[#4d5664]">{t("ভ্যাট", "VAT")}</p><div className="mt-1 flex gap-2">{[0, 5, 7.5, 15].map((v) => <Chip key={v} on={p.vat === v} onClick={() => edit((y) => { y.policy.vat = v; })}>{num(v, lang)}%</Chip>)}</div></div>
+          <div><p className="text-[13px] text-[#4d5664]">{t("সার্ভিস চার্জ", "Service")}</p><div className="mt-1 flex gap-2">{[0, 5, 10].map((v) => <Chip key={v} on={p.sc === v} onClick={() => edit((y) => { y.policy.sc = v; })}>{num(v, lang)}%</Chip>)}</div></div>
         </div>}
       </div>
     </div>
@@ -329,7 +329,7 @@ function Modules({ d }: { d: Draft }) {
             icon={<m.icon className="size-6" />} title={t(m.bn, m.en)} sub={m.id === "restaurant" && d.extras.some((e) => e === "Restaurant" || e === "Bar") ? t("আপনি বলেছেন রেস্টুরেন্ট/বার আছে, তাই চালু করা আছে", "On because you said you have a restaurant/bar") : undefined} badge={m.locked ? t("সবসময় চালু", "Always on") : pl === "starter" ? undefined : t(`${PLANS[pl].label} থেকে`, `From ${PLANS[pl].label}`)} />;
         })}
       </div>
-      <p className="mt-4 rounded-lg border border-[#e6e8ec] bg-white px-4 py-3 text-[14px] text-[#4b5160]">{t("আপনার বাছাই অনুযায়ী মানানসই প্ল্যান:", "Plan that fits your choices:")} <b className="text-[#1d1f24]">{PLANS[need].label}</b> · {t("শেষ ধাপে বদলাতে পারবেন", "you can change it in the last part")}</p>
+      <p className="mt-4 rounded-lg border border-[#e3e7ec] bg-white px-4 py-3 text-[14px] text-[#4d5664]">{t("আপনার বাছাই অনুযায়ী মানানসই প্ল্যান:", "Plan that fits your choices:")} <b className="text-[#0f1720]">{PLANS[need].label}</b> · {t("শেষ ধাপে বদলাতে পারবেন", "you can change it in the last part")}</p>
     </Q>
   );
 }
@@ -344,10 +344,10 @@ function Team({ d }: { d: Draft }) {
       <p className="mt-6 text-[15px] font-semibold">{t("কাউকে এখনই যোগ করবেন? (৩ জন পর্যন্ত)", "Invite someone now? (up to 3)")}</p>
       <div className="mt-2 space-y-2">
         {d.team.map((m, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#dcdfe5] bg-white p-2.5">
+          <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#c6ccd4] bg-white p-2.5">
             <input aria-label={`${t("মোবাইল", "Mobile")} ${i + 1}`} inputMode="tel" placeholder="01712 345678" value={m.phone} onChange={(e) => edit((x) => { x.team[i].phone = e.target.value; })} className={field + " h-11 min-w-0 flex-1 basis-[160px]"} />
             <div className="flex flex-wrap gap-1.5">{ROLES.map(([en, bn]) => <Chip key={en} on={m.role === en} onClick={() => edit((x) => { x.team[i].role = en; })}>{t(bn, en)}</Chip>)}</div>
-            <button aria-label={`${t("বাদ দিন", "Remove")} ${i + 1}`} onClick={() => edit((x) => { x.team.splice(i, 1); })} className="ml-auto grid size-10 place-items-center rounded-full text-[#5b6170] hover:bg-[#f1f2f5]">✕</button>
+            <button aria-label={`${t("বাদ দিন", "Remove")} ${i + 1}`} onClick={() => edit((x) => { x.team.splice(i, 1); })} className="ml-auto grid size-10 place-items-center rounded-full text-[#4d5664] hover:bg-[#e9edf2]">✕</button>
           </div>
         ))}
         {d.team.length < 3 && <Ghost onClick={() => edit((x) => { x.team.push({ phone: "", role: "Front desk" }); x.teamLater = false; })}><Plus className="size-[18px]" /> {t("একজন যোগ করুন", "Add a person")}</Ghost>}
@@ -359,7 +359,7 @@ function Team({ d }: { d: Draft }) {
 // ---------------- Part 5 ----------------
 const BANKS = ["Sonali Bank", "Janata Bank", "Agrani Bank", "Rupali Bank", "BRAC Bank", "Dutch-Bangla Bank", "The City Bank", "Eastern Bank", "Islami Bank Bangladesh", "Prime Bank", "Mutual Trust Bank", "Bank Asia", "Pubali Bank", "Uttara Bank", "Dhaka Bank", "Southeast Bank", "NCC Bank", "ONE Bank", "AB Bank", "Standard Chartered"];
 function In({ id, lab, value, set, ph, mode, hint }: { id: string; lab: string; value?: string; set: (v: string) => void; ph?: string; mode?: "tel" | "numeric"; hint?: string }) {
-  return <div><label htmlFor={id} className={label}>{lab}</label><input id={id} value={value ?? ""} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode={mode} className={field + " mt-1.5"} />{hint && <p className="mt-1 text-[12.5px] text-[#5b6170]">{hint}</p>}</div>;
+  return <div><label htmlFor={id} className={label}>{lab}</label><input id={id} value={value ?? ""} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode={mode} className={field + " mt-1.5"} />{hint && <p className="mt-1 text-[12.5px] text-[#4d5664]">{hint}</p>}</div>;
 }
 function Payments({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
@@ -397,7 +397,7 @@ function Payments({ d }: { d: Draft }) {
       </div>
 
       <h2 className="mt-9 text-[18px] font-semibold">{t("BinGi Payments — অনলাইনে কার্ড ও ওয়ালেট", "BinGi Payments — online cards & wallets")}</h2>
-      <p className="mt-1 text-[14.5px] text-[#5b6170]">{t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে, টাকা আপনার সেটেলমেন্ট অ্যাকাউন্টে যাবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website; money settles to your account. Goes live after verification and approval.")}</p>
+      <p className="mt-1 text-[14.5px] text-[#4d5664]">{t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে, টাকা আপনার সেটেলমেন্ট অ্যাকাউন্টে যাবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website; money settles to your account. Goes live after verification and approval.")}</p>
       <div role="radiogroup" aria-label="BinGi Payments" className="mt-4 grid gap-2.5">
         <Tile role="radio" on={p.bingi === "apply"} onClick={() => setP((x) => { x.bingi = "apply"; })} icon={<Wallet className="size-6" />} title={t("এখনই আবেদন করুন", "Apply now")} sub={t("সেটেলমেন্ট অ্যাকাউন্ট দিন", "Add your settlement account")}>
           <div role="radiogroup" aria-label={t("সেটেলমেন্ট কোথায়", "Settle to")} className="flex flex-wrap gap-2">
@@ -418,7 +418,7 @@ function Payments({ d }: { d: Draft }) {
               <In id="st-wallet" lab={t("bKash মার্চেন্ট নম্বর", "bKash merchant number")} value={st.wallet} set={(v) => setS("wallet", v)} mode="tel" />
             </div>
           )}
-          <p className="mt-3 text-[12.5px] text-[#5b6170]">{t("প্রোটোটাইপ: তথ্য শুধু এই ব্রাউজারে থাকে, কোথাও পাঠানো হয় না।", "Prototype: kept in this browser only, not sent anywhere.")}</p>
+          <p className="mt-3 text-[12.5px] text-[#4d5664]">{t("প্রোটোটাইপ: তথ্য শুধু এই ব্রাউজারে থাকে, কোথাও পাঠানো হয় না।", "Prototype: kept in this browser only, not sent anywhere.")}</p>
         </Tile>
         <Tile role="radio" on={p.bingi === "later"} onClick={() => setP((x) => { x.bingi = "later"; })} icon={<Clock className="size-6" />} title={t("পরে সেটআপ করবো", "Set up later")} sub={t("HMS → সেটিংস → কানেক্টিভিটি থেকে পরে আবেদন", "Apply later in HMS → Settings → Connectivity")} />
       </div>
@@ -441,15 +441,15 @@ function Website({ d }: { d: Draft }) {
           const on = d.site.theme === x.id;
           return (
             <button key={x.id} role="radio" aria-checked={on} onClick={() => edit((y) => { y.site.theme = x.id; y.site.later = false; })}
-              className={clsx("relative overflow-hidden rounded-xl border text-left transition-colors", on ? "border-[#ef6b62]" : "border-[#dcdfe5] hover:border-[#d5d8e0]")}>
+              className={clsx("relative overflow-hidden rounded-xl border text-left transition-colors", on ? "border-[#ef6b62]" : "border-[#c6ccd4] hover:border-[#d5d8e0]")}>
               <Image src={`/themes/${x.id}.jpg`} alt="" width={520} height={260} className="aspect-[16/8] w-full object-cover object-top" />
               <span className="flex flex-wrap items-center gap-2 bg-white p-3"><span className="text-[15.5px] font-semibold">{x.name}</span>{fits(x) && <span className="rounded-full bg-[#e9f6ee] px-2 py-0.5 text-[11.5px] font-semibold text-[#1c6b3c]">{t("আপনার জন্য মানানসই", "Good fit")}</span>}</span>
-              {on && <span className="onb-pop absolute right-3 top-3 grid size-7 place-items-center rounded-full bg-[#c8232e] text-white shadow"><Check className="size-4" /></span>}
+              {on && <span className="onb-pop absolute right-3 top-3 grid size-7 place-items-center rounded-full bg-[#b11c29] text-white shadow"><Check className="size-4" /></span>}
             </button>
           );
         })}
       </div>
-      <p className="mt-3 text-[13.5px] text-[#5b6170]">{t("কিছু লুক নির্দিষ্ট প্ল্যানে পাওয়া যায় — প্ল্যান শেষ ধাপে।", "Some looks need a higher plan — plan is in the last part.")}</p>
+      <p className="mt-3 text-[13.5px] text-[#4d5664]">{t("কিছু লুক নির্দিষ্ট প্ল্যানে পাওয়া যায় — প্ল্যান শেষ ধাপে।", "Some looks need a higher plan — plan is in the last part.")}</p>
     </Q>
   );
 }
@@ -462,8 +462,8 @@ function Plan({ d, units }: { d: Draft; units: number }) {
   const n = (v: number) => num(money(v), lang);
   return (
     <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms. ${TRIAL_DAYS} days free.`)}>
-      <div role="radiogroup" aria-label={t("বিলিং", "Billing")} className="inline-flex rounded-lg border border-[#cfd3db] bg-white p-1">
-        {([1, 6, 12] as Cycle[]).map((c) => <button key={c} role="radio" aria-checked={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })} className={clsx("h-9 rounded-md px-3.5 text-[14px] font-semibold", d.cycle === c ? "bg-[#1d1f24] text-white" : "text-[#4b5160] hover:bg-[#f4f5f7]")}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className={clsx("ml-1.5 text-[12.5px]", d.cycle === c ? "text-[#ffb4ad]" : "text-[#c8232e]")}>−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</button>)}
+      <div role="radiogroup" aria-label={t("বিলিং", "Billing")} className="inline-flex rounded-lg border border-[#858c97] bg-white p-1">
+        {([1, 6, 12] as Cycle[]).map((c) => <button key={c} role="radio" aria-checked={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })} className={clsx("h-9 rounded-md px-3.5 text-[14px] font-semibold", d.cycle === c ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:bg-[#e9edf2]")}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className={clsx("ml-1.5 text-[12.5px]", d.cycle === c ? "text-[#ffb4ad]" : "text-[#b11c29]")}>−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</button>)}
       </div>
       <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="mt-5 grid gap-3 md:grid-cols-3">
         {(Object.keys(PLANS) as PlanId[]).map((p) => {
@@ -471,43 +471,43 @@ function Plan({ d, units }: { d: Draft; units: number }) {
           const low = planRank(p) < planRank(rec);
           return (
             <button key={p} role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })}
-              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "border-[#c8232e] shadow-[inset_0_0_0_1px_#c8232e]" : "border-[#dcdfe5] hover:border-[#9aa0ac]")}>
-              <span className="flex items-center justify-between gap-2"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#c8232e] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
-              <span className="mt-1 text-[13.5px] text-[#5b6170]">{t(P.forBn, P.for)}</span>
-              <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#b11c29]">{t(bn, en)}</span>)}</span>
-              <span className="mt-3 text-[28px] font-semibold leading-none">৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#5b6170]"> /{t("রুম/মাস", "room/month")}</span></span>
-              <span className="mt-3 space-y-1.5 border-t border-[#eceef2] pt-3 text-[13px] text-[#4b5160]">
+              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "border-[#b11c29] shadow-[inset_0_0_0_1px_#b11c29]" : "border-[#c6ccd4] hover:border-[#9aa0ac]")}>
+              <span className="flex items-center justify-between gap-2"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#b11c29] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
+              <span className="mt-1 text-[13.5px] text-[#4d5664]">{t(P.forBn, P.for)}</span>
+              <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8e1621]">{t(bn, en)}</span>)}</span>
+              <span className="mt-3 text-[28px] font-semibold leading-none">৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#4d5664]"> /{t("রুম/মাস", "room/month")}</span></span>
+              <span className="mt-3 space-y-1.5 border-t border-[#e3e7ec] pt-3 text-[13px] text-[#4d5664]">
                 <span className="block">{t(`${num(q.billed, lang)} রুম · ৳${n(q.monthly)}/মাস`, `${q.billed} rooms · ৳${n(q.monthly)}/month`)}</span>
                 <span className="block">{t(`বুকিং ফি: মার্কেটপ্লেস ${num(P.fees[0], lang)}% · ওয়েব ${num(P.fees[1], lang)}% · ওয়াক-ইন ${num(P.fees[2], lang)}%`, `Booking fees: Marketplace ${P.fees[0]}% · Web ${P.fees[1]}% · Walk-in ${P.fees[2]}%`)}</span>
                 <span className="block">{P.activation ? <>{t("অ্যাক্টিভেশন", "Activation")} {P.activationRegular && <s>৳{n(P.activationRegular)}</s>} ৳{n(P.activation)}</> : t("অ্যাক্টিভেশন ফি নেই", "No activation fee")}</span>
               </span>
-              <span className="mt-3 border-t border-[#eceef2] pt-3 text-[12.5px] font-semibold">{t(...P.includesTitle)}</span>
-              <span className="mt-1.5 space-y-1">{P.includes.map(([bn, en]) => <span key={en} className="flex items-start gap-1.5 text-[13px] text-[#4b5160]"><Check className="mt-0.5 size-3.5 shrink-0 text-[#c8232e]" strokeWidth={3} />{t(bn, en)}</span>)}</span>
+              <span className="mt-3 border-t border-[#e3e7ec] pt-3 text-[12.5px] font-semibold">{t(...P.includesTitle)}</span>
+              <span className="mt-1.5 space-y-1">{P.includes.map(([bn, en]) => <span key={en} className="flex items-start gap-1.5 text-[13px] text-[#4d5664]"><Check className="mt-0.5 size-3.5 shrink-0 text-[#b11c29]" strokeWidth={3} />{t(bn, en)}</span>)}</span>
               {low && <span className="mt-3 rounded bg-[#fdf6e7] px-2 py-1 text-[12px] text-[#7a4a0b]">{t("আপনার বাছাই করা কিছু টুল এতে নেই", "Some tools you picked aren't in this plan")}</span>}
-              <span aria-hidden className={clsx("absolute right-4 top-4 grid size-5 place-items-center rounded-full border", on ? "border-[#c8232e] bg-[#c8232e]" : "hidden")}><span className="size-2 rounded-full bg-white" /></span>
+              <span aria-hidden className={clsx("absolute right-4 top-4 grid size-5 place-items-center rounded-full border", on ? "border-[#b11c29] bg-[#b11c29]" : "hidden")}><span className="size-2 rounded-full bg-white" /></span>
             </button>
           );
         })}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-[#cfd3db] bg-white px-4 py-3">
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Custom</span><span className="text-[13.5px] text-[#5b6170]">{t("একাধিক property, হোটেল গ্রুপ — কোটেশন রিভিউর পরে", "Hotel groups and chains — quotation after review")}</span></span>
-        <span className="text-[13.5px] font-semibold text-[#4b5160]">{t("সাহায্য চাপুন → কল", "Tap Help → call")}</span>
+      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-[#858c97] bg-white px-4 py-3">
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Custom</span><span className="text-[13.5px] text-[#4d5664]">{t("একাধিক property, হোটেল গ্রুপ — কোটেশন রিভিউর পরে", "Hotel groups and chains — quotation after review")}</span></span>
+        <span className="text-[13.5px] font-semibold text-[#4d5664]">{t("সাহায্য চাপুন → কল", "Tap Help → call")}</span>
       </div>
       {d.planPicked && (() => { const q = quote(d.plan, units, d.cycle); return (
-        <div className="mt-5 grid gap-1.5 rounded-xl border border-[#e6e8ec] bg-white p-4 text-[14.5px]"><dl className="grid gap-1.5">
+        <div className="mt-5 grid gap-1.5 rounded-xl border border-[#e3e7ec] bg-white p-4 text-[14.5px]"><dl className="grid gap-1.5">
           <Row k={t(`${num(q.billed, lang)} রুম × ৳${num(PLANS[d.plan].perUnit, lang)} × ${num(d.cycle, lang)} মাস`, `${q.billed} rooms × ৳${PLANS[d.plan].perUnit} × ${d.cycle} mo`)} v={`৳${n(q.gross)}`} />
           {q.off > 0 && <Row k={t("ছাড়", "Discount")} v={`−৳${n(q.off)}`} />}
           <Row k={t("অ্যাক্টিভেশন (একবার)", "Activation (one time)")} v={`৳${n(q.activation)}`} />
-          <div className="mt-1 flex justify-between border-t border-[#eceef2] pt-2 font-semibold"><dt>{t("ট্রায়ালের পর", "After the trial")}</dt><dd>৳{n(q.total)}</dd></div>
+          <div className="mt-1 flex justify-between border-t border-[#e3e7ec] pt-2 font-semibold"><dt>{t("ট্রায়ালের পর", "After the trial")}</dt><dd>৳{n(q.total)}</dd></div>
           </dl>
-          {units < MIN_BILLED && <p className="text-[12.5px] text-[#5b6170]">{t(`কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল হয়`, `Billing starts at ${MIN_BILLED} rooms`)}</p>}
-          <p className="text-[12.5px] text-[#5b6170]">{t("ট্যাক্স প্রযোজ্য হলে আলাদা", "Taxes extra where applicable")}</p>
+          {units < MIN_BILLED && <p className="text-[12.5px] text-[#4d5664]">{t(`কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল হয়`, `Billing starts at ${MIN_BILLED} rooms`)}</p>}
+          <p className="text-[12.5px] text-[#4d5664]">{t("ট্যাক্স প্রযোজ্য হলে আলাদা", "Taxes extra where applicable")}</p>
         </div>
       ); })()}
     </Q>
   );
 }
-function Row({ k, v }: { k: string; v: string }) { return <div className="flex justify-between gap-3"><dt className="text-[#5b6170]">{k}</dt><dd className="font-semibold tabular-nums">{v}</dd></div>; }
+function Row({ k, v }: { k: string; v: string }) { return <div className="flex justify-between gap-3"><dt className="text-[#4d5664]">{k}</dt><dd className="font-semibold tabular-nums">{v}</dd></div>; }
 
 function Verify({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
@@ -517,15 +517,15 @@ function Verify({ d }: { d: Draft }) {
     <Q title={t("কাগজপত্র", "Documents")} why={t("ওয়েবসাইট পাবলিক আর অনলাইন পেমেন্টের আগে লাগবে। এখন না দিলেও HMS চালাতে পারবেন।", "Needed before going public and online payment. You can use HMS meanwhile.")}>
       <div className="grid gap-3">
         {docs.map(([k, DocIcon, bn, en, req]) => (
-          <label key={k} className={clsx("flex cursor-pointer items-center gap-3 rounded-xl border p-4 focus-within:ring-4 focus-within:ring-[#ef6b62]/15", d.verify[k] ? "border-[#bfe0cb] bg-[#f4fbf6]" : "border-[#dcdfe5] bg-white")}>
-            <span className={clsx("grid size-10 place-items-center", d.verify[k] ? "text-[#1c7d45]" : "text-[#1d1f24]")} aria-hidden>{d.verify[k] ? <CircleCheck className="size-6" /> : <DocIcon className="size-6" />}</span>
-            <span className="min-w-0 flex-1"><span className="block text-[16px] font-semibold">{t(bn, en)}{!req && <span className="font-normal text-[#5b6170]"> ({t("ঐচ্ছিক", "optional")})</span>}</span><span className="block truncate text-[13.5px] text-[#5b6170]">{d.verify[k] || t("ছবি বা PDF", "Photo or PDF")}</span></span>
-            <span className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-[#c8232e]"><FileUp className="size-4" />{d.verify[k] ? t("বদলান", "Replace") : t("আপলোড", "Upload")}</span>
+          <label key={k} className={clsx("flex cursor-pointer items-center gap-3 rounded-xl border p-4 focus-within:ring-4 focus-within:ring-[#ef6b62]/15", d.verify[k] ? "border-[#bfe0cb] bg-[#f4fbf6]" : "border-[#c6ccd4] bg-white")}>
+            <span className={clsx("grid size-10 place-items-center", d.verify[k] ? "text-[#1c7d45]" : "text-[#0f1720]")} aria-hidden>{d.verify[k] ? <CircleCheck className="size-6" /> : <DocIcon className="size-6" />}</span>
+            <span className="min-w-0 flex-1"><span className="block text-[16px] font-semibold">{t(bn, en)}{!req && <span className="font-normal text-[#4d5664]"> ({t("ঐচ্ছিক", "optional")})</span>}</span><span className="block truncate text-[13.5px] text-[#4d5664]">{d.verify[k] || t("ছবি বা PDF", "Photo or PDF")}</span></span>
+            <span className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-[#b11c29]"><FileUp className="size-4" />{d.verify[k] ? t("বদলান", "Replace") : t("আপলোড", "Upload")}</span>
             <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) edit((x) => { x.verify[k] = f.name; x.verify.later = false; }); }} />
           </label>
         ))}
       </div>
-      <p className="mt-3 text-[13px] text-[#5b6170]">{t("প্রোটোটাইপ: শুধু ফাইলের নাম রাখা হয়, কিছু আপলোড হয় না।", "Prototype: only the file name is kept.")}</p>
+      <p className="mt-3 text-[13px] text-[#4d5664]">{t("প্রোটোটাইপ: শুধু ফাইলের নাম রাখা হয়, কিছু আপলোড হয় না।", "Prototype: only the file name is kept.")}</p>
     </Q>
   );
 }
@@ -537,19 +537,19 @@ function Ready({ d, counts, go }: { d: Draft; counts: { total: number; published
   const q = d.planPicked ? quote(d.plan, counts.total, d.cycle) : null;
   return (
     <Q title={t("সব ঠিক আছে?", "All good?")} why={t("জমা দিলে HMS সেটআপ মোডে খুলবে। BinGi যাচাই করে অনুমোদন দেবে।", "After submitting, HMS opens in setup mode while BinGi reviews.")}>
-      <div className="flex items-center gap-4 rounded-xl bg-gradient-to-br from-[#fff5f4] to-[#f4f5f7] p-4">
+      <div className="flex items-center gap-4 rounded-xl bg-gradient-to-br from-[#fff5f4] to-[#e9edf2] p-4">
         <Ring v={sc} lang={lang} />
         <div className="min-w-0">
           <p className="truncate text-[18px] font-semibold">{d.name || t("নাম নেই", "Untitled")}</p>
-          <p className="text-[14px] text-[#5b6170]">{num(counts.total, lang)} {t("টা রুম", "rooms")} · {d.city || "—"} · {d.planPicked ? PLANS[d.plan].label : "—"}{q ? ` · ৳${num(money(q.monthly), lang)}/${t("মাস", "mo")}` : ""}</p>
+          <p className="text-[14px] text-[#4d5664]">{num(counts.total, lang)} {t("টা রুম", "rooms")} · {d.city || "—"} · {d.planPicked ? PLANS[d.plan].label : "—"}{q ? ` · ৳${num(money(q.monthly), lang)}/${t("মাস", "mo")}` : ""}</p>
         </div>
       </div>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {cs.map((c) => (
-          <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-xl border px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#dcdfe5] bg-white")}>
-            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#c8232e] text-white" : "bg-[#e6e8ee] text-[#5b6170]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
-            <span className="min-w-0 flex-1 text-[14.5px] font-medium">{t(c.bn, c.label)}{c.level !== "required" && !c.ok && <span className="text-[12.5px] text-[#5b6170]"> · {t("পরে করা যাবে", "can wait")}</span>}</span>
-            {!c.ok && <button onClick={() => go(c.step)} className="text-[13.5px] font-semibold text-[#c8232e]">{t("ঠিক করুন", "Fix")}</button>}
+          <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-xl border px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#c6ccd4] bg-white")}>
+            <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#b11c29] text-white" : "bg-[#e3e7ec] text-[#4d5664]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
+            <span className="min-w-0 flex-1 text-[14.5px] font-medium">{t(c.bn, c.label)}{c.level !== "required" && !c.ok && <span className="text-[12.5px] text-[#4d5664]"> · {t("পরে করা যাবে", "can wait")}</span>}</span>
+            {!c.ok && <button onClick={() => go(c.step)} className="text-[13.5px] font-semibold text-[#b11c29]">{t("ঠিক করুন", "Fix")}</button>}
           </li>
         ))}
       </ul>
@@ -561,8 +561,8 @@ function Ring({ v, lang }: { v: number; lang: "bn" | "en" }) {
   return (
     <svg width="68" height="68" viewBox="0 0 64 64" role="img" aria-label={`${v}%`} className="shrink-0">
       <circle cx="32" cy="32" r={r} fill="none" stroke="#fff" strokeWidth="7" />
-      <circle cx="32" cy="32" r={r} fill="none" stroke={v >= 80 ? "#1c7d45" : "#c8232e"} strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v / 100)} transform="rotate(-90 32 32)" style={{ transition: "stroke-dashoffset 500ms ease" }} />
-      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="700" fill="#1d1f24">{num(v, lang)}%</text>
+      <circle cx="32" cy="32" r={r} fill="none" stroke={v >= 80 ? "#1c7d45" : "#b11c29"} strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v / 100)} transform="rotate(-90 32 32)" style={{ transition: "stroke-dashoffset 500ms ease" }} />
+      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="700" fill="#0f1720">{num(v, lang)}%</text>
     </svg>
   );
 }
@@ -582,24 +582,24 @@ function Done({ d }: { d: Draft }) {
         <div className="text-center">
           <span className="onb-in mx-auto grid size-16 place-items-center rounded-full bg-[#e9f7ef] text-[#1c7d45]"><CircleCheck className="size-9" /></span>
           <h1 className="mt-5 text-[28px] font-semibold leading-tight">{t("সেটআপ জমা হয়েছে", "Setup submitted")}</h1>
-          <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#5b6170]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
+          <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#4d5664]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
         </div>
-        <section className="mt-9 rounded-xl border border-[#e6e8ec] bg-white p-5">
+        <section className="mt-9 rounded-xl border border-[#e3e7ec] bg-white p-5">
           <h2 className="text-[16px] font-semibold">{t("এরপর কী হবে", "What happens next")}</h2>
           <ol className="mt-4 space-y-4">
             {steps.map((s, i) => (
               <li key={s.en} className="flex gap-3">
-                <span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", s.now ? "bg-[#1d1f24] text-white" : "bg-[#f1f2f5] text-[#5b6170]")}><s.icon className="size-[18px]" /></span>
-                <span className="min-w-0"><span className="block text-[15px] font-semibold">{num(i + 1, lang)}. {t(s.bn, s.en)}{s.now && <span className="ml-2 rounded-md bg-[#fff4e5] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8a5300]">{t("এখন চলছে", "In progress")}</span>}</span><span className="text-[14px] text-[#5b6170]">{t(s.subBn, s.subEn)}</span></span>
+                <span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", s.now ? "bg-[#0f1720] text-white" : "bg-[#e9edf2] text-[#4d5664]")}><s.icon className="size-[18px]" /></span>
+                <span className="min-w-0"><span className="block text-[15px] font-semibold">{num(i + 1, lang)}. {t(s.bn, s.en)}{s.now && <span className="ml-2 rounded-md bg-[#fff4e5] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8a5300]">{t("এখন চলছে", "In progress")}</span>}</span><span className="text-[14px] text-[#4d5664]">{t(s.subBn, s.subEn)}</span></span>
               </li>
             ))}
           </ol>
         </section>
-        <section className="mt-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
+        <section className="mt-4 rounded-xl border border-[#e3e7ec] bg-white p-5">
           <h2 className="text-[16px] font-semibold">{t("ততক্ষণে যা করতে পারেন", "Meanwhile you can")}</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Link href="/hms/rooms" className="flex items-center gap-3 rounded-lg border border-[#e6e8ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#1d1f24]"><ImageIcon className="size-5 text-[#5b6170]" />{t("রুমের ছবি দিন", "Add room photos")}</Link>
-            <Link href="/hms/staff" className="flex items-center gap-3 rounded-lg border border-[#e6e8ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#1d1f24]"><UsersRound className="size-5 text-[#5b6170]" />{t("টিম যোগ করুন", "Add your team")}</Link>
+            <Link href="/hms/rooms" className="flex items-center gap-3 rounded-lg border border-[#e3e7ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#0f1720]"><ImageIcon className="size-5 text-[#4d5664]" />{t("রুমের ছবি দিন", "Add room photos")}</Link>
+            <Link href="/hms/staff" className="flex items-center gap-3 rounded-lg border border-[#e3e7ec] px-3.5 py-3 text-[14.5px] font-medium hover:border-[#0f1720]"><UsersRound className="size-5 text-[#4d5664]" />{t("টিম যোগ করুন", "Add your team")}</Link>
           </div>
         </section>
         <div className="mt-8 flex flex-wrap justify-center gap-2"><Ghost onClick={() => router.push("/onboarding/status")}>{t("স্ট্যাটাস দেখুন", "View status")}</Ghost><Primary onClick={() => router.push("/hms")}>{t("ড্যাশবোর্ডে যান", "Go to dashboard")}</Primary></div>

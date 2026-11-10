@@ -27,7 +27,7 @@ export function GuestsFrame({ tab, counts, action, children }: { tab: "guests" |
             <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined}
               className={clsx("-mb-px flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
               {t.label}
-              <span className={clsx("rounded-full px-1.5 text-[12px] font-semibold tabular-nums", t.hot ? "bg-hms-red text-white" : "bg-hms-hover text-[#4b5160]")}>{t.n}{t.hot ? " to reply" : ""}</span>
+              <span className={clsx("rounded-full px-1.5 text-[12px] font-semibold tabular-nums", t.hot ? "bg-hms-red text-white" : "bg-hms-hover text-[#4d5664]")}>{t.n}{t.hot ? " to reply" : ""}</span>
             </Link>
           ))}
         </nav>
@@ -38,17 +38,17 @@ export function GuestsFrame({ tab, counts, action, children }: { tab: "guests" |
 }
 
 export const btn = "inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-4 text-[14px] font-semibold transition-colors disabled:opacity-50";
-export const btnPrimary = clsx(btn, "bg-hms-red text-white hover:bg-[#b11c29]");
+export const btnPrimary = clsx(btn, "btn-glow text-white");
 export const btnLine = clsx(btn, "border border-hms-line bg-white hover:bg-hms-hover");
 /** Square icon button (no horizontal padding, so the icon is never squeezed). */
 export const btnIcon = "inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-hms-line bg-white transition-colors hover:bg-hms-hover disabled:opacity-50";
-export const input = "h-11 w-full rounded-lg border border-[#cfd3db] bg-white px-3 text-[15px] outline-none focus:border-hms-ink focus:ring-2 focus:ring-hms-ink/10";
+export const input = "h-11 w-full rounded-lg border border-[#858c97] bg-white px-3 text-[15px] outline-none focus:border-hms-ink focus:ring-2 focus:ring-hms-ink/10";
 export const lbl = "mb-1.5 block text-[13.5px] font-semibold";
 
 export function Stars({ value, size = 15 }: { value: number; size?: number }) {
   return (
     <span className="inline-flex items-center gap-0.5" aria-label={`${value.toFixed(1)} out of 5`} role="img">
-      {[1, 2, 3, 4, 5].map((i) => <Star key={i} style={{ width: size, height: size }} className={i <= Math.round(value) ? "fill-[#f5a524] text-[#f5a524]" : "fill-[#e3e5ea] text-[#e3e5ea]"} />)}
+      {[1, 2, 3, 4, 5].map((i) => <Star key={i} style={{ width: size, height: size }} className={i <= Math.round(value) ? "fill-[#f5a524] text-[#f5a524]" : "fill-[#e3e7ec] text-[#e3e7ec]"} />)}
     </span>
   );
 }
@@ -56,13 +56,13 @@ export function Stars({ value, size = 15 }: { value: number; size?: number }) {
 export function StateChip({ s }: { s: GuestState }) {
   const c: Record<GuestState, string> = {
     "In house": "bg-[#e8f0fe] text-[#1d4ed8]", "Arriving today": "bg-[#fdefe7] text-[#b4501f]", Upcoming: "bg-[#eeebfc] text-[#5b44c9]",
-    "Checked out": "bg-hms-hover text-[#4b5160]", "No stay yet": "bg-hms-hover text-[#4b5160]",
+    "Checked out": "bg-hms-hover text-[#4d5664]", "No stay yet": "bg-hms-hover text-[#4d5664]",
   };
   return <span className={clsx("inline-flex whitespace-nowrap rounded-md px-2 py-0.5 text-[12.5px] font-semibold", c[s])}>{s}</span>;
 }
 
 export function Tag({ tone, children }: { tone: "vip" | "red" | "gray" | "green" | "amber"; children: ReactNode }) {
-  const c = { vip: "bg-[#fdf3d9] text-[#7a5200]", red: "bg-[#fde8e8] text-[#a11d2a]", gray: "bg-hms-hover text-[#4b5160]", green: "bg-[#e5f5ec] text-[#16693a]", amber: "bg-[#fdf3d9] text-[#7a5200]" }[tone];
+  const c = { vip: "bg-[#fdf3d9] text-[#7a5200]", red: "bg-[#fde8e8] text-[#a11d2a]", gray: "bg-hms-hover text-[#4d5664]", green: "bg-[#e5f5ec] text-[#16693a]", amber: "bg-[#fdf3d9] text-[#7a5200]" }[tone];
   return <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold", c)}>{children}</span>;
 }
 

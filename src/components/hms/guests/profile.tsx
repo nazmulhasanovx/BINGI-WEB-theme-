@@ -32,7 +32,7 @@ export function GuestProfilePage({ id }: { id: string }) {
 
   return (
     <GuestsFrame tab="guests" counts={{ guests: rows.length, reply }}>
-      <Link href="/hms/guests" className="mb-3 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#4b5160] hover:text-hms-ink"><ArrowLeft className="size-4" />All guests</Link>
+      <Link href="/hms/guests" className="mb-3 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#4d5664] hover:text-hms-ink"><ArrowLeft className="size-4" />All guests</Link>
       {g.blocked && <div className="mb-3 flex items-center gap-2 rounded-lg border border-[#f3c1c1] bg-[#fdf2f2] px-4 py-2.5 text-[14px] text-[#8a1c1c]"><UserX className="size-4" /><b>Blocked</b> · {g.blocked.reason} <button onClick={() => saveGuest({ ...g, blocked: undefined })} className="ml-auto font-semibold underline">Unblock</button></div>}
 
       <section className="rounded-xl border border-hms-line bg-white p-5">
@@ -49,7 +49,7 @@ export function GuestProfilePage({ id }: { id: string }) {
           </div>
         </div>
         <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {stats.map(([k, v]) => <div key={k} className="rounded-lg bg-[#f7f8fa] px-3.5 py-3"><dt className="text-[12.5px] text-hms-muted">{k}</dt><dd className="text-[18px] font-bold tabular-nums">{v}</dd></div>)}
+          {stats.map(([k, v]) => <div key={k} className="rounded-lg bg-[#f4f6f8] px-3.5 py-3"><dt className="text-[12.5px] text-hms-muted">{k}</dt><dd className="text-[18px] font-bold tabular-nums">{v}</dd></div>)}
         </dl>
       </section>
 
@@ -92,7 +92,7 @@ export function GuestProfilePage({ id }: { id: string }) {
               <li className="flex items-center gap-2.5"><Mail className="size-4 text-hms-muted" />{g.email || <span className="text-hms-muted">No email</span>}</li>
               <li className="flex items-center gap-2.5"><MapPin className="size-4 text-hms-muted" />{g.address || <span className="text-hms-muted">No address</span>}</li>
             </ul>
-            <div className={clsx("mt-4 rounded-lg px-3.5 py-3 text-[14px]", idMissing ? (g.state === "In house" ? "bg-[#fdf2f2]" : "bg-[#fffaf0]") : "bg-[#f7f8fa]")}>
+            <div className={clsx("mt-4 rounded-lg px-3.5 py-3 text-[14px]", idMissing ? (g.state === "In house" ? "bg-[#fdf2f2]" : "bg-[#fffaf0]") : "bg-[#f4f6f8]")}>
               {idMissing ? <p className={clsx("flex items-center gap-2 font-semibold", g.state === "In house" ? "text-[#a11d2a]" : "text-[#7a5200]")}><CircleAlert className="size-4" />{g.state === "In house" ? "Checked in without ID — collect it now" : "ID needed before check-in"}</p> : (
                 <>
                   <p className="font-semibold">{g.idType} · <span className="font-mono">{g.idNo}</span></p>
@@ -106,7 +106,7 @@ export function GuestProfilePage({ id }: { id: string }) {
 
           <section className="rounded-xl border border-hms-line bg-white p-5">
             <h3 className="text-[16px] font-bold">Preferences & notes</h3>
-            {g.prefs.length ? <div className="mt-2.5 flex flex-wrap gap-1.5">{g.prefs.map((p) => <span key={p} className="rounded-md bg-[#f1f2f5] px-2 py-1 text-[13px] font-medium">{p}</span>)}</div> : <p className="mt-1 text-[14px] text-hms-muted">No preferences saved.</p>}
+            {g.prefs.length ? <div className="mt-2.5 flex flex-wrap gap-1.5">{g.prefs.map((p) => <span key={p} className="rounded-md bg-[#e9edf2] px-2 py-1 text-[13px] font-medium">{p}</span>)}</div> : <p className="mt-1 text-[14px] text-hms-muted">No preferences saved.</p>}
             {g.notes && <p className="mt-3 rounded-lg bg-[#fffaf0] px-3.5 py-2.5 text-[14px]">{g.notes}</p>}
             <p className="mt-3 text-[12.5px] text-hms-muted">Offers: {g.marketing ? "agreed" : "not agreed"}</p>
           </section>

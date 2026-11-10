@@ -87,11 +87,11 @@ function TabletHardware({ landscape }: { landscape: boolean }) {
 /** Shown in place of the site while the property has no website yet (new property waiting for approval). */
 export function SiteNotReady({ name }: { name?: string }) {
   return (
-    <div className="grid size-full place-items-center bg-[#f7f8fa] p-8 text-center">
+    <div className="grid size-full place-items-center bg-[#f4f6f8] p-8 text-center">
       <div className="max-w-[360px]">
-        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-[#5b6170] shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-[#e6e8ec]"><Globe className="size-7" strokeWidth={1.6} /></span>
-        <p className="mt-5 text-[22px] font-semibold text-[#1d1f24]">Website not created yet</p>
-        <p className="mt-2 text-[15px] leading-relaxed text-[#5b6170]">{name ? `${name}'s` : "This property's"} website is built after BinGi approves the setup. Until then you can try themes in the Theme Store.</p>
+        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-[#4d5664] shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-[#e3e7ec]"><Globe className="size-7" strokeWidth={1.6} /></span>
+        <p className="mt-5 text-[22px] font-semibold text-[#0f1720]">Website not created yet</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#4d5664]">{name ? `${name}'s` : "This property's"} website is built after BinGi approves the setup. Until then you can try themes in the Theme Store.</p>
       </div>
     </div>
   );

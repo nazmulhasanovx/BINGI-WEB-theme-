@@ -36,16 +36,16 @@ export function PeoplePage() {
   return (
     <StaffFrame tab="people" search={q} onSearch={(v) => { setQ(v); setPage(1); }} activeFilters={(acc !== "all" ? 1 : 0) + (etype !== "all" ? 1 : 0)} onClearFilters={() => { setAcc("all"); setEtype("all"); }}
       filters={<><FilterSelect label="Account access" value={acc} onChange={(v) => { setAcc(v); setPage(1); }} options={[{ v: "linked", label: "Linked" }, { v: "invited", label: "Invited" }, { v: "not-invited", label: "Not invited" }, { v: "disabled", label: "Disabled" }]} /><FilterSelect label="Employment" value={etype} onChange={(v) => { setEtype(v); setPage(1); }} options={["Full time", "Part time", "Contract"].map((x) => ({ v: x, label: x }))} /></>} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>}
-      right={<label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[15px] font-medium"><Layers className="size-[18px]" /><select value={dept} onChange={(e) => { setDept(e.target.value as Dept); setPage(1); }} className="appearance-none bg-transparent pr-6 outline-none" aria-label="Department"><option value="all">All departments</option>{st.settings.departments.map((d) => <option key={d}>{d}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>}>
+      right={<label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white px-4 text-[15px] font-medium"><Layers className="size-[18px]" /><select value={dept} onChange={(e) => { setDept(e.target.value as Dept); setPage(1); }} className="appearance-none bg-transparent pr-6 outline-none" aria-label="Department"><option value="all">All departments</option>{st.settings.departments.map((d) => <option key={d}>{d}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>}>
       <Card>
-        <div className="mb-4 border-b border-[#eceef2] pb-3">
+        <div className="mb-4 border-b border-[#e3e7ec] pb-3">
           <Pills value={tab} onChange={setTab} items={[{ v: "dir", label: `Staff directory (${counts.all})` }, { v: "inv", label: `Invitations (${invites.length})` }, { v: "join", label: `Joining & probation (${joining.length})` }]} />
         </div>
         {tab === "dir" && (
           <>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <FilterChips value={f} onChange={(v) => { setF(v); setPage(1); }} items={[{ v: "all", label: `All (${counts.all})` }, { v: "active", label: `Active (${counts.active})` }, { v: "inactive", label: `Inactive (${counts.inactive})` }, { v: "former", label: counts.former ? `Former staff (${counts.former})` : "Former staff" }]} />
-              <span className="text-[14.5px] text-[#4b5160]">{counts.all} staff · {counts.active} active · {counts.inactive} inactive</span>
+              <span className="text-[14.5px] text-[#4d5664]">{counts.all} staff · {counts.active} active · {counts.inactive} inactive</span>
             </div>
             {list.length === 0 ? <Empty icon={<UserRound className="size-6" />} title="No staff found" text="Try another name, ID or department." /> : (
               <Table cols={[{ label: "Employee", w: "24%" }, { label: "Department" }, { label: "Position" }, { label: "Employment" }, { label: "Account access" }, { label: "Actions", w: "160px" }]}>
@@ -58,7 +58,7 @@ export function PeoplePage() {
                     <td><Chip tone={ACCESS[e.access][1]}>{ACCESS[e.access][0]}</Chip></td>
                     <td>
                       <div className="flex items-center gap-2">
-                        <Link href={`/hms/staff/people/${e.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-4" /> Open</Link>
+                        <Link href={`/hms/staff/people/${e.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-4" /> Open</Link>
                         <Menu label={`Actions for ${e.name}`} items={[
                           ...(e.access !== "linked" && e.status === "active" ? [{ label: e.access === "invited" ? "Resend invitation" : "Invite to staff app", onClick: () => { update((s) => { emp(s, e.id)!.access = "invited"; }, `Invitation sent to ${e.name}`); toast(`Invitation marked as sent to ${e.name}`); } }] : []),
                           e.status === "active" ? { label: "Mark inactive", onClick: () => setStatus(e.id, "inactive") } : { label: "Reactivate", onClick: () => { update((s) => { const x = emp(s, e.id)!; x.status = "active"; x.access = "not-invited"; }, `${e.name} reactivated`); } },
@@ -94,7 +94,7 @@ export function PeoplePage() {
         {tab === "join" && (
           <Table cols={[{ label: "Person" }, { label: "What" }, { label: "Date" }, { label: "Action", w: "160px" }]}>
             {st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId).map((c) => (
-              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#c8232e]">Open joining</Link></td></tr>
+              <tr key={c.id}><td><Person name={c.name} id={c.id} /></td><td>Joining (offer accepted)</td><td>{fmt(c.offer!.start)}</td><td><Link href={`/hms/staff/hiring/${c.id}`} className="font-medium text-[#b11c29]">Open joining</Link></td></tr>
             ))}
             {st.employees.filter((e) => e.probationEnd && e.probationEnd >= TODAY).map((e) => (
               <tr key={e.id}><td><Person name={e.name} id={e.id} /></td><td>Probation review</td><td>{fmt(e.probationEnd!)}</td><td><Btn onClick={() => { update((s) => { const x = emp(s, e.id)!; delete x.probationEnd; x.reviews.unshift({ date: TODAY, by: s.settings.approver, score: 4, note: "Probation completed — confirmed." }); }, `${e.name} confirmed after probation`); toast(`${e.name} confirmed`); }}>Confirm</Btn></td></tr>
@@ -117,30 +117,30 @@ export function EmployeePage({ id }: { id: string }) {
   const [tab, setTab] = useState<ETab>("profile");
   const [more, setMore] = useState(false);
   const [edit, setEdit] = useState(false);
-  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#c8232e]">Back to People</Link>} /></Card></StaffFrame>;
+  if (!e) return <StaffFrame tab="people" hideSearch><Card><Empty icon={<User className="size-6" />} title="Employee not found" action={<Link href="/hms/staff/people" className="font-medium text-[#b11c29]">Back to People</Link>} /></Card></StaffFrame>;
   const moreItems: { v: ETab; label: string; icon: typeof Briefcase }[] = [{ v: "assets", label: "Assets & benefits", icon: Briefcase }, { v: "reviews", label: "Reviews & training", icon: GraduationCap }, { v: "joining", label: "Joining & exit", icon: LogIn }, { v: "history", label: "History", icon: History }];
   return (
     <StaffFrame tab="people" search={find} onSearch={setFind} onSubmit={(v) => v.trim() && router.push(`/hms/staff/people?q=${encodeURIComponent(v.trim())}`)} action={<Btn kind="primary" onClick={() => setEdit(true)}><Pencil className="size-4" /> Edit employee</Btn>}>
       <Card>
-        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#c8232e]"><ArrowLeft className="size-[18px]" /> People</Link>
+        <Link href="/hms/staff/people" className="inline-flex items-center gap-2 text-[15px] hover:text-[#b11c29]"><ArrowLeft className="size-[18px]" /> People</Link>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <span className="grid size-16 place-items-center rounded-full bg-[#fdecec] text-[22px] font-semibold text-[#c8232e]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
-          <div><p className="text-[24px] font-semibold leading-tight">{e.name}</p><p className="text-[15px] text-[#5b6170]">{e.id}</p></div>
-          <span className="h-8 w-px bg-[#e6e8ee]" />
+          <span className="grid size-16 place-items-center rounded-full bg-[#ffe7e4] text-[22px] font-semibold text-[#b11c29]">{e.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
+          <div><p className="text-[24px] font-semibold leading-tight">{e.name}</p><p className="text-[15px] text-[#4d5664]">{e.id}</p></div>
+          <span className="h-8 w-px bg-[#e3e7ec]" />
           <Chip tone={STATUS[e.status][1]}>{STATUS[e.status][0]}</Chip>
-          <span className="h-8 w-px bg-[#e6e8ee]" />
+          <span className="h-8 w-px bg-[#e3e7ec]" />
           <span className="text-[16px]">{e.position}</span>
         </div>
-        <div className="relative mt-5 flex items-center gap-1 border-b border-[#eceef2] pb-2.5">
+        <div className="relative mt-5 flex items-center gap-1 border-b border-[#e3e7ec] pb-2.5">
           {(["profile", "work", "attendance", "pay"] as ETab[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#fdecec] text-[#c8232e]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>
+            <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-4 py-2 text-[15px] font-medium ", tab === t ? "bg-[#ffe7e4] text-[#b11c29]" : "hover:bg-[#e9edf2]")}>{t[0].toUpperCase() + t.slice(1)}</button>
           ))}
-          <button onClick={() => setMore((m) => !m)} aria-label="More employee sections" aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#fdecec] text-[#c8232e]" : "border-[#dfe2e8]")}>
+          <button onClick={() => setMore((m) => !m)} aria-label="More employee sections" aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[15px] font-medium", moreItems.some((m) => m.v === tab) ? "border-transparent bg-[#ffe7e4] text-[#b11c29]" : "border-[#d3d8df]")}>
             {moreItems.find((m) => m.v === tab)?.label ?? "More"} {more ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
           </button>
           {more && (
-            <div className="absolute left-[330px] top-full z-30 mt-1 w-[250px] rounded-xl border border-[#e6e8ee] bg-white p-1.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
-              {moreItems.map((m) => <button key={m.v} onClick={() => { setTab(m.v); setMore(false); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] hover:bg-[#f6f7f9]"><m.icon className="size-5" /> {m.label}</button>)}
+            <div className="absolute left-[330px] top-full z-30 mt-1 w-[250px] rounded-xl border border-[#e3e7ec] bg-white p-1.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
+              {moreItems.map((m) => <button key={m.v} onClick={() => { setTab(m.v); setMore(false); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] hover:bg-[#f4f6f8]"><m.icon className="size-5" /> {m.label}</button>)}
             </div>
           )}
         </div>
@@ -161,7 +161,7 @@ export function EmployeePage({ id }: { id: string }) {
 }
 
 function Row({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: React.ReactNode }) {
-  return <div className="grid grid-cols-[28px_150px_1fr] items-center gap-3 border-b border-[#eceef2] py-3 last:border-0"><Icon className="size-5 text-[#5b6170]" /><span className="text-[15px] text-[#4b5160]">{label}</span><span className="text-[15.5px]">{value}</span></div>;
+  return <div className="grid grid-cols-[28px_150px_1fr] items-center gap-3 border-b border-[#e3e7ec] py-3 last:border-0"><Icon className="size-5 text-[#4d5664]" /><span className="text-[15px] text-[#4d5664]">{label}</span><span className="text-[15.5px]">{value}</span></div>;
 }
 
 function ProfileTab({ e }: { e: Employee }) {
@@ -171,8 +171,8 @@ function ProfileTab({ e }: { e: Employee }) {
       <Card title="Employment summary"><Row icon={Network} label="Department" value={e.dept} /><Row icon={CalendarDays} label="Joining date" value={fmt(e.joined)} /><Row icon={User} label="Manager" value={e.manager} /></Card>
       <div className="space-y-4">
         <Card title="Personal details"><Row icon={Mail} label="Email" value={e.email || "Not provided"} /><Row icon={Phone} label="Mobile" value={e.phone} /><Row icon={Phone} label="Emergency contact" value={e.emergency || "Not provided"} /></Card>
-        <Card title="Documents"><div className="flex items-center gap-3"><FileText className="size-5 text-[#5b6170]" /><span className="flex-1 text-[16px]">Documents ({e.docs.length})</span>{renewal && <Chip tone="red">Pending renewal: {fmt(renewal.expires!).slice(0, 6)}</Chip>}</div>
-          <ul className="mt-2 space-y-1 pl-8 text-[14px] text-[#4b5160]">{e.docs.map((d) => <li key={d.name}>{d.name}{d.expires ? ` · expires ${fmt(d.expires)}` : ""}</li>)}</ul>
+        <Card title="Documents"><div className="flex items-center gap-3"><FileText className="size-5 text-[#4d5664]" /><span className="flex-1 text-[16px]">Documents ({e.docs.length})</span>{renewal && <Chip tone="red">Pending renewal: {fmt(renewal.expires!).slice(0, 6)}</Chip>}</div>
+          <ul className="mt-2 space-y-1 pl-8 text-[14px] text-[#4d5664]">{e.docs.map((d) => <li key={d.name}>{d.name}{d.expires ? ` · expires ${fmt(d.expires)}` : ""}</li>)}</ul>
         </Card>
       </div>
     </div>
@@ -185,8 +185,8 @@ function WorkTab({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Work"><Row icon={Network} label="Department" value={e.dept} /><Row icon={Briefcase} label="Position" value={e.position} /><Row icon={User} label="Reports to" value={e.manager} /><Row icon={FileText} label="Employment" value={e.type} /><Row icon={CalendarDays} label="Probation" value={e.probationEnd ? `Until ${fmt(e.probationEnd)}` : "Completed"} /></Card>
-      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#c8232e]">Schedule</Link>}>
-        <ul className="divide-y divide-[#eceef2]">{week.map(([d, s]) => <li key={d} className="flex justify-between py-2 text-[15px]"><span>{fmt(d)}</span><Chip tone={s === "Off" ? "gray" : s === "Leave" ? "red" : s === "Evening" ? "amber" : "blue"}>{s}</Chip></li>)}</ul>
+      <Card title="This week’s roster" right={<Link href="/hms/staff/schedule" className="text-[14.5px] font-medium text-[#b11c29]">Schedule</Link>}>
+        <ul className="divide-y divide-[#e3e7ec]">{week.map(([d, s]) => <li key={d} className="flex justify-between py-2 text-[15px]"><span>{fmt(d)}</span><Chip tone={s === "Off" ? "gray" : s === "Leave" ? "red" : s === "Evening" ? "amber" : "blue"}>{s}</Chip></li>)}</ul>
       </Card>
     </div>
   );
@@ -200,7 +200,7 @@ function EmpAttendance({ e }: { e: Employee }) {
   if (st.settings.attendance === "none") return <Empty icon={<CalendarDays className="size-6" />} title="Attendance is off for this property" text="Fixed payroll, leave and schedule still work." />;
   return (
     <>
-      <p className="mb-3 text-[15px] text-[#4b5160]">{present} present of {recs.length} recorded days · Leave balance: {st.balances[e.id]?.["Annual Leave"] ?? 0} annual days</p>
+      <p className="mb-3 text-[15px] text-[#4d5664]">{present} present of {recs.length} recorded days · Leave balance: {st.balances[e.id]?.["Annual Leave"] ?? 0} annual days</p>
       <Table cols={[{ label: "Date" }, { label: "Attendance" }, { label: "Check-in" }, { label: "Check-out" }, { label: "Remark" }]}>
         {recs.map(({ d, r }) => (
           <tr key={d}><td>{fmt(d)}</td><td><Chip tone={!r ? "gray" : r.status === "present" ? "green" : r.status === "leave" ? "blue" : r.status === "absent" ? "red" : "amber"}>{r ? r.status[0].toUpperCase() + r.status.slice(1) : "Not marked"}</Chip></td><td>{r?.in ?? "—"}</td><td>{r?.out ?? "—"}</td><td>{r?.remark ?? "—"}</td></tr>
@@ -216,13 +216,13 @@ function EmpPay({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
       <Card title="Salary structure">
-        {(["basic", "house", "food", "transport"] as const).map((k) => <div key={k} className="flex justify-between border-b border-[#eceef2] py-2.5 text-[15px] capitalize last:border-0"><span className="text-[#4b5160]">{k === "house" ? "House rent" : k}</span><span>BDT {money(e.salary[k])}</span></div>)}
+        {(["basic", "house", "food", "transport"] as const).map((k) => <div key={k} className="flex justify-between border-b border-[#e3e7ec] py-2.5 text-[15px] capitalize last:border-0"><span className="text-[#4d5664]">{k === "house" ? "House rent" : k}</span><span>BDT {money(e.salary[k])}</span></div>)}
         <div className="mt-2 flex justify-between text-[16px] font-semibold"><span>Gross / month</span><span>BDT {money(gross(e))}</span></div>
       </Card>
       <Card title="Payslips">
-        {lines.length === 0 ? <p className="text-[14.5px] text-[#6b7180]">No payroll run yet.</p> : (
+        {lines.length === 0 ? <p className="text-[14.5px] text-[#4d5664]">No payroll run yet.</p> : (
           <Table cols={[{ label: "Month" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Status" }, { label: "" }]}>
-            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#c8232e]">Open</Link></td></tr>)}
+            {lines.map(({ r, l }) => <tr key={r.id}><td>{monthLabel(r.month)}</td><td className="text-right">{money(l.gross - l.deductions)}</td><td className="text-right">{money(l.paid)}</td><td><Chip tone={payStatus(l) === "Paid" ? "green" : payStatus(l) === "Unpaid" ? "red" : "amber"}>{payStatus(l)}</Chip></td><td><Link href={`/hms/staff/payroll/${r.id}?emp=${e.id}`} className="font-medium text-[#b11c29]">Open</Link></td></tr>)}
           </Table>
         )}
       </Card>
@@ -236,12 +236,12 @@ function AssetsTab({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Assets issued">
-        {e.assets.length === 0 && <p className="mb-3 text-[14.5px] text-[#6b7180]">No assets issued.</p>}
-        <ul className="divide-y divide-[#eceef2]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#6b7180]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#6b7180]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#c8232e]">Return</button></span></li>)}</ul>
+        {e.assets.length === 0 && <p className="mb-3 text-[14.5px] text-[#4d5664]">No assets issued.</p>}
+        <ul className="divide-y divide-[#e3e7ec]">{e.assets.map((a) => <li key={a.tag} className="flex items-center justify-between py-2.5 text-[15px]"><span>{a.name} <span className="text-[#4d5664]">· {a.tag}</span></span><span className="flex items-center gap-3 text-[#4d5664]">since {fmt(a.since)}<button onClick={() => update((s) => { const x = emp(s, e.id)!; x.assets = x.assets.filter((y) => y.tag !== a.tag); }, `${a.name} returned by ${e.name}`)} className="text-[13px] font-medium text-[#b11c29]">Return</button></span></li>)}</ul>
         <div className="mt-3 flex gap-2"><Input value={name} onChange={(ev) => setName(ev.target.value)} placeholder="e.g. Uniform set" /><Btn disabled={!name.trim()} onClick={() => { update((s) => { emp(s, e.id)!.assets.push({ name: name.trim(), tag: `AS-${Math.floor(Math.random() * 900 + 100)}`, since: TODAY }); }, `${name} issued to ${e.name}`); setName(""); }}>Issue</Btn></div>
       </Card>
       <Card title="Benefits">
-        <ul className="divide-y divide-[#eceef2]">{st.benefits.map((b) => <li key={b.name} className="py-2.5"><p className="text-[15px] font-medium">{b.name}</p><p className="text-[14px] text-[#6b7180]">{b.detail}</p></li>)}</ul>
+        <ul className="divide-y divide-[#e3e7ec]">{st.benefits.map((b) => <li key={b.name} className="py-2.5"><p className="text-[15px] font-medium">{b.name}</p><p className="text-[14px] text-[#4d5664]">{b.detail}</p></li>)}</ul>
       </Card>
     </div>
   );
@@ -254,17 +254,17 @@ function ReviewsTab({ e }: { e: Employee }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Performance reviews">
-        <ul className="mb-3 divide-y divide-[#eceef2]">{e.reviews.map((r, i) => <li key={i} className="py-2.5"><p className="text-[15px] font-medium">{"★".repeat(r.score)}<span className="text-[#d6d9e0]">{"★".repeat(5 - r.score)}</span> <span className="ml-2 text-[14px] font-normal text-[#6b7180]">{fmt(r.date)} · {r.by}</span></p><p className="text-[14.5px] text-[#4b5160]">{r.note}</p></li>)}</ul>
-        {e.reviews.length === 0 && <p className="mb-3 text-[14.5px] text-[#6b7180]">No reviews yet.</p>}
-        <div className="space-y-2 rounded-xl bg-[#f6f7f9] p-3">
+        <ul className="mb-3 divide-y divide-[#e3e7ec]">{e.reviews.map((r, i) => <li key={i} className="py-2.5"><p className="text-[15px] font-medium">{"★".repeat(r.score)}<span className="text-[#d3d8df]">{"★".repeat(5 - r.score)}</span> <span className="ml-2 text-[14px] font-normal text-[#4d5664]">{fmt(r.date)} · {r.by}</span></p><p className="text-[14.5px] text-[#4d5664]">{r.note}</p></li>)}</ul>
+        {e.reviews.length === 0 && <p className="mb-3 text-[14.5px] text-[#4d5664]">No reviews yet.</p>}
+        <div className="space-y-2 rounded-xl bg-[#f4f6f8] p-3">
           <Select value={score} onChange={(ev) => setScore(Number(ev.target.value))} aria-label="Score">{[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} / 5</option>)}</Select>
           <Input value={note} onChange={(ev) => setNote(ev.target.value)} placeholder="Short note" />
           <Btn disabled={!note.trim()} onClick={() => { update((s) => { emp(s, e.id)!.reviews.unshift({ date: TODAY, by: s.settings.approver, score, note: note.trim() }); }, `Review added for ${e.name}`); setNote(""); }}>Add review</Btn>
         </div>
       </Card>
       <Card title="Training">
-        <ul className="divide-y divide-[#eceef2]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#6b7180]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#c8232e]">Mark done</button>}</li>)}</ul>
-        {e.trainings.length === 0 && <p className="text-[14.5px] text-[#6b7180]">No training planned.</p>}
+        <ul className="divide-y divide-[#e3e7ec]">{e.trainings.map((t, i) => <li key={i} className="flex items-center justify-between py-2.5 text-[15px]"><span>{t.name} <span className="text-[#4d5664]">· {fmt(t.date)}</span></span>{t.status === "done" ? <Chip tone="green">Done</Chip> : <button onClick={() => update((s) => { emp(s, e.id)!.trainings[i].status = "done"; }, `${t.name} completed by ${e.name}`)} className="text-[14px] font-medium text-[#b11c29]">Mark done</button>}</li>)}</ul>
+        {e.trainings.length === 0 && <p className="text-[14.5px] text-[#4d5664]">No training planned.</p>}
       </Card>
     </div>
   );
@@ -280,11 +280,11 @@ function JoiningTab({ e }: { e: Employee }) {
         {e.exit ? (
           <>
             <p className="text-[15px]">{e.exit.reason} · last day {fmt(e.exit.lastDay)}</p>
-                        <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#c8232e]">Open offboarding</Link>
+                        <Link href="/hms/staff/operations?t=off" className="mt-3 inline-block font-medium text-[#b11c29]">Open offboarding</Link>
           </>
         ) : (
           <>
-            <p className="text-[14.5px] text-[#6b7180]">No exit in progress.</p>
+            <p className="text-[14.5px] text-[#4d5664]">No exit in progress.</p>
             <Btn kind="danger" className="mt-3" onClick={() => { update((s) => { emp(s, e.id)!.exit = { reason: "Resignation", lastDay: TODAY, clearance: { assets: false, dues: false, access: false } }; }, `Offboarding started for ${e.name}`); toast("Offboarding started"); }}>Start offboarding</Btn>
           </>
         )}
@@ -296,7 +296,7 @@ function JoiningTab({ e }: { e: Employee }) {
 function HistoryTab({ e }: { e: Employee }) {
   const { st } = useHrm();
   const items = st.activity.filter((a) => a.text.includes(e.name.split(" ")[0]));
-  return items.length ? <ul className="space-y-2.5">{items.map((a, i) => <li key={i} className="flex justify-between gap-4 border-b border-[#eceef2] pb-2.5 text-[15px]"><span>{a.text}</span><span className="text-[#6b7180]">{fmtStamp(a.at)}</span></li>)}</ul> : <Empty icon={<History className="size-6" />} title="No history yet" text="Changes to this employee appear here." />;
+  return items.length ? <ul className="space-y-2.5">{items.map((a, i) => <li key={i} className="flex justify-between gap-4 border-b border-[#e3e7ec] pb-2.5 text-[15px]"><span>{a.text}</span><span className="text-[#4d5664]">{fmtStamp(a.at)}</span></li>)}</ul> : <Empty icon={<History className="size-6" />} title="No history yet" text="Changes to this employee appear here." />;
 }
 
 function EditEmployee({ e, onClose }: { e: Employee; onClose: () => void }) {
@@ -320,7 +320,7 @@ function EditEmployee({ e, onClose }: { e: Employee; onClose: () => void }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {(["basic", "house", "food", "transport"] as const).map((k) => <Field key={k} label={k === "house" ? "House rent" : k[0].toUpperCase() + k.slice(1)}><Input type="number" min={0} value={f[k]} onChange={(ev) => setF({ ...f, [k]: Number(ev.target.value) || 0 })} /></Field>)}
       </div>
-      <p className="mt-2 text-[14px] text-[#4b5160]">Gross: BDT {money(f.basic + f.house + f.food + f.transport)} — applies from the next payroll run.</p>
+      <p className="mt-2 text-[14px] text-[#4d5664]">Gross: BDT {money(f.basic + f.house + f.food + f.transport)} — applies from the next payroll run.</p>
     </Drawer>
   );
 }

@@ -24,7 +24,7 @@ export function GuestSheet({ guest, newId, findByPhone, onSave, onClose }: {
   if (!validId(g.idType, g.idNo.trim())) errs.idNo = g.idType === "NID" ? "NID is 10, 13 or 17 digits" : g.idType === "Passport" ? "Passport is 6–9 letters/numbers" : "Check the licence number";
   if (g.email && !/^\S+@\S+\.\S+$/.test(g.email)) errs.email = "Check the email";
   const save = () => { setTried(true); if (Object.keys(errs).length) return; onSave({ ...g, name: g.name.trim(), idNo: g.idNo.trim().toUpperCase(), verified: g.verified && !!g.idNo.trim() }); };
-  const err = (k: string) => tried && errs[k] ? <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#b42318]"><CircleAlert className="size-3.5" />{errs[k]}</p> : null;
+  const err = (k: string) => tried && errs[k] ? <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#c81e1e]"><CircleAlert className="size-3.5" />{errs[k]}</p> : null;
   const idTypes: IdType[] = g.country === "Bangladesh" ? ["NID", "Passport", "Driving licence"] : ["Passport"];
 
   return (
@@ -53,7 +53,7 @@ export function GuestSheet({ guest, newId, findByPhone, onSave, onClose }: {
           <input id="g-id" value={g.idNo} onChange={(e) => set("idNo", e.target.value)} placeholder={g.idType === "NID" ? "10, 13 or 17 digits" : "e.g. Z4419872"} className={input} />{err("idNo")}
           <div className="mt-3 grid grid-cols-2 gap-2">
             {(["idFront", "idBack"] as const).map((k) => (
-              <div key={k} className="rounded-lg border border-dashed border-[#cfd3db] p-2.5 text-center">
+              <div key={k} className="rounded-lg border border-dashed border-[#858c97] p-2.5 text-center">
                 <p className="text-[12.5px] font-semibold">{k === "idFront" ? "Front photo" : "Back photo"}</p>
                 {g[k] ? <p className="mt-1 truncate text-[12.5px] text-[#16693a]" title={g[k]}>✓ {g[k]}</p> : <p className="mt-1 text-[12px] text-hms-muted">Not added</p>}
                 <div className="mt-2 flex justify-center gap-1.5">
@@ -63,7 +63,7 @@ export function GuestSheet({ guest, newId, findByPhone, onSave, onClose }: {
               </div>
             ))}
           </div>
-          <label className="mt-3 flex items-center gap-2 text-[14px]"><input type="checkbox" checked={g.verified} disabled={!g.idNo.trim()} onChange={(e) => set("verified", e.target.checked)} className="size-4 accent-[#c8232e]" />I checked the original ID</label>
+          <label className="mt-3 flex items-center gap-2 text-[14px]"><input type="checkbox" checked={g.verified} disabled={!g.idNo.trim()} onChange={(e) => set("verified", e.target.checked)} className="size-4 accent-[#b11c29]" />I checked the original ID</label>
         </fieldset>
 
         <details className="group rounded-xl border border-hms-line" open={!!guest}>
@@ -73,11 +73,11 @@ export function GuestSheet({ guest, newId, findByPhone, onSave, onClose }: {
             <div><label htmlFor="g-addr" className={lbl}>Address</label><input id="g-addr" value={g.address} onChange={(e) => set("address", e.target.value)} placeholder="Area, city" className={input} /></div>
             <div><p className={lbl}>Preferences</p><div className="flex flex-wrap gap-1.5">{PREFS.map((p) => { const on = g.prefs.includes(p); return <button key={p} type="button" aria-pressed={on} onClick={() => set("prefs", on ? g.prefs.filter((x) => x !== p) : [...g.prefs, p])} className={clsx("h-8 rounded-lg border px-2.5 text-[13px] font-medium", on ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{p}</button>; })}</div></div>
             <div><label htmlFor="g-notes" className={lbl}>Notes for the team</label><textarea id="g-notes" rows={3} value={g.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Allergies, special dates, how they like to pay…" className={clsx(input, "h-auto py-2.5")} /></div>
-            <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={g.marketing} onChange={(e) => set("marketing", e.target.checked)} className="size-4 accent-[#c8232e]" />Guest agreed to receive offers</label>
+            <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" checked={g.marketing} onChange={(e) => set("marketing", e.target.checked)} className="size-4 accent-[#b11c29]" />Guest agreed to receive offers</label>
           </div>
         </details>
 
-        <label className="flex items-center gap-3 rounded-xl border border-hms-line px-4 py-3 text-[14.5px]"><Crown className="size-5 text-[#a76f00]" /><span className="flex-1 font-semibold">VIP guest</span><input type="checkbox" checked={g.vip} onChange={(e) => set("vip", e.target.checked)} className="size-4 accent-[#c8232e]" /></label>
+        <label className="flex items-center gap-3 rounded-xl border border-hms-line px-4 py-3 text-[14.5px]"><Crown className="size-5 text-[#a76f00]" /><span className="flex-1 font-semibold">VIP guest</span><input type="checkbox" checked={g.vip} onChange={(e) => set("vip", e.target.checked)} className="size-4 accent-[#b11c29]" /></label>
         <p className="text-[12.5px] text-hms-muted">Prototype: ID photos are not uploaded anywhere — only the file name is kept in this browser.</p>
       </div>
     </Sheet>

@@ -49,16 +49,16 @@ export function OverviewPage() {
   return (
     <StaffFrame tab="overview" search={q} onSearch={setQ} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>} right={<DateBox value={date} onChange={setDate} label={fmt(date)} />}>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Kpi icon={<Users className="size-6 text-[#c8232e]" />} bg="bg-[#fdecec]" label="Total staff" value={total} href="/hms/staff/people" />
+        <Kpi icon={<Users className="size-6 text-[#b11c29]" />} bg="bg-[#ffe7e4]" label="Total staff" value={total} href="/hms/staff/people" />
         <Kpi icon={<Check className="size-6 text-[#1c7d45]" />} bg="bg-[#e5f6ea]" label="Present" value={d.present} href="/hms/staff/attendance" />
-        <Kpi icon={<CalendarDays className="size-6 text-[#2f5fc4]" />} bg="bg-[#e7effd]" label="On leave" value={d.leave} href="/hms/staff/leave" />
+        <Kpi icon={<CalendarDays className="size-6 text-[#1d4ed8]" />} bg="bg-[#e7effd]" label="On leave" value={d.leave} href="/hms/staff/leave" />
         <Kpi icon={<AlertTriangle className="size-6 text-[#c47f12]" />} bg="bg-[#fdf3df]" label="Needs attention" value={d.absent + d.notMarked} href="/hms/staff/attendance" />
       </div>
-      <p className="mt-2.5 text-[14px] text-[#5b6170]">{d.active.length} active staff · Includes {d.late} late arrival{d.late === 1 ? "" : "s"}</p>
+      <p className="mt-2.5 text-[14px] text-[#4d5664]">{d.active.length} active staff · Includes {d.late} late arrival{d.late === 1 ? "" : "s"}</p>
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
-          <Card title="Today’s duty" right={<Link href="/hms/staff/schedule" className="text-[15px] font-medium text-[#c8232e]">View schedule</Link>}>
+          <Card title="Today’s duty" right={<Link href="/hms/staff/schedule" className="text-[15px] font-medium text-[#b11c29]">View schedule</Link>}>
             <Table cols={[{ label: "Department" }, { label: "Assigned" }, { label: "Required" }, { label: "Coverage" }]}>
               {duty.map((r) => (
                 <tr key={r.dept}>
@@ -71,12 +71,12 @@ export function OverviewPage() {
             </Table>
           </Card>
           <Card title="People updates">
-            {updates.length === 0 && <p className="text-[14px] text-[#6b7180]">Nothing coming up.</p>}
-            <ul className="divide-y divide-[#eceef2]">
+            {updates.length === 0 && <p className="text-[14px] text-[#4d5664]">Nothing coming up.</p>}
+            <ul className="divide-y divide-[#e3e7ec]">
               {updates.map((u) => (
                 <li key={u.name + u.text}>
-                  <Link href={u.href} className="grid grid-cols-[28px_1fr_1.4fr_auto] items-center gap-3 py-2.5 text-[15px] hover:text-[#c8232e]">
-                    <User className="size-5 text-[#5b6170]" /><span className="font-medium">{u.name}</span><span className="text-[#4b5160]">{u.text}</span><span className="text-[#4b5160]">{fmtShort(u.date)}</span>
+                  <Link href={u.href} className="grid grid-cols-[28px_1fr_1.4fr_auto] items-center gap-3 py-2.5 text-[15px] hover:text-[#b11c29]">
+                    <User className="size-5 text-[#4d5664]" /><span className="font-medium">{u.name}</span><span className="text-[#4d5664]">{u.text}</span><span className="text-[#4d5664]">{fmtShort(u.date)}</span>
                   </Link>
                 </li>
               ))}
@@ -84,12 +84,12 @@ export function OverviewPage() {
           </Card>
         </div>
         <div className="space-y-4">
-          <Card title="Pending approvals" right={<Link href="/hms/staff/operations" className="text-[15px] font-medium text-[#c8232e]">View all</Link>}>
-            <ul className="divide-y divide-[#eceef2]">
+          <Card title="Pending approvals" right={<Link href="/hms/staff/operations" className="text-[15px] font-medium text-[#b11c29]">View all</Link>}>
+            <ul className="divide-y divide-[#e3e7ec]">
               {approvals.map((a) => (
                 <li key={a.label}>
-                  <Link href={a.href} className="flex items-center gap-3 py-2 text-[15px] hover:text-[#c8232e]">
-                    <span className="grid size-8 place-items-center rounded-lg bg-[#fdecec] text-[#c8232e]"><a.icon className="size-[18px]" /></span>
+                  <Link href={a.href} className="flex items-center gap-3 py-2 text-[15px] hover:text-[#b11c29]">
+                    <span className="grid size-8 place-items-center rounded-lg bg-[#ffe7e4] text-[#b11c29]"><a.icon className="size-[18px]" /></span>
                     <span className="flex-1">{a.label}</span>
                     <Chip tone={a.n ? "red" : "gray"}>{a.n}</Chip>
                     <ChevronRight className="size-4" />
@@ -99,16 +99,16 @@ export function OverviewPage() {
             </ul>
           </Card>
           <Card>
-            <p className="text-[12.5px] font-medium uppercase tracking-wider text-[#6b7180]">Property setting</p>
+            <p className="text-[12.5px] font-medium uppercase tracking-wider text-[#4d5664]">Property setting</p>
             <p className="mt-1 flex items-center gap-2 text-[19px] font-semibold">Attendance method <Chip tone="red">{mode === "machine" ? "Machine" : mode === "manual" ? "Manual" : "No attendance"}</Chip></p>
-            <p className="mt-1.5 text-[14.5px] text-[#4b5160]">{mode === "manual" ? "Daily attendance is entered by authorised managers." : mode === "machine" ? "Check-in and check-out come from the ZKT device." : "Daily attendance is not tracked for this property."}</p>
-            <p className="mt-1 text-[14px] text-[#646b78]">Available methods: Machine · Manual · No attendance</p>
-            <Link href="/hms/staff/settings?s=attendance" className="mt-2 inline-flex items-center gap-1 text-[15px] font-medium text-[#c8232e]">Manage attendance settings <ChevronRight className="size-4" /></Link>
+            <p className="mt-1.5 text-[14.5px] text-[#4d5664]">{mode === "manual" ? "Daily attendance is entered by authorised managers." : mode === "machine" ? "Check-in and check-out come from the ZKT device." : "Daily attendance is not tracked for this property."}</p>
+            <p className="mt-1 text-[14px] text-[#4d5664]">Available methods: Machine · Manual · No attendance</p>
+            <Link href="/hms/staff/settings?s=attendance" className="mt-2 inline-flex items-center gap-1 text-[15px] font-medium text-[#b11c29]">Manage attendance settings <ChevronRight className="size-4" /></Link>
           </Card>
           <Card title="Recent activity">
             <ul className="space-y-2.5">
               {st.activity.slice(0, 4).map((a, i) => (
-                <li key={i} className="flex items-start gap-3 text-[14.5px]"><Clock className="mt-0.5 size-[18px] shrink-0 text-[#5b6170]" /><span className="flex-1">{a.text}</span><span className="shrink-0 text-[#5b6170]">{fmtStamp(a.at)}</span></li>
+                <li key={i} className="flex items-start gap-3 text-[14.5px]"><Clock className="mt-0.5 size-[18px] shrink-0 text-[#4d5664]" /><span className="flex-1">{a.text}</span><span className="shrink-0 text-[#4d5664]">{fmtStamp(a.at)}</span></li>
               ))}
             </ul>
           </Card>
@@ -121,9 +121,9 @@ export function OverviewPage() {
 
 function Kpi({ icon, bg, label, value, href }: { icon: React.ReactNode; bg: string; label: string; value: number; href: string }) {
   return (
-    <Link href={href} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#e6e8ee] bg-white px-4 py-3.5 transition-shadow hover:shadow-[0_8px_24px_-16px_rgb(0_0_0/0.3)] sm:gap-5 sm:px-6 sm:py-4">
+    <Link href={href} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#e3e7ec] bg-white px-4 py-3.5 transition-shadow hover:shadow-[0_8px_24px_-16px_rgb(0_0_0/0.3)] sm:gap-5 sm:px-6 sm:py-4">
       <span className={`hidden size-14 shrink-0 place-items-center rounded-xl sm:grid ${bg}`}>{icon}</span>
-      <span className="min-w-0"><span className="block truncate text-[14px] text-[#4b5160] sm:text-[15px]">{label}</span><span className="block text-[22px] font-bold leading-tight sm:text-[26px]">{value}</span></span>
+      <span className="min-w-0"><span className="block truncate text-[14px] text-[#4d5664] sm:text-[15px]">{label}</span><span className="block text-[22px] font-bold leading-tight sm:text-[26px]">{value}</span></span>
     </Link>
   );
 }
@@ -157,7 +157,7 @@ export function AddStaff({ onClose, initial }: { onClose: () => void; initial?: 
           <Field label="Employment"><Select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as Employee["type"] })}><option>Full time</option><option>Part time</option><option>Contract</option></Select></Field>
         </div>
         <Field label="Basic salary (BDT / month)" hint="House, food and transport are added from the salary template"><Input type="number" min={0} value={f.basic} onChange={(e) => setF({ ...f, basic: Number(e.target.value) || 0 })} /></Field>
-        <label className="flex items-center gap-2.5 text-[14.5px]"><input type="checkbox" checked={f.invite} onChange={(e) => setF({ ...f, invite: e.target.checked })} className="size-4 accent-[#c8232e]" /> Send BinGi staff app invitation by SMS</label>
+        <label className="flex items-center gap-2.5 text-[14.5px]"><input type="checkbox" checked={f.invite} onChange={(e) => setF({ ...f, invite: e.target.checked })} className="size-4 accent-[#b11c29]" /> Send BinGi staff app invitation by SMS</label>
       </div>
     </Drawer>
   );

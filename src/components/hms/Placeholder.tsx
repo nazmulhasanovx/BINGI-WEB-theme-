@@ -34,7 +34,7 @@ export function ModulePlaceholder({ id }: { id: string }) {
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-hms-hover text-hms-muted"><Hammer className="size-6" /></span>
           <div className="flex-1">
             <p className="flex flex-wrap items-center gap-2 text-[16px] font-bold">Not redesigned yet <span className="rounded-md bg-[#e5f5ec] px-2 py-0.5 text-[12px] font-semibold text-[#16693a]">{where}</span></p>
-            <p className="mt-1 max-w-[560px] text-[14px] text-[#4b5160]">This module works today in the live HMS (hms.bingi.app). In this design prototype only the shell is here — it will be redesigned inside the same frame.</p>
+            <p className="mt-1 max-w-[560px] text-[14px] text-[#4d5664]">This module works today in the live HMS (hms.bingi.app). In this design prototype only the shell is here — it will be redesigned inside the same frame.</p>
           </div>
         </div>
         <div className="mt-6 border-t border-hms-line pt-5">

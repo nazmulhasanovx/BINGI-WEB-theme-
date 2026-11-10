@@ -37,7 +37,7 @@ export function ReviewsPage() {
           <p className="text-[13px] text-hms-muted">Average rating</p>
           <p className="mt-1 flex items-baseline gap-1.5"><span className="text-[36px] font-bold leading-none tabular-nums">{n ? avg.toFixed(1) : "—"}</span><span className="text-[15px] text-hms-muted">/ 5</span></p>
           <div className="mt-2"><Stars value={avg} size={18} /></div>
-          <p className="mt-2 text-[13.5px] text-[#4b5160]">{n} reviews · {n ? Math.round((replied / n) * 100) : 0}% replied</p>
+          <p className="mt-2 text-[13.5px] text-[#4d5664]">{n} reviews · {n ? Math.round((replied / n) * 100) : 0}% replied</p>
         </section>
         <section className="rounded-xl border border-hms-line bg-white p-5" aria-label="Rating breakdown">
           <ul className="space-y-1.5">
@@ -70,7 +70,7 @@ export function ReviewsPage() {
         <aside className="space-y-3">
           <section className="rounded-xl border border-hms-line bg-white p-5 text-[14px]">
             <h3 className="text-[15px] font-bold">How reviews work</h3>
-            <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[#4b5160]">
+            <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[#4d5664]">
               <li>Only guests who checked out can review.</li>
               <li>BinGi checks each review before it goes on your website and the marketplace.</li>
               <li>Your reply shows under the review after BinGi approves it.</li>
@@ -79,7 +79,7 @@ export function ReviewsPage() {
           </section>
           <section className="rounded-xl border border-dashed border-hms-line bg-white p-5 text-[14px]">
             <p className="flex items-center gap-2 font-bold">Ask guests for a review <Tag tone="gray">Coming soon</Tag></p>
-            <p className="mt-1 text-[#4b5160]">Send a review link by SMS / WhatsApp after checkout. Needs messaging in Connectivity.</p>
+            <p className="mt-1 text-[#4d5664]">Send a review link by SMS / WhatsApp after checkout. Needs messaging in Connectivity.</p>
           </section>
         </aside>
       </div>
@@ -106,7 +106,7 @@ export function ReviewCard({ r, guest, act, compact }: { r: R; guest?: GuestRow;
       {r.text ? <p className="mt-0.5 text-[14.5px] leading-relaxed text-[#2f333b]">{r.text}</p> : <p className="mt-0.5 text-[14px] text-hms-muted">No written feedback.</p>}
       {!compact && <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-hms-muted">{ASPECTS.map((a) => <span key={a}>{a} <b className="text-[#2f333b]">{r.aspects[a]}</b></span>)}</p>}
       {r.reply && !open && (
-        <div className="mt-3 rounded-lg bg-[#f7f8fa] px-3.5 py-2.5 text-[14px]">
+        <div className="mt-3 rounded-lg bg-[#f4f6f8] px-3.5 py-2.5 text-[14px]">
           <p className="text-[12.5px] font-semibold text-hms-muted">Your reply · {dateShort(r.reply.at.slice(0, 10))} · shows after BinGi approves</p>
           <p className="mt-0.5">{r.reply.text}</p>
         </div>
@@ -124,7 +124,7 @@ export function ReviewCard({ r, guest, act, compact }: { r: R; guest?: GuestRow;
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => setOpen(true)} className={clsx(btnLine, "h-9 px-3")}><MessageSquareReply className="size-4" />{r.reply ? "Edit reply" : "Reply"}</button>
-          {!r.report && <button onClick={() => setReport(true)} className={clsx(btnLine, "h-9 px-3 text-[#4b5160]")}><Flag className="size-4" />Report</button>}
+          {!r.report && <button onClick={() => setReport(true)} className={clsx(btnLine, "h-9 px-3 text-[#4d5664]")}><Flag className="size-4" />Report</button>}
         </div>
       )}
       {report && (

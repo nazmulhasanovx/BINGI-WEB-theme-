@@ -51,7 +51,7 @@ export function GuestsPage() {
         {kpis.map((k) => (
           <button key={k.label} onClick={k.go} className={clsx("flex items-center gap-3 rounded-xl p-3.5 text-left sm:gap-4 sm:p-4 transition-shadow hover:shadow-[0_2px_10px_-4px_rgb(0_0_0/0.15)]", k.card)}>
             <span className={clsx("hidden size-11 shrink-0 place-items-center rounded-xl bg-white sm:grid shadow-[0_1px_2px_rgb(0_0_0/0.05)]", k.ink)}><k.icon className="size-5" strokeWidth={1.8} /></span>
-            <span><span className="block text-[22px] font-bold leading-tight tabular-nums">{k.value}</span><span className="text-[13.5px] text-[#4b5160]">{k.label}</span></span>
+            <span><span className="block text-[22px] font-bold leading-tight tabular-nums">{k.value}</span><span className="text-[13.5px] text-[#4d5664]">{k.label}</span></span>
           </button>
         ))}
       </div>
@@ -98,7 +98,7 @@ export function GuestsPage() {
                     <td className="hidden whitespace-nowrap px-3 py-2.5 tabular-nums lg:table-cell">{g.phone}</td>
                     <td className="px-3 py-2.5"><StateChip s={g.state} />{g.state === "In house" && <span className="ml-1.5 text-[12.5px] text-hms-muted">{g.stays.find((s) => s.status === "Checked in")?.room}</span>}</td>
                     <td className="px-3 py-2.5 text-right tabular-nums">{g.stays.length}</td>
-                    <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13.5px] text-[#4b5160] xl:table-cell">{g.last ? dateShort(g.last) : "—"}</td>
+                    <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13.5px] text-[#4d5664] xl:table-cell">{g.last ? dateShort(g.last) : "—"}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">{g.spent ? bdt(g.spent) : "—"}</td>
                     <td className="px-3 py-2.5 text-hms-muted"><ChevronRight className="size-4" /></td>
                   </tr>
