@@ -73,7 +73,7 @@ export function FeaturedStays({ hotel }: { hotel: Hotel }) {
     <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
-          <SectionHead title={presetFor(hotel.propertyType).unitsLabel} link={{ href: `${base}/rooms`, label: "All rooms" }} />
+          <SectionHead slug={hotel.slug} title={presetFor(hotel.propertyType).unitsLabel} link={{ href: `${base}/rooms`, label: "All rooms" }} />
         </Reveal>
       </Container>
       {/* phone: swipe row; tablet: 2-up; desktop: 3-up */}
@@ -101,7 +101,7 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
     <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
-          <SectionHead title="Eat well, slow down" />
+          <SectionHead slug={hotel.slug} title="Eat well, slow down" />
         </Reveal>
         <RevealGroup className="grid gap-4 md:gap-5 lg:grid-cols-[1.25fr_1fr]">
           <RevealItem>
@@ -165,7 +165,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
     <section className="mt-9 md:mt-24">
       <Container>
         <Reveal>
-          <SectionHead title="Book direct, pay less" link={{ href: `${base}/offers`, label: "All offers" }} />
+          <SectionHead slug={hotel.slug} title="Book direct, pay less" link={{ href: `${base}/offers`, label: "All offers" }} />
         </Reveal>
         <RevealGroup className="grid gap-4 md:grid-cols-2 md:gap-5">
           {offers.map((o) => (

@@ -109,7 +109,7 @@ function Days({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="Your days" title="Sun, sea and slow afternoons" center /></Reveal>
+        <Reveal><Head label="Your days" title={<DraftText slug={hotel.slug} k="copy.sun-sea-and-slow-afternoons" fallback="Sun, sea and slow afternoons" />} center /></Reveal>
         <RevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-6">
           {acts.map((s) => (
             <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><RevealItem className="overflow-hidden rounded-[26px] bg-surface shadow-card">
@@ -137,7 +137,7 @@ function Unwind({ hotel }: { hotel: Hotel }) {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-end p-5 text-white md:justify-center md:p-14">
             <p className="text-[13px] font-semibold opacity-85"><T>Eat & unwind</T></p>
-            <h2 className="mt-1 max-w-[460px] text-[28px] font-bold leading-tight md:text-[44px]"><T>{"Everything's a few steps away"}</T></h2>
+            <h2 className="mt-1 max-w-[460px] text-[28px] font-bold leading-tight md:text-[44px]"><DraftText slug={hotel.slug} k="copy.everything-s-a-few-steps-away" fallback={"Everything's a few steps away"} /></h2>
             <ul className="mt-5 grid max-w-[520px] gap-3 sm:grid-cols-2">
               {hotel.facilities.slice(0, 6).map((f) => {
                 const Icon = ICONS[f.icon] ?? Sparkles;
@@ -158,7 +158,7 @@ function Offers({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="Book direct" title="Better prices here than anywhere else" /></Reveal>
+        <Reveal><Head label="Book direct" title={<DraftText slug={hotel.slug} k="copy.better-prices-here-than-anywhere-else" fallback="Better prices here than anywhere else" />} /></Reveal>
         <RevealGroup className={`grid gap-4 md:gap-6 ${offers.length === 1 ? "md:grid-cols-2" : offers.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
           {offers.map((o) => (
             <SiteVisible key={o.id} slug={hotel.slug} kind="offers" id={o.id}><RevealItem>

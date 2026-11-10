@@ -8,7 +8,7 @@ import { slotText, useSiteView } from "@/lib/site";
 import { currentSearch } from "@/lib/href";
 import { useLicensed } from "@/lib/licences";
 import { isPaid, storeTheme } from "@/themes/paid";
-import { useLang } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 
 /** Renders the homepage sections in the order and visibility the hotel chose. */
 export function DraftSections({ slug, master, items }: { slug: string; master: MasterTheme; items: { id: string; node: ReactNode }[] }) {
@@ -25,11 +25,54 @@ function SectionFrame({ id, children }: { id: string; children: ReactNode }) {
   return <div data-section={id} className="contents">{children}</div>;
 }
 
-/** A text slot from the manifest (e.g. hero.title), with the HMS value as fallback. */
+// ---- Inline edit mode (admin preview only: Website Management › Preview › Edit) ----
+// The admin sends {type:"bingi:edit-mode", on}; edited slots post {type:"bingi:edit-text", key, value} back.
+// Only the draft changes; the live site never shows editing.
+let editOn = false;
+const editSubs = new Set<() => void>();
+const isAdminPreview = () => typeof window !== "undefined" && currentSearch().get("preview") === "draft";
+if (typeof window !== "undefined") {
+  window.addEventListener("message", (e) => {
+    if (e.origin !== window.location.origin || e.data?.type !== "bingi:edit-mode" || !isAdminPreview()) return;
+    editOn = !!e.data.on;
+    document.documentElement.toggleAttribute("data-bingi-editing", editOn);
+    editSubs.forEach((f) => f());
+  });
+}
+const subEdit = (f: () => void) => (editSubs.add(f), () => void editSubs.delete(f));
+export const useEditMode = () => useSyncExternalStore(subEdit, () => editOn, () => false);
+
+/** A text slot from the manifest (e.g. hero.title), with the HMS value as fallback. Editable inline in the admin preview. */
 export function DraftText({ slug, k, fallback }: { slug: string; k: string; fallback: string }) {
   const doc = useSiteView(slug);
   const lang = useLang();
-  return <>{slotText(doc, k, fallback, lang)}</>;
+  const t = useT();
+  const edit = useEditMode();
+  const fb = t(fallback);
+  const value = slotText(doc, k, fb, lang);
+  if (!edit) return <>{value}</>;
+  const key = lang === "bn" ? `bn:${k}` : k;
+  const save = (el: HTMLElement) => {
+    const v = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (v === value) return;
+    window.parent.postMessage({ type: "bingi:edit-text", key, value: v === fb ? "" : v }, window.location.origin);
+  };
+  return (
+    <span
+      key={`${key}:${value}`}
+      contentEditable="plaintext-only"
+      suppressContentEditableWarning
+      role="textbox"
+      aria-label={`Edit text: ${k}`}
+      data-bingi-slot={k}
+      className="bingi-editable"
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); } if (e.key === "Escape") { e.currentTarget.textContent = value; (e.currentTarget as HTMLElement).blur(); } }}
+      onBlur={(e) => save(e.currentTarget)}
+    >
+      {value}
+    </span>
+  );
 }
 
 /**
@@ -64,6 +107,17 @@ export function MasterSwitch({ slug, initial, fallback, homes }: { slug: string;
 
 /** Admin preview: scroll to the section being edited (message from Website Management). */
 export function PreviewBridge() {
+  // While editing, links and buttons don't navigate (so clicking a heading inside a card edits it instead).
+  useEffect(() => {
+    const block = (e: MouseEvent) => {
+      if (!document.documentElement.hasAttribute("data-bingi-editing")) return;
+      const t = e.target as HTMLElement;
+      if (t.closest(".bingi-editable")) return;
+      if (t.closest("a,button")) { e.preventDefault(); e.stopPropagation(); }
+    };
+    document.addEventListener("click", block, true);
+    return () => document.removeEventListener("click", block, true);
+  }, []);
   useEffect(() => {
     const on = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.data?.type !== "bingi:scroll-to") return;

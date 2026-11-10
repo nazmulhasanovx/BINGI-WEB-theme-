@@ -9,7 +9,7 @@ import { THEMES, themeById } from "@/lib/theme";
 import { hrefFor } from "@/lib/href";
 import { slotText } from "@/lib/site";
 import { MASTER_LIST, PLAN_LABEL, planAllows } from "@/themes/manifest";
-import { useWM, PreviewFrame } from "./WebsiteModule";
+import { useWM } from "./WebsiteModule";
 import { Badge, Btn, Card, Embedded, PlanLock } from "./ui";
 import { PagesPage, SectionsPage } from "./design";
 import { MediaPage, OffersPage, ReviewsPage, RoomsPage, ServicesPage } from "./content";
@@ -142,7 +142,7 @@ function Tiles() {
 const noSub = () => () => {};
 type DesignTab = "included" | "store" | "mine";
 export function DesignSimple() {
-  const { hotel, site } = useWM();
+  const { hotel, site, openPreview } = useWM();
   const d = site.draft;
   const live = site.rec.published?.master;
   const lic = useLicences(hotel.slug);
@@ -162,7 +162,7 @@ export function DesignSimple() {
       {tab === "store" && <StoreTab />}
       {tab === "mine" && <MyThemesTab />}
       {tab === "included" && (
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+      <div>
         <div className="space-y-6">
           {isPaid(d.master) && (
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e3dcf7] bg-[#f6f3ff] px-4 py-3 text-[14px]">
@@ -172,33 +172,41 @@ export function DesignSimple() {
           )}
           <section>
             <h2 className="mb-3 text-[15px] font-semibold">Theme</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {MASTER_LIST.map((m) => {
                 const allowed = planAllows(hotel.plan, m.minPlan);
                 const on = d.master === m.id;
                 return (
-                  <button
-                    key={m.id}
-                    disabled={!allowed}
-                    onClick={() => site.edit((x) => { x.master = m.id; })}
-                    className={clsx("group overflow-hidden rounded-2xl border bg-white text-left transition-shadow", on ? "border-hms-coral ring-4 ring-hms-coral/10" : "border-hms-line enabled:hover:shadow-[0_8px_24px_-14px_rgb(0_0_0/0.25)]", !allowed && "cursor-not-allowed")}
-                  >
-                    <span className="relative block aspect-[16/10] bg-hms-hover">
-                      <Image src={`/themes/${m.id}.jpg`} alt="" fill sizes="300px" className={clsx("object-cover object-top", !allowed && "opacity-50 grayscale")} />
-                      {on && <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-hms-coral text-white"><Check className="size-4" strokeWidth={3} /></span>}
-                      {live === m.id && <span className="absolute left-2.5 top-2.5"><Badge tone="green">Live</Badge></span>}
-                    </span>
-                    <span className="flex items-center justify-between gap-2 px-4 py-3">
-                      <span className="min-w-0">
-                        <span className="block text-[15px] font-semibold">{m.name}</span>
-                        <span className="block truncate text-[13px] text-hms-muted">{m.tagline}</span>
+                  <div key={m.id} className={clsx("overflow-hidden rounded-2xl border bg-white transition-shadow", on ? "border-hms-coral ring-4 ring-hms-coral/10" : "border-hms-line hover:shadow-[0_8px_24px_-14px_rgb(0_0_0/0.25)]")}>
+                    <button
+                      disabled={!allowed}
+                      aria-pressed={on}
+                      onClick={() => site.edit((x) => { x.master = m.id; })}
+                      className={clsx("block w-full text-left", !allowed && "cursor-not-allowed")}
+                    >
+                      <span className="relative block aspect-[16/10] bg-hms-hover">
+                        <Image src={`/themes/${m.id}.jpg`} alt="" fill sizes="300px" className={clsx("object-cover object-top", !allowed && "opacity-50 grayscale")} />
+                        {on && <span className="absolute right-2.5 top-2.5 grid size-7 place-items-center rounded-full bg-hms-coral text-white"><Check className="size-4" strokeWidth={3} /></span>}
+                        {live === m.id && <span className="absolute left-2.5 top-2.5"><Badge tone="green">Live</Badge></span>}
                       </span>
-                      {!allowed && <PlanLock plan={PLAN_LABEL[m.minPlan]} />}
-                    </span>
-                  </button>
+                      <span className="flex items-center justify-between gap-2 px-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[15px] font-semibold">{m.name}</span>
+                          <span className="block truncate text-[13px] text-hms-muted">{m.tagline}</span>
+                        </span>
+                        {!allowed && <PlanLock plan={PLAN_LABEL[m.minPlan]} />}
+                      </span>
+                    </button>
+                    {on && (
+                      <div className="flex gap-2 border-t border-hms-line px-3 py-2.5">
+                        <Btn variant="outline" className="h-8 flex-1 px-3 text-[13px]" onClick={() => openPreview()}><Eye className="size-4" /> Preview & edit</Btn>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
+            <p className="mt-2 text-[12.5px] text-hms-muted">Click a theme to put it in your draft, then open Preview. In Preview, tap Edit to change any heading or text right on the page.</p>
           </section>
           <section>
             <h2 className="mb-3 text-[15px] font-semibold">Colour</h2>
@@ -223,23 +231,9 @@ export function DesignSimple() {
           </section>
           <MotionCard />
         </div>
-        <Phone />
       </div>
       )}
     </>
-  );
-}
-
-function Phone() {
-  const { hotel } = useWM();
-  return (
-    <div className="xl:sticky xl:top-0 xl:self-start">
-      <div className="mx-auto h-[620px] w-[320px] overflow-hidden rounded-[34px] border-[8px] border-[#1d1f24] bg-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.4)]">
-        <div className="h-[756px] w-[390px] origin-top-left" style={{ transform: "scale(0.7795)" }}>
-          <PreviewFrame slug={hotel.slug} title="Phone preview" />
-        </div>
-      </div>
-    </div>
   );
 }
 

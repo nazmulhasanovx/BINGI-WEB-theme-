@@ -126,7 +126,7 @@ function Life({ hotel }: { hotel: Hotel }) {
     <section className="mt-14 md:mt-28">
       <Container>
         <div className="rounded-[28px] bg-brand-soft p-5 md:p-12">
-          <Reveal><Head label="Hostel life" title="Come for the beach, stay for the people" /></Reveal>
+          <Reveal><Head label="Hostel life" title={<DraftText slug={hotel.slug} k="copy.come-for-the-beach-stay-for-the-people" fallback="Come for the beach, stay for the people" />} /></Reveal>
           <RevealGroup className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {hotel.facilities.map((f) => {
               const Icon = ICONS[f.icon] ?? Sparkles;
@@ -163,7 +163,7 @@ function Rules({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mt-14 md:mt-28">
       <Container>
-        <Reveal><Head label="House rules" title="Simple rules, good sleep" /></Reveal>
+        <Reveal><Head label="House rules" title={<DraftText slug={hotel.slug} k="copy.simple-rules-good-sleep" fallback="Simple rules, good sleep" />} /></Reveal>
         <RevealGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {rules.map((r, i) => {
             const Icon = icons[i % icons.length];

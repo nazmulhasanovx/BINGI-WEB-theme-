@@ -126,7 +126,7 @@ function LongStay({ hotel }: { hotel: Hotel }) {
     <section className="mt-12 md:mt-24">
       <Container>
         <Reveal className="rounded-[14px] bg-brand-soft p-5 md:p-10">
-          <Head label="Long stays" title="Stay longer, pay less" />
+          <Head label="Long stays" title={<DraftText slug={hotel.slug} k="copy.stay-longer-pay-less" fallback="Stay longer, pay less" />} />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[{ minNights: 1, percent: 0, code: "", label: "Short stay" }, ...codes].map((c) => (
               <div key={c.label} className="rounded-[12px] bg-surface p-4 md:p-5">
@@ -151,7 +151,7 @@ function Amenities({ hotel }: { hotel: Hotel }) {
         <div className="grid gap-6 md:grid-cols-[1fr_1.2fr] md:items-center md:gap-14">
           <Reveal className="relative aspect-[4/3] overflow-hidden rounded-[14px]"><Image src={photo(hotel, /work|kitchen/)} alt="" fill sizes="(max-width: 768px) 100vw, 560px" className="object-cover" /></Reveal>
           <div>
-            <Reveal><Head label="Every flat has" title="Live and work like at home" /></Reveal>
+            <Reveal><Head label="Every flat has" title={<DraftText slug={hotel.slug} k="copy.live-and-work-like-at-home" fallback="Live and work like at home" />} /></Reveal>
             <RevealGroup className="grid grid-cols-2 gap-x-6 gap-y-5">
               {hotel.facilities.map((f) => {
                 const Icon = ICONS[f.icon] ?? Sparkles;
@@ -198,7 +198,7 @@ function Faq({ hotel }: { hotel: Hotel }) {
   return (
     <section className="mb-12 mt-12 md:mb-24 md:mt-24">
       <Container className="max-w-[900px]">
-        <Reveal><Head label="Questions" title="Before you book" /></Reveal>
+        <Reveal><Head label="Questions" title={<DraftText slug={hotel.slug} k="copy.before-you-book" fallback="Before you book" />} /></Reveal>
         <div className="divide-y divide-line border-y border-line">
           {qa.map((x) => (
             <details key={x.q} className="group py-4">

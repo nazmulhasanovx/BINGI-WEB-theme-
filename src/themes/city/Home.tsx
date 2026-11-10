@@ -265,7 +265,7 @@ function CityOffers({ hotel }: { hotel: Hotel }) {
     <section className="mt-12 md:mt-28">
       <Container>
         <Reveal>
-          <Head label="Direct booking" title="Book direct, pay less" href={`${base}/offers`} link="All offers" />
+          <Head label="Direct booking" title={<DraftText slug={hotel.slug} k="copy.book-direct-pay-less" fallback="Book direct, pay less" />} href={`${base}/offers`} link="All offers" />
         </Reveal>
         <RevealGroup className="grid gap-8 md:grid-cols-2 md:gap-6">
           {offers.map((o) => (

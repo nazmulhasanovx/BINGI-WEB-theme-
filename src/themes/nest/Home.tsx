@@ -182,7 +182,7 @@ function LifeHere({ hotel }: { hotel: Hotel }) {
             <Image src={photo} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
           </Reveal>
           <Reveal delay={0.1}>
-            <Title label="Life here" title="Simple, slow and comfortable" />
+            <Title label="Life here" title={<DraftText slug={hotel.slug} k="copy.simple-slow-and-comfortable" fallback="Simple, slow and comfortable" />} />
             <ul className="grid grid-cols-2 gap-x-5 gap-y-5 md:gap-y-6">
               {hotel.facilities.map((f) => {
                 const Icon = ICONS[f.icon] ?? Sparkles;
@@ -212,7 +212,7 @@ function Extras({ hotel }: { hotel: Hotel }) {
     <section className="mt-12 md:mt-28">
       <Container>
         <Reveal>
-          <Title label="Add to your stay" title="Meals, walks and pickup" />
+          <Title label="Add to your stay" title={<DraftText slug={hotel.slug} k="copy.meals-walks-and-pickup" fallback="Meals, walks and pickup" />} />
         </Reveal>
         <RevealGroup className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {items.map((s) => (
@@ -280,7 +280,7 @@ function BookBand({ hotel }: { hotel: Hotel }) {
     <section className="mb-12 mt-12 md:mb-24 md:mt-24">
       <Container>
         <Reveal className="relative overflow-hidden rounded-[28px] bg-action px-5 py-10 text-center text-on-action md:px-12 md:py-16">
-          <h2 className="font-heading text-[28px] leading-tight md:text-[44px]"><T>Book your stay</T></h2>
+          <h2 className="font-heading text-[28px] leading-tight md:text-[44px]"><DraftText slug={hotel.slug} k="copy.book-your-stay" fallback="Book your stay" /></h2>
           <p className="mx-auto mt-2 max-w-[460px] text-[15px] opacity-85 md:text-[17px]">
             Check-in {hotel.checkIn} · Check-out {hotel.checkOut}
           </p>
