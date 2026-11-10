@@ -38,6 +38,9 @@ import { LeavePage } from "@/components/hms/staff/leave";
 import { PayrollPage, PayrollRunPage } from "@/components/hms/staff/payroll";
 import { HiringPage, CandidatePage } from "@/components/hms/staff/hiring";
 import { OperationsPage } from "@/components/hms/staff/operations";
+import { GuestsPage } from "@/components/hms/guests/list";
+import { GuestProfilePage } from "@/components/hms/guests/profile";
+import { ReviewsPage as GuestReviewsPage } from "@/components/hms/guests/reviews";
 import { SettingsPage as StaffSettings } from "@/components/hms/staff/settings";
 import { UnitsPage, CategoriesPage, ConfigurationPage } from "@/components/hms/rooms/pages";
 import { SetupPage as RoomsSetup } from "@/components/hms/rooms/setup";
@@ -79,6 +82,10 @@ async function resolve(route: string): Promise<ReactNode> {
         else if (id && sec === "hiring") page = <CandidatePage key={id} id={id} />;
         else if (STAFF[sec] && !id) page = STAFF[sec]();
         else throw new NotFoundError("not found");
+      } else if (seg[1] === "guests" || seg[1] === "guest-reviews") {
+        const sec = seg[1] === "guest-reviews" ? "reviews" : (seg[2] ?? "");
+        if (seg[3]) throw new NotFoundError("not found");
+        page = sec === "" ? <GuestsPage /> : sec === "reviews" ? <GuestReviewsPage /> : <GuestProfilePage key={sec} id={decodeURIComponent(sec)} />;
       } else if (seg[1] === "rooms") {
         const R: Record<string, () => ReactNode> = { "": () => <UnitsPage />, categories: () => <CategoriesPage />, configuration: () => <ConfigurationPage />, setup: () => <RoomsSetup />, new: () => <RoomsAdd /> };
         const sec = seg[2] ?? "";

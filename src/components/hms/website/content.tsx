@@ -252,7 +252,7 @@ export function ReviewsPage() {
   const shown = hotel.reviews.filter((r) => !d.hiddenReviews.includes(r.id));
   return (
     <>
-      <PageHead title="Reviews" desc="Pick the reviews guests see." actions={<SourceLink href="/hms/guest-reviews" label="All reviews" />} />
+      <PageHead title="Reviews" desc="Pick the reviews guests see." actions={<SourceLink href="/hms/guests/reviews" label="All reviews" />} />
       <div className="mb-4 flex items-center gap-3">
         <span className="text-[32px] font-semibold leading-none">{hotel.reviewScore ?? "—"}</span>
         <span className="text-[14px] text-hms-muted"><Star className="mb-0.5 inline size-4 fill-hms-amber text-hms-amber" /> {hotel.reviewCount} reviews · {shown.length} shown on the site</span>

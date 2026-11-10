@@ -19,7 +19,7 @@ import { Badge, Btn, Card, Field, Input, PageHead, PlanLock, Row, Segmented, Sou
 
 const SOURCE_LINK: Record<string, { href: string; label: string }> = {
   rooms: { href: "/hms/rooms", label: "Rooms" },
-  reviews: { href: "/hms/guest-reviews", label: "Guest Reviews" },
+  reviews: { href: "/hms/guests/reviews", label: "Guest Reviews" },
   offers: { href: "/hms/discounts", label: "Discounts" },
   services: { href: "/hms/other-services", label: "Other Services" },
   facilities: { href: "/hms/website/info", label: "Property Info" },
