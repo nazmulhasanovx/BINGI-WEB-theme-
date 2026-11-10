@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
 import { useState } from "react";
+import { FittedDevice } from "./devices";
 import {
   ArrowDown, ArrowRight, ArrowUp, Check, ChevronDown, CircleAlert, CircleCheck, Eye, EyeOff, ExternalLink, Inbox, Lock, Sparkles,
 } from "lucide-react";
@@ -223,10 +224,8 @@ function PhonePreview() {
         <span className="font-medium">Live preview · phone</span>
         <span className="text-hms-muted">draft</span>
       </div>
-      <div className="mx-auto h-[640px] w-[340px] overflow-hidden rounded-[34px] border-[8px] border-[#1d1f24] bg-white shadow-[0_20px_50px_-20px_rgb(0_0_0/0.35)]">
-        <div className="h-[748px] w-[390px] origin-top-left" style={{ transform: "scale(0.8205)" }}>
-          <PreviewFrame slug={hotel.slug} title="Phone preview" />
-        </div>
+      <div className="mx-auto h-[660px] w-full max-w-[340px]">
+        <FittedDevice kind="iphone" pad={4}><PreviewFrame slug={hotel.slug} title="Phone preview" name={hotel.name} /></FittedDevice>
       </div>
     </div>
   );
@@ -297,10 +296,8 @@ export function SectionsPage() {
           {device === "desktop" ? (
             <ScaledSite slug={hotel.slug} section={open ?? undefined} width={1440} height={620} title="Homepage preview" />
           ) : (
-            <div className="mx-auto h-[620px] w-[320px] overflow-hidden rounded-[32px] border-[8px] border-[#1d1f24] bg-white">
-              <div className="h-[766px] w-[390px] origin-top-left" style={{ transform: "scale(0.7795)" }}>
-                <PreviewFrame slug={hotel.slug} section={open ?? undefined} title="Homepage preview phone" />
-              </div>
+            <div className="mx-auto h-[620px] w-full max-w-[320px]">
+              <FittedDevice kind="iphone" pad={4}><PreviewFrame slug={hotel.slug} section={open ?? undefined} title="Homepage preview phone" name={hotel.name} /></FittedDevice>
             </div>
           )}
           

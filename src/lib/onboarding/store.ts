@@ -28,7 +28,12 @@ export type Draft = {
   // S4
   modules: string[]; team: { phone: string; role: string }[]; teamLater: boolean;
   // S5
-  pay: { cash: boolean; bkash: boolean; nagad: boolean; bank: boolean; bingi: "later" | "apply" | "" };
+  pay: {
+    cash: boolean; bkash: boolean; nagad: boolean; bank: boolean; bingi: "later" | "apply" | "";
+    bkashNo?: string; bkashType?: "personal" | "merchant" | "agent"; nagadNo?: string; nagadType?: "personal" | "merchant" | "agent";
+    bankName?: string; bankHolder?: string; bankAcc?: string; bankBranch?: string;
+    settle?: { method: "bank" | "bkash"; holder: string; bank: string; acc: string; branch: string; routing: string; wallet: string };
+  };
   site: { theme: string; later: boolean };
   // S6
   verify: { nid: string; trade: string; tin: string; later: boolean };
@@ -51,16 +56,35 @@ export const STEP_TITLE: Record<StepId, [string, string]> = {
   "3.1": ["দামের নিয়ম", "Price rules"], "3.2": ["বাতিল ও সময়", "Policy & times"],
   "4.1": ["কাজের টুলস", "Tools"], "4.2": ["টিম", "Team"],
   "5.1": ["টাকা নেওয়া", "Payments"], "5.2": ["ওয়েবসাইট", "Website"],
-  "6.1": ["প্ল্যান", "Plan"], "6.2": ["কাগজপত্র", "Documents"], "6.3": ["জমা দিন", "Submit"],
+  "6.1": ["প্ল্যান", "Plan"], "6.2": ["কাগজপত্র", "Documents"], "6.3": ["রিভিউ ও জমা", "Review & submit"],
 };
 export const sectionOf = (s: StepId) => SECTIONS.findIndex((x) => (x.steps as readonly string[]).includes(s));
 
 // ---------- Pricing (confirmed by Nazmul 9–10 Nov 2026) ----------
-export const PLANS: Record<PlanId, { label: string; perUnit: number; activation: number; activationRegular?: number; for: string; restaurant: boolean }> = {
-  starter: { label: "Starter", perUnit: 30, activation: 0, for: "Small guest houses and homes", restaurant: false },
-  business: { label: "Business", perUnit: 50, activation: 4999, activationRegular: 14500, for: "Hotels and resorts, full HMS", restaurant: false },
-  ultra: { label: "Ultra", perUnit: 116, activation: 8999, for: "Full HMS + Restaurant & Bar", restaurant: true },
+// Public site pricing ("Pay per room. Nothing hidden", Nazmul 10 Nov 2026).
+export type PlanInfo = { label: string; perUnit: number; activation: number; activationRegular?: number; for: string; forBn: string; tags: [string, string][]; fees: [number, number, number]; includes: [string, string][]; includesTitle: [string, string]; restaurant: boolean };
+export const PLANS: Record<PlanId, PlanInfo> = {
+  starter: {
+    label: "Starter", perUnit: 30, activation: 0, for: "Rooms, bookings and your own website", forBn: "রুম, বুকিং আর নিজের ওয়েবসাইট",
+    tags: [["হোম / ফ্ল্যাট", "Home / flat"], ["গেস্ট হাউস", "Guest house"]], fees: [12, 1.5, 0], restaurant: false,
+    includesTitle: ["Starter-এ আছে", "Starter includes"],
+    includes: [["রুম / থাকার জায়গা ম্যানেজমেন্ট", "Room / accommodation management"], ["অনলাইন ও অফলাইন বুকিং", "Online & offline bookings"], ["ওয়েবসাইট ম্যানেজমেন্ট", "Website management"], ["ডোমেইন ম্যানেজমেন্ট", "Domain management"], ["সীমিত ওয়েবসাইট থিম", "Limited website themes"]],
+  },
+  business: {
+    label: "Business", perUnit: 50, activation: 4999, activationRegular: 14500, for: "Day-to-day hotel operations", forBn: "হোটেলের প্রতিদিনের কাজ",
+    tags: [["হোটেল", "Hotel"]], fees: [8, 1, 0], restaurant: true,
+    includesTitle: ["Starter-এর সব, সাথে", "Everything in Starter, plus"],
+    includes: [["হাউসকিপিং", "Housekeeping"], ["রেস্টুরেন্ট / মিল ম্যানেজমেন্ট", "Restaurant / meal management"], ["QR ফুড অর্ডার", "QR food ordering"], ["খরচের হিসাব", "Expense management"], ["অন্যান্য সার্ভিস", "Other services"]],
+  },
+  ultra: {
+    label: "Ultra", perUnit: 116, activation: 8999, for: "Staff, inventory and advanced operations", forBn: "স্টাফ, ইনভেন্টরি আর অ্যাডভান্সড অপারেশন",
+    tags: [["রিসোর্ট", "Resort"]], fees: [4, 0.5, 0], restaurant: true,
+    includesTitle: ["Business-এর সব, সাথে", "Everything in Business, plus"],
+    includes: [["পূর্ণ HRM", "Full HRM"], ["ইনভেন্টরি", "Inventory"], ["অ্যাডভান্সড অপারেশন", "Advanced operations"], ["সব ওয়েবসাইট থিম", "Unlimited website themes"]],
+  },
 };
+/** Which plan a module needs (public pricing page). */
+export const MODULE_PLAN: Record<string, PlanId> = { frontdesk: "starter", housekeeping: "business", restaurant: "business", accounts: "business", staff: "ultra", inventory: "ultra" };
 export const MIN_BILLED = 10;
 export const CYCLE_OFF: Record<Cycle, number> = { 1: 0, 6: 0.1, 12: 0.25 };
 export const TRIAL_DAYS = 7;
@@ -73,11 +97,16 @@ export function quote(plan: PlanId, units: number, cycle: Cycle) {
   const sub = gross - off;
   return { billed, monthly, gross, off, sub, activation: p.activation, activationRegular: p.activationRegular, total: sub + p.activation };
 }
-/** Restaurant & Bar needs Ultra (rule). Starter is for up to 20 units. */
-export function recommend(units: number, extras: string[]): PlanId {
-  if (extras.some((e) => e === "Restaurant" || e === "Bar")) return "ultra";
-  return units <= 20 && units > 0 ? "starter" : "business";
+const RANK: Record<PlanId, number> = { starter: 0, business: 1, ultra: 2 };
+const BY_TYPE: Record<string, PlanId> = { homestay: "starter", "guest-house": "starter", hostel: "starter", hotel: "business", motel: "business", "serviced-apartment": "business", other: "business", resort: "ultra", lodge: "ultra", "vacation-rental": "business" };
+/** Property type (public pricing tags) + the modules the owner turned on → the plan that fits. */
+export function recommend(d: Pick<Draft, "propertyType" | "modules" | "extras">): PlanId {
+  let p: PlanId = BY_TYPE[d.propertyType] ?? "business";
+  const need = [...d.modules, ...(d.extras.some((e) => e === "Restaurant" || e === "Bar") ? ["restaurant"] : [])];
+  for (const m of need) { const q = MODULE_PLAN[m]; if (q && RANK[q] > RANK[p]) p = q; }
+  return p;
 }
+export const planRank = (p: PlanId) => RANK[p];
 
 export const EXTRAS = ["Restaurant", "Bar", "Café", "Pool", "Spa", "Event hall", "Airport transfer", "Tours", "Laundry", "Gym"];
 export const STAFF = ["Just me", "2–5", "6–15", "16–50", "50+"];

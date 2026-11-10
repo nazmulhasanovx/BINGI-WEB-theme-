@@ -41,16 +41,16 @@ export function SetupDashboard({ d }: { d: Draft }) {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.map((k) => (
-            <div key={k.label} className="flex items-center gap-3 rounded-2xl border border-hms-line bg-white p-4">
+            <div key={k.label} className="flex items-center gap-3 rounded-xl border border-hms-line bg-white p-4">
               <span className={clsx("grid size-11 place-items-center rounded-xl", k.tint)}><k.icon className="size-5" /></span>
               <div><p className="text-[22px] font-bold leading-none">{k.value}</p><p className="mt-1 text-[13px] text-hms-muted">{k.label}{k.sub ? ` · ${k.sub}` : ""}</p></div>
             </div>
           ))}
         </div>
         <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-          <section className="rounded-2xl border border-hms-line bg-white p-5">
+          <section className="rounded-xl border border-hms-line bg-white p-5">
             <div className="flex items-center gap-3">
-              <span className="grid size-12 place-items-center rounded-2xl bg-hms-coral-soft text-hms-red"><ClipboardList className="size-6" /></span>
+              <span className="grid size-12 place-items-center rounded-xl bg-hms-coral-soft text-hms-red"><ClipboardList className="size-6" /></span>
               <div className="flex-1"><h2 className="text-[17px] font-bold">Getting started</h2><p className="text-[13.5px] text-hms-muted">{done} of {tasks.length} done</p></div>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-hms-hover"><div className="h-full rounded-full bg-hms-coral transition-[width]" style={{ width: `${(done / tasks.length) * 100}%` }} /></div>
@@ -74,7 +74,7 @@ export function SetupDashboard({ d }: { d: Draft }) {
 function PlanCard({ d }: { d: Draft }) {
   if (d.plan === "starter") {
     return (
-      <section className="flex flex-col justify-between rounded-2xl bg-gradient-to-br from-[#c8232e] to-[#8f1520] p-5 text-white">
+      <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#c8232e] to-[#8f1520] p-5 text-white">
         <div><Sparkles className="size-6" /><h2 className="mt-3 text-[19px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, staff, inventory and accounts.</p></div>
         <Link href="/hms/billing-subscription" className="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-[14px] font-semibold text-[#b11c29]">View Business</Link>
       </section>
@@ -82,15 +82,28 @@ function PlanCard({ d }: { d: Draft }) {
   }
   if (d.plan === "ultra") {
     return (
-      <section className="rounded-2xl border border-hms-line bg-white p-5">
+      <section className="rounded-xl border border-hms-line bg-white p-5">
+        <h2 className="flex items-center gap-2 text-[17px] font-bold"><UsersRound className="size-5 text-hms-red" />Team & inventory</h2>
+        <dl className="mt-3 divide-y divide-hms-line text-[14px]">
+          <div className="flex justify-between py-2"><dt className="text-hms-muted">Staff on duty</dt><dd className="font-semibold">0</dd></div>
+          <div className="flex justify-between py-2"><dt className="text-hms-muted">Low stock</dt><dd className="font-semibold">0 items</dd></div>
+          <div className="flex justify-between py-2"><dt className="text-hms-muted">Team invited</dt><dd className="font-semibold">{d.team.length}</dd></div>
+        </dl>
+        <Link href="/hms/staff" className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border border-hms-line text-[14px] font-semibold hover:bg-hms-hover">View operations</Link>
+      </section>
+    );
+  }
+  if (d.modules.includes("restaurant")) {
+    return (
+      <section className="rounded-xl border border-hms-line bg-white p-5">
         <h2 className="flex items-center gap-2 text-[17px] font-bold"><ChefHat className="size-5 text-hms-red" />Restaurant today</h2>
         <p className="mt-1 text-[13.5px] text-hms-muted">No menu yet. Add your menu to take room-service and QR orders.</p>
-        <Link href="/hms/meals" className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-hms-line text-[14px] font-semibold hover:bg-hms-hover">Add menu</Link>
+        <Link href="/hms/meals" className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-hms-line text-[14px] font-semibold hover:bg-hms-hover">Add menu</Link>
       </section>
     );
   }
   return (
-    <section className="rounded-2xl border border-hms-line bg-white p-5">
+    <section className="rounded-xl border border-hms-line bg-white p-5">
       <h2 className="flex items-center gap-2 text-[17px] font-bold"><Globe className="size-5 text-hms-red" />Website & booking</h2>
       <p className="mt-2 inline-flex rounded-full bg-[#fdf6e7] px-2.5 py-0.5 text-[12.5px] font-semibold text-[#7a4a0b]">Draft · publishes after approval</p>
       <p className="mt-2 text-[13.5px] text-hms-muted">Theme: {d.site.theme ? d.site.theme.toUpperCase() : "not chosen"}</p>
