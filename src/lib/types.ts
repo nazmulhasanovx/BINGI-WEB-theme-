@@ -2,7 +2,9 @@ import type { ThemeId } from "./theme";
 
 /** Included masters come with the plan; paid masters (drift, canopy, pod, orbit) are bought in the Theme Store. */
 export type MasterTheme = "nest" | "city" | "grand" | "cottage" | "villa" | "flat" | "escape" | "bunk" | PaidTheme;
-export type PaidTheme = "drift" | "canopy" | "pod" | "orbit" | LuxTheme;
+export type PaidTheme = "drift" | "canopy" | "pod" | "orbit" | LuxTheme | SigTheme;
+/** Signature Collection (property-type themes from Nazmul's 10 designs, 2026-11-10). */
+export type SigTheme = "aurel" | "courtyard" | "axis" | "waypoint" | "shanti" | "reside" | "commons" | "roots" | "morning" | "matir";
 /** Luxury Collection (5★–7★) — paid themes in the Theme Store. drift, canopy and orbit were rebuilt into it. */
 export type LuxTheme = "isle" | "zamindar" | "maison" | "noir" | "haven" | "summit" | "estate";
 export type PropertyType = "hotel" | "resort" | "guest-house" | "home" | "serviced-apartment" | "hostel" | "cottage" | "villa" | "other";

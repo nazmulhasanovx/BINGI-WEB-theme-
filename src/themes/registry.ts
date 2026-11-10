@@ -16,6 +16,7 @@ import { CanopyHome } from "./canopy/Home";
 import { PodHome } from "./pod/Home";
 import { OrbitHome } from "./orbit/Home";
 import { IsleHome } from "./isle/Home";
+import { SIG_HOMES } from "./sig/homes";
 import { EstateHome } from "./estate/Home";
 import { SummitHome } from "./summit/Home";
 import { HavenHome } from "./haven/Home";
@@ -37,6 +38,7 @@ export const THEME_HOMES: Record<MasterTheme, ComponentType<{ hotel: Hotel }>> =
   pod: PodHome,
   orbit: OrbitHome,
   isle: IsleHome,
+  ...SIG_HOMES,
   estate: EstateHome,
   summit: SummitHome,
   haven: HavenHome,
@@ -63,6 +65,16 @@ export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?:
   { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
   { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
   { id: "isle", name: "ISLE", plan: "Luxury", demo: "nila-island" },
+  { id: "aurel", name: "AUREL", plan: "Signature", demo: "aurel-banani" },
+  { id: "courtyard", name: "COURTYARD", plan: "Signature", demo: "the-courtyard" },
+  { id: "axis", name: "AXIS", plan: "Signature", demo: "axis-gulshan" },
+  { id: "waypoint", name: "WAYPOINT", plan: "Signature", demo: "waypoint-inn" },
+  { id: "shanti", name: "SHANTI", plan: "Signature", demo: "shanti-guest-house" },
+  { id: "reside", name: "RESIDE", plan: "Signature", demo: "haven-residences" },
+  { id: "commons", name: "COMMONS", plan: "Signature", demo: "common-ground" },
+  { id: "roots", name: "ROOTS", plan: "Signature", demo: "roots-homestay" },
+  { id: "morning", name: "MORNING", plan: "Signature", demo: "morning-house" },
+  { id: "matir", name: "MATIR", plan: "Signature", demo: "matir-farm" },
   { id: "estate", name: "ESTATE", plan: "Luxury", demo: "bonolota-estate" },
   { id: "summit", name: "SUMMIT", plan: "Luxury", demo: "meghchura" },
   { id: "haven", name: "HAVEN", plan: "Luxury", demo: "haven-lalakhal" },

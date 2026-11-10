@@ -38,7 +38,7 @@ export function Head({ hotel, k, eyebrow, title, intro, center, className, light
     <div className={clsx(center ? "mx-auto mb-10 max-w-[760px] text-center md:mb-16" : "mb-8 max-w-[760px] md:mb-14", light && "text-white", className)}>
       <Eyebrow className={light ? "!text-white/85" : undefined}>{eyebrow}</Eyebrow>
       <span aria-hidden className={clsx("lux-rule mt-4", center && "mx-auto")} />
-      <h2 className="lux-display mt-5 text-[34px] md:text-[60px]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
+      <h2 className="lux-display mt-5 text-[34px] md:text-[48px] lg:text-[60px] [overflow-wrap:anywhere]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
       {intro && <p className={clsx("mt-4 text-[16px] leading-relaxed md:text-[18px]", light ? "text-white/85" : "text-muted")}>{intro}</p>}
     </div>
   );

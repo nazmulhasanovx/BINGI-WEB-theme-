@@ -313,11 +313,21 @@ export const MANIFESTS: Record<MasterTheme, ThemeManifest> = {
   canopy: lux("canopy", "CANOPY", "Living in the canopy", "Luxury Collection — rainforest and treehouse retreats.", ["cottage", "other", "resort"], "canopy-nest", ["hero", "signature", "rooms", "journey", "experiences", "amenities", "gallery", "reviews", "faq", "arrival", "reserve"], "Height scale: treehouses by how high they sit"),
   drift: lux("drift", "DRIFT", "A voyage, slowly", "Luxury Collection — luxury houseboats and river cruises.", ["other", "resort", "villa"], "haor-bilash", ["hero", "facts", "signature", "rooms", "amenities", "experiences", "gallery", "reviews", "faq", "arrival", "reserve"], "Voyage line: the day on board along the river"),
   estate: lux("estate", "ESTATE", "The whole place is yours", "Luxury Collection — private villa estates and exclusive-use houses.", ["villa", "home", "resort"], "bonolota-estate", ["hero", "signature", "rooms", "experiences", "dining", "amenities", "gallery", "reviews", "faq", "arrival", "reserve"], "The whole estate: sleeps, bedrooms, staff and pools"),
+  aurel: lux("aurel", "AUREL", "The city. Your sanctuary.", "Signature Collection — City hotels, urban 4–5★.", ["hotel"], "aurel-banani", ["hero", "signature", "rooms", "dining", "experiences", "reserve"], "The building: 3D floor cutaway"),
+  courtyard: lux("courtyard", "COURTYARD", "Stay somewhere with soul.", "Signature Collection — Boutique hotels, townhouses.", ["hotel"], "the-courtyard", ["hero", "story", "rooms", "dining", "experiences", "reserve"], "Signature"),
+  axis: lux("axis", "AXIS", "Make room for your next move.", "Signature Collection — Business hotels, corporate stays.", ["hotel"], "axis-gulshan", ["hero", "facts", "signature", "rooms", "dining", "experiences", "arrival", "reserve"], "The business suite: 3D suite"),
+  waypoint: lux("waypoint", "WAYPOINT", "Good roads. Great rest.", "Signature Collection — Motels, highway inns, transit stays.", ["hotel"], "waypoint-inn", ["hero", "signature", "rooms", "amenities", "experiences", "reserve"], "Road-trip flow: rest, refuel, explore"),
+  shanti: lux("shanti", "SHANTI", "A slower, warmer kind of stay.", "Signature Collection — Guest houses, small B&Bs.", ["guest-house"], "shanti-guest-house", ["hero", "story", "rooms", "dining", "gallery", "reserve"], "Signature"),
+  reside: lux("reside", "RESIDE", "Space to settle in.", "Signature Collection — Serviced apartments, long stays.", ["serviced-apartment"], "haven-residences", ["hero", "signature", "rooms", "amenities", "arrival", "offers", "gallery", "reserve"], "Explore the space: 3D apartment"),
+  commons: lux("commons", "COMMONS", "Come for a bed. Stay for the people.", "Signature Collection — Hostels, social stays.", ["hostel"], "common-ground", ["hero", "gallery", "rooms", "experiences", "arrival", "reserve"], "Signature"),
+  roots: lux("roots", "ROOTS", "A new place. A familiar feeling.", "Signature Collection — Homestays, host families.", ["home"], "roots-homestay", ["hero", "story", "rooms", "dining", "experiences", "gallery", "reserve"], "Signature"),
+  morning: lux("morning", "MORNING", "Stay for the night. Love the morning.", "Signature Collection — B&Bs, small inns.", ["guest-house"], "morning-house", ["hero", "dining", "rooms", "experiences", "arrival", "reserve"], "Signature"),
+  matir: lux("matir", "MATIR", "Let the countryside wake you.", "Signature Collection — Farm stays, eco cottages.", ["cottage"], "matir-farm", ["hero", "signature", "rooms", "dining", "experiences", "story", "reserve"], "The farm: 3D diorama"),
 };
 
 export const MASTER_LIST: ThemeManifest[] = [MANIFESTS.nest, MANIFESTS.cottage, MANIFESTS.bunk, MANIFESTS.city, MANIFESTS.villa, MANIFESTS.flat, MANIFESTS.escape, MANIFESTS.grand];
 /** Paid themes (Theme Store). */
-export const PAID_LIST: ThemeManifest[] = [MANIFESTS.isle, MANIFESTS.zamindar, MANIFESTS.maison, MANIFESTS.noir, MANIFESTS.orbit, MANIFESTS.haven, MANIFESTS.summit, MANIFESTS.canopy, MANIFESTS.drift, MANIFESTS.estate, MANIFESTS.pod];
+export const PAID_LIST: ThemeManifest[] = [MANIFESTS.isle, MANIFESTS.zamindar, MANIFESTS.maison, MANIFESTS.noir, MANIFESTS.orbit, MANIFESTS.haven, MANIFESTS.summit, MANIFESTS.canopy, MANIFESTS.drift, MANIFESTS.estate, MANIFESTS.aurel, MANIFESTS.courtyard, MANIFESTS.axis, MANIFESTS.waypoint, MANIFESTS.shanti, MANIFESTS.reside, MANIFESTS.commons, MANIFESTS.roots, MANIFESTS.morning, MANIFESTS.matir, MANIFESTS.pod];
 
 export const planAllows = (plan: Plan, min?: Plan) => !min || PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(min);
 
