@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, BadgeDollarSign, ChevronRight, CircleMinus, Download, History, MoreHorizontal, Package, Pencil, Plus, Printer, Search, Store, Tag, TriangleAlert, X } from "lucide-react";
 import { MOVE_LABEL, TODAY, fmtQty, statusOf, tk, type Item, type Move, type MoveType, type StockStatus } from "@/lib/inventory/store";
-import { btnLine, btnPrimary } from "../guests/ui";
+import { btnIcon, btnLine, btnPrimary } from "../guests/ui";
 import { InventoryFrame, useInv } from "./frame";
 
 const card = "rounded-xl border border-hms-line bg-white";
@@ -125,7 +125,7 @@ function RowMenu({ item }: { item: Item }) {
   return (
     <div ref={ref} className="relative inline-block">
       <button onClick={() => setM((x) => !x)} aria-haspopup="menu" aria-expanded={m} aria-label={`Actions for ${item.name}`} className="grid size-8 place-items-center rounded-lg hover:bg-hms-hover"><MoreHorizontal className="size-4" /></button>
-      {m && <div role="menu" className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{acts.map(([l, f], k) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", k === 4 && "border-t border-hms-line", k === 5 && "text-[#b42318]")}>{l}</button>)}</div>}
+      {m && <div role="menu" className="hms-pop absolute right-0 top-9 z-20 w-44 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{acts.map(([l, f], k) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", k === 4 && "border-t border-hms-line", k === 5 && "text-[#b42318]")}>{l}</button>)}</div>}
     </div>
   );
 }

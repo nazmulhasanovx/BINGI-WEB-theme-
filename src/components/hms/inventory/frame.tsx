@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { BarChart3, Download, History, Lock, MoreHorizontal, Package, Plus, ClipboardCheck, Store, Trash2, Upload, CircleCheck } from "lucide-react";
 import { hasInventory, useInventory, type Category, type Item, type MoveType, type Supplier } from "@/lib/inventory/store";
 import { useProperty } from "../property";
-import { btnLine, btnPrimary } from "../guests/ui";
+import { btnIcon, btnLine, btnPrimary } from "../guests/ui";
 import { CategorySheet, ItemSheet, MoveSheet, SupplierSheet } from "./sheets";
 
 type Open =
@@ -60,13 +60,13 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Inventory</h1><p className="text-[14px] text-hms-muted">Check stock, record movements, and manage suppliers.</p></div>
             <div className="flex flex-wrap items-center gap-2">
-              <button onClick={() => setO({ k: "item" })} className={empty ? btnPrimary : btnLine}><Plus className="size-4" />Add Item</button>
-              <button disabled={empty} onClick={() => setO({ k: "move", type: "issue" })} className={btnLine}><Upload className="size-4" />Issue Stock</button>
+              <button onClick={() => setO({ k: "item" })} aria-label="Add Item" className={clsx(empty ? btnPrimary : btnLine, "max-sm:w-10 max-sm:px-0")}><Plus className="size-4" /><span className="max-sm:hidden">Add Item</span></button>
+              <button disabled={empty} onClick={() => setO({ k: "move", type: "issue" })} aria-label="Issue Stock" className={clsx(btnLine, "max-sm:w-10 max-sm:px-0")}><Upload className="size-4" /><span className="max-sm:hidden">Issue Stock</span></button>
               <button disabled={empty} onClick={() => setO({ k: "move", type: "receive" })} className={empty ? btnLine : btnPrimary}><Download className="size-4" />Receive Stock</button>
               <div ref={mref} className="relative">
-                <button disabled={empty} onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu} aria-label="More stock actions" className={clsx(btnLine, "w-10 px-0")}><MoreHorizontal className="size-4" /></button>
+                <button disabled={empty} onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu} aria-label="More stock actions" className={btnIcon}><MoreHorizontal className="size-4" /></button>
                 {menu && (
-                  <div role="menu" className="absolute right-0 top-11 z-30 w-60 rounded-xl border border-hms-line bg-white p-1.5 shadow-lg">
+                  <div role="menu" className="hms-pop absolute right-0 top-11 z-30 w-60 rounded-xl border border-hms-line bg-white p-1.5 shadow-lg">
                     {([["wastage", Trash2, "Record Wastage", "Log damaged or unusable stock"], ["adjust", ClipboardCheck, "Adjust Stock", "Reconcile a physical count"]] as const).map(([t, I, l, s]) => (
                       <button key={t} role="menuitem" onClick={() => { setMenu(false); setO({ k: "move", type: t }); }} className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-hms-hover">
                         <I className="mt-0.5 size-4 text-hms-muted" /><span><span className="block text-[14px] font-semibold">{l}</span><span className="text-[12.5px] text-hms-muted">{s}</span></span>
@@ -91,7 +91,7 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
       {o?.k === "move" && <MoveSheet inv={inv} type={o.type} itemId={o.item} onClose={() => setO(null)} onDone={setToast} />}
       {o?.k === "cat" && <CategorySheet inv={inv} cat={o.cat} onClose={() => setO(null)} />}
       {o?.k === "sup" && <SupplierSheet inv={inv} sup={o.sup} onClose={() => setO(null)} />}
-      {toast && <div role="status" className="onb-in fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
+      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
     </C.Provider>
   );
 }

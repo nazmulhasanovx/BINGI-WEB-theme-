@@ -48,7 +48,7 @@ export function OverviewPage() {
   const mode = st.settings.attendance;
   return (
     <StaffFrame tab="overview" search={q} onSearch={setQ} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>} right={<DateBox value={date} onChange={setDate} label={fmt(date)} />}>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Kpi icon={<Users className="size-6 text-[#c72f26]" />} bg="bg-[#fde8e7]" label="Total staff" value={total} href="/hms/staff/people" />
         <Kpi icon={<Check className="size-6 text-[#1c7d45]" />} bg="bg-[#e5f6ea]" label="Present" value={d.present} href="/hms/staff/attendance" />
         <Kpi icon={<CalendarDays className="size-6 text-[#2f5fc4]" />} bg="bg-[#e7effd]" label="On leave" value={d.leave} href="/hms/staff/leave" />
@@ -56,8 +56,8 @@ export function OverviewPage() {
       </div>
       <p className="mt-2.5 text-[14px] text-[#5b6170]">{d.active.length} active staff · Includes {d.late} late arrival{d.late === 1 ? "" : "s"}</p>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-4">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-4">
           <Card title="Today’s duty" right={<Link href="/hms/staff/schedule" className="text-[15px] font-medium text-[#c72f26]">View schedule</Link>}>
             <Table cols={[{ label: "Department" }, { label: "Assigned" }, { label: "Required" }, { label: "Coverage" }]}>
               {duty.map((r) => (
@@ -102,7 +102,7 @@ export function OverviewPage() {
             <p className="text-[12.5px] font-medium uppercase tracking-wider text-[#6b7180]">Property setting</p>
             <p className="mt-1 flex items-center gap-2 text-[19px] font-semibold">Attendance method <Chip tone="red">{mode === "machine" ? "Machine" : mode === "manual" ? "Manual" : "No attendance"}</Chip></p>
             <p className="mt-1.5 text-[14.5px] text-[#4b5160]">{mode === "manual" ? "Daily attendance is entered by authorised managers." : mode === "machine" ? "Check-in and check-out come from the ZKT device." : "Daily attendance is not tracked for this property."}</p>
-            <p className="mt-1 text-[14px] text-[#7b8190]">Available methods: Machine · Manual · No attendance</p>
+            <p className="mt-1 text-[14px] text-[#646b78]">Available methods: Machine · Manual · No attendance</p>
             <Link href="/hms/staff/settings?s=attendance" className="mt-2 inline-flex items-center gap-1 text-[15px] font-medium text-[#c72f26]">Manage attendance settings <ChevronRight className="size-4" /></Link>
           </Card>
           <Card title="Recent activity">
@@ -121,9 +121,9 @@ export function OverviewPage() {
 
 function Kpi({ icon, bg, label, value, href }: { icon: React.ReactNode; bg: string; label: string; value: number; href: string }) {
   return (
-    <Link href={href} className="flex items-center gap-5 rounded-2xl border border-[#e6e8ee] bg-white px-6 py-4 transition-shadow hover:shadow-[0_8px_24px_-16px_rgb(0_0_0/0.3)]">
-      <span className={`grid size-14 place-items-center rounded-xl ${bg}`}>{icon}</span>
-      <span><span className="block text-[15px] text-[#4b5160]">{label}</span><span className="block text-[26px] font-bold leading-tight">{value}</span></span>
+    <Link href={href} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#e6e8ee] bg-white px-4 py-3.5 transition-shadow hover:shadow-[0_8px_24px_-16px_rgb(0_0_0/0.3)] sm:gap-5 sm:px-6 sm:py-4">
+      <span className={`hidden size-14 shrink-0 place-items-center rounded-xl sm:grid ${bg}`}>{icon}</span>
+      <span className="min-w-0"><span className="block truncate text-[14px] text-[#4b5160] sm:text-[15px]">{label}</span><span className="block text-[22px] font-bold leading-tight sm:text-[26px]">{value}</span></span>
     </Link>
   );
 }

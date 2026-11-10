@@ -15,7 +15,7 @@ export function PageHead({ title, desc, actions, eyebrow }: { title: string; des
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         {eyebrow && <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-hms-muted">{eyebrow}</p>}
-        <h1 className="text-[24px] font-semibold leading-tight">{title}</h1>
+        <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>
         {desc && <p className="mt-1.5 max-w-[720px] text-[15px] text-hms-muted">{desc}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

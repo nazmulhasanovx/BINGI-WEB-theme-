@@ -109,7 +109,7 @@ async function resolve(route: string): Promise<ReactNode> {
       if (!(e instanceof NotFoundError)) throw e;
       return <RootNotFound />;
     }
-    return await (HmsLayout as Comp)({ children: page });
+    return await (HmsLayout as Comp)({ children: <div key={seg.join("/")} className="hms-page-in h-full">{page}</div> });
   }
   if (seg[0] !== "hotel" || !seg[1]) return <RootNotFound />;
   const slug = seg[1];

@@ -57,7 +57,7 @@ export function StaffFrame({
         <div className="mx-auto max-w-[1480px] px-6 py-5 lg:px-7">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-[28px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
+              <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
               <p className="mt-0.5 text-[16px] text-[#5b6170]">{hotel.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
@@ -67,16 +67,16 @@ export function StaffFrame({
             </div>
           </div>
 
-          <nav className="mt-4 flex flex-wrap items-center gap-1 border-b border-[#eceef2] pb-2.5" aria-label="Team & HR">
+          <nav className="mt-4 flex flex-wrap items-end gap-1 border-b border-hms-line" aria-label="Team & HR">
             {MAIN.map((t) => (
-              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("rounded-xl px-4 py-2 text-[15px] font-medium", tab === t.id ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>{t.label}</Link>
+              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
             ))}
             <div className="relative">
-              <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 rounded-xl px-4 py-2 text-[15px] font-medium", inMore ? "bg-[#fde8e7] text-[#c72f26]" : "hover:bg-[#f2f3f6]")}>
+              <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", inMore ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
                 {inMore ? MORE.find((m) => m.id === tab)!.label : "More"} <ChevronDown className="size-4" />
               </button>
               {more && (
-                <div className="absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
+                <div className="hms-pop absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
                   {MORE.map((m) => (
                     <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#c72f26]")}>{m.label}</Link>
                   ))}
@@ -91,7 +91,7 @@ export function StaffFrame({
                 <Search className="size-[18px] text-[#6b7180]" />
                 <input autoFocus={searchFocus} value={search ?? ""} onChange={(e) => onSearch?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && onSubmit) onSubmit((e.target as HTMLInputElement).value); }} enterKeyHint="search" placeholder={searchPlaceholder} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7b8190]" />
               </label>
-              <div className="ml-auto flex items-center gap-3">
+              <div className="ml-auto flex flex-wrap items-center gap-3">
                 {right}
                 {filters && (
                   <div className="relative">

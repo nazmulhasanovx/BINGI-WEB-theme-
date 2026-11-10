@@ -161,3 +161,20 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @keyframes onb-confetti { from { opacity: 0; transform: translateY(-30px); } 60% { opacity: 1; } to { opacity: 0.9; transform: translateY(40px); } }
 .onb-confetti { animation: onb-confetti 1200ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .onb-pop, .onb-floor, .onb-confetti { animation: none; } }
+
+/* ---------- HMS motion (functional, Telegram-smooth). Durations 140–280 ms; all off with reduced motion. ---------- */
+@keyframes hms-page { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes hms-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hms-drawer-r { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes hms-drawer-l { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes hms-pop { from { opacity: 0; transform: scale(0.96) translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes hms-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.hms-page-in { animation: hms-page 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hms-fade { animation: hms-fade 0.2s ease-out both; }
+.hms-drawer-r { animation: hms-drawer-r 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hms-drawer-l { animation: hms-drawer-l 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hms-pop { animation: hms-pop 0.14s cubic-bezier(0.2, 0.9, 0.3, 1.15) both; transform-origin: top right; }
+.hms-up { animation: hms-up 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .hms-page-in, .hms-fade, .hms-drawer-r, .hms-drawer-l, .hms-pop, .hms-up { animation: none; }
+}
