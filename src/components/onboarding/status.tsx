@@ -43,14 +43,14 @@ function Body() {
   return (
     <main className="mx-auto max-w-[760px] px-4 py-10 sm:px-6">
       <p className={clsx("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold", approved ? "bg-[#eef8f1] text-[#1c6b3c]" : "bg-[#fdf6e7] text-[#7a4a0b]")}>{approved ? <Check className="size-4" /> : <Clock className="size-4" />}{STATUS_LABEL[d.status]}</p>
-      <h1 className="mt-3 text-[28px] font-bold tracking-[-0.015em]">{d.name}</h1>
+      <h1 className="mt-3 text-[28px] font-bold tracking-[-0.015em]">{d.name || "Untitled property"}</h1>
       <p className="mt-1 text-[15px] text-[#5b6170]">{PLANS[d.plan].label} plan · free trial: {trialLeft(d)} of {TRIAL_DAYS} days left</p>
 
       <ol className="mt-6 flex items-center gap-2" aria-label="Approval progress">
         {steps.map((s, i) => (
-          <li key={s.label} className="flex flex-1 items-center gap-2">
+          <li key={s.label} className="flex flex-1 items-center gap-1.5 sm:gap-2">
             <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full text-[12.5px] font-semibold", s.ok ? "bg-[#1c7d45] text-white" : s.now ? "bg-[#d8372e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{s.ok ? <Check className="size-4" /> : i + 1}</span>
-            <span className="text-[14px] font-medium">{s.label}</span>
+            <span className="whitespace-nowrap text-[13.5px] font-medium sm:text-[14px]">{s.label}</span>
             {i < steps.length - 1 && <span className="h-px flex-1 bg-[#e3e6eb]" />}
           </li>
         ))}
@@ -89,10 +89,10 @@ function Body() {
 
 function Gate({ icon: I, title, text, on }: { icon: typeof Lock; title: string; text: string; on: boolean }) {
   return (
-    <div className="rounded-2xl bg-white p-4 ring-1 ring-[#eceef2]">
-      <span className={clsx("grid size-9 place-items-center rounded-xl", on ? "bg-[#eef8f1] text-[#1c7d45]" : "bg-[#f2f3f6] text-[#666d7a]")}>{on ? <I className="size-5" /> : <Lock className="size-[18px]" />}</span>
-      <p className="mt-3 text-[15px] font-semibold">{title}</p>
-      <p className="text-[13.5px] text-[#5b6170]">{text}</p>
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#eceef2] sm:block">
+      <span className={clsx("grid size-9 shrink-0 place-items-center rounded-xl", on ? "bg-[#eef8f1] text-[#1c7d45]" : "bg-[#f2f3f6] text-[#666d7a]")}>{on ? <I className="size-5" /> : <Lock className="size-[18px]" />}</span>
+      <div className="sm:mt-3"><p className="text-[15px] font-semibold">{title}</p>
+      <p className="text-[13.5px] text-[#5b6170]">{text}</p></div>
     </div>
   );
 }

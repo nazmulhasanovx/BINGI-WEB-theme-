@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import {
-  BedDouble, BookOpen, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, FileUp, House, Landmark, Plus, Sparkles, Tent, Trash2,
+  BedDouble, BookOpen, ClipboardCheck, Hash, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, FileUp, House, Landmark, Plus, Sparkles, Tent, Trash2,
   TreePalm, Users, UsersRound, Utensils, Wallet,
 } from "lucide-react";
 import {
@@ -58,7 +58,7 @@ function Flow({ d }: { d: Draft }) {
 
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Basics d={d} accountPhone={st.phone} />, "1.3": <Extras d={d} />, "1.4": <Plan d={d} />,
-    "2.1": <SetupStep d={d} configured={rooms.st.config.configured} enabled={rooms.st.config.enabled.map((t) => CORE[t].label)} nodes={rooms.st.config.nodes.length} />,
+    "2.1": <SetupStep d={d} configured={rooms.st.config.configured} enabled={rooms.st.config.enabled.map((t) => CORE[t].label)} nodes={locSummary(rooms.st)} />,
     "2.2": <UnitsStep st={rooms.st} />, "2.3": <InventoryReview st={rooms.st} go={go} />,
     "3.1": <Rates d={d} st={rooms.st} setRate={(id, v) => rooms.update((s) => { const c = s.categories.find((x) => x.id === id); if (c) c.baseRate = v; }, "Base price changed in onboarding")} />,
     "3.2": <Existing d={d} codes={units.map((u) => u.code)} />, "3.3": <Policy d={d} />,
@@ -223,29 +223,54 @@ function Plan({ d }: { d: Draft }) {
     </Q>
   );
 }
+function Empty({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="grid place-items-center rounded-2xl border border-dashed border-[#d6d9e0] bg-white/60 px-6 py-10 text-center">
+      <span className="grid size-12 place-items-center rounded-2xl bg-[#f2f3f6] text-[#4b5160]">{icon}</span>
+      <p className="mt-3 text-[16px] font-semibold">{title}</p>
+      <p className="mt-1 max-w-[360px] text-[14px] text-[#5b6170]">{text}</p>
+    </div>
+  );
+}
 function Row({ k, v, bold, green }: { k: string; v: string; bold?: boolean; green?: boolean }) {
   return <div className={clsx("flex justify-between gap-4", bold && "border-t border-[#eceef2] pt-2 font-semibold")}><dt className={bold ? "" : "text-[#5b6170]"}>{k}</dt><dd className={clsx("tabular-nums", green && "text-[#1c7d45]")}>{v}</dd></div>;
 }
 
 // ---------------- S2 (Rooms module) ----------------
-function SetupStep({ configured, enabled, nodes }: { d: Draft; configured: boolean; enabled: string[]; nodes: number }) {
+function locSummary(st: RS) {
+  const n = st.config.nodes;
+  const c = (f: (k: string) => boolean, one: string, many: string) => { const x = n.filter((y) => f(y.kind)).length; return x ? `${x} ${x === 1 ? one : many}` : ""; };
+  return [c((k) => ["BUILDING", "TOWER", "WING"].includes(k), "building", "buildings"), c((k) => ["FLOOR", "LEVEL"].includes(k), "floor", "floors"), c((k) => ["ZONE", "AREA", "SECTION", "CLUSTER"].includes(k), "zone", "zones"), c((k) => k === "BLOCK", "block", "blocks")].filter(Boolean).join(" · ");
+}
+function SetupStep({ configured, enabled, nodes }: { d: Draft; configured: boolean; enabled: string[]; nodes: string }) {
   return (
     <Q title="Accommodation setup" sub="Four short screens: which types you have, where they are (buildings, floors, zones), how they are numbered, and a review. Done once — the same setup works in HMS later.">
       {configured ? (
         <div className="rounded-2xl bg-white p-5 ring-1 ring-[#eceef2]">
           <p className="flex items-center gap-2 text-[15.5px] font-semibold text-[#1c6b3c]"><Check className="size-5" /> Setup saved</p>
-          <p className="mt-2 text-[14.5px] text-[#4b5160]">Types: {enabled.join(", ")} · {nodes} locations</p>
+          <dl className="mt-3 grid gap-1 text-[14.5px] sm:grid-cols-[110px_1fr]"><dt className="text-[#5b6170]">Types</dt><dd>{enabled.join(", ")}</dd><dt className="text-[#5b6170]">Locations</dt><dd>{nodes || "—"}</dd></dl>
           <Link href="/onboarding/rooms/setup" className="mt-4 inline-flex h-10 items-center rounded-xl border border-[#dfe2e8] px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]">Edit setup</Link>
         </div>
       ) : (
-        <ol className="grid gap-2 sm:grid-cols-4">
-          {["Types", "Locations", "Numbering", "Review"].map((s, i) => <li key={s} className="rounded-2xl bg-white p-4 ring-1 ring-[#eceef2]"><span className="text-[12.5px] font-semibold text-[#c8232e]">{i + 1}</span><span className="mt-1 block text-[15px] font-semibold">{s}</span></li>)}
+        <ol className="grid gap-3 sm:grid-cols-2">
+          {SETUP_STEPS.map(([s, t, I], i) => (
+            <li key={s} className="flex gap-3 rounded-2xl bg-white p-4 ring-1 ring-[#eceef2]">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#fdf1f0] text-[#c8232e]"><I className="size-5" /></span>
+              <span><span className="block text-[15px] font-semibold">{i + 1}. {s}</span><span className="text-[13.5px] text-[#5b6170]">{t}</span></span>
+            </li>
+          ))}
         </ol>
       )}
     </Q>
   );
 }
 
+const SETUP_STEPS: [string, string, typeof Building2][] = [
+  ["Types", "Rooms, cottages, villas, apartments…", BedDouble],
+  ["Locations", "Buildings and floors, or zones", Building2],
+  ["Numbering", "101, C01, TA-101 — preview first", Hash],
+  ["Review", "Check and save", ClipboardCheck],
+];
 type RS = ReturnType<typeof useRooms>["st"];
 function UnitsStep({ st }: { st: RS }) {
   const live = st.units.filter((u) => u.status !== "archived");
@@ -261,7 +286,7 @@ function UnitsStep({ st }: { st: RS }) {
               <Link href={`/onboarding/rooms/new?category=${c.id}`} className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#dfe2e8] px-3 text-[14px] font-medium hover:bg-[#f6f7f9]"><Plus className="size-4" />Add</Link>
             </li>); })}
         </ul>
-      ) : <p className="rounded-2xl bg-white p-5 text-[14.5px] text-[#5b6170] ring-1 ring-[#eceef2]">No units yet.</p>}
+      ) : <Empty icon={<BedDouble className="size-6" />} title="No units yet" text="Start with your most common room type. You can add the rest now or later in HMS." />}
       <Link href="/onboarding/rooms/new" className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-dashed border-[#e2a19c] bg-white px-4 text-[15px] font-medium text-[#b12a22] hover:bg-[#fdf6f5]"><Plus className="size-[18px]" /> Add another category</Link>
     </Q>
   );
@@ -272,6 +297,7 @@ function InventoryReview({ st, go }: { st: RS; go: (s: StepId) => void }) {
   const cats = st.categories.filter((c) => !c.archived);
   return (
     <Q title="Check your inventory" sub={`${live.length} ${live.length === 1 ? "unit" : "units"} in ${cats.length} ${cats.length === 1 ? "category" : "categories"}. New categories are checked by BinGi after you submit; until then units stay drafts (not bookable).`}>
+      {!cats.length ? <Empty icon={<BedDouble className="size-6" />} title="Nothing to check yet" text="Add at least one unit in the previous step." /> :
       <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-[#eceef2]">
         {cats.map((c) => {
           const us = live.filter((u) => u.category === c.id);
@@ -283,7 +309,7 @@ function InventoryReview({ st, go }: { st: RS; go: (s: StepId) => void }) {
             </div>
           );
         })}
-      </div>
+      </div>}
       <button onClick={() => go("2.2")} className="mt-4 text-[14.5px] font-medium text-[#c8232e] underline-offset-4 hover:underline">Add or change units</button>
     </Q>
   );
@@ -394,7 +420,7 @@ function Modules({ d }: { d: Draft }) {
         {MODULES.map((m) => {
           const blocked = m.ultra && !ultra;
           const on = m.locked || (!blocked && d.modules.includes(m.id));
-          return <Tile key={m.id} on={on} disabled={m.locked || blocked} onClick={() => edit((x) => { x.modules = x.modules.includes(m.id) ? x.modules.filter((y) => y !== m.id) : [...x.modules, m.id]; })} icon={<m.icon className="size-5" />} title={m.title} sub={blocked ? "Needs the Ultra plan" : m.sub} badge={m.locked ? "Always on" : blocked ? "Ultra" : undefined} />;
+          return <Tile key={m.id} on={on} locked={m.locked} disabled={blocked} onClick={() => edit((x) => { x.modules = x.modules.includes(m.id) ? x.modules.filter((y) => y !== m.id) : [...x.modules, m.id]; })} icon={<m.icon className="size-5" />} title={m.title} sub={blocked ? "Needs the Ultra plan" : m.sub} badge={m.locked ? "Always on" : blocked ? "Ultra" : undefined} />;
         })}
       </div>
       <p className="mt-4 text-[13px] text-[#5b6170]">Plan limits (staff logins, outlets) are applied by BinGi billing.</p>
@@ -487,7 +513,8 @@ function QuoteStep({ d, units }: { d: Draft; units: number }) {
           <Row k="Activation (one time)" v={`৳${money(q.activation)}`} />
           <Row k="Total after trial" v={`৳${money(q.total)}`} bold />
         </dl>
-        {d.units !== n && d.units > 0 && <p className="mt-3 text-[13px] text-[#5b6170]">You estimated {d.units} units in part 1; the quote uses the {n} you actually added.</p>}
+        {n === 0 && <p role="note" className="mt-3 flex gap-2 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13.5px] text-[#7a4a0b]"><CircleAlert className="mt-0.5 size-4 shrink-0" />No units added yet — the minimum of {MIN_BILLED} is shown. Add units in part 2.</p>}
+        {d.units !== n && d.units > 0 && n > 0 && <p className="mt-3 text-[13px] text-[#5b6170]">You estimated {d.units} units in part 1; the quote uses the {n} you actually added.</p>}
       </div>
       <p className="mt-3 text-[13px] text-[#666d7a]">VAT and other fees, if any, appear on the invoice. Prototype quote — the final amount comes from BinGi billing.</p>
     </Q>
