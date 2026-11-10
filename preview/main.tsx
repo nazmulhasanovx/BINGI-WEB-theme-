@@ -39,6 +39,7 @@ import { PayrollPage, PayrollRunPage } from "@/components/hms/staff/payroll";
 import { HiringPage, CandidatePage } from "@/components/hms/staff/hiring";
 import { OperationsPage } from "@/components/hms/staff/operations";
 import { GuestsPage } from "@/components/hms/guests/list";
+import { CatalogPage as SvcCatalog, OrdersPage as SvcOrders, CategoriesPage as SvcCategories } from "@/components/hms/services/pages";
 import { StockPage as InvStock, HistoryPage as InvHistory, ReportsPage as InvReports, SetupPage as InvSetup } from "@/components/hms/inventory/pages";
 import { GuestProfilePage } from "@/components/hms/guests/profile";
 import { ReviewsPage as GuestReviewsPage } from "@/components/hms/guests/reviews";
@@ -83,6 +84,11 @@ async function resolve(route: string): Promise<ReactNode> {
         else if (id && sec === "hiring") page = <CandidatePage key={id} id={id} />;
         else if (STAFF[sec] && !id) page = STAFF[sec]();
         else throw new NotFoundError("not found");
+      } else if (seg[1] === "other-services") {
+        const O: Record<string, () => ReactNode> = { "": () => <SvcCatalog />, orders: () => <SvcOrders />, categories: () => <SvcCategories /> };
+        const sec = seg[2] ?? "";
+        if (!O[sec] || seg[3]) throw new NotFoundError("not found");
+        page = O[sec]();
       } else if (seg[1] === "inventory") {
         const I: Record<string, () => ReactNode> = { "": () => <InvStock />, history: () => <InvHistory />, reports: () => <InvReports />, setup: () => <InvSetup /> };
         const sec = seg[2] ?? "";
