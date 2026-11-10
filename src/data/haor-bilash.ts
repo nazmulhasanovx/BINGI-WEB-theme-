@@ -1,4 +1,4 @@
-// DEMO DATA — Haor Bilash is a fictional houseboat used to design the paid DRIFT theme.
+// DEMO DATA — Haor Bilash is a fictional luxury houseboat used to design the DRIFT luxury theme (upgraded 2026-11-10).
 // Photos: Unsplash (free licence), demo only.
 import type { Hotel } from "@/lib/types";
 
@@ -6,11 +6,11 @@ const P = "/demo/haor-bilash";
 
 export const haorBilash: Hotel = {
   slug: "haor-bilash",
-  name: "Haor Bilash Houseboat",
-  type: "Houseboat",
-  stars: 0,
-  tagline: "Wake up on the water.",
-  intro: "A wooden houseboat with six cabins on Tanguar Haor. Cook on board, swim at noon, watch the sun set from the roof deck.",
+  name: "Haor Bilash Luxury Houseboat",
+  type: "Luxury houseboat",
+  stars: 5,
+  tagline: "A slow voyage across the haor",
+  intro: "A teak houseboat with six en-suite cabins, a chef and a crew of eight, drifting across Tanguar Haor. Swim at noon, dine on the roof deck, sleep on still water.",
   logoText: "Haor Bilash",
   heroPhoto: `${P}/hero.jpg`,
   area: "Tanguar Haor",
@@ -26,10 +26,10 @@ export const haorBilash: Hotel = {
   highlights: ["6 cabins", "All meals on board", "Roof deck"],
   facilities: [
     { name: "Roof deck", short: "Sunset seats and night sky", icon: "sun" },
-    { name: "Cook on board", short: "Fresh haor fish, three meals a day", icon: "utensils" },
+    { name: "Chef on board", short: "Haor fish and village produce, all meals", icon: "utensils" },
     { name: "Life jackets", short: "One for every guest", icon: "shield" },
     { name: "Solar power", short: "Lights and phone charging", icon: "plug" },
-    { name: "Clean toilets", short: "Two on board", icon: "bath" },
+    { name: "En-suite cabins", short: "Hot showers in every cabin", icon: "bath" },
     { name: "Canoe", short: "Small boat for village visits", icon: "boat" },
   ],
   nearby: [
@@ -45,7 +45,7 @@ export const haorBilash: Hotel = {
       id: "h1", slug: "deck-cabin", name: "Deck Cabin", kind: "room",
       short: "Double bed and a window on the water.",
       description: "A wooden cabin on the main deck with a double bed, a window at water level and a fan. Shared toilets are a few steps away.",
-      fromPrice: 9500, maxAdults: 2, maxChildren: 1, bed: "1 Double bed", sizeSqft: 90, view: "Water",
+      fromPrice: 28000, maxAdults: 2, maxChildren: 1, bed: "1 Double bed", sizeSqft: 90, view: "Water",
       units: 3, specs: ["Main deck", "Water-level window", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
       photos: [`${P}/cabin.jpg`, `${P}/deck.jpg`], featured: true,
@@ -54,7 +54,7 @@ export const haorBilash: Hotel = {
       id: "h2", slug: "family-cabin", name: "Family Cabin", kind: "room",
       short: "Two beds for four, at the back of the boat.",
       description: "The biggest cabin, at the stern: a double and a single bed plus floor mattress, with its own small sitting corner.",
-      fromPrice: 15000, maxAdults: 4, maxChildren: 1, bed: "1 Double + 1 Single", sizeSqft: 140, view: "Water",
+      fromPrice: 42000, maxAdults: 4, maxChildren: 1, bed: "1 Double + 1 Single", sizeSqft: 140, view: "Water",
       units: 2, specs: ["Stern", "Sitting corner", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
       photos: [`${P}/boat-side.jpg`, `${P}/cabin.jpg`],
@@ -63,7 +63,7 @@ export const haorBilash: Hotel = {
       id: "h3", slug: "roof-cabin", name: "Roof Cabin", kind: "room",
       short: "Upper deck, steps from the roof seats.",
       description: "A single cabin on the upper deck with windows on two sides — first to see the sunrise.",
-      fromPrice: 12000, maxAdults: 2, maxChildren: 0, bed: "1 Double bed", sizeSqft: 100, view: "Haor, both sides",
+      fromPrice: 36000, maxAdults: 2, maxChildren: 0, bed: "1 Double bed", sizeSqft: 100, view: "Haor, both sides",
       units: 1, specs: ["Upper deck", "Windows on two sides", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
       photos: [`${P}/deck.jpg`, `${P}/sunset.jpg`], featured: true,

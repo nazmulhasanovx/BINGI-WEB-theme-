@@ -43,10 +43,10 @@ export const canopyNest: Hotel = {
   rooms: [
     {
       id: "t1", slug: "canopy-treehouse", name: "Canopy Treehouse", kind: "cottage",
-      short: "Six metres up, a deck in the leaves.",
-      description: "A one-room treehouse six metres up a jackfruit tree, with a queen bed, a wide deck and a small bathroom at the foot of the stairs.",
+      short: "Twelve metres up, a deck in the leaves.",
+      description: "A one-room treehouse twelve metres up an old jackfruit tree, with a queen bed in fine linen, a wide deck and a stone bathroom at the foot of the stairs.",
       fromPrice: 28000, maxAdults: 2, maxChildren: 0, bed: "1 Queen bed", sizeSqft: 180, view: "Forest",
-      units: 3, specs: ["12 m up", "Private deck", "Bathroom at the base"],
+      units: 3, specs: ["12 m up", "Private deck", "Stone bathroom at the base"],
       amenities: ["Hot water", "Mosquito net", "Fan", "Deck"],
       photos: [`${P}/tree-2.jpg`, `${P}/inside-2.jpg`], featured: true,
     },
@@ -111,7 +111,7 @@ export const canopyNest: Hotel = {
     { time: "19:00", title: "Night forest walk", text: "Torches, a guide, and the forest waking up." },
   ],
   faq: [
-    { q: "Are the stairs hard?", a: "Canopy Treehouse has steep wooden stairs. The Round Window House is the easiest (3 m)." },
+    { q: "Are the stairs hard?", a: "Canopy Treehouse has steep wooden stairs. The Round Window House is the easiest (7 m)." },
     { q: "Is there electricity?", a: "Yes, lights, a fan and a charging point in every treehouse." },
     { q: "Will we see wildlife?", a: "Gibbons and birds most mornings, but wildlife is never guaranteed." },
   ],
