@@ -3,11 +3,11 @@ from PIL import Image
 import glob, os
 root = os.path.dirname(os.path.abspath(__file__))
 app = os.path.join(root, "..", "bingi-web-theme-") if os.path.isdir(os.path.join(root, "..", "bingi-web-theme-")) else os.path.join(root, "..")
-for hotel in ["azure-bay", "sea-pearl", "tea-valley", "mistwood", "shalbon", "lakeview", "coral-cove", "wave-bunk"]:
+for hotel in ["azure-bay", "sea-pearl", "tea-valley", "mistwood", "shalbon", "lakeview", "coral-cove", "wave-bunk", "haor-bilash", "canopy-nest", "skypod", "altura"]:
     out = os.path.join(root, ".images", hotel)
     os.makedirs(out, exist_ok=True)
     for f in glob.glob(os.path.join(app, "public", "demo", hotel, "*.jpg")):
         im = Image.open(f).convert("RGB")
         w, h = im.size
-        s = min(1, 1000 / max(w, h))
-        im.resize((round(w * s), round(h * s)), Image.LANCZOS).save(os.path.join(out, os.path.basename(f)), quality=52, optimize=True, progressive=True)
+        s = min(1, 820 / max(w, h))
+        im.resize((round(w * s), round(h * s)), Image.LANCZOS).save(os.path.join(out, os.path.basename(f)), quality=46, optimize=True, progressive=True)

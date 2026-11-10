@@ -32,11 +32,11 @@ export function LicenceNotice() {
   if (lic.has(live)) {
     if (mine && mine.status === "cancelled") {
       const d = daysBetween(today(), mine.renews);
-      if (d <= 7) return <Banner tone="amber" text={`${name} ends ${d <= 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`} (${fmtDay(mine.renews)}). After that your website shows ${fb}. Bookings keep working.`} action={<Link href="/hms/website/design?tab=mine" className="font-semibold underline">Keep {name}</Link>} />;
+      if (d <= 7) return <Banner tone="amber" text={`${name} ends ${d <= 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`} (${fmtDay(mine.renews)}). After that your website shows ${fb}. Bookings keep working.`} action={<Link href="/hms/website/design?tab=mine" onClick={() => setTimeout(() => window.dispatchEvent(new Event("bingi:url")), 50)} className="font-semibold underline">Keep {name}</Link>} />;
     }
     return null;
   }
-  return <Banner tone="red" text={`Your ${name} licence has ended, so your website now shows ${fb}. Your content and bookings are safe.`} action={<Link href="/hms/website/design?tab=store" className="font-semibold underline">Buy {name} again</Link>} />;
+  return <Banner tone="red" text={`Your ${name} licence has ended, so your website now shows ${fb}. Your content and bookings are safe.`} action={<Link href="/hms/website/design?tab=store" onClick={() => setTimeout(() => window.dispatchEvent(new Event("bingi:url")), 50)} className="font-semibold underline">Buy {name} again</Link>} />;
 }
 function Banner({ tone, text, action }: { tone: "amber" | "red"; text: string; action?: React.ReactNode }) {
   return (

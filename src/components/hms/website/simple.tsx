@@ -139,16 +139,17 @@ function Tiles() {
 }
 
 /* ---------- Design: theme, colour, font ---------- */
-const noSub = () => () => {};
+// Re-read ?tab= on back/forward, hash routes (preview build) and same-page links (they fire "bingi:url").
+const subUrl = (f: () => void) => { const ev = ["popstate", "hashchange", "bingi:url"]; ev.forEach((e) => window.addEventListener(e, f)); return () => ev.forEach((e) => window.removeEventListener(e, f)); };
 type DesignTab = "included" | "store" | "mine";
 export function DesignSimple() {
   const { hotel, site, openPreview } = useWM();
   const d = site.draft;
   const live = site.rec.published?.master;
   const lic = useLicences(hotel.slug);
-  const q = useSyncExternalStore(noSub, () => currentSearch().get("tab"), () => null);
-  const [pick, setPick] = useState<DesignTab | null>(null);
-  const tab: DesignTab = pick ?? (q === "store" || q === "mine" ? q : "included");
+  const q = useSyncExternalStore(subUrl, () => currentSearch().get("tab"), () => null);
+  const [pick, setPick] = useState<{ q: string | null; t: DesignTab } | null>(null);
+  const tab: DesignTab = pick && pick.q === q ? pick.t : q === "store" || q === "mine" ? q : "included";
   const owned = lic.list.length;
   return (
     <>
@@ -156,7 +157,7 @@ export function DesignSimple() {
       <LicenceNotice />
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-hms-line" role="tablist" aria-label="Themes">
         {([["included", "Included themes"], ["store", "Theme Store"], ["mine", `My themes${owned ? ` (${owned})` : ""}`]] as const).map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setPick(id)} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", tab === id ? "border-hms-coral text-[#c42f2f]" : "border-transparent text-hms-muted hover:text-hms-ink")}>{label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setPick({ q, t: id })} className={clsx("-mb-px whitespace-nowrap border-b-2 px-3.5 pb-2.5 pt-1 text-[14px] font-medium transition-colors", tab === id ? "border-hms-coral text-[#c42f2f]" : "border-transparent text-hms-muted hover:text-hms-ink")}>{label}</button>
         ))}
       </div>
       {tab === "store" && <StoreTab />}
@@ -167,7 +168,7 @@ export function DesignSimple() {
           {isPaid(d.master) && (
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e3dcf7] bg-[#f6f3ff] px-4 py-3 text-[14px]">
               <span className="flex-1">Your draft uses <b>{MANIFESTS[d.master].name}</b>, a paid theme. Pick an included theme below to switch back.</span>
-              <button onClick={() => setPick("mine")} className="font-semibold text-[#5b3fb5]">My themes</button>
+              <button onClick={() => setPick({ q, t: "mine" })} className="font-semibold text-[#5b3fb5]">My themes</button>
             </div>
           )}
           <section>
