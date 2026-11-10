@@ -7,9 +7,9 @@ import { TODAY as TODAY_ISO } from "@/lib/rooms/store";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 
 type Svc = ReturnType<typeof useServices>;
-const Err = ({ children }: { children: ReactNode }) => <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#b42318]"><CircleAlert className="size-3.5" />{children}</p>;
+const Err = ({ children }: { children: ReactNode }) => <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#c81e1e]"><CircleAlert className="size-3.5" />{children}</p>;
 export const Note = ({ tone = "info", title, children }: { tone?: "info" | "warn"; title: string; children: ReactNode }) => (
-  <div className={clsx("flex gap-2.5 rounded-lg px-3.5 py-2.5 text-[13px]", tone === "warn" ? "bg-[#fff6e5] text-[#7a4a0b]" : "bg-[#f4f2fb] text-[#4b5160]")}>
+  <div className={clsx("flex gap-2.5 rounded-lg px-3.5 py-2.5 text-[13px]", tone === "warn" ? "bg-[#fff6e5] text-[#7a4a0b]" : "bg-[#f4f2fb] text-[#4d5664]")}>
     {tone === "warn" ? <TriangleAlert className="mt-0.5 size-4 shrink-0" /> : <Info className="mt-0.5 size-4 shrink-0 text-[#6b55e0]" />}
     <span><b className={tone === "warn" ? "" : "text-[#3b2f8f]"}>{title}</b><span className="block">{children}</span></span>
   </div>
@@ -18,8 +18,8 @@ const Foot = ({ onClose, label, onSave, disabled, cancel = "Cancel" }: { onClose
   <><button onClick={onClose} className={clsx(btnLine, "flex-1")}>{cancel}</button><button onClick={onSave} disabled={disabled} className={clsx(btnPrimary, "flex-1")}>{label}</button></>
 );
 const Seg = ({ value, options, onChange, label }: { value: string; options: [string, string][]; onChange: (v: string) => void; label: string }) => (
-  <div role="radiogroup" aria-label={label} className="flex rounded-lg bg-[#f1f2f5] p-1">
-    {options.map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)} className={clsx("h-9 flex-1 rounded-md text-[14px] font-semibold", value === v ? "bg-white shadow-sm" : "text-[#5b6170]")}>{l}</button>)}
+  <div role="radiogroup" aria-label={label} className="flex rounded-lg bg-[#e9edf2] p-1">
+    {options.map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)} className={clsx("h-9 flex-1 rounded-md text-[14px] font-semibold", value === v ? "bg-white shadow-sm" : "text-[#4d5664]")}>{l}</button>)}
   </div>
 );
 
@@ -59,7 +59,7 @@ export function ServiceSheet({ svc, item, onClose }: { svc: Svc; item?: Service;
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="sv-cat" className={lbl}>Category</label><select id="sv-cat" value={f.category} onChange={(e) => set("category", e.target.value)} className={input}>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           <div><label htmlFor="sv-price" className={lbl}>Unit Price</label>
-            <div className="flex h-11 items-center rounded-lg border border-[#cfd3db] bg-white pr-3 focus-within:border-hms-ink"><input id="sv-price" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} placeholder="0" className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] outline-none" /><span className="text-[12.5px] text-hms-muted">BDT</span></div>
+            <div className="flex h-11 items-center rounded-lg border border-[#858c97] bg-white pr-3 focus-within:border-hms-ink"><input id="sv-price" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} placeholder="0" className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] outline-none" /><span className="text-[12.5px] text-hms-muted">BDT</span></div>
             {tried && errs.price && <Err>{errs.price}</Err>}</div>
         </div>
         <div><label htmlFor="sv-dur" className={lbl}>Duration</label><input id="sv-dur" value={f.duration} onChange={(e) => set("duration", e.target.value)} placeholder="e.g. 30 min" className={input} />
@@ -70,7 +70,7 @@ export function ServiceSheet({ svc, item, onClose }: { svc: Svc; item?: Service;
           {f.image ? (
             <div className="relative overflow-hidden rounded-xl border border-hms-line"><ServiceImage src={f.image} className="h-32 w-full" /><button type="button" onClick={() => set("image", undefined)} aria-label="Remove image" className="absolute right-2 top-2 grid size-8 place-items-center rounded-lg bg-white/90 shadow"><X className="size-4" /></button></div>
           ) : (
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#cfd3db] px-4 py-3 hover:bg-hms-hover">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#858c97] px-4 py-3 hover:bg-hms-hover">
               <ImagePlus className="size-5 text-hms-muted" /><span><span className="block text-[14px] font-semibold">Upload image</span><span className="text-[12.5px] text-hms-muted">Add a photo for your website</span></span>
               <input type="file" accept="image/*" className="sr-only" onChange={(e) => pickImage(e.target.files?.[0])} />
             </label>
@@ -123,9 +123,9 @@ export function OrderSheet({ svc, order, serviceId, onClose, onDone }: { svc: Sv
       footer={<Foot onClose={onClose} label={order ? "Save Changes" : "Save Order"} onSave={save} disabled={disabled} />}>
       <div className="space-y-4">
         <div><label htmlFor="or-svc" className={lbl}>Service</label>
-          <select id="or-svc" value={sid} disabled={!!order} onChange={(e) => setSid(e.target.value)} className={clsx(input, order && "bg-[#f7f8fa] text-[#5b6170]")}>{active.map((x) => <option key={x.id} value={x.id}>{x.name} · {tk(x.price)}</option>)}</select></div>
+          <select id="or-svc" value={sid} disabled={!!order} onChange={(e) => setSid(e.target.value)} className={clsx(input, order && "bg-[#f4f6f8] text-[#4d5664]")}>{active.map((x) => <option key={x.id} value={x.id}>{x.name} · {tk(x.price)}</option>)}</select></div>
         <div><p className={lbl}>Charge Method</p>
-          {lockedMethod ? <p className="flex h-11 items-center rounded-lg bg-[#f7f8fa] px-3 text-[14px] font-semibold">{method === "booking" ? "Charge to booking" : "Cash sale"}</p>
+          {lockedMethod ? <p className="flex h-11 items-center rounded-lg bg-[#f4f6f8] px-3 text-[14px] font-semibold">{method === "booking" ? "Charge to booking" : "Cash sale"}</p>
             : <Seg label="Charge method" value={method} onChange={(v) => setMethod(v as Order["method"])} options={[["booking", "Charge to booking"], ["cash", "Cash sale"]]} />}</div>
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="or-qty" className={lbl}>Quantity</label><input id="or-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value.replace(/\D/g, ""))} className={input} />{n < 1 && <Err>At least 1</Err>}</div>
@@ -148,7 +148,7 @@ export function OrderSheet({ svc, order, serviceId, onClose, onDone }: { svc: Sv
               </div>
             ) : (
               <div>
-                <label className={clsx("flex h-11 items-center gap-2 rounded-lg border bg-white px-3", tried && noBooking ? "border-[#d92d20]" : "border-[#cfd3db] focus-within:border-hms-ink")}>
+                <label className={clsx("flex h-11 items-center gap-2 rounded-lg border bg-white px-3", tried && noBooking ? "border-[#c81e1e]" : "border-[#858c97] focus-within:border-hms-ink")}>
                   <Search className="size-4 text-hms-muted" /><span className="sr-only">Find booking</span>
                   <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search booking ID, guest name or room" className="h-full flex-1 bg-transparent text-[14.5px] outline-none" />
                 </label>
@@ -206,7 +206,7 @@ export function DetailsSheet({ svc, order, onClose, onEdit, onCancel }: { svc: S
         <dl className="divide-y divide-hms-line text-[14px]">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-hms-muted">{k}</dt><dd className="text-right font-semibold">{v}</dd></div>)}</dl>
         {order.cancelled && <Note tone="warn" title="Cancelled">{order.cancelled.reason}</Note>}
         {!editable && !order.cancelled && <p className="text-[12.5px] text-hms-muted">{order.method === "cash" ? "Cash sales are paid — they can’t be edited. Cancel records a refund to note in Cashbox." : "Paid booking charges can’t be edited."}</p>}
-        {!order.cancelled && <button onClick={onCancel} className="text-[13.5px] font-semibold text-[#b42318]">Cancel this order</button>}
+        {!order.cancelled && <button onClick={onCancel} className="text-[13.5px] font-semibold text-[#c81e1e]">Cancel this order</button>}
       </div>
     </Sheet>
   );
@@ -235,7 +235,7 @@ export function CancelSheet({ svc, order, onClose, onDone }: { svc: Svc; order: 
 }
 
 export function PayPill({ o }: { o: Order }) {
-  if (o.cancelled) return <span className="inline-flex items-center gap-1.5 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4b5160]"><span className="size-1.5 rounded-full bg-current" />Cancelled</span>;
+  if (o.cancelled) return <span className="inline-flex items-center gap-1.5 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664]"><span className="size-1.5 rounded-full bg-current" />Cancelled</span>;
   return <span className={clsx("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12.5px] font-semibold", o.payment === "Paid" ? "bg-[#e5f5ec] text-[#16693a]" : "bg-[#fdf3d9] text-[#7a5200]")}><span className="size-1.5 rounded-full bg-current" />{o.payment}</span>;
 }
 
@@ -264,13 +264,13 @@ export function PreviewSheet({ svc, item, onClose, onBack }: { svc: Svc; item: S
     <Sheet title="Website Preview" sub="Preview the service card in Horizon Experiences." onClose={onClose} footer={<Foot onClose={onClose} cancel="Close" label="Back to Service" onSave={onBack} />}>
       <div className="space-y-4">
         <div className="flex items-center justify-between"><p className="text-[14px] font-semibold">Horizon · Experiences</p>
-          <span className={clsx("rounded-md px-2 py-0.5 text-[12.5px] font-semibold", visible ? "bg-[#e5f5ec] text-[#16693a]" : "bg-hms-hover text-[#4b5160]")}>{visible ? "● Visible on Horizon" : "Not on the website"}</span></div>
+          <span className={clsx("rounded-md px-2 py-0.5 text-[12.5px] font-semibold", visible ? "bg-[#e5f5ec] text-[#16693a]" : "bg-hms-hover text-[#4d5664]")}>{visible ? "● Visible on Horizon" : "Not on the website"}</span></div>
         <article className="overflow-hidden rounded-xl border border-hms-line">
           <div className="p-2"><div className="overflow-hidden rounded-lg">{item.image ? <ServiceImage src={item.image} className="h-40 w-full" /> : <div className="grid h-40 place-items-center bg-hms-hover text-[13px] text-hms-muted">No image yet</div>}</div></div>
           <div className="px-4 pb-4">
             <p className="text-[11.5px] font-bold uppercase tracking-wider text-hms-red">{c?.name}</p>
             <p className="text-[19px] font-bold">{item.name}</p>
-            <p className="mt-0.5 text-[13.5px] text-[#4b5160]">{item.description || "—"}</p>
+            <p className="mt-0.5 text-[13.5px] text-[#4d5664]">{item.description || "—"}</p>
             <div className="mt-3 flex justify-between text-[13px]"><span className="text-hms-muted">{item.duration}</span><b>{tk(item.price)} per service</b></div>
           </div>
         </article>

@@ -51,15 +51,15 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
   const toast = useSyncExternalStore((f) => (subs.add(f), () => void subs.delete(f)), () => toastText, () => null);
   return (
     <>
-      <div className="h-full overflow-y-auto bg-[#fafafb]">
+      <div className="h-full overflow-y-auto bg-[#f4f6f8]">
         <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-7">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>
-              <p className="mt-0.5 text-[15.5px] text-[#5b6170]">{h.name}</p>
+              <p className="mt-0.5 text-[15.5px] text-[#4d5664]">{h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white hover:bg-[#b11c29]"><Plus className="size-[18px]" /> Add accommodation</Link>}
+              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white hover:bg-[#8e1621]"><Plus className="size-[18px]" /> Add accommodation</Link>}
               <Menu label="More actions" items={[
                 { label: "Reset demo data", onClick: () => { reset(); showToast("Demo data reset"); } },
                 { label: "Start setup from scratch (demo)", onClick: () => { startFresh(); showToast("Setup cleared — start again"); }, danger: true },
@@ -83,16 +83,16 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
 
 function SetupIntro() {
   return (
-    <div className="mx-auto mt-6 max-w-[640px] rounded-2xl border border-[#eceef2] bg-white p-6 text-center sm:p-8">
-      <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#fdecec] text-[#c8232e]"><Building2 className="size-6" /></span>
+    <div className="mx-auto mt-6 max-w-[640px] rounded-2xl border border-[#e3e7ec] bg-white p-6 text-center sm:p-8">
+      <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#ffe7e4] text-[#b11c29]"><Building2 className="size-6" /></span>
       <h2 className="mt-4 text-[22px] font-semibold">Set up your accommodation once</h2>
-      <p className="mx-auto mt-2 max-w-[460px] text-[15px] text-[#5b6170]">Tell BinGi what you sell (rooms, cottages, villas…), where they are, and how you number them. After this, adding units takes a few clicks.</p>
+      <p className="mx-auto mt-2 max-w-[460px] text-[15px] text-[#4d5664]">Tell BinGi what you sell (rooms, cottages, villas…), where they are, and how you number them. After this, adding units takes a few clicks.</p>
       <ol className="mx-auto mt-5 grid max-w-[420px] gap-2 text-left text-[14.5px]">
         {["Choose accommodation types", "Add buildings, floors or zones", "Pick a numbering style", "Review and save"].map((s, i) => (
-          <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#f2f3f6] text-[13px] font-semibold">{i + 1}</span>{s}</li>
+          <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#e9edf2] text-[13px] font-semibold">{i + 1}</span>{s}</li>
         ))}
       </ol>
-      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#c8232e] px-5 text-[15px] font-medium text-white hover:bg-[#b11c29]">Start setup</Link>
+      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#b11c29] px-5 text-[15px] font-medium text-white hover:bg-[#8e1621]">Start setup</Link>
     </div>
   );
 }
@@ -101,12 +101,12 @@ function SetupIntro() {
 export function Steps({ title, steps, step, onStep, children, footer, maxDone }: { title: string; steps: string[]; step: number; onStep: (i: number) => void; children: ReactNode; footer: ReactNode; maxDone: number }) {
   const base = useRoomsBase();
   return (
-    <div className="flex h-full flex-col bg-[#fafafb]">
+    <div className="flex h-full flex-col bg-[#f4f6f8]">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] px-4 pb-8 pt-5 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{title}</h1>
-            <Link href={base} className="text-[14.5px] font-medium text-[#5b6170] hover:text-[#1d1f24]">Cancel</Link>
+            <Link href={base} className="text-[14.5px] font-medium text-[#4d5664] hover:text-[#0f1720]">Cancel</Link>
           </div>
           <ol className="mt-4 hidden gap-2 lg:flex" aria-label="Steps">
             {steps.map((s, i) => {
@@ -114,19 +114,19 @@ export function Steps({ title, steps, step, onStep, children, footer, maxDone }:
               return (
                 <li key={s} className="min-w-0 flex-1">
                   <button disabled={!can} onClick={() => onStep(i)} aria-current={i === step ? "step" : undefined}
-                    className={clsx("flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[14px] font-medium transition-colors", i === step ? "border-[#ef8f89] bg-[#fdecec] text-[#b11c29]" : can ? "border-[#e6e8ee] bg-white hover:bg-[#f6f7f9]" : "border-[#eceef2] bg-white text-[#80869a]")}>
-                    <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full text-[12.5px]", i < step ? "bg-[#1c7d45] text-white" : i === step ? "bg-[#c8232e] text-white" : "bg-[#eef0f3] text-[#5b6170]")}>{i < step ? <Check className="size-3.5" /> : i + 1}</span>
+                    className={clsx("flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[14px] font-medium transition-colors", i === step ? "border-[#ef8f89] bg-[#ffe7e4] text-[#8e1621]" : can ? "border-[#e3e7ec] bg-white hover:bg-[#f4f6f8]" : "border-[#e3e7ec] bg-white text-[#80869a]")}>
+                    <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full text-[12.5px]", i < step ? "bg-[#1c7d45] text-white" : i === step ? "bg-[#b11c29] text-white" : "bg-[#e9edf2] text-[#4d5664]")}>{i < step ? <Check className="size-3.5" /> : i + 1}</span>
                     <span className="truncate">{s}</span>
                   </button>
                 </li>
               );
             })}
           </ol>
-          <p className="mt-3 text-[14px] font-medium text-[#5b6170] lg:hidden">Step {step + 1} of {steps.length} · <span className="text-[#1d1f24]">{steps[step]}</span></p>
+          <p className="mt-3 text-[14px] font-medium text-[#4d5664] lg:hidden">Step {step + 1} of {steps.length} · <span className="text-[#0f1720]">{steps[step]}</span></p>
           <div className="mt-5">{children}</div>
         </div>
       </div>
-      <div className="border-t border-[#eceef2] bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="border-t border-[#e3e7ec] bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-[1100px] flex-wrap items-center gap-2">{footer}</div>
       </div>
     </div>
@@ -135,11 +135,11 @@ export function Steps({ title, steps, step, onStep, children, footer, maxDone }:
 
 export function Section({ title, desc, children, right }: { title: string; desc?: string; children: ReactNode; right?: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-[#eceef2] bg-white p-4 sm:p-5">
+    <section className="rounded-2xl border border-[#e3e7ec] bg-white p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-[17px] font-semibold">{title}</h2>
-          {desc && <p className="mt-0.5 text-[14px] text-[#5b6170]">{desc}</p>}
+          {desc && <p className="mt-0.5 text-[14px] text-[#4d5664]">{desc}</p>}
         </div>
         {right}
       </div>
@@ -152,14 +152,14 @@ export function Section({ title, desc, children, right }: { title: string; desc?
 export function ChoiceCard({ on, onClick, icon: Icon, title, sub, badge, disabled }: { on: boolean; onClick: () => void; icon: typeof BedDouble; title: string; sub?: string; badge?: string; disabled?: boolean }) {
   return (
     <button type="button" aria-pressed={on} disabled={disabled} onClick={onClick}
-      className={clsx("relative flex min-h-[76px] items-start sm:min-h-[92px] gap-3 rounded-2xl border p-3.5 text-left transition-[border,background,box-shadow] disabled:opacity-50", on ? "border-[#c8232e] bg-[#fdecec] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
-      <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-[#c8232e] text-white" : "bg-[#f2f3f6] text-[#4b5160]")}><Icon className="size-5" /></span>
+      className={clsx("relative flex min-h-[76px] items-start sm:min-h-[92px] gap-3 rounded-2xl border p-3.5 text-left transition-[border,background,box-shadow] disabled:opacity-50", on ? "border-[#b11c29] bg-[#ffe7e4] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e7ec] bg-white hover:border-[#858c97]")}>
+      <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-[#b11c29] text-white" : "bg-[#e9edf2] text-[#4d5664]")}><Icon className="size-5" /></span>
       <span className="min-w-0">
         <span className="block text-[15px] font-semibold">{title}</span>
-        {sub && <span className="mt-0.5 block text-[13px] leading-snug text-[#5b6170]">{sub}</span>}
+        {sub && <span className="mt-0.5 block text-[13px] leading-snug text-[#4d5664]">{sub}</span>}
       </span>
-      {badge && <span className="absolute right-2.5 top-2.5 rounded-md bg-[#eef0f3] px-1.5 py-0.5 text-[11.5px] font-medium text-[#4b5160]">{badge}</span>}
-      {on && <span className="absolute bottom-2.5 right-2.5 grid size-5 place-items-center rounded-full bg-[#c8232e] text-white"><Check className="size-3.5" /></span>}
+      {badge && <span className="absolute right-2.5 top-2.5 rounded-md bg-[#e9edf2] px-1.5 py-0.5 text-[11.5px] font-medium text-[#4d5664]">{badge}</span>}
+      {on && <span className="absolute bottom-2.5 right-2.5 grid size-5 place-items-center rounded-full bg-[#b11c29] text-white"><Check className="size-3.5" /></span>}
     </button>
   );
 }
@@ -175,23 +175,23 @@ export function AmenityPicker({ value, onChange }: { value: string[]; onChange: 
   }, [q, value]);
   const toggle = (a: string) => onChange(value.includes(a) ? value.filter((x) => x !== a) : [...value, a]);
   return (
-    <div className="rounded-xl border border-[#e3e6eb]">
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#eceef2] p-2.5">
-        <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-lg bg-[#f4f5f7] px-2.5">
-          <Search className="size-4 text-[#6b7180]" />
+    <div className="rounded-xl border border-[#e3e7ec]">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#e3e7ec] p-2.5">
+        <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-lg bg-[#e9edf2] px-2.5">
+          <Search className="size-4 text-[#4d5664]" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search amenities" aria-label="Search amenities" className="min-w-0 flex-1 bg-transparent text-[14px] outline-none" />
         </label>
-        <span className="text-[13.5px] font-medium text-[#5b6170]" aria-live="polite">{value.length} selected</span>
+        <span className="text-[13.5px] font-medium text-[#4d5664]" aria-live="polite">{value.length} selected</span>
       </div>
       <div className="max-h-[300px] space-y-3 overflow-y-auto p-3">
         {groups.map((g) => (
           <div key={g.group} role="group" aria-label={g.group}>
-            <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#6b7180]">{g.group}</p>
+            <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#4d5664]">{g.group}</p>
             <div className="flex flex-wrap gap-1.5">
               {g.items.map((a) => {
                 const on = value.includes(a);
                 return (
-                  <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[13.5px]", on ? "border-[#c8232e] bg-[#fdecec] font-medium text-[#b11c29]" : "border-[#e3e6eb] bg-white hover:bg-[#f6f7f9]")}>
+                  <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[13.5px]", on ? "border-[#b11c29] bg-[#ffe7e4] font-medium text-[#8e1621]" : "border-[#e3e7ec] bg-white hover:bg-[#f4f6f8]")}>
                     {on && <Check className="size-3.5" />}{a}
                   </button>
                 );
@@ -199,10 +199,10 @@ export function AmenityPicker({ value, onChange }: { value: string[]; onChange: 
             </div>
           </div>
         ))}
-        {!groups.length && <p className="text-[14px] text-[#5b6170]">No amenity matches “{q}”.</p>}
+        {!groups.length && <p className="text-[14px] text-[#4d5664]">No amenity matches “{q}”.</p>}
       </div>
-      <div className="flex gap-2 border-t border-[#eceef2] p-2.5">
-        <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />
+      <div className="flex gap-2 border-t border-[#e3e7ec] p-2.5">
+        <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#d3d8df] px-2.5 text-[14px] outline-none focus:border-[#b11c29]" />
         <Btn type="button" className="h-9" disabled={!custom.trim()} onClick={() => { const c = custom.trim(); if (!value.includes(c)) onChange([...value, c]); setCustom(""); }}>Add</Btn>
       </div>
     </div>
@@ -216,5 +216,5 @@ const noop = () => () => {};
 /** Editors copy saved data into local state once; render them only after the browser store is read, so they never start from the server seed (that would trip the stale-version check or drop changes). */
 export function Hydrated({ children }: { children: ReactNode }) {
   const ready = useSyncExternalStore(noop, () => true, () => false);
-  return ready ? <>{children}</> : <div className="p-8 text-[14px] text-[#5b6170]" role="status">Loading…</div>;
+  return ready ? <>{children}</> : <div className="p-8 text-[14px] text-[#4d5664]" role="status">Loading…</div>;
 }

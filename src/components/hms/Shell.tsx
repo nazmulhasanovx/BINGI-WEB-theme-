@@ -236,7 +236,7 @@ function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean
       className={clsx(
         "group flex items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150",
         big ? "h-11 text-[15px]" : "h-[30px] text-[14px]",
-        active ? "bg-hms-red font-medium text-white shadow-[0_6px_16px_-6px_rgb(185_28_44/0.6)]" : "text-hms-ink hover:bg-hms-hover",
+        active ? "btn-glow font-medium text-white" : "text-hms-ink hover:bg-hms-hover",
         collapsed && "justify-center px-0",
       )}
     >
@@ -327,7 +327,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         ))}
       </nav>
       <span className="ml-1 hidden rounded-full bg-hms-amber-soft px-2 py-0.5 text-[11px] font-semibold text-hms-amber lg:inline">Prototype · demo data</span>
-      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[#e2483f] to-[#c8232e] px-2.5 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_-6px_rgb(200_35_46/0.6)] hover:from-[#c8232e] hover:to-[#b11c29] sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
+      <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg btn-glow px-2.5 text-[12.5px] font-semibold text-white sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
       <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
         <SearchBox items={SEARCH_TARGETS} />
         <span className="hidden sm:block"><LanguageMenu /></span>

@@ -31,13 +31,13 @@ export function HiringPage() {
   const cands = st.candidates.filter((c) => (stage === "all" || c.stage === stage) && (fj === "all" || c.job === fj) && m(`${c.name} ${c.id} ${c.job}`));
   const upcoming = st.candidates.filter((c) => c.offer?.status === "accepted" && !c.employeeId && (fj === "all" || c.job === fj));
   const ints = st.candidates.filter((c) => c.interview && (fj === "all" || c.job === fj) && m(`${c.name} ${c.id}`)).sort((a, b) => a.interview!.date.localeCompare(b.interview!.date));
-  const upd = <span className="text-[15.5px] text-[#4b5160]">Last updated {fmt(TODAY)} (Asia/Dhaka)</span>;
+  const upd = <span className="text-[15.5px] text-[#4d5664]">Last updated {fmt(TODAY)} (Asia/Dhaka)</span>;
   return (
     <StaffFrame tab="hiring" search={q} onSearch={setQ} activeFilters={fj !== "all" ? 1 : 0} onClearFilters={() => setFj("all")} filters={<FilterSelect label="Job" value={fj} onChange={setFj} options={st.jobs.map((j) => ({ v: j.id, label: `${j.title} · ${j.id}` }))} />} searchPlaceholder="Search jobs, candidates, ID (e.g. HK001, CAND001)" action={tab === "cands" ? <Btn kind="primary" onClick={() => setAddCand(true)}><Plus className="size-[18px]" /> Add candidate</Btn> : <Btn kind="primary" onClick={() => setJob("new")}><Plus className="size-[18px]" /> Create job</Btn>}>
       <h2 className="text-[26px] font-semibold">Hiring</h2>
-      <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-2.5">
+      <div className="mt-3 flex flex-wrap gap-2 border-b border-[#e3e7ec] pb-2.5">
         {([["jobs", "Jobs"], ["cands", `Candidates (${st.candidates.length})`], ["int", "Interviews"]] as const).map(([v, l]) => (
-          <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2 text-[16px]", tab === v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f2f3f6]")}>{l}</button>
+          <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2 text-[16px]", tab === v ? "bg-[#ffe7e4] font-medium text-[#b11c29]" : "hover:bg-[#e9edf2]")}>{l}</button>
         ))}
       </div>
       {tab === "jobs" && (
@@ -61,13 +61,13 @@ export function HiringPage() {
             )}
           </Card>
           <Card title={`Upcoming joining (${upcoming.length})`} right={upd}>
-            {upcoming.length === 0 ? <p className="text-[15px] text-[#6b7180]">No one is joining soon.</p> : (
+            {upcoming.length === 0 ? <p className="text-[15px] text-[#4d5664]">No one is joining soon.</p> : (
               <Table cols={[{ label: "Candidate", w: "20%" }, { label: "Candidate ID" }, { label: "Job ID" }, { label: "Offer status" }, { label: "Joining date" }, { label: "Employee" }, { label: "Action", w: "290px" }]}>
                 {upcoming.map((c) => (
                   <tr key={c.id}>
                     <td><span className="flex items-center gap-3"><Avatar name={c.name} id={c.id} /><b className="text-[16px]">{c.name}</b></span></td>
                     <td>{c.id}</td><td>{c.job}</td><td><Chip tone="green">Offer accepted</Chip></td><td>{fmt(c.offer!.start)}</td><td><Chip tone="gray">Not yet employee</Chip></td>
-                    <td><div className="flex gap-2"><Link href={`/hms/staff/hiring/${c.id}`} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#dfe2e8] bg-white text-[15.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-[18px]" /> Open</Link>
+                    <td><div className="flex gap-2"><Link href={`/hms/staff/hiring/${c.id}`} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#d3d8df] bg-white text-[15.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-[18px]" /> Open</Link>
                       <Menu label={`Actions for ${c.name}`} items={[{ label: "Joining checklist", onClick: () => router.push(`/hms/staff/hiring/${c.id}`) }]} /></div></td>
                   </tr>
                 ))}
@@ -85,11 +85,11 @@ export function HiringPage() {
                 {cands.map((c) => (
                   <tr key={c.id}>
                     <td><Person name={c.name} id={c.id} /></td>
-                    <td>{st.jobs.find((j) => j.id === c.job)?.title ?? c.job}<span className="block text-[13.5px] text-[#6b7180]">{c.job}</span></td>
+                    <td>{st.jobs.find((j) => j.id === c.job)?.title ?? c.job}<span className="block text-[13.5px] text-[#4d5664]">{c.job}</span></td>
                     <td>{fmt(c.applied)}</td>
                     <td><Chip tone={STAGE_LABEL[c.stage][1]}>{STAGE_LABEL[c.stage][0]}</Chip></td>
-                    <td className="text-[14.5px] text-[#4b5160]">{nextStep(c)}</td>
-                    <td><Link href={`/hms/staff/hiring/${c.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-4" /> Open</Link></td>
+                    <td className="text-[14.5px] text-[#4d5664]">{nextStep(c)}</td>
+                    <td><Link href={`/hms/staff/hiring/${c.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-4" /> Open</Link></td>
                   </tr>
                 ))}
               </Table>
@@ -107,7 +107,7 @@ export function HiringPage() {
                   <td>{fmt(c.interview!.date)}, {c.interview!.time}{c.interview!.date === TODAY && <Chip tone="blue" className="ml-2">Today</Chip>}</td>
                   <td>{c.interview!.with}</td>
                   <td>{c.interview!.result ? <Chip tone={c.interview!.result === "pass" ? "green" : "red"}>{c.interview!.result === "pass" ? "Passed" : "Not selected"}</Chip> : <Chip tone="amber">Upcoming</Chip>}</td>
-                  <td><Link href={`/hms/staff/hiring/${c.id}?t=interview`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><ExternalLink className="size-4" /> Open</Link></td>
+                  <td><Link href={`/hms/staff/hiring/${c.id}?t=interview`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-4" /> Open</Link></td>
                 </tr>
               ))}
             </Table>
@@ -151,8 +151,8 @@ function JobDrawer({ job, onClose, onSaved }: { job: Job | null; onClose: () => 
         <Field label="Vacancy"><Input type="number" min={1} value={f.vacancy} onChange={(e) => setF({ ...f, vacancy: Math.max(1, Number(e.target.value) || 1) })} /></Field>
         <Field label="Salary range"><Input value={f.salary} onChange={(e) => setF({ ...f, salary: e.target.value })} placeholder="BDT 18,000–20,000" /></Field>
       </div>
-      {job && <p className="text-[14.5px] text-[#4b5160]">{st.candidates.filter((c) => c.job === job.id).length} applicants · created {fmt(job.created)}</p>}
-      <p className="text-[13.5px] text-[#6b7180]">Published jobs are listed for your team. Posting to job sites or the hotel website is not connected yet.</p>
+      {job && <p className="text-[14.5px] text-[#4d5664]">{st.candidates.filter((c) => c.job === job.id).length} applicants · created {fmt(job.created)}</p>}
+      <p className="text-[13.5px] text-[#4d5664]">Published jobs are listed for your team. Posting to job sites or the hotel website is not connected yet.</p>
     </Drawer>
   );
 }
@@ -167,7 +167,7 @@ function AddCandidate({ onClose }: { onClose: () => void }) {
       <Field label="Full name"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
       <Field label="Job"><Select value={f.job} onChange={(e) => setF({ ...f, job: e.target.value })}>{open.map((j) => <option key={j.id} value={j.id}>{j.title} · {j.id}</option>)}</Select></Field>
       <Field label="Mobile" hint="11 digits, starts with 01"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="01XXXXXXXXX" /></Field>
-      {f.phone && !phoneOk && <p className="text-[14px] text-[#c8232e]">Enter a valid Bangladesh mobile number.</p>}
+      {f.phone && !phoneOk && <p className="text-[14px] text-[#b11c29]">Enter a valid Bangladesh mobile number.</p>}
       <Field label="Email (optional)"><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
     </Drawer>
   );
@@ -182,7 +182,7 @@ export function CandidatePage({ id }: { id: string }) {
   const qt = useQuery("t");
   const [tabState, setTab] = useState<CTab | null>(null);
   const tab: CTab = tabState ?? (qt === "interview" || qt === "offer" || qt === "profile" || qt === "joining" ? qt : c?.stage === "joining" ? "joining" : c?.stage === "offer" ? "offer" : c?.stage === "interview" || c?.stage === "shortlisted" ? "interview" : "profile");
-  if (!c) return <StaffFrame tab="hiring" hideSearch><Card><Empty icon={<UserPlus className="size-6" />} title="Candidate not found" action={<Link href="/hms/staff/hiring" className="font-medium text-[#c8232e]">Back to Hiring</Link>} /></Card></StaffFrame>;
+  if (!c) return <StaffFrame tab="hiring" hideSearch><Card><Empty icon={<UserPlus className="size-6" />} title="Candidate not found" action={<Link href="/hms/staff/hiring" className="font-medium text-[#b11c29]">Back to Hiring</Link>} /></Card></StaffFrame>;
   const job = st.jobs.find((j) => j.id === c.job);
   const si = c.stage === "rejected" ? -1 : STAGES.indexOf(c.stage);
   const ready = c.checklist.identity && c.checklist.documents && !c.employeeId;
@@ -191,31 +191,31 @@ export function CandidatePage({ id }: { id: string }) {
   const confirm = () => { let newId: string | null = null; update((s) => { newId = confirmJoining(s, c.id); }, `${c.name} joined — added to staff`); toast(`${c.name} added to staff${newId ? ` as ${newId}` : ""}`); };
   const ol = offerLabel(c);
   return (
-    <StaffFrame tab="hiring" hideSearch action={c.employeeId ? <Link href={`/hms/staff/people/${c.employeeId}`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#c8232e] px-5 text-[15.5px] font-medium text-white hover:bg-[#b11c29]">Open employee {c.employeeId}</Link> : <Btn kind="primary" disabled={!canConfirm} onClick={confirm} className={clsx(!canConfirm && "!bg-[#e6e8ee] !text-[#8a8f9c]")}>Confirm joining</Btn>}>
-      <Link href="/hms/staff/hiring" className="inline-flex h-11 items-center gap-3 rounded-xl border border-[#dfe2e8] bg-white px-5 text-[16px] hover:bg-[#f6f7f9]"><ArrowLeft className="size-5" /> Back to Hiring</Link>
+    <StaffFrame tab="hiring" hideSearch action={c.employeeId ? <Link href={`/hms/staff/people/${c.employeeId}`} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#b11c29] px-5 text-[15.5px] font-medium text-white hover:bg-[#8e1621]">Open employee {c.employeeId}</Link> : <Btn kind="primary" disabled={!canConfirm} onClick={confirm} className={clsx(!canConfirm && "!bg-[#e3e7ec] !text-[#8a8f9c]")}>Confirm joining</Btn>}>
+      <Link href="/hms/staff/hiring" className="inline-flex h-11 items-center gap-3 rounded-xl border border-[#d3d8df] bg-white px-5 text-[16px] hover:bg-[#f4f6f8]"><ArrowLeft className="size-5" /> Back to Hiring</Link>
       <Card className="mt-4">
         <div className="flex flex-wrap items-center gap-4">
           <Avatar name={c.name} id={c.id} size={52} />
-          <div className="flex-1"><p className="text-[21px] font-semibold">{c.name}</p><p className="text-[15.5px] text-[#4b5160]">{c.id} <span className="mx-2 text-[#c7cad2]">|</span> {job?.title} <span className="mx-2 text-[#c7cad2]">|</span> {c.job}</p></div>
+          <div className="flex-1"><p className="text-[21px] font-semibold">{c.name}</p><p className="text-[15.5px] text-[#4d5664]">{c.id} <span className="mx-2 text-[#c7cad2]">|</span> {job?.title} <span className="mx-2 text-[#c7cad2]">|</span> {c.job}</p></div>
           {c.stage === "rejected" ? <Chip tone="red">Rejected</Chip> : <Chip tone={ol[1]}>{ol[0]}</Chip>}
-          {c.offer && <><span className="hidden h-12 w-px bg-[#e6e8ee] md:block" /><span className="flex items-center gap-3 text-[16px]"><CalendarDays className="size-6" /><span>Joining {fmt(c.offer.start)}<span className="block">(today {fmt(TODAY).slice(0, 6)})</span></span></span></>}
+          {c.offer && <><span className="hidden h-12 w-px bg-[#e3e7ec] md:block" /><span className="flex items-center gap-3 text-[16px]"><CalendarDays className="size-6" /><span>Joining {fmt(c.offer.start)}<span className="block">(today {fmt(TODAY).slice(0, 6)})</span></span></span></>}
         </div>
-        <ol className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#eceef2] pt-4">
+        <ol className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#e3e7ec] pt-4">
           {STAGES.map((s, i) => {
             const done = c.employeeId ? true : i < si;
             const cur = i === si && !c.employeeId;
             return (
               <li key={s} className="flex flex-1 items-center gap-3">
-                <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full", done ? "bg-[#2fa45a] text-white" : cur ? "border-2 border-[#c8232e]" : "border-2 border-[#d6d9e0]")}>{done && <Check className="size-4" />}</span>
-                <span className={clsx("text-[16.5px]", cur && "font-medium text-[#c8232e]")}>{STAGE_LABEL[s][0]}</span>
-                {i < STAGES.length - 1 && <span className={clsx("h-0.5 flex-1", done ? "bg-[#9fd7b2]" : "bg-[#e6e8ee]")} />}
+                <span className={clsx("grid size-7 shrink-0 place-items-center rounded-full", done ? "bg-[#2fa45a] text-white" : cur ? "border-2 border-[#b11c29]" : "border-2 border-[#d3d8df]")}>{done && <Check className="size-4" />}</span>
+                <span className={clsx("text-[16.5px]", cur && "font-medium text-[#b11c29]")}>{STAGE_LABEL[s][0]}</span>
+                {i < STAGES.length - 1 && <span className={clsx("h-0.5 flex-1", done ? "bg-[#9fd7b2]" : "bg-[#e3e7ec]")} />}
               </li>
             );
           })}
         </ol>
       </Card>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["profile", "interview", "offer", "joining"] as CTab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2.5 text-[16.5px] ", tab === t ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f2f3f6]")}>{t[0].toUpperCase() + t.slice(1)}</button>)}
+        {(["profile", "interview", "offer", "joining"] as CTab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-xl px-6 py-2.5 text-[16.5px] ", tab === t ? "bg-[#ffe7e4] font-medium text-[#b11c29]" : "hover:bg-[#e9edf2]")}>{t[0].toUpperCase() + t.slice(1)}</button>)}
       </div>
       <div className="mt-3 grid gap-4 xl:grid-cols-[1.6fr_1fr]">
         <div>
@@ -224,15 +224,15 @@ export function CandidatePage({ id }: { id: string }) {
           {tab === "offer" && <OfferC c={c} />}
           {tab === "joining" && (
             <Card title="Joining checklist">
-              {c.stage !== "joining" ? <p className="text-[15px] text-[#6b7180]">Opens after the candidate accepts the offer.</p> : (
+              {c.stage !== "joining" ? <p className="text-[15px] text-[#4d5664]">Opens after the candidate accepts the offer.</p> : (
                 <>
-                  <ul className="divide-y divide-[#eceef2] border-t border-[#eceef2]">
+                  <ul className="divide-y divide-[#e3e7ec] border-t border-[#e3e7ec]">
                     <Check1 done label="Offer accepted" sub="Candidate has accepted the offer." />
                     <Check1 done={c.checklist.identity} label="Identity match" sub="Verify identity with a valid government ID." onToggle={c.employeeId ? undefined : () => stamp({ update }, c.id, (x) => { x.checklist.identity = !x.checklist.identity; }, c.checklist.identity ? "Identity check undone." : "Identity verified.", `${c.name}: identity ${c.checklist.identity ? "unchecked" : "verified"}`)} />
                     <Check1 done={c.checklist.documents} label="Documents" sub="Collect required joining documents (e.g., ID copy, photo, etc.)." onToggle={c.employeeId ? undefined : () => stamp({ update }, c.id, (x) => { x.checklist.documents = !x.checklist.documents; }, c.checklist.documents ? "Documents unmarked." : "Joining documents collected.", `${c.name}: documents ${c.checklist.documents ? "unmarked" : "collected"}`)} />
                     <Check1 done={c.checklist.confirmed} label="Joining confirmation" sub="Confirm actual joining on the scheduled date." />
                   </ul>
-                  <p className="mt-4 flex items-center gap-3 text-[15.5px] text-[#4b5160]"><Info className="size-5" />
+                  <p className="mt-4 flex items-center gap-3 text-[15.5px] text-[#4d5664]"><Info className="size-5" />
                     {c.employeeId ? `Joined. Now staff member ${c.employeeId}.` : !ready ? "Complete identity check and confirm actual joining first." : !dateOk ? `Joining date is ${fmt(c.offer!.start)}. Confirm on the day the person starts (or change the date in Offer).` : "Ready — use Confirm joining at the top."}
                   </p>
                 </>
@@ -242,12 +242,12 @@ export function CandidatePage({ id }: { id: string }) {
         </div>
         <div className="space-y-3">
           <Card title="Offer details">
-            {c.offer ? <div className="space-y-1.5 text-[16px]"><p className="flex items-center gap-3"><Wallet className="size-5" /><span className="w-24">Salary</span>BDT{money(c.offer.salary)} / month</p><p className="flex items-center gap-3"><CalendarDays className="size-5" /><span className="w-24">Start date</span>{fmt(c.offer.start)}</p></div> : <p className="text-[15px] text-[#6b7180]">No offer yet.</p>}
+            {c.offer ? <div className="space-y-1.5 text-[16px]"><p className="flex items-center gap-3"><Wallet className="size-5" /><span className="w-24">Salary</span>BDT{money(c.offer.salary)} / month</p><p className="flex items-center gap-3"><CalendarDays className="size-5" /><span className="w-24">Start date</span>{fmt(c.offer.start)}</p></div> : <p className="text-[15px] text-[#4d5664]">No offer yet.</p>}
           </Card>
           <Card>
-            <div className="flex items-start gap-3"><UserPlus className="mt-0.5 size-6" /><div className="flex-1"><p className="text-[18px] font-semibold">Account invitation</p><p className="text-[15px] text-[#4b5160]">{c.employeeId ? "Sent to the staff app." : "Will be sent after joining is confirmed."}</p></div><Chip tone={c.employeeId ? "green" : "amber"}>{c.employeeId ? "Sent" : "Pending"}</Chip></div>
+            <div className="flex items-start gap-3"><UserPlus className="mt-0.5 size-6" /><div className="flex-1"><p className="text-[18px] font-semibold">Account invitation</p><p className="text-[15px] text-[#4d5664]">{c.employeeId ? "Sent to the staff app." : "Will be sent after joining is confirmed."}</p></div><Chip tone={c.employeeId ? "green" : "amber"}>{c.employeeId ? "Sent" : "Pending"}</Chip></div>
           </Card>
-          <div className="flex items-start gap-3 rounded-2xl border border-[#e6e8ee] bg-[#f6f7f9] p-5"><Info className="mt-0.5 size-5" /><div>{c.employeeId ? <><p className="text-[16.5px] font-semibold">Employee {c.employeeId}</p><Link href={`/hms/staff/people/${c.employeeId}`} className="text-[15px] font-medium text-[#c8232e]">Open profile</Link></> : <><p className="text-[16.5px] font-semibold">Not an employee yet.</p><p className="text-[15px] text-[#4b5160]">The candidate will be added to staff after joining is confirmed.</p></>}</div></div>
+          <div className="flex items-start gap-3 rounded-2xl border border-[#e3e7ec] bg-[#f4f6f8] p-5"><Info className="mt-0.5 size-5" /><div>{c.employeeId ? <><p className="text-[16.5px] font-semibold">Employee {c.employeeId}</p><Link href={`/hms/staff/people/${c.employeeId}`} className="text-[15px] font-medium text-[#b11c29]">Open profile</Link></> : <><p className="text-[16.5px] font-semibold">Not an employee yet.</p><p className="text-[15px] text-[#4d5664]">The candidate will be added to staff after joining is confirmed.</p></>}</div></div>
           <Card>
             <p className="flex items-center gap-3 text-[18px] font-semibold"><History className="size-5" /> History</p>
             <ul className="mt-2 space-y-1.5 pl-9">{c.history.map((h, i) => <li key={i} className="grid grid-cols-[110px_1fr] gap-3 text-[15px]"><span>{fmt(h.date)}</span><span>{h.text}</span></li>)}</ul>
@@ -263,7 +263,7 @@ function Check1({ done, label, sub, onToggle }: { done: boolean; label: string; 
   return (
     <li className="flex items-center gap-4 py-3">
       {onToggle ? <button onClick={onToggle} aria-pressed={done} aria-label={label}>{box}</button> : box}
-      <div className="flex-1"><p className="text-[16px] font-semibold">{label}</p><p className="text-[14.5px] text-[#4b5160]">{sub}</p></div>
+      <div className="flex-1"><p className="text-[16px] font-semibold">{label}</p><p className="text-[14.5px] text-[#4d5664]">{sub}</p></div>
       <Chip tone={done ? "green" : "amber"}>{done ? "Complete" : "Pending"}</Chip>
     </li>
   );
@@ -273,7 +273,7 @@ function ProfileC({ c }: { c: Candidate }) {
   const { update } = useHrm();
   return (
     <Card title="Profile">
-      <dl className="divide-y divide-[#eceef2] text-[15.5px]">{[["Mobile", c.phone], ["Email", c.email || "—"], ["Applied", fmt(c.applied)], ["Stage", STAGE_LABEL[c.stage][0]]].map(([k, v]) => <div key={k} className="flex justify-between py-2.5"><dt className="text-[#4b5160]">{k}</dt><dd>{v}</dd></div>)}</dl>
+      <dl className="divide-y divide-[#e3e7ec] text-[15.5px]">{[["Mobile", c.phone], ["Email", c.email || "—"], ["Applied", fmt(c.applied)], ["Stage", STAGE_LABEL[c.stage][0]]].map(([k, v]) => <div key={k} className="flex justify-between py-2.5"><dt className="text-[#4d5664]">{k}</dt><dd>{v}</dd></div>)}</dl>
       <div className="mt-4 flex flex-wrap gap-2">
         {c.stage === "applied" && <Btn kind="primary" onClick={() => stamp({ update }, c.id, (x) => { x.stage = "shortlisted"; }, "Shortlisted.", `${c.name} shortlisted`)}>Shortlist</Btn>}
         {c.stage !== "rejected" && !c.employeeId && <Btn kind="danger" onClick={() => stamp({ update }, c.id, (x) => { x.stage = "rejected"; }, "Not selected.", `${c.name} rejected`)}>Reject</Btn>}
@@ -286,7 +286,7 @@ function ProfileC({ c }: { c: Candidate }) {
 function InterviewC({ c }: { c: Candidate }) {
   const { update } = useHrm();
   const [f, setF] = useState({ date: c.interview?.date ?? addDays(TODAY, 2), time: c.interview?.time ?? "11:00", with: c.interview?.with ?? "Hotel Manager" });
-  if (c.stage === "applied") return <Card title="Interview"><p className="text-[15px] text-[#6b7180]">Shortlist the candidate first.</p></Card>;
+  if (c.stage === "applied") return <Card title="Interview"><p className="text-[15px] text-[#4d5664]">Shortlist the candidate first.</p></Card>;
   const canEdit = c.stage === "shortlisted" || (c.stage === "interview" && !c.interview?.result);
   return (
     <Card title="Interview">
@@ -313,7 +313,7 @@ function OfferC({ c }: { c: Candidate }) {
   const { update } = useHrm();
   const [f, setF] = useState({ salary: c.offer?.salary ?? 18000, start: c.offer?.start ?? addDays(TODAY, 7) });
   const [note, setNote] = useState("");
-  if (!["offer", "joining"].includes(c.stage)) return <Card title="Offer"><p className="text-[15px] text-[#6b7180]">Available after the interview is passed.</p></Card>;
+  if (!["offer", "joining"].includes(c.stage)) return <Card title="Offer"><p className="text-[15px] text-[#4d5664]">Available after the interview is passed.</p></Card>;
   const locked = !!c.employeeId;
   return (
     <Card title="Offer">

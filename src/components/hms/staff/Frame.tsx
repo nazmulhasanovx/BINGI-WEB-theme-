@@ -53,15 +53,15 @@ export function StaffFrame({
   };
   return (
     <>
-      <div className="h-full overflow-y-auto bg-[#fafafb]">
+      <div className="h-full overflow-y-auto bg-[#f4f6f8]">
         <div className="mx-auto max-w-[1480px] px-6 py-5 lg:px-7">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
-              <p className="mt-0.5 text-[16px] text-[#5b6170]">{hotel.name}</p>
+              <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              <Link href="/hms/staff/settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]"><Settings className="size-[18px]" /> Settings</Link>
+              <Link href="/hms/staff/settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><Settings className="size-[18px]" /> Settings</Link>
               {action}
               <Menu label="More actions" items={[{ label: "Export staff (CSV)", onClick: exportCsv }, { label: "Reset demo data", onClick: () => { reset(); setToast("Demo data reset"); } , danger: true }]} />
             </div>
@@ -76,9 +76,9 @@ export function StaffFrame({
                 {inMore ? MORE.find((m) => m.id === tab)!.label : "More"} <ChevronDown className="size-4" />
               </button>
               {more && (
-                <div className="hms-pop absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e6e8ee] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
+                <div className="hms-pop absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e3e7ec] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
                   {MORE.map((m) => (
-                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f6f7f9]", tab === m.id && "font-semibold text-[#c8232e]")}>{m.label}</Link>
+                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f4f6f8]", tab === m.id && "font-semibold text-[#b11c29]")}>{m.label}</Link>
                   ))}
                 </div>
               )}
@@ -87,23 +87,23 @@ export function StaffFrame({
 
           {!hideSearch && (
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label className="flex h-11 w-full max-w-[400px] items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-3.5">
-                <Search className="size-[18px] text-[#6b7180]" />
+              <label className="flex h-11 w-full max-w-[400px] items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white px-3.5">
+                <Search className="size-[18px] text-[#4d5664]" />
                 <input autoFocus={searchFocus} value={search ?? ""} onChange={(e) => onSearch?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && onSubmit) onSubmit((e.target as HTMLInputElement).value); }} enterKeyHint="search" placeholder={searchPlaceholder} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7b8190]" />
               </label>
               <div className="ml-auto flex flex-wrap items-center gap-3">
                 {right}
                 {filters && (
                   <div className="relative">
-                    <button onClick={() => setFOpen((o) => !o)} aria-expanded={fOpen} className={clsx("inline-flex h-11 items-center gap-2 rounded-xl border bg-white px-4 text-[15px] font-medium hover:bg-[#f6f7f9]", activeFilters ? "border-[#ef6f68] text-[#c8232e]" : "border-[#dfe2e8]")}>
-                      <Filter className="size-[18px]" /> Filters{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-[#c8232e] text-[12px] text-white">{activeFilters}</span>}
+                    <button onClick={() => setFOpen((o) => !o)} aria-expanded={fOpen} className={clsx("inline-flex h-11 items-center gap-2 rounded-xl border bg-white px-4 text-[15px] font-medium hover:bg-[#f4f6f8]", activeFilters ? "border-[#ef6f68] text-[#b11c29]" : "border-[#d3d8df]")}>
+                      <Filter className="size-[18px]" /> Filters{activeFilters > 0 && <span className="grid size-5 place-items-center rounded-full bg-[#b11c29] text-[12px] text-white">{activeFilters}</span>}
                     </button>
                     {fOpen && (
-                      <div role="dialog" aria-label="Filters" className="absolute right-0 top-full z-40 mt-2 w-[300px] space-y-3 rounded-2xl border border-[#e6e8ee] bg-white p-4 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.3)]">
+                      <div role="dialog" aria-label="Filters" className="absolute right-0 top-full z-40 mt-2 w-[300px] space-y-3 rounded-2xl border border-[#e3e7ec] bg-white p-4 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.3)]">
                         {filters}
                         <div className="flex justify-between pt-1">
-                          <button onClick={() => onClearFilters?.()} disabled={!activeFilters} className="text-[14px] font-medium text-[#c8232e] disabled:text-[#8a8f9c]">Clear all</button>
-                          <button onClick={() => setFOpen(false)} className="rounded-lg bg-[#f2f3f6] px-3 py-1.5 text-[14px] font-medium">Done</button>
+                          <button onClick={() => onClearFilters?.()} disabled={!activeFilters} className="text-[14px] font-medium text-[#b11c29] disabled:text-[#8a8f9c]">Clear all</button>
+                          <button onClick={() => setFOpen(false)} className="rounded-lg bg-[#e9edf2] px-3 py-1.5 text-[14px] font-medium">Done</button>
                         </div>
                       </div>
                     )}
@@ -123,7 +123,7 @@ export function StaffFrame({
 /** Date picker button styled like the design ("📅 04 Nov 2026 ⌄"). */
 export function DateBox({ value, onChange, type = "date", label }: { value: string; onChange: (v: string) => void; type?: "date" | "month" | "week"; label: string }) {
   return (
-    <label className="relative inline-flex h-11 min-w-[200px] items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-4 text-[15px] font-medium">
+    <label className="relative inline-flex h-11 min-w-[200px] items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white px-4 text-[15px] font-medium">
       <svg aria-hidden className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></svg>
       <span className="flex-1">{label}</span>
       <ChevronDown className="size-4" />
@@ -136,8 +136,8 @@ export function DateBox({ value, onChange, type = "date", label }: { value: stri
 export function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; label: string }[] }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[13.5px] font-medium text-[#4b5160]">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px] outline-none focus:border-[#c8232e]">
+      <span className="mb-1 block text-[13.5px] font-medium text-[#4d5664]">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-xl border border-[#d3d8df] bg-white px-3 text-[14.5px] outline-none focus:border-[#b11c29]">
         <option value="all">All</option>
         {options.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
       </select>

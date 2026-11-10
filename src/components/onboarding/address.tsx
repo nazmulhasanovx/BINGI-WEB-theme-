@@ -29,11 +29,11 @@ export function AddressSheet({ d, onClose }: { d: Draft; onClose: () => void }) 
     <div><label htmlFor={`a-${k}`} className="block text-[13.5px] font-semibold">{label}</label><input id={`a-${k}`} value={f[k]} onChange={(e) => setF((s) => ({ ...s, [k]: e.target.value }))} placeholder={ph} {...p} className={field + " mt-1 h-11 text-[15px]"} /></div>
   );
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1d1f24]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
+    <div className="bingi-ui fixed inset-0 z-50 flex items-end justify-center bg-[#0f1720]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={t("ঠিকানা নিশ্চিত করুন", "Confirm the address")} onClick={(e) => e.stopPropagation()} className="onb-in max-h-[94dvh] w-full max-w-[860px] overflow-y-auto rounded-t-xl bg-white shadow-2xl sm:rounded-xl">
-        <div className="flex items-center justify-between border-b border-[#eef0f3] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[#e9edf2] px-5 py-4">
           <h2 className="text-[18px] font-semibold">{t("ঠিকানাটি নিশ্চিত করুন", "Confirm the address")}</h2>
-          <button onClick={onClose} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#dcdfe5] hover:bg-[#f4f5f7]"><X className="size-5" /></button>
+          <button onClick={onClose} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#c6ccd4] hover:bg-[#e9edf2]"><X className="size-5" /></button>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-[1.1fr_1fr]">
           <div>
@@ -45,14 +45,14 @@ export function AddressSheet({ d, onClose }: { d: Draft; onClose: () => void }) 
                 <path d="M300 0 L400 0 L400 60 Q 340 70 300 0 Z" fill="#cfe3f6" />
               </svg>
               <div className="pointer-events-none absolute" style={{ left: `${f.pin.x * 100}%`, top: `${f.pin.y * 100}%`, transform: "translate(-50%,-100%)" }}>
-                <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden><path d="M18 46 C 6 30, 0 22, 0 16 A 18 18 0 0 1 36 16 C 36 22, 30 30, 18 46 Z" fill="#e2483f" /><circle cx="18" cy="16" r="7" fill="#fff" /></svg>
+                <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden><path d="M18 46 C 6 30, 0 22, 0 16 A 18 18 0 0 1 36 16 C 36 22, 30 30, 18 46 Z" fill="#d9343f" /><circle cx="18" cy="16" r="7" fill="#fff" /></svg>
               </div>
-              <span className="absolute bottom-2 left-2 rounded-full bg-white px-2 py-0.5 font-mono text-[11px] text-[#4b5160]">{(21.2 + f.pin.y * 0.5).toFixed(4)}, {(91.9 + f.pin.x * 0.4).toFixed(4)}</span>
+              <span className="absolute bottom-2 left-2 rounded-full bg-white px-2 py-0.5 font-mono text-[11px] text-[#4d5664]">{(21.2 + f.pin.y * 0.5).toFixed(4)}, {(91.9 + f.pin.x * 0.4).toFixed(4)}</span>
             </div>
-            <p className="mt-2 text-[12.5px] text-[#5b6170]">{t("প্রোটোটাইপ: আঁকা ম্যাপ। আসল ম্যাপ পরে যুক্ত হবে।", "Prototype: illustrated map. A real map comes later.")}</p>
+            <p className="mt-2 text-[12.5px] text-[#4d5664]">{t("প্রোটোটাইপ: আঁকা ম্যাপ। আসল ম্যাপ পরে যুক্ত হবে।", "Prototype: illustrated map. A real map comes later.")}</p>
           </div>
           <div className="grid content-start gap-3">
-            <div><span className="block text-[13.5px] font-semibold">{t("দেশ", "Country")}</span><p className={field + " mt-1 flex h-11 items-center bg-[#f8f9fb] text-[15px]"}>{t("বাংলাদেশ", "Bangladesh")}</p></div>
+            <div><span className="block text-[13.5px] font-semibold">{t("দেশ", "Country")}</span><p className={field + " mt-1 flex h-11 items-center bg-[#f4f6f8] text-[15px]"}>{t("বাংলাদেশ", "Bangladesh")}</p></div>
             {inp("road", t("রাস্তা / বাড়ি", "Road / house"), t("যেমন: কলাতলী রোড", "e.g. Kolatoli Road"))}
             {inp("area", t("এলাকা", "Area"), t("যেমন: কলাতলী", "e.g. Kolatoli"))}
             <div className="grid grid-cols-2 gap-3">
@@ -60,10 +60,10 @@ export function AddressSheet({ d, onClose }: { d: Draft; onClose: () => void }) 
               <div><label htmlFor="a-div" className="block text-[13.5px] font-semibold">{t("বিভাগ", "Division")}</label><select id="a-div" value={f.division} onChange={(e) => setF((s) => ({ ...s, division: e.target.value }))} className={field + " mt-1 h-11 text-[15px]"}>{DIVISIONS.map(([en, bn]) => <option key={en} value={en}>{t(bn, en)}</option>)}</select></div>
             </div>
             {inp("postcode", t("পোস্টকোড", "Postcode"), "4700", { inputMode: "numeric", maxLength: 4 })}
-            {err && <p role="alert" className="text-[14px] font-medium text-[#b11c29]">{t("রাস্তা আর শহর দিন।", "Add the road and city.")}</p>}
+            {err && <p role="alert" className="text-[14px] font-medium text-[#8e1621]">{t("রাস্তা আর শহর দিন।", "Add the road and city.")}</p>}
           </div>
         </div>
-        <div className="border-t border-[#eef0f3] p-4"><Primary onClick={save} className="w-full">{t("এই ঠিকানা ব্যবহার করুন", "Use this address")}</Primary></div>
+        <div className="border-t border-[#e9edf2] p-4"><Primary onClick={save} className="w-full">{t("এই ঠিকানা ব্যবহার করুন", "Use this address")}</Primary></div>
       </div>
     </div>,
     document.body,

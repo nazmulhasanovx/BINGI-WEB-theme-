@@ -35,7 +35,7 @@ function AddPageInner() {
       <div className="grid h-full place-items-center p-6 text-center">
         <div>
           <p className="text-[18px] font-semibold">Finish the one-time setup first</p>
-          <Link href={`${base}/setup`} className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
+          <Link href={`${base}/setup`} className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white">Start setup</Link>
         </div>
       </div>
     );
@@ -150,7 +150,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
     <Steps title={`Add ${pr ? pr.label.toLowerCase() : "accommodation"}`} steps={STEPS} step={step} onStep={go} maxDone={maxDone}
       footer={<>
         <Btn disabled={step === 0} onClick={() => go(step - 1)}>Back</Btn>
-        {step === 2 && <span className="text-[14px] font-medium text-[#4b5160] lg:hidden" aria-live="polite">{picks.length} selected</span>}
+        {step === 2 && <span className="text-[14px] font-medium text-[#4d5664] lg:hidden" aria-live="polite">{picks.length} selected</span>}
         <span className="ml-auto" />
         {step > 0 && <Btn kind="ghost" className="px-3 sm:px-4" aria-label="Save setup draft" onClick={saveSetupDraft}><span>Save<span className="hidden sm:inline"> setup draft</span></span></Btn>}
         {step < 4 ? <Btn kind="primary" onClick={() => go(step + 1)}>Continue</Btn> : <>
@@ -159,7 +159,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
         </>}
       </>}>
       {(err.length > 0 || conflicts.length > 0) && (
-        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-4 py-3 text-[14.5px] text-[#a3261f]">
+        <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#ffe7e4] px-4 py-3 text-[14.5px] text-[#a3261f]">
           {conflicts.length > 0 && <p className="font-semibold">Nothing was created. Fix these and try again:</p>}
           {[...err, ...conflicts].map((e) => <p key={e}>{e}</p>)}
         </div>
@@ -183,7 +183,7 @@ function TypeStep({ p, core, choose, setCore, st, enable }: { p?: PresetSlug; co
   return (
     <div className="space-y-4">
       <Section title="What are you adding?" desc="Specialty stays are presets — they use one of six booking engines, so availability and pricing stay safe."
-        right={<label className="flex h-10 w-full items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-3 sm:w-[240px]"><Search className="size-4 text-[#6b7180]" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search types" aria-label="Search types" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>}>
+        right={<label className="flex h-10 w-full items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-3 sm:w-[240px]"><Search className="size-4 text-[#4d5664]" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search types" aria-label="Search types" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>}>
         <div className="space-y-5">
           {groups.map((g) => {
             const items = PRESETS.filter((x) => x.group === g.id && match(x));
@@ -193,8 +193,8 @@ function TypeStep({ p, core, choose, setCore, st, enable }: { p?: PresetSlug; co
             return (
               <div key={g.id}>
                 {collapsible ? (
-                  <button onClick={() => setSpecial((s) => !s)} aria-expanded={open} className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-[#5b6170]">{g.label} <ChevronDown className={clsx("size-4 transition-transform", !open && "-rotate-90")} /></button>
-                ) : <p className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-[#5b6170]">{g.label}</p>}
+                  <button onClick={() => setSpecial((s) => !s)} aria-expanded={open} className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-[#4d5664]">{g.label} <ChevronDown className={clsx("size-4 transition-transform", !open && "-rotate-90")} /></button>
+                ) : <p className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-[#4d5664]">{g.label}</p>}
                 {open && (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {items.map((x) => (
@@ -218,9 +218,9 @@ function TypeStep({ p, core, choose, setCore, st, enable }: { p?: PresetSlug; co
                 </Select>
               </Field>
             ) : <div><p className="text-[14px] font-medium">Booking engine</p><p className="mt-1 text-[15px]">{CORE[core].label} · {CORE[core].inventory}</p></div>}
-            <div className="text-[14px] text-[#5b6170]">
-              <p><b className="text-[#1d1f24]">Location:</b> {CORE[core].strategy === "floor" ? "Building → Floor" : "Zone → optional Block"}</p>
-              <p className="mt-1"><b className="text-[#1d1f24]">Numbers like:</b> {pr.example}</p>
+            <div className="text-[14px] text-[#4d5664]">
+              <p><b className="text-[#0f1720]">Location:</b> {CORE[core].strategy === "floor" ? "Building → Floor" : "Zone → optional Block"}</p>
+              <p className="mt-1"><b className="text-[#0f1720]">Numbers like:</b> {pr.example}</p>
             </div>
           </div>
           {!st.config.enabled.includes(core) && (
@@ -249,15 +249,15 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
         <div role="radiogroup" aria-label="Category" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((x) => (
             <button key={x.id} role="radio" aria-checked={catId === x.id} onClick={() => setCatId(x.id)}
-              className={clsx("rounded-2xl border p-3.5 text-left", catId === x.id ? "border-[#c8232e] bg-[#fdecec] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
+              className={clsx("rounded-2xl border p-3.5 text-left", catId === x.id ? "border-[#b11c29] bg-[#ffe7e4] shadow-[0_0_0_3px_rgb(216_55_46/0.12)]" : "border-[#e3e7ec] bg-white hover:border-[#858c97]")}>
               <span className="block text-[15px] font-semibold">{x.name}</span>
-              <span className="mt-0.5 block text-[13.5px] text-[#5b6170]">৳{money(x.baseRate)} / night · {count(x.id)} units · {presetOf(x.preset).label}{x.approval !== "approved" ? " · waiting for approval" : ""}</span>
+              <span className="mt-0.5 block text-[13.5px] text-[#4d5664]">৳{money(x.baseRate)} / night · {count(x.id)} units · {presetOf(x.preset).label}{x.approval !== "approved" ? " · waiting for approval" : ""}</span>
             </button>
           ))}
           <button role="radio" aria-checked={catId === "new"} onClick={() => { setCatId("new"); if (!cat) setCat(blankCat(core, p)); }}
-            className={clsx("flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-left", catId === "new" ? "border-[#c8232e] bg-[#fdecec]" : "border-[#cfd3db] bg-white hover:bg-[#fafafb]")}>
-            <span className="grid size-9 place-items-center rounded-xl bg-[#f2f3f6]"><Plus className="size-5" /></span>
-            <span><span className="block text-[15px] font-semibold">Create new category</span><span className="block text-[13.5px] text-[#5b6170]">e.g. {pod ? "Single Pod" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : "Deluxe Twin"}</span></span>
+            className={clsx("flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-left", catId === "new" ? "border-[#b11c29] bg-[#ffe7e4]" : "border-[#858c97] bg-white hover:bg-[#f4f6f8]")}>
+            <span className="grid size-9 place-items-center rounded-xl bg-[#e9edf2]"><Plus className="size-5" /></span>
+            <span><span className="block text-[15px] font-semibold">Create new category</span><span className="block text-[13.5px] text-[#4d5664]">e.g. {pod ? "Single Pod" : core === "VILLA" ? "Pool Villa" : core === "COTTAGE" ? "Garden Cottage" : core === "APARTMENT" ? "Two-Bedroom Flat" : "Deluxe Twin"}</span></span>
           </button>
         </div>
       </Section>
@@ -282,7 +282,7 @@ function CategoryStep({ st, core, p, catId, setCatId, cat, setCat }: { st: Rooms
               <Input value={c.video ?? ""} onChange={(e) => set({ video: e.target.value || undefined })} placeholder="https://youtu.be/…" aria-invalid={!!c.video && !vid} />
             </Field>
             <div className="md:col-span-2"><Field label="Amenities" group><AmenityPicker value={c.amenities} onChange={(a) => set({ amenities: a })} /></Field></div>
-            <p className="text-[13.5px] text-[#5b6170] md:col-span-2">Photos are added in the category after saving (the photo library uploads to the HMS media store).</p>
+            <p className="text-[13.5px] text-[#4d5664] md:col-span-2">Photos are added in the category after saving (the photo library uploads to the HMS media store).</p>
           </div>
         </Section>
       )}
@@ -329,9 +329,9 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <Section title="Choose unit numbers" desc={`${cat.name} · ${CORE[core].strategy === "floor" ? "pick numbers on any floor, in one go" : "pick numbers in any zone"}`}>
-        <div role="tablist" aria-label="How to choose" className="mb-4 inline-flex flex-wrap rounded-xl bg-[#f2f3f6] p-1">
+        <div role="tablist" aria-label="How to choose" className="mb-4 inline-flex flex-wrap rounded-xl bg-[#e9edf2] p-1">
           {([["pick", "Pick from list"], ["generate", "Next N"], ["range", "Range"], ["manual", "Type numbers"]] as [Mode, string][]).map(([v, l]) => (
-            <button key={v} role="tab" aria-selected={mode === v} onClick={() => { setMode(v); setNote(null); }} className={clsx("rounded-lg px-3.5 py-1.5 text-[14px] font-medium", mode === v ? "bg-white shadow-sm" : "text-[#4b5160]")}>{l}</button>
+            <button key={v} role="tab" aria-selected={mode === v} onClick={() => { setMode(v); setNote(null); }} className={clsx("rounded-lg px-3.5 py-1.5 text-[14px] font-medium", mode === v ? "bg-white shadow-sm" : "text-[#4d5664]")}>{l}</button>
           ))}
         </div>
 
@@ -339,9 +339,9 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
           <div className="mb-3 max-w-[360px]"><Field label="Location"><Select value={leaf?.id} onChange={(e) => setLeafId(e.target.value)}>{ls.map((l) => <option key={l.id} value={l.id}>{nodePath(c, l.id)}</option>)}</Select></Field></div>
         )}
         {mode === "pick" && (custom
-          ? <p className="text-[14.5px] text-[#5b6170]">This type uses manual numbering — use <b>Type numbers</b>.</p>
+          ? <p className="text-[14.5px] text-[#4d5664]">This type uses manual numbering — use <b>Type numbers</b>.</p>
           : <>
-            <label className="mb-3 flex h-10 max-w-[300px] items-center gap-2 rounded-xl border border-[#dfe2e8] bg-white px-3"><Search className="size-4 text-[#6b7180]" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a number" aria-label="Find a number" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>
+            <label className="mb-3 flex h-10 max-w-[300px] items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-3"><Search className="size-4 text-[#4d5664]" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a number" aria-label="Find a number" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>
             <div className="space-y-2">{ls.map((l, i) => <LeafGrid key={l.id} c={c} core={core} p={p} leaf={l} startOpen={i < 4} q={q} taken={taken} picked={picked} toggle={(k) => setPicks(picked(k.code) ? picks.filter((x) => !sameCode(x.code, k.code)) : [...picks, k])} />)}</div>
           </>)}
         {mode === "generate" && leaf && !custom && (
@@ -363,7 +363,7 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
             <Btn type="submit">Add {codeFor(c, core, p, leaf, Math.max(1, Number(from)))?.code} – {codeFor(c, core, p, leaf, Math.max(1, Number(to)))?.code}</Btn>
           </form>
         )}
-        {(mode === "generate" || mode === "range") && custom && <p className="text-[14.5px] text-[#5b6170]">Manual numbering — use <b>Type numbers</b>.</p>}
+        {(mode === "generate" || mode === "range") && custom && <p className="text-[14.5px] text-[#4d5664]">Manual numbering — use <b>Type numbers</b>.</p>}
         {mode === "manual" && leaf && (
           <form className="space-y-2" onSubmit={(e) => {
             e.preventDefault();
@@ -382,21 +382,21 @@ function UnitsStep({ st, core, p, cat, picks, setPicks, addNode }: { st: RoomsSt
             <Btn type="submit" disabled={!manual.trim()}>Add numbers</Btn>
           </form>
         )}
-        {note && <p role="status" className="mt-3 text-[14px] text-[#4b5160]">{note}</p>}
+        {note && <p role="status" className="mt-3 text-[14px] text-[#4d5664]">{note}</p>}
       </Section>
 
       <aside className="lg:sticky lg:top-0 lg:self-start">
-        <Section title={`Selected (${picks.length})`} right={picks.length > 0 ? <button onClick={() => { setPicks([]); setNote(null); }} className="text-[14px] font-medium text-[#c8232e]">Clear</button> : undefined}>
-          {!picks.length ? <p className="text-[14px] text-[#5b6170]">Nothing selected yet.</p> : (
+        <Section title={`Selected (${picks.length})`} right={picks.length > 0 ? <button onClick={() => { setPicks([]); setNote(null); }} className="text-[14px] font-medium text-[#b11c29]">Clear</button> : undefined}>
+          {!picks.length ? <p className="text-[14px] text-[#4d5664]">Nothing selected yet.</p> : (
             <>
               <ul className="flex max-h-[280px] flex-wrap gap-1.5 overflow-y-auto" aria-label="Selected units">
                 {picks.map((k) => (
-                  <li key={k.code} className="inline-flex items-center gap-1 rounded-lg bg-[#fdecec] py-1 pl-2.5 pr-1 font-mono text-[13.5px] font-medium text-[#b11c29]">
+                  <li key={k.code} className="inline-flex items-center gap-1 rounded-lg bg-[#ffe7e4] py-1 pl-2.5 pr-1 font-mono text-[13.5px] font-medium text-[#8e1621]">
                     {k.code}<button aria-label={`Remove ${k.code}`} onClick={() => setPicks(picks.filter((x) => x.code !== k.code))} className="grid size-5 place-items-center rounded hover:bg-white"><X className="size-3" /></button>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-[12.5px] text-[#5b6170]">Not reserved until you create them. Another staff member can still use these numbers before you finish.</p>
+              <p className="mt-3 text-[12.5px] text-[#4d5664]">Not reserved until you create them. Another staff member can still use these numbers before you finish.</p>
             </>
           )}
         </Section>
@@ -417,13 +417,13 @@ function LeafGrid({ c, core, p, leaf, startOpen, q, taken, picked, toggle }: { c
   const sel = slots.filter((s) => picked(s.code)?.node === leaf.id).length;
   if (q && !shown.length) return null;
   return (
-    <div className="rounded-xl border border-[#e6e8ee]">
+    <div className="rounded-xl border border-[#e3e7ec]">
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open || !!q} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[14.5px] font-medium">
         <ChevronDown className={clsx("size-4 transition-transform", !(open || q) && "-rotate-90")} />{nodePath(c, leaf.id)}
-        {sel > 0 && <span className="ml-auto rounded-md bg-[#fdecec] px-2 py-0.5 text-[12.5px] text-[#b11c29]">{sel} selected</span>}
+        {sel > 0 && <span className="ml-auto rounded-md bg-[#ffe7e4] px-2 py-0.5 text-[12.5px] text-[#8e1621]">{sel} selected</span>}
       </button>
       {(open || q) && (
-        <div className="border-t border-[#eceef2] p-3">
+        <div className="border-t border-[#e3e7ec] p-3">
           <div className="flex flex-wrap gap-1.5">
             {shown.map((s) => {
               const pk = picked(s.code);
@@ -433,14 +433,14 @@ function LeafGrid({ c, core, p, leaf, startOpen, q, taken, picked, toggle }: { c
                 <button key={s.code} type="button" disabled={disabled} aria-pressed={!!pk && !elsewhere} onClick={() => toggle({ node: leaf.id, local: s.local, code: s.code })}
                   title={s.unit ? `${s.code} exists (${s.unit.status})` : elsewhere ? `Picked in ${nodePath(c, pk.node)}` : undefined}
                   className={clsx("inline-flex min-w-[64px] items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 font-mono text-[13.5px]",
-                    s.unit ? "border-[#eceef2] bg-[#f4f5f7] text-[#80869a]" : elsewhere ? "border-dashed border-[#d6d9e0] text-[#80869a]" : pk ? "border-[#c8232e] bg-[#c8232e] font-semibold text-white" : "border-[#e3e6eb] bg-white hover:border-[#cfd3db]")}>
+                    s.unit ? "border-[#e3e7ec] bg-[#e9edf2] text-[#80869a]" : elsewhere ? "border-dashed border-[#d3d8df] text-[#80869a]" : pk ? "border-[#b11c29] bg-[#b11c29] font-semibold text-white" : "border-[#e3e7ec] bg-white hover:border-[#858c97]")}>
                   {s.unit && <Lock className="size-3" />}{s.code}
                 </button>
               );
             })}
           </div>
-          {!q && count < 99 && <button onClick={() => setCount((x) => Math.min(99, x + 12))} className="mt-2.5 text-[13.5px] font-medium text-[#c8232e]">Show more numbers</button>}
-          <p className="mt-2 flex flex-wrap gap-3 text-[12px] text-[#5b6170]"><span className="inline-flex items-center gap-1"><Lock className="size-3" /> exists</span><span>Dashed = picked in another location</span></p>
+          {!q && count < 99 && <button onClick={() => setCount((x) => Math.min(99, x + 12))} className="mt-2.5 text-[13.5px] font-medium text-[#b11c29]">Show more numbers</button>}
+          <p className="mt-2 flex flex-wrap gap-3 text-[12px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><Lock className="size-3" /> exists</span><span>Dashed = picked in another location</span></p>
         </div>
       )}
     </div>
@@ -485,29 +485,29 @@ function DetailsStep({ st, cat, picks, over, setOver, editCat }: { st: RoomsStat
     <div className="space-y-4">
       <Section title={`From the category: ${cat.name}`} desc="Every unit gets these. You don&apos;t enter them again." right={<Btn onClick={editCat}>Edit category</Btn>}>
         <dl className="grid gap-x-6 gap-y-2 text-[14.5px] sm:grid-cols-2 lg:grid-cols-4">
-          <div><dt className="text-[#5b6170]">Base price</dt><dd className="font-semibold">৳{money(cat.baseRate)} / {unit}</dd></div>
-          <div><dt className="text-[#5b6170]">Guests</dt><dd className="font-medium">{cat.maxAdults} {cat.maxAdults === 1 ? "adult" : "adults"}{cat.maxChildren ? ` + ${cat.maxChildren} children` : ""}</dd></div>
-          <div><dt className="text-[#5b6170]">Beds</dt><dd className="font-medium">{cat.bed}{cat.bedrooms !== undefined ? ` · ${cat.bedrooms === 0 ? "studio" : `${cat.bedrooms} bedroom${cat.bedrooms > 1 ? "s" : ""}`}` : ""}</dd></div>
-          <div><dt className="text-[#5b6170]">Video</dt><dd className="font-medium">{cat.video ? "YouTube video" : "None (optional)"}</dd></div>
-          <div className="sm:col-span-2 lg:col-span-4"><dt className="text-[#5b6170]">Amenities</dt><dd className="font-medium">{cat.amenities.join(", ") || "—"}</dd></div>
+          <div><dt className="text-[#4d5664]">Base price</dt><dd className="font-semibold">৳{money(cat.baseRate)} / {unit}</dd></div>
+          <div><dt className="text-[#4d5664]">Guests</dt><dd className="font-medium">{cat.maxAdults} {cat.maxAdults === 1 ? "adult" : "adults"}{cat.maxChildren ? ` + ${cat.maxChildren} children` : ""}</dd></div>
+          <div><dt className="text-[#4d5664]">Beds</dt><dd className="font-medium">{cat.bed}{cat.bedrooms !== undefined ? ` · ${cat.bedrooms === 0 ? "studio" : `${cat.bedrooms} bedroom${cat.bedrooms > 1 ? "s" : ""}`}` : ""}</dd></div>
+          <div><dt className="text-[#4d5664]">Video</dt><dd className="font-medium">{cat.video ? "YouTube video" : "None (optional)"}</dd></div>
+          <div className="sm:col-span-2 lg:col-span-4"><dt className="text-[#4d5664]">Amenities</dt><dd className="font-medium">{cat.amenities.join(", ") || "—"}</dd></div>
         </dl>
       </Section>
       <Section title="Only what is different for a unit" desc="Leave empty to use the category. Room readiness, maintenance and bookings are managed in Housekeeping and Bookings.">
-        <div className="hidden grid-cols-[110px_1fr_150px_190px] gap-3 border-b border-[#eceef2] pb-2 text-[13px] font-medium text-[#5b6170] lg:grid"><span>Unit</span><span>Location</span><span>Price (৳/{unit})</span><span>Video</span></div>
-        <ul className="divide-y divide-[#eceef2]">
+        <div className="hidden grid-cols-[110px_1fr_150px_190px] gap-3 border-b border-[#e3e7ec] pb-2 text-[13px] font-medium text-[#4d5664] lg:grid"><span>Unit</span><span>Location</span><span>Price (৳/{unit})</span><span>Video</span></div>
+        <ul className="divide-y divide-[#e3e7ec]">
           {picks.map((k) => {
             const o = over[k.code] ?? {};
             return (
               <li key={k.code} className="grid gap-2 py-3 lg:grid-cols-[110px_1fr_150px_190px] lg:items-center lg:gap-3">
                 <span className="font-mono text-[14.5px] font-semibold">{k.code}</span>
-                <span className="text-[14px] text-[#5b6170]">{nodePath(st.config, k.node)}</span>
-                <label className="text-[12.5px] font-medium text-[#5b6170] lg:hidden" htmlFor={`rate-${k.code}`}>Own price (optional)</label>
-                <input id={`rate-${k.code}`} type="number" min={0} aria-label={`Price for ${k.code}`} placeholder={String(cat.baseRate)} value={o.rate ?? ""} onChange={(e) => set(k.code, { rate: e.target.value === "" ? undefined : Number(e.target.value) })} className="h-9 rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />
+                <span className="text-[14px] text-[#4d5664]">{nodePath(st.config, k.node)}</span>
+                <label className="text-[12.5px] font-medium text-[#4d5664] lg:hidden" htmlFor={`rate-${k.code}`}>Own price (optional)</label>
+                <input id={`rate-${k.code}`} type="number" min={0} aria-label={`Price for ${k.code}`} placeholder={String(cat.baseRate)} value={o.rate ?? ""} onChange={(e) => set(k.code, { rate: e.target.value === "" ? undefined : Number(e.target.value) })} className="h-9 rounded-lg border border-[#d3d8df] px-2.5 text-[14px] outline-none focus:border-[#b11c29]" />
                 <div className="space-y-1.5">
-                  <select aria-label={`Video for ${k.code}`} value={o.video ?? "inherit"} onChange={(e) => set(k.code, { video: e.target.value as Unit["video"] })} className="h-9 w-full rounded-lg border border-[#dfe2e8] px-2 text-[14px]">
+                  <select aria-label={`Video for ${k.code}`} value={o.video ?? "inherit"} onChange={(e) => set(k.code, { video: e.target.value as Unit["video"] })} className="h-9 w-full rounded-lg border border-[#d3d8df] px-2 text-[14px]">
                     <option value="inherit">Same as category</option><option value="replace">This unit&apos;s own video</option><option value="hide">No video</option>
                   </select>
-                  {o.video === "replace" && <input aria-label={`Video link for ${k.code}`} placeholder="https://youtu.be/…" value={o.videoUrl ?? ""} onChange={(e) => set(k.code, { videoUrl: e.target.value })} className="h-9 w-full rounded-lg border border-[#dfe2e8] px-2.5 text-[14px] outline-none focus:border-[#c8232e]" />}
+                  {o.video === "replace" && <input aria-label={`Video link for ${k.code}`} placeholder="https://youtu.be/…" value={o.videoUrl ?? ""} onChange={(e) => set(k.code, { videoUrl: e.target.value })} className="h-9 w-full rounded-lg border border-[#d3d8df] px-2.5 text-[14px] outline-none focus:border-[#b11c29]" />}
                 </div>
               </li>
             );
@@ -527,17 +527,17 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <Section title="You are creating">
         <dl className="grid grid-cols-[130px_1fr] gap-y-2.5 text-[14.5px]">
-          <dt className="text-[#5b6170]">Type</dt><dd className="font-medium">{presetOf(p).label}{presetOf(p).group !== "standard" && ` · works as ${CORE[core].label}`}</dd>
-          <dt className="text-[#5b6170]">Category</dt><dd className="font-medium">{cat.name}{isNew && <span className="ml-2 rounded-md bg-[#e6efff] px-1.5 py-0.5 text-[12px] text-[#2457c5]">New</span>}</dd>
-          <dt className="text-[#5b6170]">Units</dt><dd className="font-medium">{picks.length}</dd>
-          <dt className="text-[#5b6170]">Price</dt><dd className="font-medium">৳{money(Math.min(...rates))}{Math.max(...rates) !== Math.min(...rates) && ` – ৳${money(Math.max(...rates))}`} / night</dd>
-          <dt className="text-[#5b6170]">Video</dt><dd className="font-medium">{cat.video ? "Category video" : "None — that's fine"}</dd>
+          <dt className="text-[#4d5664]">Type</dt><dd className="font-medium">{presetOf(p).label}{presetOf(p).group !== "standard" && ` · works as ${CORE[core].label}`}</dd>
+          <dt className="text-[#4d5664]">Category</dt><dd className="font-medium">{cat.name}{isNew && <span className="ml-2 rounded-md bg-[#e6efff] px-1.5 py-0.5 text-[12px] text-[#2457c5]">New</span>}</dd>
+          <dt className="text-[#4d5664]">Units</dt><dd className="font-medium">{picks.length}</dd>
+          <dt className="text-[#4d5664]">Price</dt><dd className="font-medium">৳{money(Math.min(...rates))}{Math.max(...rates) !== Math.min(...rates) && ` – ৳${money(Math.max(...rates))}`} / night</dd>
+          <dt className="text-[#4d5664]">Video</dt><dd className="font-medium">{cat.video ? "Category video" : "None — that's fine"}</dd>
         </dl>
         <div className="mt-5 space-y-3">
           {Object.entries(byNode).map(([id, ks]) => (
             <div key={id}>
-              <p className="text-[13.5px] font-semibold text-[#4b5160]">{nodePath(st.config, id)} · {ks.length}</p>
-              <p className="mt-1 flex flex-wrap gap-1.5">{ks.map((k) => <span key={k.code} className="rounded-md bg-[#f2f3f6] px-2 py-0.5 font-mono text-[13.5px]">{k.code}</span>)}</p>
+              <p className="text-[13.5px] font-semibold text-[#4d5664]">{nodePath(st.config, id)} · {ks.length}</p>
+              <p className="mt-1 flex flex-wrap gap-1.5">{ks.map((k) => <span key={k.code} className="rounded-md bg-[#e9edf2] px-2 py-0.5 font-mono text-[13.5px]">{k.code}</span>)}</p>
             </div>
           ))}
         </div>
@@ -551,14 +551,14 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
             <Check ok text="Each unit is sold as a whole" />
             <Check ok={cat.approval === "approved"} text={cat.approval === "approved" ? "Category approved by BinGi" : "Category waits for BinGi approval — you can create drafts now, publish after approval"} />
             <Check ok={picks.length <= BATCH_MAX} text={`${picks.length} of max ${BATCH_MAX} units in one batch`} />
-            <li className="text-[13px] text-[#5b6170]">Subscription unit limit is checked by the HMS backend when it is connected.</li>
+            <li className="text-[13px] text-[#4d5664]">Subscription unit limit is checked by the HMS backend when it is connected.</li>
           </ul>
         </Section>
         <Section title="What each button does">
-          <ul className="space-y-2 text-[13.5px] text-[#4b5160]">
-            <li><b className="text-[#1d1f24]">Save setup draft</b> — keeps your choices. Numbers are not reserved.</li>
-            <li><b className="text-[#1d1f24]">Create as draft</b> — units are created and numbers reserved, but guests can&apos;t book them.</li>
-            <li><b className="text-[#1d1f24]">Publish</b> — units can be sold on dates where rates and availability allow.</li>
+          <ul className="space-y-2 text-[13.5px] text-[#4d5664]">
+            <li><b className="text-[#0f1720]">Save setup draft</b> — keeps your choices. Numbers are not reserved.</li>
+            <li><b className="text-[#0f1720]">Create as draft</b> — units are created and numbers reserved, but guests can&apos;t book them.</li>
+            <li><b className="text-[#0f1720]">Publish</b> — units can be sold on dates where rates and availability allow.</li>
           </ul>
         </Section>
       </div>
@@ -566,5 +566,5 @@ function ReviewStep({ st, cat, core, p, picks, over, isNew }: { st: RoomsState; 
   );
 }
 function Check({ ok, text }: { ok: boolean; text: string }) {
-  return <li className={clsx("flex items-start gap-2", ok ? "text-[#1c7d45]" : "text-[#c8232e]")}><span aria-hidden className="mt-0.5">{ok ? "✓" : "!"}</span><span className="text-[#1d1f24]">{text}</span></li>;
+  return <li className={clsx("flex items-start gap-2", ok ? "text-[#1c7d45]" : "text-[#b11c29]")}><span aria-hidden className="mt-0.5">{ok ? "✓" : "!"}</span><span className="text-[#0f1720]">{text}</span></li>;
 }

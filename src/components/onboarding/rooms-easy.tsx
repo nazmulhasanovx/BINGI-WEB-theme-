@@ -64,16 +64,16 @@ export function RoomsWhere({ d, st }: { d: Draft; st: Rooms["st"] }) {
               })}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[#dcdfe5] bg-white p-4">
-            <span className="grid size-12 place-items-center rounded-xl bg-[#fdecec] text-[#c8232e]"><Building className="size-6" /></span>
-            <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{t("কয় তলায় রুম আছে?", "How many floors have rooms?")}</p><p className="text-[13.5px] text-[#5b6170]">{top ? t(`১ম থেকে ${floorLabel(top, true)}`, `1st to ${floorLabel(top, false)}`) : t("এখনো বাছাই হয়নি", "Not chosen yet")}</p></div>
+          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[#c6ccd4] bg-white p-4">
+            <span className="grid size-12 place-items-center rounded-xl bg-[#ffe7e4] text-[#b11c29]"><Building className="size-6" /></span>
+            <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{t("কয় তলায় রুম আছে?", "How many floors have rooms?")}</p><p className="text-[13.5px] text-[#4d5664]">{top ? t(`১ম থেকে ${floorLabel(top, true)}`, `1st to ${floorLabel(top, false)}`) : t("এখনো বাছাই হয়নি", "Not chosen yet")}</p></div>
             <Stepper label={t("তলা", "Floors")} value={top} set={(n) => setFloors(Math.max(n, minTop), ground)} min={Math.max(1, minTop)} max={MAX_FLOOR} />
           </div>
-          <div className="rounded-xl border border-[#dcdfe5] bg-white p-4">
-            <label className="flex items-center gap-3 text-[16px] font-semibold"><input type="checkbox" checked={ground} disabled={groundUsed} onChange={(e) => setFloors(Math.max(top, 1), e.target.checked)} className="size-5 accent-[#c8232e]" />{t("নিচতলায়ও রুম আছে", "Rooms on the ground floor too")}</label>
-            {ground && <div className="mt-3 flex flex-wrap items-center gap-2 pl-8"><span className="text-[14px] text-[#5b6170]">{t("নম্বর:", "Numbers:")}</span><Chip on={d.ground === "G"} onClick={() => edit((x) => { x.ground = "G"; })}>G01, G02…</Chip><Chip on={d.ground === "0"} onClick={() => edit((x) => { x.ground = "0"; })}>001, 002…</Chip></div>}
+          <div className="rounded-xl border border-[#c6ccd4] bg-white p-4">
+            <label className="flex items-center gap-3 text-[16px] font-semibold"><input type="checkbox" checked={ground} disabled={groundUsed} onChange={(e) => setFloors(Math.max(top, 1), e.target.checked)} className="size-5 accent-[#b11c29]" />{t("নিচতলায়ও রুম আছে", "Rooms on the ground floor too")}</label>
+            {ground && <div className="mt-3 flex flex-wrap items-center gap-2 pl-8"><span className="text-[14px] text-[#4d5664]">{t("নম্বর:", "Numbers:")}</span><Chip on={d.ground === "G"} onClick={() => edit((x) => { x.ground = "G"; })}>G01, G02…</Chip><Chip on={d.ground === "0"} onClick={() => edit((x) => { x.ground = "0"; })}>001, 002…</Chip></div>}
           </div>
-          {top > 0 && <p className="text-[14px] text-[#5b6170]">{t("নম্বর এমন হবে:", "Numbers will look like:")} <b className="font-mono text-[#1d1f24]">{[ground ? (d.ground === "G" ? "G01" : "001") : null, "101", "102", top > 1 ? `${top}01` : null].filter(Boolean).join(", ")}…</b>{bs.length > 1 && <> · <b className="font-mono text-[#1d1f24]">A-101</b></>}</p>}
+          {top > 0 && <p className="text-[14px] text-[#4d5664]">{t("নম্বর এমন হবে:", "Numbers will look like:")} <b className="font-mono text-[#0f1720]">{[ground ? (d.ground === "G" ? "G01" : "001") : null, "101", "102", top > 1 ? `${top}01` : null].filter(Boolean).join(", ")}…</b>{bs.length > 1 && <> · <b className="font-mono text-[#0f1720]">A-101</b></>}</p>}
         </div>
       )}
       {zoneTypes && (
@@ -82,10 +82,10 @@ export function RoomsWhere({ d, st }: { d: Draft; st: Rooms["st"] }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {ZONES.map((z) => { const on = d.zones.includes(z.id); const lock = on && zUsed(z.id); return <Chip key={z.id} on={on} disabled={lock} onClick={() => edit((x) => { x.zones = x.zones.includes(z.id) ? x.zones.filter((y) => y !== z.id) : [...x.zones, z.id]; })}><Trees className="size-4" aria-hidden />{t(z.bn, z.en)}</Chip>; })}
           </div>
-          <p className="mt-3 text-[14px] text-[#5b6170]">{t("নম্বর:", "Numbers:")} <b className="font-mono text-[#1d1f24]">{d.stay.filter((s) => STAY.find((x) => x.id === s)?.where === "zone").map((s) => `${STAY.find((x) => x.id === s)!.prefix}01`).join(", ")}…</b></p>
+          <p className="mt-3 text-[14px] text-[#4d5664]">{t("নম্বর:", "Numbers:")} <b className="font-mono text-[#0f1720]">{d.stay.filter((s) => STAY.find((x) => x.id === s)?.where === "zone").map((s) => `${STAY.find((x) => x.id === s)!.prefix}01`).join(", ")}…</b></p>
         </div>
       )}
-      {!floorTypes && !zoneTypes && <p className="text-[15px] text-[#5b6170]">{t("আগের ধাপে কী ভাড়া দেন বাছাই করুন।", "Choose what you rent in the previous step.")}</p>}
+      {!floorTypes && !zoneTypes && <p className="text-[15px] text-[#4d5664]">{t("আগের ধাপে কী ভাড়া দেন বাছাই করুন।", "Choose what you rent in the previous step.")}</p>}
       <p className="sr-only">{num(st.units.length, lang)}</p>
     </Q>
   );
@@ -128,25 +128,25 @@ export function RoomTypes({ d, rooms }: { d: Draft; rooms: Rooms }) {
             const us = live.filter((u) => u.category === c.id);
             const I = STAY_ICON[c.core];
             return (
-              <li key={c.id} className="onb-in flex gap-3 rounded-xl border border-[#dcdfe5] bg-white p-3.5">
-                <span className="grid size-16 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#fdecea] to-[#f4f5f7] text-[#c8232e]"><I className="size-8" /></span>
+              <li key={c.id} className="onb-in flex gap-3 rounded-xl border border-[#c6ccd4] bg-white p-3.5">
+                <span className="grid size-16 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#fdecea] to-[#e9edf2] text-[#b11c29]"><I className="size-8" /></span>
                 <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-baseline gap-x-2 text-[16.5px] font-semibold">{c.name}<span className="text-[13px] font-medium text-[#5b6170]">{t(ROOM_KINDS.find((k) => k.id === c.roomKind)?.bn ?? "", ROOM_KINDS.find((k) => k.id === c.roomKind)?.en ?? "")}</span></p>
-                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-[13.5px] text-[#5b6170]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(c.maxAdults, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span><span className="font-semibold text-[#b11c29]">৳{num(money(c.baseRate), lang)} / {t("রাত", "night")}</span></p>
-                  <p className="mt-1.5 flex flex-wrap gap-1">{us.slice(0, 12).map((u) => <span key={u.id} className="rounded-lg bg-[#f1f2f5] px-1.5 py-0.5 font-mono text-[12.5px] font-semibold">{u.code}</span>)}{us.length > 12 && <span className="text-[12.5px] text-[#5b6170]">+{num(us.length - 12, lang)}</span>}</p>
+                  <p className="flex flex-wrap items-baseline gap-x-2 text-[16.5px] font-semibold">{c.name}<span className="text-[13px] font-medium text-[#4d5664]">{t(ROOM_KINDS.find((k) => k.id === c.roomKind)?.bn ?? "", ROOM_KINDS.find((k) => k.id === c.roomKind)?.en ?? "")}</span></p>
+                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-[13.5px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(c.maxAdults, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span><span className="font-semibold text-[#8e1621]">৳{num(money(c.baseRate), lang)} / {t("রাত", "night")}</span></p>
+                  <p className="mt-1.5 flex flex-wrap gap-1">{us.slice(0, 12).map((u) => <span key={u.id} className="rounded-lg bg-[#e9edf2] px-1.5 py-0.5 font-mono text-[12.5px] font-semibold">{u.code}</span>)}{us.length > 12 && <span className="text-[12.5px] text-[#4d5664]">+{num(us.length - 12, lang)}</span>}</p>
                 </div>
-                <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-10 shrink-0 place-items-center self-start rounded-full text-[#5b6170] hover:bg-[#fff1f0] hover:text-[#b11c29]"><Trash2 className="size-[18px]" /></button>
+                <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-10 shrink-0 place-items-center self-start rounded-full text-[#4d5664] hover:bg-[#fff1f0] hover:text-[#8e1621]"><Trash2 className="size-[18px]" /></button>
               </li>
             );
           })}
         </ul>
       )}
       <button onClick={start} className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] p-4 text-left transition-colors hover:bg-[#fff4f3]">
-        <span className="grid size-12 place-items-center rounded-xl bg-[#c8232e] text-white"><Plus className="size-6" /></span>
-        <span><span className="block text-[17px] font-semibold">{cats.length ? t("আরেকটা ধরন যোগ করুন", "Add another room type") : t("প্রথম রুমের ধরন যোগ করুন", "Add your first room type")}</span><span className="text-[14px] text-[#5b6170]">{t("৪টা ছোট ধাপ · ১ মিনিট", "4 short steps · 1 minute")}</span></span>
-        <ChevronRight className="ml-auto size-5 text-[#c8232e]" />
+        <span className="grid size-12 place-items-center rounded-xl bg-[#b11c29] text-white"><Plus className="size-6" /></span>
+        <span><span className="block text-[17px] font-semibold">{cats.length ? t("আরেকটা ধরন যোগ করুন", "Add another room type") : t("প্রথম রুমের ধরন যোগ করুন", "Add your first room type")}</span><span className="text-[14px] text-[#4d5664]">{t("৪টা ছোট ধাপ · ১ মিনিট", "4 short steps · 1 minute")}</span></span>
+        <ChevronRight className="ml-auto size-5 text-[#b11c29]" />
       </button>
-      {cats.length > 0 && <p className="mt-3 text-[14px] text-[#5b6170]">{t(`মোট ${num(live.length, lang)}টা রুম। সব যোগ হলে "এগিয়ে যান" চাপুন।`, `${live.length} rooms in total. Press "Continue" when you're done.`)}</p>}
+      {cats.length > 0 && <p className="mt-3 text-[14px] text-[#4d5664]">{t(`মোট ${num(live.length, lang)}টা রুম। সব যোগ হলে "এগিয়ে যান" চাপুন।`, `${live.length} rooms in total. Press "Continue" when you're done.`)}</p>}
     </Q>
   );
 }
@@ -192,13 +192,13 @@ function TypeForm({ d, rooms, form: f, setForm, onDone }: { d: Draft; rooms: Roo
     <section>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{f.name || t("নতুন রুমের ধরন", "New room type")}</h1>
-        <button onClick={() => setForm(null)} className="inline-flex h-10 items-center gap-1 rounded-full px-3 text-[14.5px] font-medium text-[#5b6170] hover:bg-[#f4f5f7]"><X className="size-4" />{t("বাতিল", "Cancel")}</button>
+        <button onClick={() => setForm(null)} className="inline-flex h-10 items-center gap-1 rounded-full px-3 text-[14.5px] font-medium text-[#4d5664] hover:bg-[#e9edf2]"><X className="size-4" />{t("বাতিল", "Cancel")}</button>
       </div>
       <ol className="mt-3 grid grid-cols-4 gap-1.5" aria-label={t("ধাপ", "Steps")}>
         {cards.map((c, i) => (
           <li key={c}><button onClick={() => i < card && setCard(i)} aria-current={i === card ? "step" : undefined} className="w-full text-left">
-            <span className={clsx("block h-1.5 rounded-full transition-colors", i <= card ? "bg-[#c8232e]" : "bg-[#e6e8ee]")} />
-            <span className={clsx("mt-1.5 block truncate text-[12.5px] font-semibold", i === card ? "text-[#b11c29]" : "text-[#5b6170]")}>{c}</span>
+            <span className={clsx("block h-1.5 rounded-full transition-colors", i <= card ? "bg-[#b11c29]" : "bg-[#e3e7ec]")} />
+            <span className={clsx("mt-1.5 block truncate text-[12.5px] font-semibold", i === card ? "text-[#8e1621]" : "text-[#4d5664]")}>{c}</span>
           </button></li>
         ))}
       </ol>
@@ -218,11 +218,11 @@ function TypeForm({ d, rooms, form: f, setForm, onDone }: { d: Draft; rooms: Roo
             <div className="space-y-5">
               <div>
                 <label htmlFor="price" className="text-[15.5px] font-semibold">{t("প্রতি রাতের দাম", "Price per night")}</label>
-                <div className="mt-2 flex items-center gap-2"><span className="text-[24px] font-semibold text-[#b11c29]">৳</span><input id="price" inputMode="numeric" value={f.price} onChange={(e) => set({ price: e.target.value.replace(/\D/g, "").slice(0, 7) })} placeholder="5000" className={field + " h-14 max-w-[220px] text-[22px] font-semibold"} /></div>
+                <div className="mt-2 flex items-center gap-2"><span className="text-[24px] font-semibold text-[#8e1621]">৳</span><input id="price" inputMode="numeric" value={f.price} onChange={(e) => set({ price: e.target.value.replace(/\D/g, "").slice(0, 7) })} placeholder="5000" className={field + " h-14 max-w-[220px] text-[22px] font-semibold"} /></div>
                 <div className="mt-2 flex flex-wrap gap-2">{[2000, 3500, 5000, 8000, 12000].map((v) => <Chip key={v} on={price === v} onClick={() => set({ price: String(v) })}>৳{num(money(v), lang)}</Chip>)}</div>
-                {price > 0 && <p className="mt-3 rounded-xl bg-[#f4f5f7] px-4 py-2.5 text-[14.5px]">{t("গেস্ট দেবে", "Guest pays")} <b>৳{num(money(final), lang)}</b> <span className="text-[#5b6170]">({t("ভ্যাট", "VAT")} {num(vat, lang)}% + {t("সার্ভিস", "service")} {num(sc, lang)}%)</span></p>}
+                {price > 0 && <p className="mt-3 rounded-xl bg-[#e9edf2] px-4 py-2.5 text-[14.5px]">{t("গেস্ট দেবে", "Guest pays")} <b>৳{num(money(final), lang)}</b> <span className="text-[#4d5664]">({t("ভ্যাট", "VAT")} {num(vat, lang)}% + {t("সার্ভিস", "service")} {num(sc, lang)}%)</span></p>}
               </div>
-              <div className="flex flex-wrap items-center gap-4"><p className="flex items-center gap-2 text-[15.5px] font-semibold"><UsersRound className="size-5 text-[#c8232e]" />{t("সর্বোচ্চ অতিথি", "Max guests")}</p><Stepper label={t("অতিথি", "Guests")} value={f.guests} set={(n) => set({ guests: n })} min={1} max={12} /></div>
+              <div className="flex flex-wrap items-center gap-4"><p className="flex items-center gap-2 text-[15.5px] font-semibold"><UsersRound className="size-5 text-[#b11c29]" />{t("সর্বোচ্চ অতিথি", "Max guests")}</p><Stepper label={t("অতিথি", "Guests")} value={f.guests} set={(n) => set({ guests: n })} min={1} max={12} /></div>
               <Group title={t("রুমের মাপ (ঐচ্ছিক)", "Room size (optional)")}>{SIZES.map((s) => <Chip key={s} on={f.size === s} onClick={() => set({ size: f.size === s ? undefined : s })}>{num(s, lang)} {t("বর্গফুট", "sq ft")}</Chip>)}</Group>
             </div>
           )}
@@ -235,18 +235,18 @@ function TypeForm({ d, rooms, form: f, setForm, onDone }: { d: Draft; rooms: Roo
                   const free = list.filter((x) => !taken.has(x.code.toUpperCase())).length;
                   const mine = f.picks.filter((x) => x.node === p.id).length;
                   return (
-                    <button key={p.id} onClick={() => setSheet(p)} className={clsx("flex items-center gap-3 rounded-xl border p-3.5 text-left transition-colors", mine ? "border-[#1d1f24] bg-white shadow-[inset_0_0_0_1px_#1d1f24]" : "border-[#dcdfe5] bg-white hover:border-[#d5d8e0]")}>
-                      <span className="min-w-0 flex-1"><span className="block text-[15.5px] font-semibold">{placeName(p, config, lang)}</span><span className="text-[13px] text-[#5b6170]">{t(`${num(free, lang)}টা খালি`, `${free} free`)}{mine ? t(` · ${num(mine, lang)}টা বাছাই`, ` · ${mine} picked`) : ""}</span></span>
-                      <span className="inline-flex h-9 items-center gap-1 rounded-full border border-[#f3c9c5] px-3 text-[13.5px] font-semibold text-[#c8232e]"><Plus className="size-4" />{t("রুম দেখুন", "View rooms")}</span>
+                    <button key={p.id} onClick={() => setSheet(p)} className={clsx("flex items-center gap-3 rounded-xl border p-3.5 text-left transition-colors", mine ? "border-[#0f1720] bg-white shadow-[inset_0_0_0_1px_#0f1720]" : "border-[#c6ccd4] bg-white hover:border-[#d5d8e0]")}>
+                      <span className="min-w-0 flex-1"><span className="block text-[15.5px] font-semibold">{placeName(p, config, lang)}</span><span className="text-[13px] text-[#4d5664]">{t(`${num(free, lang)}টা খালি`, `${free} free`)}{mine ? t(` · ${num(mine, lang)}টা বাছাই`, ` · ${mine} picked`) : ""}</span></span>
+                      <span className="inline-flex h-9 items-center gap-1 rounded-full border border-[#f3c9c5] px-3 text-[13.5px] font-semibold text-[#b11c29]"><Plus className="size-4" />{t("রুম দেখুন", "View rooms")}</span>
                     </button>
                   );
                 })}
               </div>
               {f.picks.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-[14px] font-semibold text-[#5b6170]">{t(`বাছাই করা ${num(f.picks.length, lang)}টা`, `${f.picks.length} picked`)}</p>
+                  <p className="text-[14px] font-semibold text-[#4d5664]">{t(`বাছাই করা ${num(f.picks.length, lang)}টা`, `${f.picks.length} picked`)}</p>
                   <div className="mt-2 flex flex-wrap gap-2">{f.picks.map((p) => (
-                    <span key={p.code} className="inline-flex items-center gap-1 rounded-xl bg-[#f1f2f5] py-1 pl-2.5 pr-1 font-mono text-[14px] font-semibold">{p.code}<button aria-label={t(`${p.code} বাদ দিন`, `Remove ${p.code}`)} onClick={() => set({ picks: f.picks.filter((x) => x.code !== p.code) })} className="grid size-6 place-items-center rounded-lg hover:bg-white"><X className="size-3.5" /></button></span>
+                    <span key={p.code} className="inline-flex items-center gap-1 rounded-xl bg-[#e9edf2] py-1 pl-2.5 pr-1 font-mono text-[14px] font-semibold">{p.code}<button aria-label={t(`${p.code} বাদ দিন`, `Remove ${p.code}`)} onClick={() => set({ picks: f.picks.filter((x) => x.code !== p.code) })} className="grid size-6 place-items-center rounded-lg hover:bg-white"><X className="size-3.5" /></button></span>
                   ))}</div>
                 </div>
               )}
@@ -262,33 +262,33 @@ function TypeForm({ d, rooms, form: f, setForm, onDone }: { d: Draft; rooms: Roo
                     const I = AM_ICON[a] ?? Sparkles; const on = f.amen.includes(a);
                     return (
                       <button key={a} type="button" aria-pressed={on} onClick={() => set({ amen: on ? f.amen.filter((x) => x !== a) : [...f.amen, a] })}
-                        className={clsx("flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-[14px] font-semibold transition-colors", on ? "border-[#1d1f24] bg-white shadow-[inset_0_0_0_1px_#1d1f24]" : "border-[#dcdfe5] bg-white")}>
-                        <span className={clsx("grid size-8 shrink-0 place-items-center rounded-xl", on ? "bg-[#c8232e] text-white" : "bg-[#fdecec] text-[#c8232e]")}>{on ? <Check className="size-4" /> : <I className="size-4" />}</span>
+                        className={clsx("flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-[14px] font-semibold transition-colors", on ? "border-[#0f1720] bg-white shadow-[inset_0_0_0_1px_#0f1720]" : "border-[#c6ccd4] bg-white")}>
+                        <span className={clsx("grid size-8 shrink-0 place-items-center rounded-xl", on ? "bg-[#b11c29] text-white" : "bg-[#ffe7e4] text-[#b11c29]")}>{on ? <Check className="size-4" /> : <I className="size-4" />}</span>
                         <span className="min-w-0 truncate">{t(AM_BN[a] ?? a, a)}</span>
                       </button>
                     );
                   })}
                 </div>
-                <button onClick={() => setAllAm((x) => !x)} className="mt-2 text-[14.5px] font-semibold text-[#c8232e]">{allAm ? t("কম দেখান", "Show fewer") : t("সব সুবিধা দেখুন", "See all amenities")}</button>
+                <button onClick={() => setAllAm((x) => !x)} className="mt-2 text-[14.5px] font-semibold text-[#b11c29]">{allAm ? t("কম দেখান", "Show fewer") : t("সব সুবিধা দেখুন", "See all amenities")}</button>
               </div>
               <div>
                 <p className="text-[15.5px] font-semibold">{t("খাবার", "Meals")}</p>
                 {(["breakfast", "lunch"] as const).map((m) => (
-                  <div key={m} className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#dcdfe5] bg-white px-4 py-2.5">
+                  <div key={m} className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#c6ccd4] bg-white px-4 py-2.5">
                     <span className="text-[15px] font-semibold">{m === "breakfast" ? t("নাশতা", "Breakfast") : t("দুপুরের খাবার", "Lunch")}</span>
-                    <div role="radiogroup" aria-label={m} className="flex rounded-full bg-[#f1f2f5] p-1">
-                      {([["none", "নেই", "None"], ["included", "সাথে আছে", "Included"], ["extra", "আলাদা দামে", "Extra"]] as const).map(([v, bn, en]) => <button key={v} role="radio" aria-checked={f[m] === v} onClick={() => set({ [m]: v } as Partial<Form>)} className={clsx("h-9 rounded-full px-3 text-[13.5px] font-semibold", f[m] === v ? "bg-white shadow-sm" : "text-[#5b6170]")}>{t(bn, en)}</button>)}
+                    <div role="radiogroup" aria-label={m} className="flex rounded-full bg-[#e9edf2] p-1">
+                      {([["none", "নেই", "None"], ["included", "সাথে আছে", "Included"], ["extra", "আলাদা দামে", "Extra"]] as const).map(([v, bn, en]) => <button key={v} role="radio" aria-checked={f[m] === v} onClick={() => set({ [m]: v } as Partial<Form>)} className={clsx("h-9 rounded-full px-3 text-[13.5px] font-semibold", f[m] === v ? "bg-white shadow-sm" : "text-[#4d5664]")}>{t(bn, en)}</button>)}
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="rounded-xl bg-[#f4f5f7] px-4 py-3 text-[14px] text-[#4b5160]">{t("ছবি পরে HMS → রুম থেকে যোগ করবেন।", "Add photos later in HMS → Rooms.")}</p>
+              <p className="rounded-xl bg-[#e9edf2] px-4 py-3 text-[14px] text-[#4d5664]">{t("ছবি পরে HMS → রুম থেকে যোগ করবেন।", "Add photos later in HMS → Rooms.")}</p>
             </div>
           )}
         </div>
         {slot && createPortal(
           <div className="flex items-center gap-2">
-            {card > 0 ? <button onClick={() => { setTried(false); setCard((c) => c - 1); }} className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[15px] font-medium hover:bg-[#f4f5f7]">← {t("আগের", "Back")}</button> : <button onClick={() => setForm(null)} className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[15px] font-medium hover:bg-[#f4f5f7]">{t("বাতিল", "Cancel")}</button>}
+            {card > 0 ? <button onClick={() => { setTried(false); setCard((c) => c - 1); }} className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[15px] font-medium hover:bg-[#e9edf2]">← {t("আগের", "Back")}</button> : <button onClick={() => setForm(null)} className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[15px] font-medium hover:bg-[#e9edf2]">{t("বাতিল", "Cancel")}</button>}
             <div className="ml-auto">{card < 3 ? <Primary onClick={nextCard}>{t("পরের", "Next")} <ChevronRight className="size-[18px]" /></Primary> : <Primary onClick={save}><Check className="size-[18px]" />{t(`সেভ করুন (${num(f.picks.length, lang)}টা রুম)`, `Save (${f.picks.length} rooms)`)}</Primary>}</div>
           </div>, slot)}
       </div>
@@ -319,11 +319,11 @@ function NumberSheet({ place, name, list, taken, picks, onClose }: { place: LocN
   const shown = list.filter((x) => x.code.toLowerCase().includes(q.toLowerCase()));
   const nextFree = (n: number) => { const add: Pick[] = []; for (const x of list) { if (add.length >= n) break; if (!taken.has(x.code.toUpperCase()) && !sel.some((s) => s.code === x.code)) add.push({ node: place.id, local: x.local, code: x.code }); } setSel([...sel, ...add]); };
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1d1f24]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => onClose(sel)}>
+    <div className="bingi-ui fixed inset-0 z-50 flex items-end justify-center bg-[#0f1720]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => onClose(sel)}>
       <div role="dialog" aria-modal="true" aria-label={name} onClick={(e) => e.stopPropagation()} className="onb-in flex max-h-[92dvh] w-full max-w-[680px] flex-col rounded-t-xl bg-white shadow-2xl sm:rounded-xl">
-        <div className="flex items-start justify-between gap-3 border-b border-[#eef0f3] px-5 py-4">
-          <div><h2 className="text-[18px] font-semibold">{name}</h2><p className="text-[13.5px] text-[#5b6170]">{t("একসাথে অনেকগুলো চাপুন", "Tap several at once")}</p></div>
-          <button onClick={() => onClose(sel)} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#dcdfe5]"><X className="size-5" /></button>
+        <div className="flex items-start justify-between gap-3 border-b border-[#e9edf2] px-5 py-4">
+          <div><h2 className="text-[18px] font-semibold">{name}</h2><p className="text-[13.5px] text-[#4d5664]">{t("একসাথে অনেকগুলো চাপুন", "Tap several at once")}</p></div>
+          <button onClick={() => onClose(sel)} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#c6ccd4]"><X className="size-5" /></button>
         </div>
         <div className="flex flex-wrap items-center gap-2 px-5 pt-4">
           <input aria-label={t("নম্বর খুঁজুন", "Search numbers")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("নম্বর খুঁজুন", "Search")} className={field + " h-11 min-w-0 flex-1 basis-[160px] text-[15px]"} />
@@ -335,12 +335,12 @@ function NumberSheet({ place, name, list, taken, picks, onClose }: { place: LocN
             const on = sel.some((s) => s.code === x.code);
             return (
               <button key={x.code} disabled={used} aria-pressed={on} onClick={() => setSel(on ? sel.filter((s) => s.code !== x.code) : [...sel, { node: place.id, local: x.local, code: x.code }])}
-                className={clsx("h-12 rounded-xl font-mono text-[15px] font-semibold transition-colors", used ? "cursor-not-allowed bg-[#eceef2] text-[#a3a8b4] line-through" : on ? "bg-[#c8232e] text-white " : "bg-[#f4f5f7] hover:bg-[#fdecec]")}>{x.code}</button>
+                className={clsx("h-12 rounded-xl font-mono text-[15px] font-semibold transition-colors", used ? "cursor-not-allowed bg-[#e3e7ec] text-[#a3a8b4] line-through" : on ? "bg-[#b11c29] text-white " : "bg-[#e9edf2] hover:bg-[#ffe7e4]")}>{x.code}</button>
             );
           })}
         </div>
-        <div className="flex items-center gap-2 border-t border-[#eef0f3] px-5 py-3.5">
-          <span className="text-[14px] text-[#5b6170]">{t(`এখানে ${num(here, lang)}টা বাছাই`, `${here} picked here`)}</span>
+        <div className="flex items-center gap-2 border-t border-[#e9edf2] px-5 py-3.5">
+          <span className="text-[14px] text-[#4d5664]">{t(`এখানে ${num(here, lang)}টা বাছাই`, `${here} picked here`)}</span>
           <Primary onClick={() => onClose(sel)} className="ml-auto">{t("ঠিক আছে", "Done")}</Primary>
         </div>
       </div>

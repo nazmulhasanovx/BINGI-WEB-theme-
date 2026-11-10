@@ -40,7 +40,7 @@ function useNotes(): Note[] {
     const arriving = g.rows.filter((r) => r.state === "Arriving today");
     if (arriving.length) out.push({ id: "arr", icon: CalendarCheck, tone: "bg-[#fdefe7] text-[#d9622b]", title: `${arriving.length} guest${arriving.length > 1 ? "s" : ""} arriving today`, sub: arriving.map((r) => r.name).slice(0, 3).join(", "), href: "/hms/guests" });
     const noId = g.rows.filter((r) => r.state === "In house" && r.idMissing);
-    if (noId.length) out.push({ id: "id", icon: UserRoundCheck, tone: "bg-[#fde8e8] text-[#c8232e]", title: `${noId.length} in-house guest${noId.length > 1 ? "s" : ""} without ID`, sub: "Collect ID at the front desk", href: "/hms/guests" });
+    if (noId.length) out.push({ id: "id", icon: UserRoundCheck, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${noId.length} in-house guest${noId.length > 1 ? "s" : ""} without ID`, sub: "Collect ID at the front desk", href: "/hms/guests" });
     const reply = g.reviews.filter((r) => !r.reply).length;
     if (reply) out.push({ id: "rv", icon: MessageSquareReply, tone: "bg-[#fdf3d9] text-[#a76f00]", title: `${reply} review${reply > 1 ? "s" : ""} waiting for a reply`, sub: "Replies show after BinGi approves", href: "/hms/guests/reviews" });
     if (hasInventory(h)) {
@@ -149,7 +149,7 @@ export function SearchBox({ items }: { items: NavTarget[] }) {
   }, []);
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Search (⌘K)" className="hidden h-9 w-[210px] items-center gap-2 rounded-full bg-hms-hover px-3 text-left text-[13px] text-hms-muted hover:bg-[#eceef2] lg:flex">
+      <button onClick={() => setOpen(true)} aria-label="Search (⌘K)" className="hidden h-9 w-[210px] items-center gap-2 rounded-full bg-hms-hover px-3 text-left text-[13px] text-hms-muted hover:bg-[#e3e7ec] lg:flex">
         <Search className="size-4 shrink-0" /><span className="flex-1 truncate whitespace-nowrap">Search…</span><kbd className="font-sans text-[11px] font-semibold">⌘K</kbd>
       </button>
       <button onClick={() => setOpen(true)} aria-label="Search" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover lg:hidden"><Search className="size-[17px]" /></button>

@@ -35,30 +35,30 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
   const TypeIcon = type?.icon ?? BedDouble;
   return (
     <div className="space-y-4">
-      <p className="text-[13px] font-semibold text-[#5b6170]">{t("অতিথিরা যেভাবে দেখবেন", "What guests will see")} <span className="font-normal">· {t("নমুনা", "sample")}</span></p>
-      <div className="overflow-hidden rounded-xl border border-[#e6e8ec] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-        <div className="relative grid aspect-[16/10] place-items-center bg-[#f1f2f5] text-[#5b6170]">
+      <p className="text-[13px] font-semibold text-[#4d5664]">{t("অতিথিরা যেভাবে দেখবেন", "What guests will see")} <span className="font-normal">· {t("নমুনা", "sample")}</span></p>
+      <div className="overflow-hidden rounded-xl border border-[#e3e7ec] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+        <div className="relative grid aspect-[16/10] place-items-center bg-[#e9edf2] text-[#4d5664]">
           <span className="flex flex-col items-center gap-1.5 text-[12.5px]"><ImageIcon className="size-7" strokeWidth={1.5} />{t("ছবি পরে HMS-এ দেবেন", "Photos are added later in HMS")}</span>
-          {type && <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-[12px] font-semibold text-[#1d1f24] shadow-sm"><TypeIcon className="size-3.5" />{t(type.bn, type.en)}</span>}
+          {type && <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-[12px] font-semibold text-[#0f1720] shadow-sm"><TypeIcon className="size-3.5" />{t(type.bn, type.en)}</span>}
         </div>
         <div className="space-y-2.5 p-4">
           <div>
             <p className={d.name ? "text-[17px] font-semibold" : "text-[17px] font-semibold text-[#a3a8b3]"}>{d.name || t("আপনার property-র নাম", "Your property name")}</p>
-            <p className="mt-0.5 flex items-center gap-1 text-[13.5px] text-[#5b6170]"><MapPin className="size-3.5 shrink-0" />{place || t("এলাকা, শহর", "Area, city")}</p>
+            <p className="mt-0.5 flex items-center gap-1 text-[13.5px] text-[#4d5664]"><MapPin className="size-3.5 shrink-0" />{place || t("এলাকা, শহর", "Area, city")}</p>
           </div>
-          <ul className="space-y-1.5 border-t border-[#eceef2] pt-2.5 text-[13.5px] text-[#4b5160]">
+          <ul className="space-y-1.5 border-t border-[#e3e7ec] pt-2.5 text-[13.5px] text-[#4d5664]">
             <li className="flex items-center gap-2"><BedDouble className="size-4 shrink-0 text-[#8a909c]" />{units ? t(`${num(units, lang)}টা রুম · ${num(cats.length, lang)} ধরন`, `${units} rooms · ${cats.length} types`) : t("রুম এখনো যোগ হয়নি", "No rooms yet")}</li>
             {d.policy.preset && <li className="flex items-center gap-2"><ShieldCheck className="size-4 shrink-0 text-[#8a909c]" />{t(...POLICY[d.policy.preset])}</li>}
             {d.seen.includes("3.1") && <li className="flex items-center gap-2"><Clock className="size-4 shrink-0 text-[#8a909c]" />{t("চেক-ইন", "Check-in")} {num(d.policy.checkIn, lang)} · {t("চেক-আউট", "Check-out")} {num(d.policy.checkOut, lang)}</li>}
             {d.seen.includes("5.1") && pays && <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0 text-[#8a909c]" />{pays}</li>}
           </ul>
-          <div className="flex items-end justify-between border-t border-[#eceef2] pt-2.5">
-            {from ? <p className="text-[13px] text-[#5b6170]">{t("শুরু", "From")} <b className="text-[18px] text-[#1d1f24]">{money(from)}</b> /{t("রাত", "night")}</p> : <p className="text-[13px] text-[#a3a8b3]">{t("দাম রুম যোগ করলে দেখাবে", "Price shows after rooms")}</p>}
+          <div className="flex items-end justify-between border-t border-[#e3e7ec] pt-2.5">
+            {from ? <p className="text-[13px] text-[#4d5664]">{t("শুরু", "From")} <b className="text-[18px] text-[#0f1720]">{money(from)}</b> /{t("রাত", "night")}</p> : <p className="text-[13px] text-[#a3a8b3]">{t("দাম রুম যোগ করলে দেখাবে", "Price shows after rooms")}</p>}
           </div>
         </div>
       </div>
       {tip && (
-        <div className="flex gap-2.5 rounded-xl bg-[#f4f5f7] p-3.5 text-[13.5px] leading-relaxed text-[#4b5160]">
+        <div className="flex gap-2.5 rounded-xl bg-[#e9edf2] p-3.5 text-[13.5px] leading-relaxed text-[#4d5664]">
           <Lightbulb className="mt-0.5 size-4 shrink-0 text-[#b7791f]" />
           <p>{t(...tip)}</p>
         </div>

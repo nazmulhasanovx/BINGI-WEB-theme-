@@ -7,8 +7,8 @@ import type { useInventory } from "@/lib/inventory/store";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 
 type Inv = ReturnType<typeof useInventory>;
-const Err = ({ children }: { children: ReactNode }) => <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#b42318]"><CircleAlert className="size-3.5" />{children}</p>;
-const Hint = ({ children }: { children: ReactNode }) => <p className="flex items-center gap-2 rounded-lg bg-[#f4f2fb] px-3 py-2 text-[13px] text-[#4b5160]"><Info className="size-4 shrink-0 text-[#6b55e0]" />{children}</p>;
+const Err = ({ children }: { children: ReactNode }) => <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#c81e1e]"><CircleAlert className="size-3.5" />{children}</p>;
+const Hint = ({ children }: { children: ReactNode }) => <p className="flex items-center gap-2 rounded-lg bg-[#f4f2fb] px-3 py-2 text-[13px] text-[#4d5664]"><Info className="size-4 shrink-0 text-[#6b55e0]" />{children}</p>;
 const Foot = ({ onClose, label, onSave, disabled }: { onClose: () => void; label: string; onSave: () => void; disabled?: boolean }) => (
   <><button onClick={onClose} className={clsx(btnLine, "flex-1")}>Cancel</button><button onClick={onSave} disabled={disabled} className={clsx(btnPrimary, "flex-1")}>{label}</button></>
 );
@@ -26,7 +26,7 @@ function Fold({ title, sub, open: o = false, children }: { title: string; sub: s
 }
 function QtyInput({ id, value, onChange, unit, invalid }: { id: string; value: string; onChange: (v: string) => void; unit: string; invalid?: boolean }) {
   return (
-    <div className={clsx("flex h-11 items-center rounded-lg border bg-white pr-3 focus-within:ring-2", invalid ? "border-[#d92d20] focus-within:ring-[#d92d20]/15" : "border-[#cfd3db] focus-within:border-hms-ink focus-within:ring-hms-ink/10")}>
+    <div className={clsx("flex h-11 items-center rounded-lg border bg-white pr-3 focus-within:ring-2", invalid ? "border-[#c81e1e] focus-within:ring-[#c81e1e]/15" : "border-[#858c97] focus-within:border-hms-ink focus-within:ring-hms-ink/10")}>
       <input id={id} inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, ""))} aria-invalid={invalid} className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] outline-none" />
       <span className="text-[13px] text-hms-muted">{unit}</span>
     </div>
@@ -59,7 +59,7 @@ export function ItemSheet({ inv, item, onClose }: { inv: Inv; item?: Item; onClo
         <div><label htmlFor="it-name" className={lbl}>Item Name</label><input id="it-name" autoFocus value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Bath Mat" className={input} />{tried && errs.name && <Err>{errs.name}</Err>}</div>
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="it-unit" className={lbl}>Unit</label><select id="it-unit" value={f.unit} onChange={(e) => set("unit", e.target.value)} className={input}>{UNITS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
-          {item ? <div><p className={lbl}>Available</p><p className="flex h-11 items-center rounded-lg bg-[#f7f8fa] px-3 text-[15px] font-semibold">{fmtQty(item.qty, item.unit)}</p></div>
+          {item ? <div><p className={lbl}>Available</p><p className="flex h-11 items-center rounded-lg bg-[#f4f6f8] px-3 text-[15px] font-semibold">{fmtQty(item.qty, item.unit)}</p></div>
             : <div><label htmlFor="it-open" className={lbl}>Opening Stock</label><QtyInput id="it-open" value={f.opening} onChange={(v) => set("opening", v)} unit={f.unit} /></div>}
         </div>
         <Fold title="Item settings" sub="SKU, category, supplier & more" open={!!item}>
@@ -116,10 +116,10 @@ export function MoveSheet({ inv, type, itemId, onClose, onDone }: { inv: Inv; ty
           {over && it && <Err>Enter {fmtQty(it.qty, it.unit)} or less. This item has {fmtQty(it.qty, it.unit)} available.</Err>}
           {type === "adjust" && <p className="mt-1 text-[12.5px] text-hms-muted">Enter the total quantity you physically counted.</p>}</div>
         {it && (
-          <div className="flex items-center gap-3 rounded-lg bg-[#f7f8fa] px-4 py-3">
+          <div className="flex items-center gap-3 rounded-lg bg-[#f4f6f8] px-4 py-3">
             <span className="flex-1"><span className="block text-[14px] font-semibold">Stock balance</span><span className="text-[12.5px] text-hms-muted">{type === "adjust" && after !== null ? `Adjustment of ${after - it.qty > 0 ? "+" : ""}${fmtQty(q(after - it.qty), it.unit)}` : "After saving"}</span></span>
             <span className="tabular-nums text-[14.5px] font-semibold">{fmtQty(it.qty, it.unit)}</span><ArrowRight className="size-4 text-hms-muted" />
-            <span className={clsx("tabular-nums text-[15px] font-bold", after === null ? "text-hms-muted" : after < 0 ? "text-[#b42318]" : "text-[#16693a]")}>{after === null ? "—" : fmtQty(after, it.unit)}</span>
+            <span className={clsx("tabular-nums text-[15px] font-bold", after === null ? "text-hms-muted" : after < 0 ? "text-[#c81e1e]" : "text-[#16693a]")}>{after === null ? "—" : fmtQty(after, it.unit)}</span>
           </div>
         )}
         {type === "adjust" && <Hint>The change appears in Movement History with the counted balance.</Hint>}
@@ -161,7 +161,7 @@ export function CategorySheet({ inv, cat, onClose }: { inv: Inv; cat?: Category;
         <div><label htmlFor="cat-name" className={lbl}>Category Name</label><input id="cat-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Maintenance Supplies" className={input} />
           {tried && !name.trim() && <Err>Enter a name</Err>}{tried && dup && <Err>This category already exists</Err>}</div>
         <Hint>Use categories to group and filter stock items.</Hint>
-        {cat && <button type="button" disabled={used > 0} onClick={() => { inv.removeCategory(cat.id); onClose(); }} className="text-[13.5px] font-semibold text-[#b42318] disabled:text-hms-muted">{used ? "Move its items to another category to delete it" : "Delete category"}</button>}
+        {cat && <button type="button" disabled={used > 0} onClick={() => { inv.removeCategory(cat.id); onClose(); }} className="text-[13.5px] font-semibold text-[#c81e1e] disabled:text-hms-muted">{used ? "Move its items to another category to delete it" : "Delete category"}</button>}
       </div>
     </Sheet>
   );
@@ -187,7 +187,7 @@ export function SupplierSheet({ inv, sup, onClose }: { inv: Inv; sup?: Supplier;
           <div><label htmlFor="sp-e" className={clsx(lbl, "flex justify-between")}>Email {opt}</label><input id="sp-e" value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="Enter email" className={input} />{tried && badEmail && <Err>Check the email</Err>}</div>
         </div>
         <div><label htmlFor="sp-a" className={clsx(lbl, "flex justify-between")}>Address {opt}</label><textarea id="sp-a" rows={3} value={f.address} onChange={(e) => set("address", e.target.value)} placeholder="Enter address" className={clsx(input, "h-auto py-2.5")} /></div>
-        {sup && <button type="button" disabled={used > 0} onClick={() => { inv.removeSupplier(sup.id); onClose(); }} className="text-[13.5px] font-semibold text-[#b42318] disabled:text-hms-muted">{used ? "Items use this supplier — change them to delete it" : "Delete supplier"}</button>}
+        {sup && <button type="button" disabled={used > 0} onClick={() => { inv.removeSupplier(sup.id); onClose(); }} className="text-[13.5px] font-semibold text-[#c81e1e] disabled:text-hms-muted">{used ? "Items use this supplier — change them to delete it" : "Delete supplier"}</button>}
       </div>
     </Sheet>
   );

@@ -26,9 +26,9 @@ export function OperationsPage() {
     <StaffFrame tab="operations" search={q} onSearch={setQ} action={action} activeFilters={fd !== "all" ? 1 : 0} onClearFilters={() => setFd("all")} filters={tab === "comm" ? undefined : <FilterSelect label="Department" value={fd} onChange={setFd} options={st.settings.departments.map((d) => ({ v: d, label: d }))} />}>
       <Card>
         <h2 className="text-[24px] font-semibold">Team Operations</h2>
-        <div className="mt-3 flex flex-wrap gap-2 border-b border-[#eceef2] pb-3">
+        <div className="mt-3 flex flex-wrap gap-2 border-b border-[#e3e7ec] pb-3">
           {([["app", "Approvals"], ["srv", "Services"], ["perf", "Performance & training"], ["comm", "Communication"], ["off", "Offboarding"]] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#fdecec] font-medium text-[#c8232e]" : "hover:bg-[#f6f7f9]")}>{l}</button>
+            <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#ffe7e4] font-medium text-[#b11c29]" : "hover:bg-[#f4f6f8]")}>{l}</button>
           ))}
         </div>
         <div className="mt-4">
@@ -53,7 +53,7 @@ function useItems(): Item[] {
 }
 
 function Dd({ icon: Icon, value, onChange, children, label }: { icon: typeof Layers; value: string; onChange: (v: string) => void; children: React.ReactNode; label: string }) {
-  return <label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white pl-4 pr-10 text-[15.5px]"><Icon className="size-[18px]" /><select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="appearance-none bg-transparent outline-none">{children}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>;
+  return <label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white pl-4 pr-10 text-[15.5px]"><Icon className="size-[18px]" /><select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="appearance-none bg-transparent outline-none">{children}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>;
 }
 
 function Approvals({ q, dept }: { q: string; dept: string }) {
@@ -95,10 +95,10 @@ function Approvals({ q, dept }: { q: string; dept: string }) {
               const [Icon, cls] = ICON[i.kind];
               return (
                 <tr key={i.id}>
-                  <td><span className="flex items-center gap-3"><span className={clsx("grid size-10 shrink-0 place-items-center rounded-full", cls)}><Icon className="size-5" /></span><span><b className="block text-[15.5px]">{i.kind}</b><span className="text-[14px] text-[#5b6170]">{i.id}</span></span></span></td>
+                  <td><span className="flex items-center gap-3"><span className={clsx("grid size-10 shrink-0 place-items-center rounded-full", cls)}><Icon className="size-5" /></span><span><b className="block text-[15.5px]">{i.kind}</b><span className="text-[14px] text-[#4d5664]">{i.id}</span></span></span></td>
                   <td>{i.kind === "Shift swap" ? i.detail : <>{i.to && i.to !== i.date ? `${fmt(i.date)} – ${fmt(i.to)}` : fmt(i.date)}<span className="block">{i.kind === "Leave" ? `(${i.detail})` : i.detail}</span></>}</td>
                   <td><Person name={emp(st, i.emp)?.name ?? i.emp} id={i.emp} /></td>
-                  <td>{fmt(i.requested)}<span className="block text-[14px] text-[#5b6170]">Asia/Dhaka</span></td>
+                  <td>{fmt(i.requested)}<span className="block text-[14px] text-[#4d5664]">Asia/Dhaka</span></td>
                   <td className="font-semibold">{i.approver}</td>
                   <td><Chip tone={i.status === "pending" ? "amber" : i.status === "approved" ? "green" : "red"}>{i.status[0].toUpperCase() + i.status.slice(1)}</Chip></td>
                   <td><div className="flex gap-2"><Btn onClick={() => setRev(i.id)}><Eye className="size-[18px]" /> Review</Btn>
@@ -128,11 +128,11 @@ function ReviewItem({ i, onClose, onDecide }: { i: Item; onClose: () => void; on
   return (
     <Drawer title={`Review · ${i.kind}`} onClose={onClose} footer={i.status === "pending" ? <><Btn kind="danger" onClick={() => onDecide(false)}>Reject</Btn><Btn kind="primary" onClick={() => onDecide(true)}>Approve</Btn></> : <Btn onClick={onClose}>Close</Btn>}>
       <Person name={e?.name ?? i.emp} id={i.emp} sub={`${i.emp} · ${e?.dept}`} />
-      <dl className="divide-y divide-[#eceef2] rounded-xl border border-[#eceef2] px-4 text-[15px]">
-        {[["Request", i.id], ["Date", i.to && i.to !== i.date ? `${fmt(i.date)} – ${fmt(i.to)}` : fmt(i.date)], ["Details", i.detail], ["Requested on", fmt(i.requested)], ["Approver", i.approver], ["Status", i.status]].map(([k, v]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-[#4b5160]">{k}</dt><dd className="text-right capitalize-first">{v}</dd></div>)}
+      <dl className="divide-y divide-[#e3e7ec] rounded-xl border border-[#e3e7ec] px-4 text-[15px]">
+        {[["Request", i.id], ["Date", i.to && i.to !== i.date ? `${fmt(i.date)} – ${fmt(i.to)}` : fmt(i.date)], ["Details", i.detail], ["Requested on", fmt(i.requested)], ["Approver", i.approver], ["Status", i.status]].map(([k, v]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-[#4d5664]">{k}</dt><dd className="text-right capitalize-first">{v}</dd></div>)}
       </dl>
-      {i.kind === "Shift swap" && (() => { const ds = [i.date, addDays(i.date, 1)]; return <p className="rounded-xl bg-[#f6f7f9] px-4 py-3 text-[14.5px]">Now: {ds.map((d) => `${fmt(d).slice(0, 6)} ${st.roster.cells[i.emp]?.[d] ?? "—"}`).join(" · ")}</p>; })()}
-      <p className="text-[13.5px] text-[#6b7180]">{EFFECT[i.kind]}</p>
+      {i.kind === "Shift swap" && (() => { const ds = [i.date, addDays(i.date, 1)]; return <p className="rounded-xl bg-[#f4f6f8] px-4 py-3 text-[14.5px]">Now: {ds.map((d) => `${fmt(d).slice(0, 6)} ${st.roster.cells[i.emp]?.[d] ?? "—"}`).join(" · ")}</p>; })()}
+      <p className="text-[13.5px] text-[#4d5664]">{EFFECT[i.kind]}</p>
     </Drawer>
   );
 }
@@ -164,7 +164,7 @@ function NewRequest({ onClose }: { onClose: () => void }) {
         {kind === "Advance" && <Field label="Amount (BDT)"><Input type="number" min={0} value={f.amount || ""} onChange={(e) => setF({ ...f, amount: Math.max(0, Number(e.target.value) || 0) })} /></Field>}
       </div>
       {kind === "Advance" && <Field label="Reason"><Input value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></Field>}
-      <p className="rounded-xl bg-[#f6f7f9] px-4 py-3 text-[14.5px]">Goes to <b>{st.settings.approver}</b> for approval. {EFFECT[kind]}</p>
+      <p className="rounded-xl bg-[#f4f6f8] px-4 py-3 text-[14.5px]">Goes to <b>{st.settings.approver}</b> for approval. {EFFECT[kind]}</p>
     </Drawer>
   );
 }
@@ -178,7 +178,7 @@ function Services({ q, dept }: { q: string; dept: string }) {
     <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
       <div>{list.length === 0 ? <Empty icon={<FileText className="size-6" />} title="No service requests" /> : (
         <Table cols={[{ label: "Request" }, { label: "Employee", w: "26%" }, { label: "Requested" }, { label: "Status" }, { label: "", w: "140px" }]}>
-          {list.map((s) => <tr key={s.id}><td><b>{s.kind}</b><span className="block text-[14px] text-[#5b6170]">{s.id}</span></td><td><Person name={emp(st, s.emp)?.name ?? s.emp} id={s.emp} /></td><td>{fmt(s.date)}</td><td><Chip tone={s.status === "done" ? "green" : "amber"}>{s.status === "done" ? "Done" : "Open"}</Chip></td><td>{s.status === "open" && <Btn onClick={() => update((x) => { x.services.find((y) => y.id === s.id)!.status = "done"; }, `${s.kind} ready for ${emp(st, s.emp)?.name}`)}>Mark done</Btn>}</td></tr>)}
+          {list.map((s) => <tr key={s.id}><td><b>{s.kind}</b><span className="block text-[14px] text-[#4d5664]">{s.id}</span></td><td><Person name={emp(st, s.emp)?.name ?? s.emp} id={s.emp} /></td><td>{fmt(s.date)}</td><td><Chip tone={s.status === "done" ? "green" : "amber"}>{s.status === "done" ? "Done" : "Open"}</Chip></td><td>{s.status === "open" && <Btn onClick={() => update((x) => { x.services.find((y) => y.id === s.id)!.status = "done"; }, `${s.kind} ready for ${emp(st, s.emp)?.name}`)}>Mark done</Btn>}</td></tr>)}
         </Table>
       )}</div>
       <Card title="New service request">
@@ -186,7 +186,7 @@ function Services({ q, dept }: { q: string; dept: string }) {
           <Field label="Staff"><Select value={f.emp} onChange={(e) => setF({ ...f, emp: e.target.value })}>{active.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</Select></Field>
           <Field label="Document"><Select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as ServiceReq["kind"] })}><option>Salary certificate</option><option>ID card</option><option>Experience letter</option></Select></Field>
           <Btn kind="primary" className="w-full" onClick={() => update((s) => { s.services.unshift({ id: `SRV-${s.services.length + 1}`, emp: f.emp, kind: f.kind, date: TODAY, status: "open" }); }, `${f.kind} requested for ${emp(st, f.emp)?.name}`)}>Add request</Btn>
-          <p className="text-[13px] text-[#6b7180]">Document printing is planned.</p>
+          <p className="text-[13px] text-[#4d5664]">Document printing is planned.</p>
         </div>
       </Card>
     </div>
@@ -203,12 +203,12 @@ function Performance({ q, dept }: { q: string; dept: string }) {
   const who = st.employees.filter((e) => e.status === "active" && (f.dept === "all" || e.dept === f.dept));
   return (
     <>
-      <div className="mb-3 flex items-center justify-between"><p className="text-[15px] text-[#4b5160]">{st.employees.filter((e) => e.reviews.length).length} reviewed · {st.employees.reduce((t, e) => t + e.trainings.filter((x) => x.status === "planned").length, 0)} trainings planned</p><Btn onClick={() => setPlan(true)}><GraduationCap className="size-[18px]" /> Plan training</Btn></div>
+      <div className="mb-3 flex items-center justify-between"><p className="text-[15px] text-[#4d5664]">{st.employees.filter((e) => e.reviews.length).length} reviewed · {st.employees.reduce((t, e) => t + e.trainings.filter((x) => x.status === "planned").length, 0)} trainings planned</p><Btn onClick={() => setPlan(true)}><GraduationCap className="size-[18px]" /> Plan training</Btn></div>
       <Table cols={[{ label: "Employee", w: "26%" }, { label: "Department" }, { label: "Last review" }, { label: "Training" }, { label: "", w: "120px" }]}>
         {list.map((e) => {
           const r = e.reviews[0];
           const pl = e.trainings.filter((t) => t.status === "planned").length;
-          return <tr key={e.id}><td><Person name={e.name} id={e.id} /></td><td>{e.dept}</td><td>{r ? <>{"★".repeat(r.score)}<span className="text-[#d6d9e0]">{"★".repeat(5 - r.score)}</span><span className="ml-2 text-[14px] text-[#5b6170]">{fmt(r.date)}</span></> : <span className="text-[#6b7180]">No review</span>}</td><td>{e.trainings.length ? `${e.trainings.length - pl} done${pl ? ` · ${pl} planned` : ""}` : "—"}</td><td><Btn onClick={() => router.push(`/hms/staff/people/${e.id}`)}>Open</Btn></td></tr>;
+          return <tr key={e.id}><td><Person name={e.name} id={e.id} /></td><td>{e.dept}</td><td>{r ? <>{"★".repeat(r.score)}<span className="text-[#d3d8df]">{"★".repeat(5 - r.score)}</span><span className="ml-2 text-[14px] text-[#4d5664]">{fmt(r.date)}</span></> : <span className="text-[#4d5664]">No review</span>}</td><td>{e.trainings.length ? `${e.trainings.length - pl} done${pl ? ` · ${pl} planned` : ""}` : "—"}</td><td><Btn onClick={() => router.push(`/hms/staff/people/${e.id}`)}>Open</Btn></td></tr>;
         })}
       </Table>
       {plan && (
@@ -228,7 +228,7 @@ function Communication() {
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
       <div>{st.notices.length === 0 ? <Empty icon={<Megaphone className="size-6" />} title="No notices" /> : (
-        <ul className="space-y-3">{st.notices.map((n) => <li key={n.id} className="rounded-xl border border-[#eceef2] p-4"><div className="flex items-start justify-between gap-3"><p className="text-[16.5px] font-semibold">{n.title}</p><Menu label={`Actions for ${n.title}`} items={[{ label: "Delete", danger: true, onClick: () => update((s) => { s.notices = s.notices.filter((x) => x.id !== n.id); }, `Notice deleted: ${n.title}`) }]} /></div><p className="mt-1 text-[15px] text-[#4b5160]">{n.body}</p><p className="mt-2 text-[13.5px] text-[#6b7180]">To {n.to} · {fmt(n.date)}</p></li>)}</ul>
+        <ul className="space-y-3">{st.notices.map((n) => <li key={n.id} className="rounded-xl border border-[#e3e7ec] p-4"><div className="flex items-start justify-between gap-3"><p className="text-[16.5px] font-semibold">{n.title}</p><Menu label={`Actions for ${n.title}`} items={[{ label: "Delete", danger: true, onClick: () => update((s) => { s.notices = s.notices.filter((x) => x.id !== n.id); }, `Notice deleted: ${n.title}`) }]} /></div><p className="mt-1 text-[15px] text-[#4d5664]">{n.body}</p><p className="mt-2 text-[13.5px] text-[#4d5664]">To {n.to} · {fmt(n.date)}</p></li>)}</ul>
       )}</div>
       <Card title="New notice">
         <div className="space-y-3">
@@ -236,7 +236,7 @@ function Communication() {
           <Field label="Message"><Area value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} /></Field>
           <Field label="To"><Select value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })}><option>All staff</option>{st.settings.departments.map((d) => <option key={d}>{d}</option>)}</Select></Field>
           <Btn kind="primary" className="w-full" disabled={!f.title.trim() || !f.body.trim()} onClick={() => { update((s) => { s.notices.unshift({ id: `N-${Date.now() % 100000}`, title: f.title.trim(), body: f.body.trim(), to: f.to, date: TODAY }); }, `Notice posted: ${f.title}`); setF({ title: "", body: "", to: "All staff" }); }}>Post notice</Btn>
-          <p className="text-[13px] text-[#6b7180]">Saved on the HR board. Push/SMS delivery to the staff app is not connected yet.</p>
+          <p className="text-[13px] text-[#4d5664]">Saved on the HR board. Push/SMS delivery to the staff app is not connected yet.</p>
         </div>
       </Card>
     </div>
@@ -258,11 +258,11 @@ function Offboarding({ q, dept }: { q: string; dept: string }) {
             const x = e.exit!;
             const done = CLEAR.every(([k]) => x.clearance[k]);
             return (
-              <div key={e.id} className="rounded-xl border border-[#eceef2] p-4">
+              <div key={e.id} className="rounded-xl border border-[#e3e7ec] p-4">
                 <div className="flex items-center justify-between"><Person name={e.name} id={e.id} sub={`${e.position} · last day ${fmt(x.lastDay)}`} /><Chip tone={e.status === "former" ? "gray" : done ? "green" : "amber"}>{e.status === "former" ? "Left" : done ? "Cleared" : x.reason}</Chip></div>
                 <ul className="mt-3 space-y-2">
                   {CLEAR.map(([k, l]) => (
-                    <li key={k}><label className="flex items-center gap-3 text-[15px]"><input type="checkbox" disabled={e.status === "former"} checked={!!x.clearance[k]} onChange={() => update((s) => { const c = emp(s, e.id)!.exit!.clearance; c[k] = !c[k]; if (k === "access" && c[k]) emp(s, e.id)!.access = "disabled"; }, `${e.name}: ${l.toLowerCase()} ${x.clearance[k] ? "unchecked" : "done"}`)} className="size-5 accent-[#c8232e]" />{l}{k === "assets" && e.assets.length > 0 && <span className="text-[13.5px] text-[#b45309]">({e.assets.length} still issued)</span>}</label></li>
+                    <li key={k}><label className="flex items-center gap-3 text-[15px]"><input type="checkbox" disabled={e.status === "former"} checked={!!x.clearance[k]} onChange={() => update((s) => { const c = emp(s, e.id)!.exit!.clearance; c[k] = !c[k]; if (k === "access" && c[k]) emp(s, e.id)!.access = "disabled"; }, `${e.name}: ${l.toLowerCase()} ${x.clearance[k] ? "unchecked" : "done"}`)} className="size-5 accent-[#b11c29]" />{l}{k === "assets" && e.assets.length > 0 && <span className="text-[13.5px] text-[#b45309]">({e.assets.length} still issued)</span>}</label></li>
                   ))}
                 </ul>
                 {e.status !== "former" && (

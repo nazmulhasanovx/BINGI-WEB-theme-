@@ -50,11 +50,11 @@ export function UnitsPage() {
         <Stat label="Drafts (not bookable)" value={drafts.length} tone={drafts.length ? "amber" : undefined} />
         <Stat label="Archived" value={archived} sub="Codes kept, no capacity used" />
       </div>
-      <p className="mt-2 text-[12.5px] text-[#5b6170]">Package unit limit and per-unit charge come from Billing (not connected in this prototype). Setup drafts and categories without units don&apos;t count.</p>
+      <p className="mt-2 text-[12.5px] text-[#4d5664]">Package unit limit and per-unit charge come from Billing (not connected in this prototype). Setup drafts and categories without units don&apos;t count.</p>
       {(st.excluded?.length ?? 0) > 0 && (
         <section role="status" className="mt-4 rounded-2xl border border-[#d8dcf0] bg-[#f5f6fd] p-4 text-[14px]">
           <p className="font-semibold">Not in this release</p>
-          <ul className="mt-1 space-y-0.5 text-[#4b5160]">{st.excluded!.map((x) => <li key={x.name}><b>{x.name}</b> — {x.reason}</li>)}</ul>
+          <ul className="mt-1 space-y-0.5 text-[#4d5664]">{st.excluded!.map((x) => <li key={x.name}><b>{x.name}</b> — {x.reason}</li>)}</ul>
         </section>
       )}
 
@@ -65,8 +65,8 @@ export function UnitsPage() {
             {st.drafts.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14.5px]">
                 <span className="min-w-0 flex-1"><b>{presetOf(d.preset).label}</b>{d.category && ` · ${cat(d.category)?.name ?? ""}`} · {d.picks.length} numbers picked (not reserved) · saved {fmtStamp(d.savedAt)}</span>
-                <Link href={`/hms/rooms/new?draft=${d.id}`} className="font-medium text-[#c8232e]">Continue</Link>
-                <button onClick={() => update((s) => { s.drafts = s.drafts.filter((x) => x.id !== d.id); }, "Setup draft discarded")} className="text-[#5b6170] hover:text-[#1d1f24]">Discard</button>
+                <Link href={`/hms/rooms/new?draft=${d.id}`} className="font-medium text-[#b11c29]">Continue</Link>
+                <button onClick={() => update((s) => { s.drafts = s.drafts.filter((x) => x.id !== d.id); }, "Setup draft discarded")} className="text-[#4d5664] hover:text-[#0f1720]">Discard</button>
               </li>
             ))}
           </ul>
@@ -74,33 +74,33 @@ export function UnitsPage() {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        <label className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-[#dfe2e8] bg-white px-3.5 sm:max-w-[340px]">
-          <Search className="size-[18px] text-[#6b7180]" />
+        <label className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white px-3.5 sm:max-w-[340px]">
+          <Search className="size-[18px] text-[#4d5664]" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search number or category" aria-label="Search units" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7b8190]" />
         </label>
-        <select aria-label="Type" value={core} onChange={(e) => setCore(e.target.value as CoreType | "all")} className="h-11 rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px]">
+        <select aria-label="Type" value={core} onChange={(e) => setCore(e.target.value as CoreType | "all")} className="h-11 rounded-xl border border-[#d3d8df] bg-white px-3 text-[14.5px]">
           <option value="all">All types</option>{cores.map((t) => <option key={t} value={t}>{CORE[t].plural}</option>)}
         </select>
-        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="h-11 rounded-xl border border-[#dfe2e8] bg-white px-3 text-[14.5px]">
+        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="h-11 rounded-xl border border-[#d3d8df] bg-white px-3 text-[14.5px]">
           <option value="all">Published & drafts</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option>
         </select>
         {drafts.length > 0 && <Btn className="sm:ml-auto" onClick={publishAll}>Publish all drafts ({drafts.length})</Btn>}
       </div>
 
       <div className="mt-4 space-y-4">
-        {!st.units.length && <div className="rounded-2xl border border-[#eceef2] bg-white"><Empty icon={<Building2 className="size-6" />} title="No units yet" text="Add your first rooms, cottages or beds." action={<Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#c8232e] px-4 text-[14.5px] font-medium text-white"><Plus className="size-4" /> Add accommodation</Link>} /></div>}
-        {st.units.length > 0 && !list.length && <p className="rounded-2xl border border-[#eceef2] bg-white p-6 text-center text-[15px] text-[#5b6170]">No unit matches these filters.</p>}
+        {!st.units.length && <div className="rounded-2xl border border-[#e3e7ec] bg-white"><Empty icon={<Building2 className="size-6" />} title="No units yet" text="Add your first rooms, cottages or beds." action={<Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white"><Plus className="size-4" /> Add accommodation</Link>} /></div>}
+        {st.units.length > 0 && !list.length && <p className="rounded-2xl border border-[#e3e7ec] bg-white p-6 text-center text-[15px] text-[#4d5664]">No unit matches these filters.</p>}
         {groups.map(([nid, us]) => (
-          <section key={nid} className="rounded-2xl border border-[#eceef2] bg-white p-4">
-            <h2 className="mb-3 flex items-center gap-2 text-[15.5px] font-semibold">{["FLOOR", "LEVEL"].includes(st.config.nodes.find((n) => n.id === nid)?.kind ?? "") ? <Building2 className="size-[18px] text-[#5b6170]" /> : <MapPin className="size-[18px] text-[#5b6170]" />}{nodePath(st.config, nid)}<span className="font-normal text-[#5b6170]">· {us.length}</span></h2>
+          <section key={nid} className="rounded-2xl border border-[#e3e7ec] bg-white p-4">
+            <h2 className="mb-3 flex items-center gap-2 text-[15.5px] font-semibold">{["FLOOR", "LEVEL"].includes(st.config.nodes.find((n) => n.id === nid)?.kind ?? "") ? <Building2 className="size-[18px] text-[#4d5664]" /> : <MapPin className="size-[18px] text-[#4d5664]" />}{nodePath(st.config, nid)}<span className="font-normal text-[#4d5664]">· {us.length}</span></h2>
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
               {us.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })).map((x) => {
                 const Icon = PRESET_ICON[x.preset];
                 return (
                   <li key={x.id}>
-                    <button onClick={() => setOpen(x.id)} className="w-full rounded-xl border border-[#e6e8ee] p-3 text-left transition-colors hover:border-[#cfd3db] hover:bg-[#fafafb]">
-                      <span className="flex items-center justify-between gap-2"><span className="font-mono text-[17px] font-semibold">{x.code}</span><Icon className="size-4 text-[#6b7180]" aria-label={presetOf(x.preset).label} /></span>
-                      <span className="mt-0.5 block truncate text-[13.5px] text-[#4b5160]">{cat(x.category)?.name}</span>
+                    <button onClick={() => setOpen(x.id)} className="w-full rounded-xl border border-[#e3e7ec] p-3 text-left transition-colors hover:border-[#858c97] hover:bg-[#f4f6f8]">
+                      <span className="flex items-center justify-between gap-2"><span className="font-mono text-[17px] font-semibold">{x.code}</span><Icon className="size-4 text-[#4d5664]" aria-label={presetOf(x.preset).label} /></span>
+                      <span className="mt-0.5 block truncate text-[13.5px] text-[#4d5664]">{cat(x.category)?.name}</span>
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
                         <Chip tone={x.status === "published" ? "green" : x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "published" ? "Published" : x.status === "draft" ? "Draft" : "Archived"}</Chip>
                       </span>
@@ -119,10 +119,10 @@ export function UnitsPage() {
 
 function Stat({ label, value, tone, sub }: { label: string; value: number; tone?: "amber"; sub?: string }) {
   return (
-    <div className="rounded-2xl border border-[#eceef2] bg-white px-4 py-3">
-      <p className="text-[13.5px] text-[#5b6170]">{label}</p>
+    <div className="rounded-2xl border border-[#e3e7ec] bg-white px-4 py-3">
+      <p className="text-[13.5px] text-[#4d5664]">{label}</p>
       <p className={clsx("mt-0.5 text-[24px] font-bold", tone === "amber" && "text-[#9c5f0e]")}>{value}</p>
-      {sub && <p className="text-[12px] leading-snug text-[#6b7180]">{sub}</p>}
+      {sub && <p className="text-[12px] leading-snug text-[#4d5664]">{sub}</p>}
     </div>
   );
 }
@@ -155,25 +155,25 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
     </>}>
       <div className="space-y-5">
         <dl className="grid grid-cols-[120px_1fr] gap-y-2 text-[14.5px]">
-          <dt className="text-[#5b6170]">Status</dt><dd><Chip tone={u.status === "published" ? "green" : u.status === "draft" ? "amber" : "gray"}>{u.status === "published" ? "Published — can be sold" : u.status === "draft" ? "Draft — not bookable" : "Archived — history only"}</Chip></dd>
-          <dt className="text-[#5b6170]">Unit code</dt><dd className="font-mono font-semibold">{u.code}</dd>
-          <dt className="text-[#5b6170]">Door number</dt><dd className="font-mono">{u.local}</dd>
-          <dt className="text-[#5b6170]">Location</dt><dd>{nodePath(st.config, u.node)}</dd>
-          <dt className="text-[#5b6170]">Category</dt><dd>{cat?.name ?? "—"}</dd>
-          <dt className="text-[#5b6170]">Sold as</dt><dd>{CORE[u.core].label} · {CORE[u.core].inventory.toLowerCase()}</dd>
-          <dt className="text-[#5b6170]">Price</dt><dd className="font-semibold">৳{money(unitRate(u, cat))} / night{u.rate !== undefined && <span className="ml-1.5 text-[12.5px] font-normal text-[#5b6170]">(own price)</span>}</dd>
+          <dt className="text-[#4d5664]">Status</dt><dd><Chip tone={u.status === "published" ? "green" : u.status === "draft" ? "amber" : "gray"}>{u.status === "published" ? "Published — can be sold" : u.status === "draft" ? "Draft — not bookable" : "Archived — history only"}</Chip></dd>
+          <dt className="text-[#4d5664]">Unit code</dt><dd className="font-mono font-semibold">{u.code}</dd>
+          <dt className="text-[#4d5664]">Door number</dt><dd className="font-mono">{u.local}</dd>
+          <dt className="text-[#4d5664]">Location</dt><dd>{nodePath(st.config, u.node)}</dd>
+          <dt className="text-[#4d5664]">Category</dt><dd>{cat?.name ?? "—"}</dd>
+          <dt className="text-[#4d5664]">Sold as</dt><dd>{CORE[u.core].label} · {CORE[u.core].inventory.toLowerCase()}</dd>
+          <dt className="text-[#4d5664]">Price</dt><dd className="font-semibold">৳{money(unitRate(u, cat))} / night{u.rate !== undefined && <span className="ml-1.5 text-[12.5px] font-normal text-[#4d5664]">(own price)</span>}</dd>
         </dl>
         {u.status === "draft" && issues.length > 0 && (
-          <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#fdecec] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
+          <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#ffe7e4] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
         )}
-        <div className="space-y-3 border-t border-[#eceef2] pt-4">
+        <div className="space-y-3 border-t border-[#e3e7ec] pt-4">
           <p className="text-[14px] font-semibold">Only for this unit</p>
           <Field label="Own price (leave empty to use category)" hint={badRate ? "Must be more than 0" : undefined}><Input type="number" min={0} value={rate} placeholder={String(cat?.baseRate ?? "")} onChange={(e) => setRate(e.target.value)} /></Field>
           <Field label="Video"><Select value={video} onChange={(e) => setVideo(e.target.value as Unit["video"])}><option value="inherit">Same as category</option><option value="replace">This unit&apos;s own video</option><option value="hide">No video</option></Select></Field>
           {video === "replace" && <Field label="YouTube link" hint={url && badUrl ? "Only YouTube links" : undefined}><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtu.be/…" /></Field>}
           <Field label="Note for staff (optional)"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Connecting door to 103" /></Field>
         </div>
-        <p className="text-[13px] text-[#5b6170]">Room readiness and maintenance are in Housekeeping; reservations in Bookings. Moving a booked unit to draft is checked against bookings by the HMS backend.</p>
+        <p className="text-[13px] text-[#4d5664]">Room readiness and maintenance are in Housekeeping; reservations in Bookings. Moving a booked unit to draft is checked against bookings by the HMS backend.</p>
       </div>
     </Drawer>
   );
@@ -188,26 +188,26 @@ export function CategoriesPage() {
   const c = edit ? st.categories.find((x) => x.id === edit) : undefined;
   return (
     <RoomsFrame tab="categories">
-      {!st.categories.length && <div className="rounded-2xl border border-[#eceef2] bg-white"><Empty icon={<Building2 className="size-6" />} title="No categories yet" text="Categories are created while adding units." /></div>}
+      {!st.categories.length && <div className="rounded-2xl border border-[#e3e7ec] bg-white"><Empty icon={<Building2 className="size-6" />} title="No categories yet" text="Categories are created while adding units." /></div>}
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {st.categories.filter((x) => !x.archived).map((x) => {
           const us = st.units.filter((u) => u.category === x.id);
           const Icon = PRESET_ICON[x.preset];
           return (
-            <li key={x.id} className="flex flex-col rounded-2xl border border-[#eceef2] bg-white p-4">
+            <li key={x.id} className="flex flex-col rounded-2xl border border-[#e3e7ec] bg-white p-4">
               <div className="flex items-start gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f2f3f6]"><Icon className="size-5 text-[#4b5160]" /></span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e9edf2]"><Icon className="size-5 text-[#4d5664]" /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[16px] font-semibold">{x.name}</p>
-                  <p className="text-[13.5px] text-[#5b6170]">{presetOf(x.preset).label}{presetOf(x.preset).group !== "standard" && ` · works as ${CORE[x.core].label}`}</p>
+                  <p className="text-[13.5px] text-[#4d5664]">{presetOf(x.preset).label}{presetOf(x.preset).group !== "standard" && ` · works as ${CORE[x.core].label}`}</p>
                 </div>
               </div>
               <dl className="mt-3 grid grid-cols-3 gap-2 text-[13.5px]">
-                <div><dt className="text-[#5b6170]">Base price</dt><dd className="font-semibold">৳{money(x.baseRate)}</dd></div>
-                <div><dt className="text-[#5b6170]">Units</dt><dd className="font-semibold">{us.length}{us.some((u) => u.status === "draft") && <span className="font-normal text-[#9c5f0e]"> ({us.filter((u) => u.status === "draft").length} draft)</span>}</dd></div>
-                <div><dt className="text-[#5b6170]">Guests</dt><dd className="font-semibold">{x.maxAdults}{x.maxChildren ? `+${x.maxChildren}` : ""}</dd></div>
+                <div><dt className="text-[#4d5664]">Base price</dt><dd className="font-semibold">৳{money(x.baseRate)}</dd></div>
+                <div><dt className="text-[#4d5664]">Units</dt><dd className="font-semibold">{us.length}{us.some((u) => u.status === "draft") && <span className="font-normal text-[#9c5f0e]"> ({us.filter((u) => u.status === "draft").length} draft)</span>}</dd></div>
+                <div><dt className="text-[#4d5664]">Guests</dt><dd className="font-semibold">{x.maxAdults}{x.maxChildren ? `+${x.maxChildren}` : ""}</dd></div>
               </dl>
-              <p className="mt-2 line-clamp-2 text-[13px] text-[#5b6170]">{x.amenities.join(" · ")}</p>
+              <p className="mt-2 line-clamp-2 text-[13px] text-[#4d5664]">{x.amenities.join(" · ")}</p>
               {x.approval !== "approved" && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13px] text-[#7a4a0b]">
                   <span className="flex-1">Waiting for BinGi approval — units stay drafts until approved.</span>
@@ -217,7 +217,7 @@ export function CategoriesPage() {
               <div className="mt-auto flex gap-2 pt-3">
                 <Btn className="h-9 flex-1" onClick={() => setEdit(x.id)}>Edit</Btn>
                 {us.length > 0 && us.every((u) => u.status === "archived") && <Btn kind="danger" className="h-9" onClick={() => { update((s) => { s.categories.find((y) => y.id === x.id)!.archived = true; }, `Category ${x.name} archived`); toast(`${x.name} archived`); }}>Archive</Btn>}
-                <Link href={`/hms/rooms/new?category=${x.id}`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#dfe2e8] bg-white text-[14px] font-medium hover:bg-[#f6f7f9]"><Plus className="size-4" /> Add units</Link>
+                <Link href={`/hms/rooms/new?category=${x.id}`} className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#d3d8df] bg-white text-[14px] font-medium hover:bg-[#f4f6f8]"><Plus className="size-4" /> Add units</Link>
               </div>
             </li>
           );
@@ -248,8 +248,8 @@ function CategoryDrawer({ st, c, onClose }: { st: RoomsState; c: Category; onClo
       <Btn kind="primary" disabled={errs.length > 0} onClick={() => { update((s) => { const i = s.categories.findIndex((x) => x.id === c.id); s.categories[i] = { ...d, name: d.name.trim() }; }, `Category ${d.name.trim()} updated (${n} units)`); toast("Category saved"); onClose(); }}>Save</Btn>
     </>}>
       <div className="space-y-4">
-        <p className="rounded-xl bg-[#f6f7f9] px-3.5 py-2.5 text-[14px] text-[#4b5160]">{n} units use this category. Changes apply to all of them{own ? `; ${own} with their own price keep it` : ""}. Bookings already made keep their price.</p>
-        {errs.length > 0 && <div role="alert" className="text-[14px] text-[#c8232e]">{errs.map((e) => <p key={e}>{e}</p>)}</div>}
+        <p className="rounded-xl bg-[#f4f6f8] px-3.5 py-2.5 text-[14px] text-[#4d5664]">{n} units use this category. Changes apply to all of them{own ? `; ${own} with their own price keep it` : ""}. Bookings already made keep their price.</p>
+        {errs.length > 0 && <div role="alert" className="text-[14px] text-[#b11c29]">{errs.map((e) => <p key={e}>{e}</p>)}</div>}
         <Field label="Name"><Input value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Base price (৳ / night)"><Input type="number" min={0} value={d.baseRate || ""} onChange={(e) => setD({ ...d, baseRate: Number(e.target.value) })} /></Field>
@@ -273,10 +273,10 @@ export function ConfigurationPage() {
   return (
     <RoomsFrame tab="setup">
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Setup" desc={`Version ${c.version} · saved ${fmtStamp(c.savedAt)}`} right={<Link href="/hms/rooms/setup" className="inline-flex h-10 items-center rounded-xl border border-[#dfe2e8] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f6f7f9]">Edit setup</Link>}>
+        <Section title="Setup" desc={`Version ${c.version} · saved ${fmtStamp(c.savedAt)}`} right={<Link href="/hms/rooms/setup" className="inline-flex h-10 items-center rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]">Edit setup</Link>}>
           <dl className="grid grid-cols-[130px_1fr] gap-y-2 text-[14.5px]">
-            <dt className="text-[#5b6170]">Property type</dt><dd className="font-medium">{propertyTypeFor(h).label}</dd>
-            <dt className="text-[#5b6170]">Types on</dt><dd className="font-medium">{c.enabled.map((t) => CORE[t].plural).join(", ")}</dd>
+            <dt className="text-[#4d5664]">Property type</dt><dd className="font-medium">{propertyTypeFor(h).label}</dd>
+            <dt className="text-[#4d5664]">Types on</dt><dd className="font-medium">{c.enabled.map((t) => CORE[t].plural).join(", ")}</dd>
           </dl>
         </Section>
         <Section title="Numbering">
@@ -288,15 +288,15 @@ export function ConfigurationPage() {
           <ul className="space-y-3 text-[14.5px]">
             {c.nodes.filter((n) => !n.parent).map((p) => (
               <li key={p.id}>
-                <p className="font-medium">{p.name}{p.code && <span className="ml-1.5 rounded bg-[#f2f3f6] px-1.5 font-mono text-[12.5px]">{p.code}</span>} <span className="font-normal text-[#5b6170]">· {count(p.id)} units</span></p>
-                <p className="mt-1 flex flex-wrap gap-1.5">{c.nodes.filter((n) => n.parent === p.id).map((n) => <span key={n.id} className="rounded-md bg-[#f2f3f6] px-2 py-0.5 text-[13px]">{n.name} · {st.units.filter((u) => u.node === n.id).length}</span>)}</p>
+                <p className="font-medium">{p.name}{p.code && <span className="ml-1.5 rounded bg-[#e9edf2] px-1.5 font-mono text-[12.5px]">{p.code}</span>} <span className="font-normal text-[#4d5664]">· {count(p.id)} units</span></p>
+                <p className="mt-1 flex flex-wrap gap-1.5">{c.nodes.filter((n) => n.parent === p.id).map((n) => <span key={n.id} className="rounded-md bg-[#e9edf2] px-2 py-0.5 text-[13px]">{n.name} · {st.units.filter((u) => u.node === n.id).length}</span>)}</p>
               </li>
             ))}
           </ul>
         </Section>
         <Section title="Recent changes">
           <ul className="space-y-2 text-[14px]">
-            {st.activity.slice(0, 8).map((a, i) => <li key={i}><span className="text-[#5b6170]">{fmtStamp(a.at)}</span> · {a.text}</li>)}
+            {st.activity.slice(0, 8).map((a, i) => <li key={i}><span className="text-[#4d5664]">{fmtStamp(a.at)}</span> · {a.text}</li>)}
           </ul>
         </Section>
       </div>

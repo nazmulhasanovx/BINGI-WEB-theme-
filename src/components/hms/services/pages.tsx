@@ -23,7 +23,7 @@ const TABS: { id: Tab; label: string; href: string; icon: typeof Package }[] = [
 const card = "rounded-xl border border-hms-line bg-white";
 const sel = "h-10 rounded-lg border border-hms-line bg-white px-3 text-[14px] outline-none focus:border-hms-ink";
 const ICON: Record<string, [typeof Package, string]> = { t: [BedDouble, "bg-[#e8f0fe] text-[#1d4ed8]"], g: [Shirt, "bg-[#f1edff] text-[#6b55e0]"], e: [Sparkles, "bg-[#fdefe7] text-[#d9622b]"] };
-const iconFor = (cat: string) => ICON[cat] ?? [Package, "bg-hms-hover text-[#4b5160]"];
+const iconFor = (cat: string) => ICON[cat] ?? [Package, "bg-hms-hover text-[#4d5664]"];
 
 function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
   const h = useProperty();
@@ -64,7 +64,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
       {o?.k === "cancel" && det && <CancelSheet svc={svc} order={det} onClose={() => setO(null)} onDone={setToast} />}
       {o?.k === "cat" && <CategorySheet svc={svc} cat={o.cat} onClose={() => setO(null)} />}
       {o?.k === "preview" && prev && <PreviewSheet svc={svc} item={prev} onClose={() => setO(null)} onBack={() => setO({ k: "service", item: prev })} />}
-      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#1d1f24] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
+      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 text-[#7ee2a8]" />{toast}</div>}
     </C.Provider>
   );
 }
@@ -76,7 +76,7 @@ function Menu({ label, items }: { label: string; items: [string, () => void, boo
   return (
     <div ref={ref} className="relative inline-block">
       <button onClick={() => setM((x) => !x)} aria-haspopup="menu" aria-expanded={m} aria-label={label} className="grid size-9 place-items-center rounded-lg border border-hms-line bg-white hover:bg-hms-hover"><MoreHorizontal className="size-4" /></button>
-      {m && <div role="menu" className="hms-pop absolute right-0 top-10 z-20 w-48 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{items.map(([l, f, danger]) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", danger && "text-[#b42318]")}>{l}</button>)}</div>}
+      {m && <div role="menu" className="hms-pop absolute right-0 top-10 z-20 w-48 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{items.map(([l, f, danger]) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", danger && "text-[#c81e1e]")}>{l}</button>)}</div>}
     </div>
   );
 }
@@ -111,7 +111,7 @@ function Catalog() {
                 <td className="px-5 py-2.5"><span className="flex items-center gap-3"><span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", tone)}><I className="size-4" /></span><span><span className="block font-semibold">{s.name}</span>{s.image && !s.archived && <span className="text-[12px] text-[#16693a]">On website</span>}</span></span></td>
                 <td className="px-3 py-2.5">{cats.get(s.category) ?? "—"}</td><td className="px-3 py-2.5">{s.duration || "—"}</td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-right font-bold tabular-nums">{tk(s.price)}</td>
-                <td className="px-3 py-2.5">{s.archived ? <span className="inline-flex items-center gap-1.5 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4b5160]"><span className="size-1.5 rounded-full bg-current" />Archived</span> : <span className="inline-flex items-center gap-1.5 rounded-md bg-[#e5f5ec] px-2 py-0.5 text-[12.5px] font-semibold text-[#16693a]"><span className="size-1.5 rounded-full bg-current" />Active</span>}</td>
+                <td className="px-3 py-2.5">{s.archived ? <span className="inline-flex items-center gap-1.5 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664]"><span className="size-1.5 rounded-full bg-current" />Archived</span> : <span className="inline-flex items-center gap-1.5 rounded-md bg-[#e5f5ec] px-2 py-0.5 text-[12.5px] font-semibold text-[#16693a]"><span className="size-1.5 rounded-full bg-current" />Active</span>}</td>
                 <td className="px-5 py-2.5"><span className="flex justify-end gap-2">
                   {!s.archived && <button onClick={() => open({ k: "order", service: s.id })} aria-label={`Order ${s.name}`} className={clsx(btnLine, "h-9 px-3")}><Plus className="size-4" />Order</button>}
                   <button onClick={() => open({ k: "service", item: s })} aria-label={`Edit ${s.name}`} className="grid size-9 place-items-center rounded-lg border border-hms-line bg-white hover:bg-hms-hover"><Pencil className="size-4" /></button>

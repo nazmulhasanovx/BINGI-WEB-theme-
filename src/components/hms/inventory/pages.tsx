@@ -9,7 +9,7 @@ import { InventoryFrame, useInv } from "./frame";
 const card = "rounded-xl border border-hms-line bg-white";
 const sel = "h-10 rounded-lg border border-hms-line bg-white px-3 text-[14px] outline-none focus:border-hms-ink";
 const TONE: Record<string, string> = { "In stock": "bg-[#e5f5ec] text-[#16693a]", "Low stock": "bg-[#fdf3d9] text-[#7a5200]", "Out of stock": "bg-[#fde8e8] text-[#a11d2a]" };
-const MOVE_TONE: Record<MoveType, string> = { opening: "bg-hms-hover text-[#4b5160]", receive: "bg-[#e5f5ec] text-[#16693a]", issue: "bg-[#e8f0fe] text-[#1d4ed8]", wastage: "bg-[#fdf3d9] text-[#7a5200]", adjust: "bg-[#eeebfc] text-[#5b44c9]" };
+const MOVE_TONE: Record<MoveType, string> = { opening: "bg-hms-hover text-[#4d5664]", receive: "bg-[#e5f5ec] text-[#16693a]", issue: "bg-[#e8f0fe] text-[#1d4ed8]", wastage: "bg-[#fdf3d9] text-[#7a5200]", adjust: "bg-[#eeebfc] text-[#5b44c9]" };
 export const Pill = ({ tone, children }: { tone: string; children: React.ReactNode }) => <span className={clsx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[12.5px] font-semibold", tone)}><span className="size-1.5 rounded-full bg-current" />{children}</span>;
 const ICON_TONE: Record<string, string> = { c1: "bg-[#f1edff] text-[#6b55e0]", c2: "bg-[#e8f0fe] text-[#1d4ed8]", c3: "bg-[#fdefe7] text-[#d9622b]", c4: "bg-[#e5f5ec] text-[#1c7d45]" };
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -40,7 +40,7 @@ function Stock() {
   const kpis: [string, number, string, typeof Package, string, StockStatus | ""][] = [
     ["Active Items", inv.items.length, "Items tracked", Package, "bg-[#f1edff] text-[#6b55e0]", ""],
     ["Low Stock", low, "At or below reorder level", TriangleAlert, "bg-[#fdf3d9] text-[#a76f00]", "Low stock"],
-    ["Out of Stock", out, "Zero available", CircleMinus, "bg-[#fde8e8] text-[#c8232e]", "Out of stock"],
+    ["Out of Stock", out, "Zero available", CircleMinus, "bg-[#fde8e8] text-[#b11c29]", "Out of stock"],
   ];
   return (
     <>
@@ -125,7 +125,7 @@ function RowMenu({ item }: { item: Item }) {
   return (
     <div ref={ref} className="relative inline-block">
       <button onClick={() => setM((x) => !x)} aria-haspopup="menu" aria-expanded={m} aria-label={`Actions for ${item.name}`} className="grid size-8 place-items-center rounded-lg hover:bg-hms-hover"><MoreHorizontal className="size-4" /></button>
-      {m && <div role="menu" className="hms-pop absolute right-0 top-9 z-20 w-44 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{acts.map(([l, f], k) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", k === 4 && "border-t border-hms-line", k === 5 && "text-[#b42318]")}>{l}</button>)}</div>}
+      {m && <div role="menu" className="hms-pop absolute right-0 top-9 z-20 w-44 rounded-xl border border-hms-line bg-white p-1 text-left shadow-lg">{acts.map(([l, f], k) => <button key={l} role="menuitem" onClick={() => { setM(false); f(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover", k === 4 && "border-t border-hms-line", k === 5 && "text-[#c81e1e]")}>{l}</button>)}</div>}
     </div>
   );
 }
@@ -170,7 +170,7 @@ function MoveRow({ m, it }: { m: Move; it?: Item }) {
       <td className={clsx("whitespace-nowrap px-3 py-2.5 text-right font-bold tabular-nums", m.change > 0 ? "text-[#16693a]" : "")}>{signed(m.change, u)}</td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{fmtQty(m.balance, u)}</td>
       <td className="max-w-[260px] px-3 py-2.5">{m.ref && <span className="block font-mono text-[13px]">{m.ref}</span>}{m.note && <span className={m.ref ? "text-[12.5px] text-hms-muted" : ""}>{m.note}</span>}{!m.ref && !m.note && "—"}</td>
-      <td className="whitespace-nowrap px-5 py-2.5 text-[#4b5160]">{m.by}</td>
+      <td className="whitespace-nowrap px-5 py-2.5 text-[#4d5664]">{m.by}</td>
     </tr>
   );
 }

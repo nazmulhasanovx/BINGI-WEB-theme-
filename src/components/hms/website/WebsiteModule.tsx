@@ -104,7 +104,7 @@ function PublishBar() {
       <div className="ml-auto flex items-center gap-2">
         {n > 0 && <span className="hidden text-[13px] text-hms-amber sm:inline">{n} change{n > 1 ? "s" : ""} not published</span>}
         <Btn variant="outline" onClick={() => openPreview()} className="h-8 px-3.5 text-[13px]">Preview</Btn>
-        {n > 0 && <Link href="/hms/website/publish" className="inline-flex h-8 items-center rounded-full bg-hms-coral px-3.5 text-[13px] font-medium text-white hover:bg-[#b11c29]">Publish</Link>}
+        {n > 0 && <Link href="/hms/website/publish" className="inline-flex h-8 items-center rounded-full bg-hms-coral px-3.5 text-[13px] font-medium text-white hover:bg-[#8e1621]">Publish</Link>}
       </div>
     </div>
   );
@@ -148,7 +148,7 @@ export function DevicePreview({ section, onClose }: { section?: string; onClose:
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
   return (
-    <div className="hms-app fixed inset-0 z-[80] flex flex-col bg-[#eef0f4]" role="dialog" aria-label="Preview">
+    <div className="hms-app fixed inset-0 z-[80] flex flex-col bg-[#e9edf2]" role="dialog" aria-label="Preview">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
         <p className="text-[15px] font-semibold">Preview · draft</p>
         <span className="hidden text-[13px] text-hms-muted lg:inline">{edit ? (saved ? `${saved} change${saved > 1 ? "s" : ""} saved to draft` : "Click any outlined text to change it") : "Only you see this"}</span>

@@ -83,7 +83,7 @@ export function Dashboard() {
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, Md Yeapas</h1>
             <p className="text-[14px] text-hms-muted">{day}</p>
           </div>
-          <Link href="/hms/bookings" className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-hms-red px-4 text-[14px] font-semibold text-white shadow-[0_6px_16px_-8px_rgb(185_28_44/0.7)] hover:bg-[#b11c29]"><Plus className="size-4" />New booking</Link>
+          <Link href="/hms/bookings" className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-glow px-4 text-[14px] font-semibold text-white"><Plus className="size-4" />New booking</Link>
         </div>
 
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -92,8 +92,8 @@ export function Dashboard() {
               <span className={clsx("hidden size-12 shrink-0 sm:grid place-items-center rounded-xl bg-white shadow-[0_1px_2px_rgb(0_0_0/0.05)]", k.ink)}><k.icon className="size-[22px]" strokeWidth={1.8} /></span>
               <div className="min-w-0">
                 <p className="truncate text-[19px] font-bold leading-tight tabular-nums sm:text-[22px]">{k.value}</p>
-                <p className="text-[13.5px] text-[#4b5160]">{k.label}</p>
-                {k.sub && <p className="text-[12.5px] text-[#4b5160]">{k.sub}</p>}
+                <p className="text-[13.5px] text-[#4d5664]">{k.label}</p>
+                {k.sub && <p className="text-[12.5px] text-[#4d5664]">{k.sub}</p>}
               </div>
             </div>
           ))}
@@ -110,7 +110,7 @@ export function Dashboard() {
                 ))}
               </ul>
             </div>
-            <Link href={hk ? "/hms/housekeeping" : "/hms/bookings"} className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#1d1f24] px-6 text-[14px] font-semibold text-white hover:bg-black">Open tasks</Link>
+            <Link href={hk ? "/hms/housekeeping" : "/hms/bookings"} className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#0f1720] px-6 text-[14px] font-semibold text-white hover:bg-black">Open tasks</Link>
           </section>
           <WebsiteCard h={h} published={!!site.rec.published} domain={site.rec.domain.status === "verified" || site.rec.domain.status === "live"} />
         </div>
@@ -157,7 +157,7 @@ export function Dashboard() {
 }
 
 function StatusChip({ s }: { s: BookingStatus }) {
-  const c = s === "Confirmed" ? "bg-[#e5f5ec] text-[#16693a]" : s === "Checked in" ? "bg-[#e8f0fe] text-[#1d4ed8]" : "bg-hms-hover text-[#4b5160]";
+  const c = s === "Confirmed" ? "bg-[#e5f5ec] text-[#16693a]" : s === "Checked in" ? "bg-[#e8f0fe] text-[#1d4ed8]" : "bg-hms-hover text-[#4d5664]";
   return <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-[12.5px] font-semibold", c)}>{s === "Confirmed" && "✓ "}{s}</span>;
 }
 
@@ -176,7 +176,7 @@ function WebsiteCard({ h, published, domain }: { h: Hotel; published: boolean; d
         {cells.map(([k, v]) => <div key={k} className="px-2 first:pl-0"><dt className="truncate text-[12.5px] text-hms-muted">{k}</dt><dd className="text-[18px] font-bold tabular-nums">{v}</dd></div>)}
       </dl>
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-hms-line pt-3">
-        <Link href="/hms/website/design" className="inline-flex items-center gap-1.5 text-[13.5px] text-[#4b5160] hover:text-hms-ink"><Monitor className="size-4" />All themes</Link>
+        <Link href="/hms/website/design" className="inline-flex items-center gap-1.5 text-[13.5px] text-[#4d5664] hover:text-hms-ink"><Monitor className="size-4" />All themes</Link>
         <Link href="/hms/website/overview" className="inline-flex h-9 items-center rounded-lg border border-hms-line px-3.5 text-[13.5px] font-semibold hover:bg-hms-hover">Manage website</Link>
       </div>
     </section>
@@ -194,9 +194,9 @@ function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant }: { onDuty: number;
     return <Rows title="Restaurant today" rows={rows} cta="Open meals" href="/hms/meals" />;
   }
   return (
-    <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#c8232e] to-[#8f1520] p-5 text-white">
+    <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#b11c29] to-[#7a1320] p-5 text-white">
       <div><Sparkles className="size-6" /><h2 className="mt-3 text-[18px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, restaurant & QR ordering and expenses — and lower booking fees.</p></div>
-      <Link href="/hms/billing" className="mt-5 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-white px-4 text-[14px] font-semibold text-[#b11c29]">See Business <ArrowRight className="size-4" /></Link>
+      <Link href="/hms/billing" className="mt-5 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-white px-4 text-[14px] font-semibold text-[#8e1621]">See Business <ArrowRight className="size-4" /></Link>
     </section>
   );
 }

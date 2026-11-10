@@ -48,7 +48,7 @@ export function Btn({ children, variant = "primary", className, ...rest }: { var
       {...rest}
       className={clsx(
         "inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[14px] font-medium transition-[background,transform,opacity] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45",
-        variant === "primary" && "bg-hms-coral text-white hover:bg-[#b11c29]",
+        variant === "primary" && "bg-hms-coral text-white hover:bg-[#8e1621]",
         variant === "outline" && "border border-hms-line bg-white hover:bg-hms-hover",
         variant === "ghost" && "text-hms-ink hover:bg-hms-hover",
         variant === "danger" && "border border-red-200 bg-white text-hms-red hover:bg-red-50",
