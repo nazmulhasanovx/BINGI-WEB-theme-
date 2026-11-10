@@ -117,14 +117,14 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
       </div>
       <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="HMS">
         {GROUPS.map((g) => (
-          <div key={g.label} className="mt-3 first:mt-1">
-            {!collapsed && <p className="px-2 pb-1.5 text-[12px] font-medium text-hms-muted">{g.label}</p>}
+          <div key={g.label} className="mt-2.5 first:mt-0.5">
+            {!collapsed && <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>}
             {g.items.map((i) => (
               <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} />
             ))}
           </div>
         ))}
-        <div className="mt-3 border-t border-hms-line pt-3">
+        <div className="mt-2.5 border-t border-hms-line pt-2.5">
           <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} />
         </div>
       </nav>
@@ -156,12 +156,12 @@ function NavItem({ item, active, collapsed }: { item: Item; active: boolean; col
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "group my-px flex h-[34px] items-center gap-3 rounded-[10px] px-2.5 text-[15px] transition-colors",
+        "group flex h-[30px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] transition-colors",
         active ? "bg-hms-red font-medium text-white shadow-[0_6px_16px_-6px_rgb(185_28_44/0.6)]" : "text-hms-ink hover:bg-hms-hover",
         collapsed && "justify-center px-0",
       )}
     >
-      <Icon className="size-[18px] shrink-0" strokeWidth={1.75} />
+      <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
       {!collapsed && item.badge ? (
         <span className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", active ? "bg-white/20" : "bg-hms-coral-soft text-hms-red")}>{item.badge}</span>

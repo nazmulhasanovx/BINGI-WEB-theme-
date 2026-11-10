@@ -48,8 +48,8 @@ function InnerNav({ active }: { active: string }) {
   return (
     <aside className="no-scrollbar hidden w-[212px] shrink-0 overflow-y-auto border-r border-hms-line bg-hms-nav px-2.5 py-3 lg:block" aria-label="Website Management">
       {groups.map((g) => (
-        <div key={g || "top"} className={g && g !== "Publish" ? "mt-4" : g === "Publish" ? "mt-4 border-t border-hms-line pt-3" : ""}>
-          {g && g !== "Publish" && <p className="px-3 pb-1 text-[12px] font-medium text-hms-muted">{g}</p>}
+        <div key={g || "top"} className={g && g !== "Publish" ? "mt-2.5" : g === "Publish" ? "mt-2.5 border-t border-hms-line pt-2.5" : ""}>
+          {g && g !== "Publish" && <p className="px-3 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g}</p>}
           {WM_PAGES.filter((p) => p.group === g).map((p) => {
             const Icon = p.icon;
             const on = p.id === active;
@@ -58,9 +58,9 @@ function InnerNav({ active }: { active: string }) {
                 key={p.id}
                 href={`/hms/website/${p.id}`}
                 aria-current={on ? "page" : undefined}
-                className={clsx("mb-px flex h-9 items-center gap-3 rounded-xl px-3 text-[14px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}
+                className={clsx("flex h-[30px] items-center gap-2.5 rounded-lg px-3 text-[13.5px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}
               >
-                <Icon className="size-[17px] shrink-0" strokeWidth={on ? 2.2 : 1.8} />
+                <Icon className="size-4 shrink-0" strokeWidth={on ? 2.2 : 1.8} />
                 {p.label}
               </Link>
             );
