@@ -257,14 +257,14 @@ export function Experiences({ hotel, cats = ["activity", "spa", "celebration", "
     <Sec>
       <Container>
         <Reveal><Head hotel={hotel} k={k} eyebrow={eyebrow} title={title} intro={intro} /></Reveal>
-        <RevealGroup className={clsx("grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-7 md:gap-y-10", items.length >= 3 && "lg:grid-cols-4")}>
+        <RevealGroup className={clsx("grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-7 md:gap-y-10", items.length === 3 ? "lg:grid-cols-3" : items.length >= 4 && "lg:grid-cols-4")}>
           {items.map((s) => (
             <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}>
               <RevealItem>
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[var(--lux-r)]"><Image src={s.photo!} alt="" fill sizes="(max-width: 640px) 100vw, 300px" className="object-cover" /></div>
                 <h3 className="lux-display mt-4 text-[20px] md:mt-5 md:text-[24px]">{s.name}</h3>
                 <p className="mt-1.5 text-[14px] leading-relaxed text-muted md:mt-2 md:text-[15px]">{s.short}</p>
-                <p className="mt-3 text-[14.5px]"><b className="tabular-nums">{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span></p>
+                <p className="mt-3 text-[14.5px]">{s.price > 0 ? <><b className="tabular-nums">{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span></> : <b><T>Included</T></b>}</p>
               </RevealItem>
             </SiteVisible>
           ))}
