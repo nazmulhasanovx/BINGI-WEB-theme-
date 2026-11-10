@@ -23,6 +23,7 @@ import Dining from "@/app/hotel/[slug]/dining/page";
 import Experiences from "@/app/hotel/[slug]/experiences/page";
 import Offers from "@/app/hotel/[slug]/offers/page";
 import Explore from "@/app/hotel/[slug]/explore/page";
+import ThemeExtra from "@/app/hotel/[slug]/[page]/page";
 import Events from "@/app/hotel/[slug]/events/page";
 import Policies from "@/app/hotel/[slug]/policies/page";
 import MyTrip from "@/app/hotel/[slug]/my-trip/page";
@@ -120,6 +121,7 @@ async function resolve(route: string): Promise<ReactNode> {
     let params: Record<string, string> = { slug };
     if (sub[0] === "rooms" && sub[1]) { P = Room; params = { slug, room: sub[1] }; }
     else if (sub.length <= 1) P = PAGES[sub[0] ?? ""];
+    if (!P && sub.length === 1) { P = ThemeExtra as Comp; params = { slug, page: sub[0] }; }
     if (!P) throw new NotFoundError("");
     page = await P({ params: Promise.resolve(params) });
   } catch (e) {
