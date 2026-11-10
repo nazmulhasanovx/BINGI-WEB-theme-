@@ -44,7 +44,7 @@ export const haorBilash: Hotel = {
     {
       id: "h1", slug: "deck-cabin", name: "Deck Cabin", kind: "room",
       short: "Double bed and a window on the water.",
-      description: "A wooden cabin on the main deck with a double bed, a window at water level and a fan. Shared toilets are a few steps away.",
+      description: "A teak cabin on the main deck with a double bed in crisp linen, a window at water level, air-conditioning and its own shower room.",
       fromPrice: 28000, maxAdults: 2, maxChildren: 1, bed: "1 Double bed", sizeSqft: 90, view: "Water",
       units: 3, specs: ["Main deck", "Water-level window", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
@@ -53,7 +53,7 @@ export const haorBilash: Hotel = {
     {
       id: "h2", slug: "family-cabin", name: "Family Cabin", kind: "room",
       short: "Two beds for four, at the back of the boat.",
-      description: "The biggest cabin, at the stern: a double and a single bed plus floor mattress, with its own small sitting corner.",
+      description: "The largest cabin, at the stern: a double and a single bed, a sitting corner with a view astern and an en-suite shower room.",
       fromPrice: 42000, maxAdults: 4, maxChildren: 1, bed: "1 Double + 1 Single", sizeSqft: 140, view: "Water",
       units: 2, specs: ["Stern", "Sitting corner", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
@@ -62,7 +62,7 @@ export const haorBilash: Hotel = {
     {
       id: "h3", slug: "roof-cabin", name: "Roof Cabin", kind: "room",
       short: "Upper deck, steps from the roof seats.",
-      description: "A single cabin on the upper deck with windows on two sides — first to see the sunrise.",
+      description: "The only cabin on the upper deck, with windows on two sides and its own shower room — first to see the sunrise.",
       fromPrice: 36000, maxAdults: 2, maxChildren: 0, bed: "1 Double bed", sizeSqft: 100, view: "Haor, both sides",
       units: 1, specs: ["Upper deck", "Windows on two sides", "All meals"],
       amenities: ["Fan", "Mosquito net", "Charging point", "Life jackets"],
