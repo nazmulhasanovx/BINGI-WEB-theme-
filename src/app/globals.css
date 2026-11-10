@@ -257,3 +257,4 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @keyframes lux-drift { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
 .lux-float { animation: lux-drift 7s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .lux-breathe, .lux-sweep, .lux-float { animation: none; } }
+.lux-arch { border-radius: 999px 999px 0 0 / 46% 46% 0 0; }

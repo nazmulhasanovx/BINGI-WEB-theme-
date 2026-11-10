@@ -16,6 +16,7 @@ import { CanopyHome } from "./canopy/Home";
 import { PodHome } from "./pod/Home";
 import { OrbitHome } from "./orbit/Home";
 import { IsleHome } from "./isle/Home";
+import { ZamindarHome } from "./zamindar/Home";
 
 export const THEME_HOMES: Partial<Record<MasterTheme, ComponentType<{ hotel: Hotel }>>> = {
   grand: GrandHome,
@@ -31,6 +32,7 @@ export const THEME_HOMES: Partial<Record<MasterTheme, ComponentType<{ hotel: Hot
   pod: PodHome,
   orbit: OrbitHome,
   isle: IsleHome,
+  zamindar: ZamindarHome,
 };
 
 export const MASTERS: { id: MasterTheme; name: string; plan: string; demo?: string }[] = [
@@ -51,4 +53,5 @@ export const PAID_MASTERS: { id: MasterTheme; name: string; plan: string; demo?:
   { id: "pod", name: "POD", plan: "Paid", demo: "skypod" },
   { id: "orbit", name: "ORBIT", plan: "Paid", demo: "altura" },
   { id: "isle", name: "ISLE", plan: "Luxury", demo: "nila-island" },
+  { id: "zamindar", name: "ZAMINDAR", plan: "Luxury", demo: "shonali-rajbari" },
 ];
