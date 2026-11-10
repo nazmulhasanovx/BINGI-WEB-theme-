@@ -29,6 +29,7 @@ export function WebsiteModule({ page }: { page: string }) {
         <InnerNav active={page} />
         <div className="flex min-w-0 flex-1 flex-col">
           <PublishBar />
+          <PhoneNav active={page} />
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-[1240px] px-6 py-7 lg:px-8">
               <Page />
@@ -66,6 +67,26 @@ function InnerNav({ active }: { active: string }) {
         </div>
       ))}
     </aside>
+  );
+}
+
+/** Phones and tablets (< lg): the page menu as one swipeable row; the current page scrolls into view. */
+function PhoneNav({ active }: { active: string }) {
+  const ref = useRef<HTMLAnchorElement>(null);
+  useEffect(() => { ref.current?.scrollIntoView({ block: "nearest", inline: "center" }); }, [active]);
+  return (
+    <nav aria-label="Website Management pages" className="no-scrollbar flex shrink-0 gap-1.5 overflow-x-auto border-b border-hms-line bg-white px-4 py-2 lg:hidden">
+      {WM_PAGES.map((p) => {
+        const on = p.id === active;
+        const Icon = p.icon;
+        return (
+          <Link key={p.id} ref={on ? ref : undefined} href={`/hms/website/${p.id}`} aria-current={on ? "page" : undefined}
+            className={clsx("flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] transition-colors", on ? "bg-hms-coral font-semibold text-white" : "bg-hms-nav text-hms-ink")}>
+            <Icon className="size-4" strokeWidth={on ? 2.2 : 1.8} /> {p.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 

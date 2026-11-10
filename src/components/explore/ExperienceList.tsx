@@ -1,4 +1,5 @@
 "use client";
+import { useSiteView } from "@/lib/site";
 
 import Image from "next/image";
 import { useState } from "react";
@@ -26,7 +27,8 @@ export function ExperienceList({ hotel }: { hotel: Hotel }) {
   const { cart, setExtra } = useGuestState(hotel.slug);
   const { openSearch } = useBooking();
   const toast = useToast();
-  const list = hotel.services.filter((s) => s.photo);
+  const doc = useSiteView(hotel.slug);
+  const list = hotel.services.filter((s) => s.photo && doc?.services[s.id]?.visible !== false);
   const cats = Array.from(new Set(list.map((s) => s.category)));
   const [cat, setCat] = useState<string>("all");
 

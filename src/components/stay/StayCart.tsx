@@ -1,4 +1,5 @@
 "use client";
+import { useSiteView } from "@/lib/site";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -18,12 +19,13 @@ export function StayCart({ hotel }: { hotel: Hotel }) {
   const base = `/hotel/${hotel.slug}`;
   const { cart, setExtra, clearCart, setPromo, ready } = useGuestState(hotel.slug);
   const stay = cart.stay;
+  const doc = useSiteView(hotel.slug);
   if (!ready) return <ListSkeleton rows={2} />;
   if (!stay) return <EmptyStay base={base} />;
   const q = quote(hotel, stay, cart.extras, cart.promo);
   if (!q) return <EmptyStay base={base} />;
 
-  const extras = hotel.services.filter((s) => s.addToStay && !(stay.plan === "breakfast" && s.category === "stay"));
+  const extras = hotel.services.filter((s) => s.addToStay && doc?.services[s.id]?.visible !== false && !(stay.plan === "breakfast" && s.category === "stay"));
   const qty = (id: string) => cart.extras.find((e) => e.serviceId === id)?.qty ?? 0;
   const go = () => router.push(`${base}/checkout`);
 

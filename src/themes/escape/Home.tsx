@@ -112,14 +112,14 @@ function Days({ hotel }: { hotel: Hotel }) {
         <Reveal><Head label="Your days" title="Sun, sea and slow afternoons" center /></Reveal>
         <RevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-6">
           {acts.map((s) => (
-            <RevealItem key={s.id} className="overflow-hidden rounded-[26px] bg-surface shadow-card">
+            <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><RevealItem className="overflow-hidden rounded-[26px] bg-surface shadow-card">
               {s.photo && <div className="relative aspect-[16/11]"><Image src={s.photo} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" /></div>}
               <div className="p-5">
                 <h3 className="text-[19px] font-bold">{s.name}</h3>
                 <p className="mt-1 text-[15px] text-muted">{s.short}</p>
                 <p className="mt-3 text-[15px]"><b>{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span>{s.addToStay && <span className="ml-2 rounded-full bg-brand-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-action"><T>Add to stay</T></span>}</p>
               </div>
-            </RevealItem>
+            </RevealItem></SiteVisible>
           ))}
         </RevealGroup>
       </Container>
@@ -195,7 +195,7 @@ function GettingHere({ hotel }: { hotel: Hotel }) {
                 </li>
               ))}
             </ul>
-            {transfer && <p className="mt-4 rounded-[18px] bg-brand-soft p-4 text-[15px]"><b>{transfer.name}</b> — {transfer.short} <span className="whitespace-nowrap font-semibold">{formatMoney(transfer.price)} {transfer.unit}</span></p>}
+            {transfer && <SiteVisible slug={hotel.slug} kind="services" id={transfer.id}><p className="mt-4 rounded-[18px] bg-brand-soft p-4 text-[15px]"><b>{transfer.name}</b> — {transfer.short} <span className="whitespace-nowrap font-semibold">{formatMoney(transfer.price)} {transfer.unit}</span></p></SiteVisible>}
             <a href={mapsLink(hotel)} target="_blank" rel="noopener" className="mt-5 inline-flex h-12 items-center gap-2 rounded-full bg-action px-6 text-[15px] font-semibold text-on-action"><Navigation className="size-4" /> <T>Get directions</T></a>
           </Reveal>
         </div>

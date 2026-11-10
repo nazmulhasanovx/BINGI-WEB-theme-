@@ -128,10 +128,10 @@ function ADayHere({ hotel }: { hotel: Hotel }) {
   const fire = hotel.facilities.find((f) => f.icon === "flame");
   const dinner = hotel.services.filter((s) => s.category === "stay")[1];
   const steps = [
-    { icon: Sunrise, time: "Morning", title: meal?.name, text: meal?.short, price: meal && `${formatMoney(meal.price)} ${meal.unit}`, add: meal?.addToStay },
-    { icon: Sun, time: "Afternoon", title: walk?.name, text: walk?.short, price: walk && `${formatMoney(walk.price)} ${walk.unit}`, add: walk?.addToStay },
-    { icon: Coffee, time: "Evening", title: dinner?.name, text: dinner?.short, price: dinner && `${formatMoney(dinner.price)} ${dinner.unit}`, add: dinner?.addToStay },
-    { icon: fire ? Flame : Moon, time: "Night", title: fire?.name, text: fire?.short, price: undefined, add: false },
+    { icon: Sunrise, time: "Morning", title: meal?.name, text: meal?.short, price: meal && `${formatMoney(meal.price)} ${meal.unit}`, add: meal?.addToStay, sid: meal?.id },
+    { icon: Sun, time: "Afternoon", title: walk?.name, text: walk?.short, price: walk && `${formatMoney(walk.price)} ${walk.unit}`, add: walk?.addToStay, sid: walk?.id },
+    { icon: Coffee, time: "Evening", title: dinner?.name, text: dinner?.short, price: dinner && `${formatMoney(dinner.price)} ${dinner.unit}`, add: dinner?.addToStay, sid: dinner?.id },
+    { icon: fire ? Flame : Moon, time: "Night", title: fire?.name, text: fire?.short, price: undefined, add: false, sid: undefined as string | undefined },
   ].filter((s) => s.title);
   if (steps.length < 2) return null;
   const pic = photo(hotel, /bonfire|fire/);
@@ -146,13 +146,13 @@ function ADayHere({ hotel }: { hotel: Hotel }) {
             <Reveal><Title label="A day here" title="Slow days, warm evenings" /></Reveal>
             <RevealGroup className="relative space-y-6 border-l border-action/30 pl-6">
               {steps.map((s) => (
-                <RevealItem key={s.time} className="relative">
+                <SiteVisible key={s.time} slug={hotel.slug} kind="services" id={s.sid ?? "-"}><RevealItem className="relative">
                   <span className="absolute -left-[37px] top-0 grid size-6 place-items-center rounded-full bg-action text-on-action"><s.icon className="size-3.5" /></span>
                   <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-action"><T>{s.time}</T></p>
                   <p className="mt-0.5 font-heading text-[20px] leading-tight md:text-[24px]">{s.title}</p>
                   {s.text && <p className="mt-1 text-[15px] text-muted">{s.text}</p>}
                   {s.price && <p className="mt-1 text-[14px] font-semibold">{s.price}{s.add && <> · <span className="font-normal text-muted"><T>add when you book</T></span></>}</p>}
-                </RevealItem>
+                </RevealItem></SiteVisible>
               ))}
             </RevealGroup>
           </div>

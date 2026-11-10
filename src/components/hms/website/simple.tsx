@@ -109,7 +109,7 @@ function Tiles() {
   const rooms = hotel.rooms.filter((r) => d.rooms[r.id]?.visible !== false).length;
   const offers = hotel.offers.filter((o) => d.offers[o.id]?.visible !== false && (o.kind === "discount" || hotel.flags.packages)).length;
   const reviews = hotel.reviews.length - d.hiddenReviews.length;
-  const pay = [d.booking.payAtHotel && "Pay at hotel", d.booking.bkash && "bKash", d.booking.advance && `${d.booking.advancePercent}% advance`].filter(Boolean).join(" · ");
+  const pay = [d.booking.payAtHotel && "Pay on arrival", d.booking.bkash && "bKash", d.booking.advance && `${d.booking.advancePercent}% advance`].filter(Boolean).join(" · ");
   const tiles = [
     { href: "design", label: "Theme & Style", value: `${manifest.name} · ${themeById(d.palette).name}` },
     { href: "homepage", label: "Homepage", value: `${st.order.length - st.hidden.length} sections shown` },

@@ -166,13 +166,13 @@ function Included({ hotel }: { hotel: Hotel }) {
               <p className="text-[15px] font-semibold"><T>{g.t}</T></p>
               <ul className="mt-4 divide-y divide-line">
                 {g.items.map((s) => (
-                  <li key={s.id} className="flex items-start justify-between gap-4 py-3.5">
+                  <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><li className="flex items-start justify-between gap-4 py-3.5">
                     <span className="flex gap-3">
                       <CheckCircle2 className={`mt-0.5 size-[18px] shrink-0 ${g.included ? "text-action" : "text-muted"}`} />
                       <span><span className="block text-[15px] font-medium">{s.name}</span><span className="text-[14px] text-muted">{s.short}</span></span>
                     </span>
                     {!g.included && <span className="shrink-0 text-right text-[14px]"><b>{formatMoney(s.price)}</b><span className="block text-muted">{s.unit}</span></span>}
-                  </li>
+                  </li></SiteVisible>
                 ))}
               </ul>
             </Reveal>

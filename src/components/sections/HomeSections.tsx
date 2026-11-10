@@ -129,7 +129,7 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
             <p className="px-3 pb-1 pt-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-action">Experiences</p>
             <ul>
               {exps.map((s) => (
-                <li key={s.id}>
+                <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><li>
                   <Link href={`${base}/experiences`} className="group flex items-center gap-4 rounded-2xl p-3 hover:bg-canvas">
                     <span className="relative size-[72px] shrink-0 overflow-hidden rounded-2xl md:size-20">
                       <Image src={s.photo!} alt="" fill sizes="80px" className="object-cover" />
@@ -142,7 +142,7 @@ export function DineAndDo({ hotel }: { hotel: Hotel }) {
                     </span>
                     <ArrowRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-action" />
                   </Link>
-                </li>
+                </li></SiteVisible>
               ))}
             </ul>
             <Link href={`${base}/experiences`} className="m-1 mt-0 flex h-12 items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold text-action hover:bg-brand-soft">

@@ -25,11 +25,11 @@ export function BookingPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="How guests can pay" desc="Only methods you turn on here appear at checkout.">
           <ul className="divide-y divide-hms-line">
-            <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium">Pay at the hotel</b><span className="text-[13px] text-hms-muted">Cash or card on arrival</span></span><Toggle label="Pay at the hotel" on={b.payAtHotel} onChange={(v) => set("payAtHotel", v)} /></li>
+            <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium">Pay on arrival</b><span className="text-[13px] text-hms-muted">Cash or card on arrival</span></span><Toggle label="Pay at the hotel" on={b.payAtHotel} onChange={(v) => set("payAtHotel", v)} /></li>
             <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium">{bkash?.provider ?? "bKash"} (send money)</b><span className="text-[13px] text-hms-muted">{bkash?.number ? `To ${bkash.number} · guest enters the transaction ID` : "Add a number in Payments first"}</span></span><Toggle label="bKash" on={b.bkash && !!bkash} disabled={!bkash} onChange={(v) => set("bkash", v)} /></li>
             <li className="flex items-center gap-3 py-3">
-              <span className="flex-1"><b className="block text-[14px] font-medium">Advance payment</b><span className="text-[13px] text-hms-muted">Guest pays part now, rest at the hotel</span></span>
-              {b.advance && <span className="flex items-center gap-1"><Input type="number" min={10} max={90} step={5} value={b.advancePercent} onChange={(e) => set("advancePercent", Math.max(10, Math.min(90, Number(e.target.value) || 30)))} className="h-9 w-[72px] text-right" /><span className="text-[13px] text-hms-muted">%</span></span>}
+              <span className="flex-1"><b className="block text-[14px] font-medium">Advance payment</b><span className="text-[13px] text-hms-muted">Guest pays part now, rest on arrival</span></span>
+              {b.advance && <span className="flex items-center gap-1"><Input type="number" aria-label="Advance percent" min={10} max={90} step={5} value={b.advancePercent} onChange={(e) => set("advancePercent", Math.max(10, Math.min(90, Number(e.target.value) || 30)))} className="h-9 w-[72px] text-right" /><span className="text-[13px] text-hms-muted">%</span></span>}
               <Toggle label="Advance payment" on={b.advance} onChange={(v) => set("advance", v)} />
             </li>
             <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium text-hms-muted">Card / online payment</b><span className="text-[13px] text-hms-muted">{card?.gatewayApproved ? "Gateway approved" : "Needs an approved payment gateway"}</span></span>{card?.gatewayApproved ? <Badge tone="green">Ready</Badge> : <SourceLink href="/hms/settings" label="Connect gateway" />}</li>
@@ -43,8 +43,8 @@ export function BookingPage() {
             <li className="py-3"><b className="block text-[14px] font-medium">Guest account</b><span className="mb-2 block text-[13px] text-hms-muted">BinGi Marketplace account (phone + OTP)</span><Segmented value={b.guestAccount} onChange={(v) => set("guestAccount", v)} options={[{ v: "optional", label: "Optional" }, { v: "required", label: "Required to book" }]} /></li>
           </ul>
         </Card>
-        <Card title="Confirmation message" desc="Shown after booking, and in the SMS/email." className="lg:col-span-2">
-          <TextArea value={b.note} maxLength={240} onChange={(e) => set("note", e.target.value)} />
+        <Card title="Confirmation message" desc="Shown to the guest after booking. SMS/email sending is not connected yet." className="lg:col-span-2">
+          <TextArea aria-label="Confirmation message" value={b.note} maxLength={240} onChange={(e) => set("note", e.target.value)} />
           
         </Card>
       </div>
