@@ -1,4 +1,4 @@
-// DEMO DATA — Altura Banani is a fictional city tower hotel used to design the paid ORBIT theme.
+// DEMO DATA — Altura Banani is a fictional sky-tower hotel used to design the ORBIT luxury theme (rebuilt 2026-11-10).
 // Photos: Unsplash (free licence), demo only.
 import type { Hotel } from "@/lib/types";
 
@@ -7,10 +7,10 @@ const P = "/demo/altura";
 export const altura: Hotel = {
   slug: "altura",
   name: "Altura Banani",
-  type: "City hotel",
-  stars: 4,
-  tagline: "High above Banani. Close to everything.",
-  intro: "A glass tower hotel on Road 11 with city-view rooms, a rooftop pool and meeting rooms — ten minutes from Gulshan.",
+  type: "Sky tower hotel",
+  stars: 5,
+  tagline: "Sleep above the city",
+  intro: "A glass tower on Road 11. Rooms start on the 30th floor, the pool is on the roof and the whole city is the view — ten minutes from Gulshan.",
   logoText: "Altura",
   heroPhoto: `${P}/hero.jpg`,
   area: "Banani",
@@ -47,7 +47,7 @@ export const altura: Hotel = {
       description: "A quiet king room with a full-height window over Banani, a work desk and a rain shower.",
       fromPrice: 9800, maxAdults: 2, maxChildren: 1, bed: "1 King bed", sizeSqft: 300, view: "City",
       units: 20, amenities: ["City window", "Work desk", "Rain shower", "Smart TV", "Free Wi-Fi", "Minibar"],
-      photos: [`${P}/desk.jpg`, `${P}/night-room.jpg`], featured: true,
+      photos: [`${P}/desk.jpg`, `${P}/night-room.jpg`], featured: true, specs: ["Floors 30–34"],
     },
     {
       id: "a2", slug: "twin-deluxe", name: "Twin Deluxe", kind: "room",
@@ -55,7 +55,7 @@ export const altura: Hotel = {
       description: "Two queen beds, a city view and a little more space for families and colleagues.",
       fromPrice: 11500, maxAdults: 3, maxChildren: 1, bed: "2 Queen beds", sizeSqft: 360, view: "City",
       units: 14, amenities: ["Two queen beds", "City view", "Rain shower", "Smart TV", "Free Wi-Fi"],
-      photos: [`${P}/twin.jpg`, `${P}/night-room.jpg`],
+      photos: [`${P}/twin.jpg`, `${P}/night-room.jpg`], specs: ["Floors 30–36"],
     },
     {
       id: "a3", slug: "executive-corner", name: "Executive Corner", kind: "room",
@@ -63,7 +63,7 @@ export const altura: Hotel = {
       description: "High-floor corner room with a lounge chair, windows on two sides and executive lounge access.",
       fromPrice: 15500, maxAdults: 2, maxChildren: 1, bed: "1 King bed", sizeSqft: 420, view: "City, two sides",
       units: 8, amenities: ["Corner windows", "Lounge access", "Bathtub", "Nespresso", "Free Wi-Fi"],
-      photos: [`${P}/lounge.jpg`, `${P}/sunset.jpg`], featured: true,
+      photos: [`${P}/lounge.jpg`, `${P}/sunset.jpg`], featured: true, specs: ["Floors 37–41"],
     },
     {
       id: "a4", slug: "sky-suite", name: "Sky Suite", kind: "suite",
@@ -71,13 +71,15 @@ export const altura: Hotel = {
       description: "A suite on the highest guest floor with a separate living room and a bathtub facing the skyline.",
       fromPrice: 26000, maxAdults: 3, maxChildren: 1, bed: "1 King bed + sofa bed", sizeSqft: 680, view: "Skyline",
       units: 3, amenities: ["Living room", "Window bathtub", "Lounge access", "Nespresso", "Free Wi-Fi"],
-      photos: [`${P}/suite.jpg`, `${P}/lounge.jpg`], featured: true,
+      photos: [`${P}/suite.jpg`, `${P}/lounge.jpg`], featured: true, specs: ["Floor 43"],
     },
   ],
   services: [
     { id: "s1", name: "Airport transfer", category: "transfer", short: "Sedan to or from the airport.", price: 2500, unit: "per trip", addToStay: true },
     { id: "s2", name: "Breakfast", category: "dining", short: "Buffet in the lounge, 6:30–10:30.", price: 1200, unit: "per person", photo: `${P}/reception.jpg`, addToStay: true },
     { id: "s3", name: "Meeting room (half day)", category: "activity", short: "Up to 20 people, screen and tea.", price: 15000, unit: "per half day", photo: `${P}/lobby.jpg`, addToStay: false },
+    { id: "s4", name: "Sunset cabana", category: "celebration", short: "A private cabana at the rooftop pool with drinks for two.", price: 18000, unit: "per evening", photo: `${P}/pool-2.jpg`, addToStay: true },
+    { id: "s5", name: "Sky lounge evening", category: "activity", short: "Executive lounge access with canapés, 6–8 PM.", price: 6000, unit: "per person", photo: `${P}/sunset.jpg`, addToStay: true },
   ],
   outlets: [],
   menu: [],
@@ -86,7 +88,7 @@ export const altura: Hotel = {
   ],
   promoCodes: [{ code: "ALTURA10", percent: 10, label: "Altura 10%" }],
   reviews: [
-    { id: "r1", name: "Shafiq R.", from: "Dhaka", score: 4.5, text: "Great view from the 6th floor, very quiet rooms.", stayed: "Oct 2026" },
+    { id: "r1", name: "Shafiq R.", from: "Dhaka", score: 4.5, text: "Great view from the 38th floor, very quiet rooms.", stayed: "Oct 2026" },
     { id: "r2", name: "Laura B.", from: "UK", score: 5, text: "Rooftop pool at sunset — lovely.", stayed: "Sep 2026" },
     { id: "r3", name: "Tanvir M.", from: "Chattogram", score: 4.5, text: "Good for business, close to Gulshan.", stayed: "Aug 2026" },
     { id: "r4", name: "Priya S.", from: "India", score: 4.5, text: "Sky Suite bathtub view was worth it.", stayed: "Oct 2026" },
