@@ -64,7 +64,7 @@ export function seedMenu(h: Hotel): { categories: Category[]; items: Item[] } {
     { id: "x3", name: "Vegetable pakora", cat: "c-st", price: 380, prep: 10, available: true, pos: true, qr: true, veg: true },
     { id: "x4", name: "Beef kala bhuna", cat: "c-lo", price: 650, prep: 20, available: true, pos: true, qr: true, sizes: [{ name: "Half", price: 650 }, { name: "Full", price: 1050 }] },
     { id: "x5", name: "Prawn malai curry", cat: "c-lo", price: 800, prep: 20, available: true, pos: true, qr: true, sizes: [{ name: "Half", price: 800 }, { name: "Full", price: 1350 }] },
-    { id: "x6", name: "Plain rice", cat: "c-lo", price: 150, prep: 5, available: true, pos: true, qr: true, veg: true, photo: "/demo/matir/rice-close.jpg" },
+    { id: "x6", name: "Plain rice", cat: "c-lo", price: 150, prep: 5, available: true, pos: true, qr: true, veg: true},
     { id: "x7", name: "Club sandwich & fries", cat: "c-in", price: 720, prep: 15, available: true, pos: true, qr: true },
     { id: "x8", name: "Chicken pasta alfredo", cat: "c-in", price: 890, prep: 18, available: false, pos: true, qr: true },
     { id: "x9", name: "Mishti doi", cat: "c-de", price: 220, prep: 2, available: true, pos: true, qr: true, veg: true },
