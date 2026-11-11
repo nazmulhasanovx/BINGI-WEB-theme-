@@ -1,6 +1,7 @@
 "use client";
 // Restaurant & Bar — shared hook, chips, order sheet and payment sheet.
 import { imgSrc } from "@/lib/img";
+import { can } from "@/lib/plan";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -175,4 +176,12 @@ export function PaySheet({ r, id, onClose, onDone }: { r: Restaurant; id: string
       </div>
     </Sheet>
   );
+}
+
+/** Sidebar badge: QR / POS orders waiting for approval (only when the plan has Restaurant). */
+export function MealsBadge({ active }: { active: boolean }) {
+  const { h, m } = useRestaurant();
+  const n = m.st.orders.filter((o) => o.status === "approval").length;
+  if (!n || !can(h, "restaurant")) return null;
+  return <span aria-label={`${n} waiting`} className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", active ? "bg-white/20" : "bg-hms-coral-soft text-hms-red")}>{n}</span>;
 }

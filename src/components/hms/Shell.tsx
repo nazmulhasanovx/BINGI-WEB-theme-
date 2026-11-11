@@ -2,6 +2,7 @@
 // HMS shell — sidebar + header, 1:1 with the live HMS (hms.bingi.app, Nov 2026).
 // Every module page renders inside this, so other modules can be designed in this repo too.
 import { ChatBadge } from "./chat/page";
+import { MealsBadge } from "./meals/shared";
 import Link from "next/link";
 import { imgSrc } from "@/lib/img";
 import Image from "next/image";
@@ -33,7 +34,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { id: "housekeeping", label: "Housekeeping", icon: Brush, href: "/hms/housekeeping" },
       { id: "guests", label: "Guests", icon: UserPlus, href: "/hms/guests" },
       { id: "chat", label: "Chat", icon: MessageSquare, href: "/hms/chat" },
-      { id: "meals", label: "Meals", icon: ChefHat, href: "/hms/meals", badge: 2 },
+      { id: "meals", label: "Meals", icon: ChefHat, href: "/hms/meals" },
     ],
   },
   {
@@ -247,6 +248,7 @@ function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean
       <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
       {!collapsed && item.id === "chat" ? <ChatBadge active={active} /> : null}
+      {!collapsed && item.id === "meals" ? <MealsBadge active={active} /> : null}
       {!collapsed && item.badge ? (
         <span className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", active ? "bg-white/20" : "bg-hms-coral-soft text-hms-red")}>{item.badge}</span>
       ) : null}

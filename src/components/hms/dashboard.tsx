@@ -3,8 +3,8 @@ import { can } from "@/lib/plan";
 // HMS Dashboard (operating property). Layout from Nazmul's reference (10 Nov 2026):
 // greeting → 4 KPIs → Today's priorities + Website & booking → Arriving today + plan card.
 // Data: rooms come from the Rooms store, staff from the HRM store, website from Website Management.
-// Bookings, QR orders and stock are DEMO fixtures built from this property's own rooms
-// (no bookings backend in the prototype) — the header already shows "Prototype · demo data".
+// Priorities read every module (Bookings, Payments, Restaurant, Chat, Expenses, Communication) — each line
+// only shows when there is something to do. Demo data in the prototype (header shows "Prototype · demo data").
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo } from "react";
@@ -21,6 +21,13 @@ import { statusOf, useInventory } from "@/lib/inventory/store";
 import { type BookingStatus } from "@/lib/bookings/demo";
 import { useStays } from "@/lib/bookings/store";
 import { useGuestNames } from "@/lib/guests/store";
+import { useBookings } from "@/lib/bookings/store";
+import { refundsDue, toCollect } from "@/lib/payments/ledger";
+import { useExpenses } from "@/lib/expenses/store";
+import { useRestaurant } from "./meals/shared";
+import { useChatData } from "./chat/page";
+import { useCommData } from "./communication/data";
+import { AlertTriangle, MessageSquare, Receipt, RotateCcw } from "lucide-react";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const short = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]}`;
@@ -53,7 +60,6 @@ export function Dashboard() {
   const available = rooms.length - inHouse.length;
   const revenue = inHouse.reduce((s, b) => s + b.total / b.nights, 0);
 
-  const plan = h.plan;
   const hasRestaurant = can(h, "restaurant");
   const hasHrm = can(h, "hrm");
   const active = hrm.employees.filter((e) => e.status === "active");
@@ -62,13 +68,30 @@ export function Dashboard() {
   const attIssues = active.filter((e) => !att[e.id] || att[e.id].status === "absent").length;
 
   const hk = can(h, "housekeeping");
+  const bk = useBookings(h);
+  const rest = useRestaurant();
+  const chat = useChatData().chat;
+  const ex = useExpenses(h);
+  const comm = useCommData().comm;
+  const qrWaiting = hasRestaurant ? rest.m.st.orders.filter((o) => o.status === "approval").length : 0;
+  const ordersToday = rest.m.st.orders.filter((o) => o.at.startsWith(TODAY) && o.status !== "cancelled" && o.status !== "declined").length;
+  const menuItems = rest.m.st.items.filter((i) => i.available).length;
+  const collect = toCollect(bk.list, TODAY).filter((x) => x.rank <= 3);
+  const refunds = refundsDue(bk.list).length;
+  const exPending = can(h, "expenses") ? ex.st.expenses.filter((e) => e.status === "pending").length : 0;
+  const failed = comm.st.log.filter((m) => m.status === "failed").length;
+  const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
   const priorities = [
-    { icon: Brush, text: departing.length ? `${departing.length} room${departing.length === 1 ? "" : "s"} need cleaning` : "No rooms to clean yet", href: "/hms/housekeeping", show: hk },
-    { icon: CalendarCheck, text: departing.length ? `${departing.length} guest${departing.length === 1 ? "" : "s"} checking out` : "No check-outs today", href: "/hms/bookings", show: !hk },
-    { icon: QrCode, text: "2 QR orders waiting", href: "/hms/meals", show: hasRestaurant },
-    { icon: UserRoundCheck, text: `${attIssues} attendance exception${attIssues === 1 ? "" : "s"}`, href: "/hms/staff/attendance", show: hasHrm },
-    { icon: Wallet, text: `${arriving.filter((b) => b.due > 0).length} arrivals with payment due`, href: "/hms/bookings", show: true },
-  ].filter((p) => p.show).slice(0, 3);
+    { icon: Wallet, text: `${n(collect.length, "guest")} to collect from today`, href: "/hms/payments?tab=collect", show: collect.length > 0 },
+    { icon: Brush, text: `${n(departing.length, "room")} to clean after check-out`, href: "/hms/housekeeping", show: hk && departing.length > 0 },
+    { icon: CalendarCheck, text: `${n(departing.length, "guest")} checking out`, href: "/hms/bookings", show: !hk && departing.length > 0 },
+    { icon: QrCode, text: `${n(qrWaiting, "QR order")} waiting for approval`, href: "/hms/meals/orders", show: qrWaiting > 0 },
+    { icon: MessageSquare, text: `${n(chat.unread, "unread guest message")}`, href: "/hms/chat", show: chat.unread > 0 },
+    { icon: Receipt, text: `${n(exPending, "expense")} waiting approval`, href: "/hms/operations?tab=list", show: exPending > 0 },
+    { icon: RotateCcw, text: `${n(refunds, "refund")} to give back`, href: "/hms/payments?tab=refunds", show: refunds > 0 },
+    { icon: AlertTriangle, text: `${n(failed, "message")} not delivered`, href: "/hms/communication?tab=history", show: failed > 0 },
+    { icon: UserRoundCheck, text: `${n(attIssues, "attendance exception")}`, href: "/hms/staff/attendance", show: hasHrm && attIssues > 0 },
+  ].filter((p) => p.show);
 
   const hour = new Date().getHours();
   const day = new Date(`${TODAY}T00:00:00`).toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "short", year: "numeric" }).replace(",", "");
@@ -109,12 +132,14 @@ export function Dashboard() {
             <div className="min-w-0 flex-1">
               <h2 id="pri" className="text-[18px] font-bold">Today&apos;s priorities</h2>
               <ul className="mt-2.5 space-y-2">
-                {priorities.map((p) => (
+                {priorities.slice(0, 5).map((p) => (
                   <li key={p.text}><Link href={p.href} className="flex items-center gap-2.5 text-[14.5px] hover:text-hms-red"><p.icon className="size-[18px] shrink-0 text-hms-red" strokeWidth={1.8} />{p.text}</Link></li>
                 ))}
+                {priorities.length === 0 && <li className="text-[14.5px] text-hms-muted">All clear — nothing waiting right now.</li>}
+                {priorities.length > 5 && <li className="text-[13px] text-hms-muted">+{priorities.length - 5} more below in each module</li>}
               </ul>
             </div>
-            <Link href={hk ? "/hms/housekeeping" : "/hms/bookings"} className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#0f1720] px-6 text-[14px] font-semibold text-white hover:bg-black">Open tasks</Link>
+            <Link href={priorities[0]?.href ?? "/hms/bookings"} className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#0f1720] px-6 text-[14px] font-semibold text-white hover:bg-black">{priorities.length ? "Start with the first" : "Open bookings"}</Link>
           </section>
           <WebsiteCard h={h} published={!!site.rec.published} domain={site.rec.domain.status === "verified" || site.rec.domain.status === "live"} />
         </div>
@@ -137,7 +162,7 @@ export function Dashboard() {
                         <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{stay(b.from, b.to)}</td>
                         <td className="px-2.5 py-2.5"><StatusChip s={b.status} /></td>
                         <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</td>
-                        <td className="px-2.5 py-2.5 text-right"><Link href={`/hms/bookings?b=${b.code}`} aria-label={`Open booking for ${guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
+                        <td className="px-2.5 py-2.5 text-right"><Link href={`/hms/bookings/view?b=${b.code}`} aria-label={`Open booking for ${guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
                       </tr>
                     ); })}
                   </tbody>
@@ -145,7 +170,7 @@ export function Dashboard() {
               </div>
               <ul className="divide-y divide-hms-line border-t border-hms-line lg:hidden">
                 {arriving.map((b) => { const guest = names.get(b.guestId) ?? "Guest"; return (
-                  <li key={b.code}><Link href={`/hms/bookings?b=${b.code}`} className="flex items-center gap-3 px-4 py-3">
+                  <li key={b.code}><Link href={`/hms/bookings/view?b=${b.code}`} className="flex items-center gap-3 px-4 py-3">
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-hms-coral-soft text-[12px] font-bold text-hms-red">{guest.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{guest}</span><span className="block text-[12.5px] text-hms-muted">Room {b.room} · {stay(b.from, b.to)}</span></span>
                     <span className="text-right text-[12.5px]">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</span>
@@ -153,7 +178,7 @@ export function Dashboard() {
               </ul></>
             ) : <p className="px-5 pb-5 text-[14px] text-hms-muted">No arrivals today. Add rooms and publish them to start taking bookings.</p>}
           </section>
-          <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} />
+          <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} qr={qrWaiting} orders={ordersToday} menu={menuItems} />
         </div>
       </div>
     </div>
@@ -188,13 +213,13 @@ function WebsiteCard({ h, published, domain }: { h: Hotel; published: boolean; d
 }
 
 /** Third card by plan: Ultra = team & inventory · Business = restaurant today · Starter = upgrade. */
-function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant }: { onDuty: number; lowStock: number; hasHrm: boolean; hasRestaurant: boolean }) {
+function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant, qr, orders, menu }: { onDuty: number; lowStock: number; hasHrm: boolean; hasRestaurant: boolean; qr: number; orders: number; menu: number }) {
   if (hasHrm) {
-    const rows: [typeof UsersRound, string, string][] = [[UsersRound, "Staff on duty", String(onDuty)], [Boxes, "Low stock", `${lowStock} item${lowStock === 1 ? "" : "s"}`], [ChefHat, "Menu items", "48"]];
-    return <Rows title="Team & inventory" rows={rows} cta="View operations" href="/hms/operations" />;
+    const rows: [typeof UsersRound, string, string][] = [[UsersRound, "Staff on duty", String(onDuty)], [Boxes, "Low stock", `${lowStock} item${lowStock === 1 ? "" : "s"}`], [ChefHat, "Restaurant orders today", String(orders)]];
+    return <Rows title="Team & inventory" rows={rows} cta="Open Staff" href="/hms/staff" />;
   }
   if (hasRestaurant) {
-    const rows: [typeof UsersRound, string, string][] = [[QrCode, "QR orders waiting", "2"], [ChefHat, "Orders today", "14"], [Sparkles, "Menu items", "48"]];
+    const rows: [typeof UsersRound, string, string][] = [[QrCode, "QR orders waiting", String(qr)], [ChefHat, "Orders today", String(orders)], [Sparkles, "Menu items on sale", String(menu)]];
     return <Rows title="Restaurant today" rows={rows} cta="Open meals" href="/hms/meals" />;
   }
   return (
