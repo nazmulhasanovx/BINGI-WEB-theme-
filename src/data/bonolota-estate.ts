@@ -68,7 +68,7 @@ export const bonolotaEstate: Hotel = {
     { q: "Can we book the whole estate?", a: "Yes. Message us with your dates and number of guests; we confirm exclusive use and the chef's menu within a few hours." },
     { q: "Are events allowed?", a: "Yes, on the lawn and pavilion, up to 120 guests, with music until 11 PM." },
   ],
-  theme: { master: "estate", id: "forest", heading: "serif" },
+  theme: { master: "estate", id: "plum", heading: "serif" },
   propertyType: "villa",
   plan: "ultra",
 };
