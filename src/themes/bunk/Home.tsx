@@ -140,11 +140,11 @@ function Life({ hotel }: { hotel: Hotel }) {
             })}
           </RevealGroup>
           {events.length > 0 && (
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
+            <div className="mt-6 grid gap-3 md:grid-cols-2 [&>*]:min-w-0">
               {events.map((e) => (
-                <SiteVisible key={e.id} slug={hotel.slug} kind="services" id={e.id}><div className="flex items-center gap-4 rounded-[18px] bg-surface p-3">
+                <SiteVisible key={e.id} slug={hotel.slug} kind="services" id={e.id}><div className="flex min-w-0 items-center gap-3 rounded-[18px] bg-surface p-3 sm:gap-4">
                   {e.photo && <span className="relative size-16 shrink-0 overflow-hidden rounded-[12px]"><Image src={e.photo} alt="" fill sizes="64px" className="object-cover" /></span>}
-                  <div className="min-w-0 flex-1"><p className="text-[15.5px] font-bold">{e.name}</p><p className="truncate text-[13.5px] text-muted">{e.short}</p></div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-[15.5px] font-bold">{e.name}</p><p className="truncate text-[13.5px] text-muted">{e.short}</p></div>
                   <p className="shrink-0 pr-2 text-[15px] font-bold">{e.price ? formatMoney(e.price) : "Free"}</p>
                 </div></SiteVisible>
               ))}
