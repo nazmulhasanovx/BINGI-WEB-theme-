@@ -2,6 +2,7 @@
 // HMS shell — sidebar + header, 1:1 with the live HMS (hms.bingi.app, Nov 2026).
 // Every module page renders inside this, so other modules can be designed in this repo too.
 import Link from "next/link";
+import { imgSrc } from "@/lib/img";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -65,7 +66,7 @@ export const ALL_ITEMS = [...GROUPS.flatMap((g) => g.items), { id: "settings", l
 const SEARCH_TARGETS: NavTarget[] = [
   ...[...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }].map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
   { label: "Guest reviews", href: "/hms/guests/reviews", icon: Star }, { label: "Inventory history", href: "/hms/inventory/history", icon: Boxes },
-  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "Cash movements", href: "/hms/cashbox/movements", icon: Wallet }, { label: "Cashbox closed days", href: "/hms/cashbox/days", icon: Wallet }, { label: "Restaurant cashbox", href: "/hms/meals/cashbox", icon: Wallet }, { label: "Restaurant POS (new order)", href: "/hms/meals/pos", icon: ChefHat }, { label: "Kitchen orders", href: "/hms/meals/kitchen", icon: ChefHat }, { label: "Restaurant menu", href: "/hms/meals/menu", icon: ChefHat }, { label: "Restaurant orders", href: "/hms/meals/orders", icon: ChefHat }, { label: "Restaurant cash settings", href: "/hms/meals/cash-settings", icon: Wallet }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
+  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "New booking", href: "/hms/bookings/new", icon: CalendarCheck }, { label: "Booking calendar", href: "/hms/bookings/calendar", icon: CalendarCheck }, { label: "All bookings", href: "/hms/bookings/list", icon: CalendarCheck }, { label: "Cash movements", href: "/hms/cashbox/movements", icon: Wallet }, { label: "Cashbox closed days", href: "/hms/cashbox/days", icon: Wallet }, { label: "Restaurant cashbox", href: "/hms/meals/cashbox", icon: Wallet }, { label: "Restaurant POS (new order)", href: "/hms/meals/pos", icon: ChefHat }, { label: "Kitchen orders", href: "/hms/meals/kitchen", icon: ChefHat }, { label: "Restaurant menu", href: "/hms/meals/menu", icon: ChefHat }, { label: "Restaurant orders", href: "/hms/meals/orders", icon: ChefHat }, { label: "Restaurant cash settings", href: "/hms/meals/cash-settings", icon: Wallet }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
   { label: "Room types", href: "/hms/rooms", icon: BedDouble }, { label: "Room numbers", href: "/hms/rooms/numbers", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
 ];
@@ -117,16 +118,13 @@ function ShellInner({ children }: { children: ReactNode }) {
 }
 
 function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; activeId: string; onToggle: () => void }) {
-  const hotel = useProperty();
   return (
     <aside className={clsx("hidden shrink-0 flex-col border-r border-hms-line bg-white transition-[width] duration-300 ease-out md:flex", collapsed ? "w-[68px]" : "w-[224px]")}>
-      <div className="flex h-14 shrink-0 items-center px-4">
-        {hotel.propertyCode !== undefined || hotel.slug.startsWith("onb-")
-          ? <span className="grid size-9 place-items-center rounded-md bg-hms-coral-soft text-[13px] font-semibold text-hms-red" aria-label={hotel.name}>{hotel.name.slice(0, 2).toUpperCase()}</span>
-          : <span className="relative size-9 overflow-hidden rounded-md">
-              <Image src={hotel.heroPhoto} alt={hotel.name} fill sizes="36px" className="object-cover" />
-            </span>}
-      </div>
+      {/* Official BinGi HMS logo (the property shows in the switcher at the bottom). */}
+      <Link href="/hms" aria-label="BinGi HMS — Dashboard" className={clsx("flex h-16 shrink-0 items-center", collapsed ? "justify-center px-2" : "px-5")}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, inlined in the single-file preview */}
+        <img src={imgSrc(collapsed ? "/brand/bingi-hms-mark.png" : "/brand/bingi-hms.png")} alt="BinGi HMS" className={collapsed ? "size-10 object-contain" : "h-11 w-auto"} />
+      </Link>
       <NavList activeId={activeId} collapsed={collapsed} />
       <div className="shrink-0 border-t border-hms-line p-3">
         {!collapsed && <ModeSwitch />}
@@ -218,7 +216,7 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
   return (
     <div className="hms-fade fixed inset-0 z-[80] bg-black/30 md:hidden" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest("a")) onClose(); }} className="hms-drawer-l flex h-full w-[min(300px,86vw)] flex-col bg-white shadow-2xl">
-        <div className="flex h-14 shrink-0 items-center justify-between px-4"><span className="text-[16px] font-bold">Menu</span><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
+        <div className="flex h-14 shrink-0 items-center justify-between px-4">{/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}<img src={imgSrc("/brand/bingi-hms.png")} alt="BinGi HMS" className="h-10 w-auto" /><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
         <NavList activeId={activeId} collapsed={false} big />
         <div className="shrink-0 border-t border-hms-line p-3"><PropertySwitcher collapsed={false} /></div>
       </div>
@@ -353,6 +351,11 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { pos: "POS", orders: "Orders", kitchen: "Kitchen", menu: "Menu", tables: "Tables & QR", reports: "Reports", settings: "Settings", cashbox: "Cashbox", "cash-settings": "Cash settings" };
     return [{ label: "Restaurant & Bar", href: "/hms/meals" }, { label: names[seg] ?? seg }];
+  }
+  if (path.startsWith("/hms/bookings")) {
+    const seg = path.split("/")[3];
+    const names: Record<string, string> = { calendar: "Calendar", list: "All bookings", new: "New booking" };
+    return [{ label: "Bookings", href: seg ? "/hms/bookings" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/cashbox")) {
     const seg = path.split("/")[3];

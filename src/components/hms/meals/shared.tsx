@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { BedDouble, CakeSlice, Clock, Coffee, EggFried, Leaf, MapPin, Plus, Printer, Salad, Sandwich, ShoppingBag, Soup, Truck, UtensilsCrossed } from "lucide-react";
 import { TODAY, useRooms } from "@/lib/rooms/store";
-import { DEMO_GUESTS } from "@/lib/bookings/demo";
 import { drawerFor, postCash } from "@/lib/cashbox/store";
 import { METHOD_LABEL, SERVICE_LABEL, SOURCE_LABEL, STATUS_LABEL, bill, tk, type Discount, type Item, type Order, type PayMethod, type Payment, type Service, type Status } from "@/lib/meals/seed";
 import { ageOf, useMeals } from "@/lib/meals/store";
@@ -19,9 +18,8 @@ export function useToast() { const [t, setT] = useState(""); const show = (m: st
 
 /** Everything a Restaurant & Bar screen needs: menu/orders, in-house guests for room service, cashbox link. */
 export function useRestaurant() {
-  const { h, refs, stays } = useCashboxData();
+  const { h, refs, stays, names } = useCashboxData();
   const { st: rooms } = useRooms(h);
-  const names = useMemo(() => new Map(DEMO_GUESTS.map((g) => [g.id, g.name])), []);
   const inHouse = useMemo(() => stays.filter((s) => s.status === "Checked in" && s.from <= TODAY && s.to > TODAY).map((s) => ({ room: s.room, guest: names.get(s.guestId) ?? "Guest" })).sort((a, b) => a.room.localeCompare(b.room, undefined, { numeric: true })), [stays, names]);
   const roomCodes = useMemo(() => rooms.units.filter((u) => u.status === "published").map((u) => u.code), [rooms.units]);
   const m = useMeals(h, inHouse, roomCodes);

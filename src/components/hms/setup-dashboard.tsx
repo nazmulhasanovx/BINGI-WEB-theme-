@@ -37,7 +37,7 @@ export function SetupDashboard({ d }: { d: Draft }) {
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"} — welcome to BinGi</h1>
             <p className="text-[14px] text-hms-muted">{h.name} · {PLANS[d.plan].label} plan · setup mode</p>
           </div>
-          <Link href="/hms/bookings" className="inline-flex h-10 items-center gap-2 rounded-xl bg-hms-coral px-4 text-[14px] font-semibold text-white">+ New booking</Link>
+          <Link href="/hms/bookings/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-hms-coral px-4 text-[14px] font-semibold text-white">+ New booking</Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.map((k) => (

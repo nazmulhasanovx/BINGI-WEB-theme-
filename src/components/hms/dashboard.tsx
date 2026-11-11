@@ -17,7 +17,9 @@ import { useSite } from "@/lib/site";
 import { PLANS } from "@/lib/onboarding/store";
 import { useProperty } from "./property";
 import { statusOf, useInventory } from "@/lib/inventory/store";
-import { DEMO_GUESTS, demoStays, type BookingStatus } from "@/lib/bookings/demo";
+import { type BookingStatus } from "@/lib/bookings/demo";
+import { useStays } from "@/lib/bookings/store";
+import { useGuestNames } from "@/lib/guests/store";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const short = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]}`;
@@ -39,8 +41,9 @@ export function Dashboard() {
     const list = (live.length ? live : st.units.filter((u) => u.status !== "archived"));
     return list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 }));
   }, [st]);
-  const bookings = useMemo(() => demoStays(h.slug, rooms), [h.slug, rooms]);
-  const names = useMemo(() => new Map(DEMO_GUESTS.map((g) => [g.id, g.name])), []);
+  const bookings = useStays(h);
+  const gmap = useGuestNames(h);
+  const names = useMemo(() => new Map([...gmap].map(([id, g]) => [id, g.name])), [gmap]);
 
   const arriving = bookings.filter((b) => b.status === "Confirmed" && b.from === TODAY);
   const inHouse = bookings.filter((b) => b.status !== "Checked out" && b.from <= TODAY && b.to > TODAY);
@@ -83,7 +86,7 @@ export function Dashboard() {
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, Md Yeapas</h1>
             <p className="text-[14px] text-hms-muted">{day}</p>
           </div>
-          <Link href="/hms/bookings" className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-glow px-4 text-[14px] font-semibold text-white"><Plus className="size-4" />New booking</Link>
+          <Link href="/hms/bookings/new" className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-glow px-4 text-[14px] font-semibold text-white"><Plus className="size-4" />New booking</Link>
         </div>
 
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -133,7 +136,7 @@ export function Dashboard() {
                         <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{stay(b.from, b.to)}</td>
                         <td className="px-2.5 py-2.5"><StatusChip s={b.status} /></td>
                         <td className="px-2.5 py-2.5 whitespace-nowrap tabular-nums">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</td>
-                        <td className="px-2.5 py-2.5 text-right"><Link href="/hms/bookings" aria-label={`Open booking for ${guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
+                        <td className="px-2.5 py-2.5 text-right"><Link href={`/hms/bookings?b=${b.code}`} aria-label={`Open booking for ${guest}`} className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-hms-line pl-2.5 pr-1.5 text-[13px] font-medium hover:bg-hms-hover">Open<ChevronRight className="size-3.5" /></Link></td>
                       </tr>
                     ); })}
                   </tbody>
@@ -141,7 +144,7 @@ export function Dashboard() {
               </div>
               <ul className="divide-y divide-hms-line border-t border-hms-line lg:hidden">
                 {arriving.map((b) => { const guest = names.get(b.guestId) ?? "Guest"; return (
-                  <li key={b.code}><Link href="/hms/bookings" className="flex items-center gap-3 px-4 py-3">
+                  <li key={b.code}><Link href={`/hms/bookings?b=${b.code}`} className="flex items-center gap-3 px-4 py-3">
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-hms-coral-soft text-[12px] font-bold text-hms-red">{guest.split(" ").map((x) => x[0]).join("").slice(0, 2)}</span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{guest}</span><span className="block text-[12.5px] text-hms-muted">Room {b.room} · {stay(b.from, b.to)}</span></span>
                     <span className="text-right text-[12.5px]">{b.due > 0 ? <span className="font-semibold text-hms-red">{bdt(b.due)} due</span> : <span className="text-[#16693a]">Paid</span>}</span>

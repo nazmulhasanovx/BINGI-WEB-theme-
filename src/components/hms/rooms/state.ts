@@ -1,8 +1,8 @@
 "use client";
-// Tonight's state of each room (Available / Booked tonight / Out of order / Draft / Archived) — shared by Room types and Room numbers.
+// Tonight's state of each room (Available / Booked tonight / Out of order / Draft / Archived) — shared by Room types and Room numbers. Bookings come from the Bookings store.
 import { useMemo } from "react";
 import { TODAY, type RoomsState } from "@/lib/rooms/store";
-import { demoStays } from "@/lib/bookings/demo";
+import { useStays } from "@/lib/bookings/store";
 import { useProperty } from "../property";
 
 export type UnitState = "available" | "booked" | "ooo" | "draft" | "archived";
@@ -17,15 +17,12 @@ export const STATE: Record<UnitState, { label: string; tone: "green" | "blue" | 
 /** Tonight's state per unit. Bookings come from the same demo stays as Dashboard and Guests (no bookings backend yet). */
 export function useUnitStates(st: RoomsState) {
   const h = useProperty();
+  const stays = useStays(h);
   return useMemo(() => {
-    const cat = new Map(st.categories.map((c) => [c.id, c]));
-    const live = st.units.filter((u) => u.status === "published");
-    const list = live.length ? live : st.units.filter((u) => u.status !== "archived");
-    const stays = demoStays(h.slug, list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 })));
     const tonight = new Set(stays.filter((s) => s.status !== "Checked out" && s.from <= TODAY && s.to > TODAY).map((s) => s.room));
     const m = new Map<string, UnitState>();
     for (const u of st.units) m.set(u.id, u.status !== "published" ? u.status : u.ooo ? "ooo" : tonight.has(u.code) ? "booked" : "available");
     return m;
-  }, [st, h.slug]);
+  }, [st, stays]);
 }
 

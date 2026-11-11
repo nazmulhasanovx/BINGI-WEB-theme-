@@ -7,7 +7,7 @@ export type BookingStatus = "Confirmed" | "Checked in" | "Checked out";
 export type PaymentStatus = "Paid" | "Partly paid" | "Due";
 export type Stay = {
   code: string; guestId: string; room: string; type: string; from: string; to: string; nights: number;
-  status: BookingStatus; payment: PaymentStatus; total: number; due: number; channel: "Walk-in" | "Website" | "Marketplace";
+  status: BookingStatus; payment: PaymentStatus; total: number; due: number; channel: "Walk-in" | "Website" | "Marketplace" | "Phone" | "Agent" | "Corporate";
 };
 export type RoomLite = { code: string; type: string; rate: number };
 

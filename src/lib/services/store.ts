@@ -9,8 +9,9 @@
 // Production: services(+variants, consumes), resources, vendors, service_orders(+log), refunds, settings.
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
-import { TODAY, useRooms } from "@/lib/rooms/store";
-import { DEMO_GUESTS, demoStays } from "@/lib/bookings/demo";
+import { TODAY } from "@/lib/rooms/store";
+import { useStays } from "@/lib/bookings/store";
+import { useGuestNames } from "@/lib/guests/store";
 import type { Dept } from "@/lib/hrm/store";
 
 export type SvcCategory = { id: string; name: string; slug: string };
@@ -147,16 +148,13 @@ export const hasServices = (h: Hotel) => h.plan !== "starter";
 const addLog = (s: State, o: Order, text: string, by = ROLE_LABEL[s.settings.role]) => { (o.log ??= []).push({ at: `${TODAY}T${nowHm()}`, text, by }); };
 
 export function useServices(h: Hotel) {
-  const { st: rooms } = useRooms(h);
+  const stays = useStays(h);
+  const names = useGuestNames(h);
   const bookings: BookingRef[] = useMemo(() => {
-    const c = new Map(rooms.categories.map((x) => [x.id, x]));
-    const live = rooms.units.filter((u) => u.status === "published");
-    const list = live.length ? live : rooms.units.filter((u) => u.status !== "archived");
-    const names = new Map(DEMO_GUESTS.map((g) => [g.id, g]));
-    return demoStays(h.slug, list.map((u) => ({ code: u.code, type: c.get(u.category)?.name ?? "Room", rate: u.rate ?? c.get(u.category)?.baseRate ?? 0 })))
+    return stays
       .filter((s) => s.status === "Checked in" || (s.status === "Confirmed" && s.from >= TODAY))
       .map((s) => ({ code: s.code, guest: names.get(s.guestId)?.name ?? "Guest", room: s.room, phone: names.get(s.guestId)?.phone ?? "" }));
-  }, [h.slug, rooms]);
+  }, [stays, names]);
   const st = useSyncExternalStore(sub, () => read(h.slug, bookings), () => seed([]));
   const update = useCallback((fn: (s: State) => void) => { const n = structuredClone(read(h.slug, bookings)); fn(n); write(h.slug, n); }, [h.slug, bookings]);
 
@@ -220,6 +218,8 @@ export function useServices(h: Hotel) {
     return null;
   }, [bookings, freeAt, h.slug, nextFree, update]);
   const decline = useCallback((id: string, reason: string) => update((s) => { const x = s.orders.find((y) => y.id === id)!; x.status = "declined"; x.note = reason; addLog(s, x, `Declined · ${reason}`); }), [update]);
+  /** Booking checked out and paid at the front desk: its unpaid service orders become Paid. */
+  const settleBooking = useCallback((code: string) => update((s) => { for (const o of s.orders) if (!o.cancelled && o.method === "booking" && o.booking?.code === code && o.payment === "Unpaid") { o.payment = "Paid"; addLog(s, o, `Paid at check-out (${code})`); } }), [update]);
   const assign = useCallback((id: string, assignee: string, resource?: string) => update((s) => { const x = s.orders.find((y) => y.id === id)!; x.assignee = assignee || undefined; if (resource) x.resource = resource; if (x.status === "confirmed" || x.status === "assigned") x.status = assignee ? "assigned" : "confirmed"; addLog(s, x, assignee ? "Assigned" : "Unassigned"); }), [update]);
   const start = useCallback((id: string) => update((s) => { const x = s.orders.find((y) => y.id === id)!; x.status = "in_progress"; addLog(s, x, "Started"); }), [update]);
   /** Done: marks the work finished; returns the inventory lines to take out (caller records them in Inventory). */
@@ -254,7 +254,7 @@ export function useServices(h: Hotel) {
   const setCashbox = useCallback((v: boolean) => update((s) => { s.cashboxOpen = v; }), [update]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); localStorage.removeItem(OLD(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
   return {
-    st, bookings, role: st.settings.role, saveService, setArchived, saveCategory, saveOrder, accept, decline, assign, start, complete, noteLog, cancelOrder, simulateRequest,
+    st, bookings, role: st.settings.role, settleBooking, saveService, setArchived, saveCategory, saveOrder, accept, decline, assign, start, complete, noteLog, cancelOrder, simulateRequest,
     freeAt, nextFree, saveResource, removeResource, saveVendor, setSettings, setCashbox, reset, uid: (p: string) => `${p}${Date.now().toString(36)}`,
   };
 }
