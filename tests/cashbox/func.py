@@ -16,7 +16,7 @@ with sync_playwright() as p:
   t("equation", now()==24350 and "৳20,700" in M() and "৳1,350" in M())
   t("breakdown", "Where cash came from" in M() and "Room booking" in M() and "Petty cash expense" in M())
   t("no raw keys", "owner_withdrawal" not in M())
-  t("other cashboxes card", "Restaurant & bar cashboxes" in M() and "Cash on the property now: ৳30,420" in M())
+  t("other cashboxes card", "Restaurant & bar cashboxes" in M() and "Cash on the property now: ৳30,158" in M())
   t("no restaurant cash in main", "Restaurant & bar\n" not in M().split("Where cash went")[0])
   t("breadcrumb", pg.locator("header").first.inner_text().count("Cashbox")>=1)
   # cash in

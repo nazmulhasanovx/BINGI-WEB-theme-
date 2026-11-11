@@ -19,7 +19,7 @@ const ABOUT: Record<string, [string, string]> = {
   communication: ["SMS, email and WhatsApp messaging to guests.", "Live in HMS"],
   settings: ["Property, team roles, taxes and connections.", "Live in HMS"],
 };
-const DONE = [["Dashboard", "/hms"], ["Room / Accommodation", "/hms/rooms"], ["Discounts & Rates", "/hms/discounts"], ["Cashbox", "/hms/cashbox"], ["Guests", "/hms/guests"], ["Staff", "/hms/staff"], ["Inventory", "/hms/inventory"], ["Other Services", "/hms/other-services"], ["Website", "/hms/website/overview"]];
+const DONE = [["Dashboard", "/hms"], ["Room / Accommodation", "/hms/rooms"], ["Discounts & Rates", "/hms/discounts"], ["Cashbox", "/hms/cashbox"], ["Restaurant & Bar", "/hms/meals"], ["Guests", "/hms/guests"], ["Staff", "/hms/staff"], ["Inventory", "/hms/inventory"], ["Other Services", "/hms/other-services"], ["Website", "/hms/website/overview"]];
 
 /** Modules not built in this repo yet. Truthful: no fake data — says where the module lives today. */
 export function ModulePlaceholder({ id }: { id: string }) {
@@ -37,13 +37,6 @@ export function ModulePlaceholder({ id }: { id: string }) {
             <p className="mt-1 max-w-[560px] text-[14px] text-[#4d5664]">This module works today in the live HMS (hms.bingi.app). In this design prototype only the shell is here — it will be redesigned inside the same frame.</p>
           </div>
         </div>
-        {id === "meals" && (
-          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-[#cfe7da] bg-[#eef8f2] p-4">
-            <p className="min-w-0 flex-1 text-[14px] text-[#165f37]"><b>New in this prototype:</b> a separate cashbox for restaurant &amp; bar, with handover to the main Cashbox.</p>
-            <Link href="/hms/meals/cashbox" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#0f1720] px-3 text-[13.5px] font-semibold text-white">Restaurant cashbox<ArrowRight className="size-3.5" /></Link>
-            <Link href="/hms/meals/cash-settings" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-hms-line bg-white px-3 text-[13.5px] font-medium">Cash settings</Link>
-          </div>
-        )}
         <div className="mt-6 border-t border-hms-line pt-5">
           <p className="text-[13px] font-semibold text-hms-muted">Redesigned in this prototype</p>
           <div className="mt-2 flex flex-wrap gap-2">{DONE.map(([l, h]) => <Link key={h} href={h} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-hms-line px-3 text-[13.5px] font-medium hover:bg-hms-hover">{l}<ArrowRight className="size-3.5 text-hms-muted" /></Link>)}</div>

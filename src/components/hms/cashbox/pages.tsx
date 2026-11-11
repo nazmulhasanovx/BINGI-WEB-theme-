@@ -10,11 +10,13 @@ import { demoStays, DEMO_GUESTS } from "@/lib/bookings/demo";
 import { APPROVAL_LIMIT, IN_FOR, IN_LABEL, MAIN, NOTES, OUT_FOR, OUT_LABEL, PETTY, fmtDate, fmtTime, label, tk, totals, useCashbox, type Cashbox, type Day, type InSource, type Movement, type OutReason } from "@/lib/cashbox/store";
 import { useProperty } from "../property";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
+import { MealsFrame } from "../meals/frame";
 
 const card = "rounded-2xl border border-hms-line bg-white";
 function useToast() { const [t, setT] = useState(""); const show = (m: string) => { setT(m); setTimeout(() => setT((x) => (x === m ? "" : x)), 2600); }; return [t, show] as const; }
 
 /** Stays + checks shared with Dashboard and Guests (demo bookings; no bookings backend in the prototype). */
+export function useCashboxData(drawerId = MAIN) { return useData(drawerId); }
 function useData(drawerId = MAIN) {
   const h = useProperty();
   const { st: rooms } = useRooms(h);
@@ -29,7 +31,7 @@ function useData(drawerId = MAIN) {
   const unpaid = stays.filter((s) => s.due > 0 && ((s.status === "Confirmed" && s.from === TODAY) || (s.status === "Checked in" && s.to === TODAY))).length;
   const ooo = rooms.units.filter((u) => u.status === "published" && u.ooo).length;
   const cb = useCashbox(h, refs, drawerId);
-  return { h, cb, refs, unpaid, ooo };
+  return { h, cb, refs, unpaid, ooo, stays };
 }
 
 type Tab = "today" | "moves" | "days" | "settings";
@@ -42,35 +44,48 @@ function Frame({ tab, children, toast, cb }: { tab: Tab; children: ReactNode; to
   const h = useProperty();
   const fnb = cb.drawer?.kind === "fnb" || tab === "settings";
   const id = cb.drawer?.id ?? MAIN;
-  const tabs: [Tab, string][] = fnb ? [["today", "Today"], ["moves", "Movements"], ["days", "Closed days"], ["settings", "Cash settings"]] : [["today", "Today"], ["moves", "Movements"], ["days", "Closed days"]];
   const fnbList = cb.others.map((o) => o.d);
+  const demo = tab !== "settings" && (
+    <details className="relative shrink-0">
+      <summary className={clsx(btnLine, "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>Demo</summary>
+      <div className="absolute right-0 top-full z-30 mt-1 w-[230px] rounded-xl border border-hms-line bg-white p-1 shadow-lg">
+        <button onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; cb.reset(); }} className="block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover">Reset demo data</button>
+        <button onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; cb.startFresh(); }} className="block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover">Start today again (not opened)</button>
+      </div>
+    </details>
+  );
+  if (fnb) {
+    const tabs: [Tab, string][] = [["today", "Today"], ["moves", "Movements"], ["days", "Closed days"], ["settings", "Cash settings"]];
+    const target = id === MAIN ? (fnbList[0]?.id ?? MAIN) : id;
+    return (
+      <MealsFrame tab="cashbox" toast={toast} sub={`${h.name} · cash for restaurant & bar`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0"><h2 className="text-[20px] font-bold">{tab === "settings" ? "Cash settings" : cb.drawer?.name ?? "Restaurant cashbox"}</h2><p className="text-[14px] text-hms-muted">{tab === "settings" ? "How restaurant & bar cash is kept" : `For ${cb.drawer?.outlets.join(", ") || "this outlet"} · business date ${fmtDate(TODAY)}`}</p></div>
+          {demo}
+        </div>
+        {fnbList.length > 1 && tab !== "settings" && (
+          <div role="tablist" aria-label="Restaurant & bar cashboxes" className="mt-3 flex flex-wrap gap-1.5">
+            {fnbList.map((d) => <Link key={d.id} role="tab" aria-selected={d.id === id} href={hrefFor(d.id, tab)} className={clsx("rounded-full border px-3 py-1.5 text-[13.5px] font-semibold", d.id === id ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{d.name}</Link>)}
+          </div>
+        )}
+        <nav aria-label="Restaurant cashbox sections" className="mt-3 flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-[#e9edf2] p-1">
+          {tabs.map(([t, l]) => <Link key={t} href={hrefFor(target, t)} aria-current={tab === t ? "page" : undefined} className={clsx("rounded-md px-3 py-1.5 text-[13.5px] font-semibold", tab === t ? "bg-white shadow-sm" : "text-[#4d5664] hover:text-hms-ink")}>{l}</Link>)}
+        </nav>
+        <div className="mt-5">{children}</div>
+      </MealsFrame>
+    );
+  }
   return (
     <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[1280px] p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {fnb && <p className="flex items-center gap-1.5 text-[13px] font-semibold text-hms-red"><UtensilsCrossed className="size-3.5" aria-hidden />Restaurant &amp; Bar</p>}
-          <h1 className="text-[24px] font-bold tracking-[-0.01em]">{fnb ? (tab === "settings" ? "Cash settings" : cb.drawer?.name ?? "Restaurant cashbox") : "Cashbox"}</h1>
-          <p className="text-[14.5px] text-hms-muted">{fnb ? (tab === "settings" ? `How restaurant & bar cash is kept at ${h.name}` : `For ${cb.drawer?.outlets.join(", ") || "this outlet"} · business date ${fmtDate(TODAY)}`) : `Main cash drawer (front desk) for ${h.name} · business date ${fmtDate(TODAY)}`}</p>
-        </div>
-        {tab !== "settings" && <details className="relative shrink-0">
-          <summary className={clsx(btnLine, "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>Demo</summary>
-          <div className="absolute right-0 top-full z-30 mt-1 w-[230px] rounded-xl border border-hms-line bg-white p-1 shadow-lg">
-            <button onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; cb.reset(); }} className="block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover">Reset demo data</button>
-            <button onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; cb.startFresh(); }} className="block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-hms-hover">Start today again (not opened)</button>
-          </div>
-        </details>}
+        <div className="min-w-0"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Cashbox</h1><p className="text-[14.5px] text-hms-muted">Main cash drawer (front desk) for {h.name} · business date {fmtDate(TODAY)}</p></div>
+        {demo}
       </div>
-      {fnb && fnbList.length > 1 && tab !== "settings" && (
-        <div role="tablist" aria-label="Restaurant & bar cashboxes" className="mt-3 flex flex-wrap gap-1.5">
-          {fnbList.map((d) => <Link key={d.id} role="tab" aria-selected={d.id === id} href={hrefFor(d.id, tab)} className={clsx("rounded-full border px-3 py-1.5 text-[13.5px] font-semibold", d.id === id ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{d.name}</Link>)}
-        </div>
-      )}
-      <nav aria-label={fnb ? "Restaurant cashbox sections" : "Cashbox sections"} className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
-        {tabs.map(([t, l]) => (
-          <Link key={t} href={hrefFor(id === MAIN && fnb ? (fnbList[0]?.id ?? MAIN) : id, t)} aria-current={tab === t ? "page" : undefined} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}</Link>
+      <nav aria-label="Cashbox sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
+        {([["today", "Today"], ["moves", "Movements"], ["days", "Closed days"]] as [Tab, string][]).map(([t, l]) => (
+          <Link key={t} href={hrefFor(MAIN, t)} aria-current={tab === t ? "page" : undefined} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}</Link>
         ))}
       </nav>
-      {fnb && tab !== "settings" && <p className="mt-3 text-[12.5px] text-hms-muted">Orders, POS, Counter and Kitchen are in the live HMS (Meal Management). This prototype adds the restaurant cashbox.</p>}
       <div className="mt-5">{children}</div>
     </div>
     {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{toast}</div>}
@@ -292,7 +307,7 @@ function MovementsView({ drawerId }: { drawerId: string }) {
   return (
     <Frame tab="moves" toast={toast} cb={cb}>
       <div className="flex flex-wrap items-center gap-2.5">
-        <select aria-label="Business day" value={date} onChange={(e) => setDate(e.target.value)} className={clsx(input, "w-auto")}>
+        <select aria-label="Business day" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 w-auto rounded-lg border border-[#858c97] bg-white px-3 text-[15px] outline-none focus:border-hms-ink">
           {days.map((d) => <option key={d.date} value={d.date}>{fmtDate(d.date)}{d.date === TODAY ? " · today" : ""}{d.closedAt ? " · closed" : " · open"}</option>)}
         </select>
         <label className="flex h-11 min-w-[220px] flex-1 items-center gap-2 rounded-lg border border-[#858c97] bg-white px-3"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search reference, note, person" aria-label="Search movements" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" /></label>

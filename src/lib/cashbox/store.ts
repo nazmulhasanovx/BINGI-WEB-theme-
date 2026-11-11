@@ -9,6 +9,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
 import { TODAY } from "@/lib/rooms/store";
+import { seedCash } from "@/lib/meals/seed";
 
 export type InSource = "booking" | "restaurant" | "service" | "other" | "dinein" | "takeaway" | "roomservice" | "handover";
 export type OutReason = "owner" | "bank" | "transfer" | "petty" | "refund" | "handover";
@@ -78,6 +79,16 @@ function seed(h: Hotel, stays: StayRef[]): State {
   const staff = ["Rahim (Front desk)", "Sumi (Front desk)", ME];
   const cashier = ["Tanvir (Restaurant)", "Mitu (Bar)"];
   const variances = [0, -200, 0, 0, 150, 0];
+  // restaurant cash comes from the same demo orders as Restaurant & Bar (Meals)
+  const cash = seedCash(h);
+  const salesFor = (d: Drawer, date: string, j: number, i: number): Movement[] => {
+    const real = cash.filter((c) => c.day === date && d.outlets.includes(c.outlet));
+    if (real.length || cash.some((c) => d.outlets.includes(c.outlet))) return real.map((c) => ({ id: id(), drawer: d.id, day: date, at: c.at, kind: "in", amount: c.amount, source: c.source, ref: c.ref, by: cashier[j % 2], auto: true }));
+    return [
+      { id: id(), drawer: d.id, day: date, at: `${date}T13:3${i}`, kind: "in", amount: 4200 + i * 330 + j * 900, source: "dinein", ref: `BR-${7100 + i * 7 + j}`, by: cashier[j % 2], auto: true },
+      { id: id(), drawer: d.id, day: date, at: `${date}T20:1${i}`, kind: "in", amount: 6100 + i * 410 + j * 700, source: "dinein", ref: `BR-${7103 + i * 7 + j}`, by: cashier[j % 2], auto: true },
+    ];
+  };
   const close = (day: Day, ms: Movement[], counted: number, carry: number, to: "bank" | "main", note?: string) => {
     const t = totals(day, ms);
     day.expected = t.now; day.counted = counted; day.carry = carry; day.deposit = counted - carry; day.depositTo = to;
@@ -88,10 +99,9 @@ function seed(h: Hotel, stays: StayRef[]): State {
     // outlets close first (22:1x) and hand cash to the main cashbox, which closes at 23:4x
     const handovers: Movement[] = [];
     fnb.forEach((d, j) => {
-      const day: Day = { drawer: d.id, date, openedAt: `${date}T11:0${i}`, openedBy: cashier[j % 2], float: 2000 };
+      const day: Day = { drawer: d.id, date, openedAt: `${date}T07:0${i}`, openedBy: cashier[j % 2], float: 2000 };
       const ms: Movement[] = [
-        { id: id(), drawer: d.id, day: date, at: `${date}T13:3${i}`, kind: "in", amount: 4200 + i * 330 + j * 900, source: "dinein", ref: `RB-${5100 + i * 7 + j}`, by: cashier[j % 2], auto: true },
-        { id: id(), drawer: d.id, day: date, at: `${date}T20:1${i}`, kind: "in", amount: 6100 + i * 410 + j * 700, source: j ? "dinein" : "takeaway", ref: `RB-${5103 + i * 7 + j}`, by: cashier[j % 2], auto: true },
+        ...salesFor(d, date, j, i),
         { id: id(), drawer: d.id, day: date, at: `${date}T16:0${i}`, kind: "out", amount: 300 + i * 40, reason: "petty", category: "Supplies", note: j ? "Ice" : "Lemons and mint", by: cashier[j % 2] },
       ];
       day.closedAt = `${date}T22:1${i}`; day.closedBy = cashier[j % 2];
@@ -126,11 +136,10 @@ function seed(h: Hotel, stays: StayRef[]): State {
     { id: id(), drawer: MAIN, day: TODAY, at: `${TODAY}T14:05`, kind: "out", amount: 500, reason: "owner", party: "Owner", note: "Sent by bKash", by: ME },
   );
   fnb.forEach((d, j) => {
-    days.push({ drawer: d.id, date: TODAY, openedAt: `${TODAY}T11:0${j}`, openedBy: cashier[j % 2], float: 2000 });
+    days.push({ drawer: d.id, date: TODAY, openedAt: `${TODAY}T07:0${j}`, openedBy: cashier[j % 2], float: 2000 });
     moves.push(
-      { id: id(), drawer: d.id, day: TODAY, at: `${TODAY}T12:4${j}`, kind: "in", amount: 2860 + j * 640, source: "dinein", ref: `RB-516${j}`, by: cashier[j % 2], auto: true },
-      { id: id(), drawer: d.id, day: TODAY, at: `${TODAY}T13:2${j}`, kind: "in", amount: 1450 + j * 300, source: j ? "dinein" : "roomservice", ref: `RB-517${j}`, party: j ? undefined : who(3), by: cashier[j % 2], auto: true },
-      { id: id(), drawer: d.id, day: TODAY, at: `${TODAY}T14:1${j}`, kind: "out", amount: 240, reason: "petty", category: "Supplies", note: j ? "Ice" : "Napkins", by: cashier[j % 2] },
+      ...salesFor(d, TODAY, j, 0),
+      { id: id(), drawer: d.id, day: TODAY, at: `${TODAY}T11:1${j}`, kind: "out", amount: 240, reason: "petty", category: "Supplies", note: j ? "Ice" : "Napkins", by: cashier[j % 2] },
     );
   });
   return { v: 2, separate: true, drawers, days, moves, seq: n };
@@ -227,3 +236,21 @@ export function useCashbox(h: Hotel, stays: StayRef[], drawerId = MAIN) {
   };
 }
 export type Cashbox = ReturnType<typeof useCashbox>;
+
+/** Which drawer takes a restaurant outlet's cash: its own cashbox when separate is on, otherwise the main cashbox. */
+export function drawerFor(h: Hotel, stays: StayRef[], outlet: string) {
+  const s = read(h, stays);
+  const own = s.separate ? s.drawers.find((d) => d.kind === "fnb" && d.outlets.includes(outlet)) : undefined;
+  const d = own ?? s.drawers.find((x) => x.id === MAIN);
+  return { id: d?.id ?? MAIN, name: d?.name ?? "Main cashbox", open: !!d && isOpen(s, d.id) };
+}
+/** Post a cash payment from another module (auto-posted, not reversible in Cashbox). Returns an error or "". */
+export function postCash(h: Hotel, stays: StayRef[], outlet: string, m: { amount: number; source: InSource; ref: string; party?: string }) {
+  const to = drawerFor(h, stays, outlet);
+  if (!to.open) return `${to.name} is not open — open it before taking cash`;
+  const s = structuredClone(read(h, stays));
+  const source: InSource = to.id === MAIN ? "restaurant" : m.source;
+  s.moves.push({ id: `m${s.seq++}`, drawer: to.id, day: TODAY, at: stamp(), kind: "in", amount: m.amount, source, ref: m.ref, party: m.party, by: ME, auto: true });
+  write(h.slug, s);
+  return "";
+}
