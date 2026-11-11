@@ -6,6 +6,7 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useEffect, useRef, useState, type ComponentType } from "react";
+import { unsaved } from "./pages";
 import { Activity, BedDouble, Brush, Building2, CalendarClock, CreditCard, FileText, Globe, Home, KeyRound, Languages, MessageSquare, Palette, Receipt, Search, ShieldCheck, SlidersHorizontal, UtensilsCrossed, Users } from "lucide-react";
 
 export type SPage = { id: string; label: string; group: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; kw: string };
@@ -30,6 +31,12 @@ export const S_PAGES: SPage[] = [
   { id: "preferences", label: "My preferences", group: "System", icon: SlidersHorizontal, kw: "appearance sidebar text size motion personal" },
 ];
 
+/** Ask before leaving a page with unsaved changes. */
+function leaveGuard(e: React.MouseEvent) {
+  if (unsaved.dirty && !window.confirm("You have unsaved changes. Leave without saving?")) e.preventDefault();
+  else unsaved.dirty = false;
+}
+
 export function SettingsNav({ active }: { active: string }) {
   const [q, setQ] = useState("");
   const k = q.trim().toLowerCase();
@@ -47,7 +54,7 @@ export function SettingsNav({ active }: { active: string }) {
           {list.filter((p) => p.group === g).map((p) => {
             const Icon = p.icon; const on = p.id === active;
             return (
-              <Link key={p.id} href={`/hms/settings/${p.id}`} aria-current={on ? "page" : undefined}
+              <Link key={p.id} href={`/hms/settings/${p.id}`} aria-current={on ? "page" : undefined} onClick={leaveGuard}
                 className={clsx("flex h-[30px] items-center gap-2.5 rounded-lg px-3 text-[13.5px] transition-colors", on ? "bg-white font-semibold text-hms-coral shadow-[0_1px_3px_rgb(0_0_0/0.08)]" : "text-hms-ink hover:bg-white/70")}>
                 <Icon className="size-4 shrink-0" strokeWidth={on ? 2.2 : 1.8} />{p.label}
               </Link>
@@ -68,7 +75,7 @@ export function SettingsPhoneNav({ active }: { active: string }) {
       {S_PAGES.map((p) => {
         const on = p.id === active; const Icon = p.icon;
         return (
-          <Link key={p.id} ref={on ? ref : undefined} href={`/hms/settings/${p.id}`} aria-current={on ? "page" : undefined}
+          <Link key={p.id} ref={on ? ref : undefined} href={`/hms/settings/${p.id}`} onClick={leaveGuard} aria-current={on ? "page" : undefined}
             className={clsx("flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] transition-colors", on ? "bg-hms-coral font-semibold text-white" : "bg-hms-nav text-hms-ink")}>
             <Icon className="size-4" strokeWidth={on ? 2.2 : 1.8} /> {p.label}
           </Link>

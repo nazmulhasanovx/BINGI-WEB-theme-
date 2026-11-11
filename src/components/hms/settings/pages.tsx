@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import clsx from "clsx";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowUpRight, Check, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
@@ -37,6 +37,8 @@ function useDraft<T>(src: T) {
   return { d, setD, dirty, discard: () => setD(src) };
 }
 function SaveBar({ dirty, onSave, onDiscard }: { dirty: boolean; onSave: () => void; onDiscard: () => void }) {
+  useEffect(() => { unsaved.dirty = dirty; return () => { unsaved.dirty = false; }; }, [dirty]);
+  useEffect(() => { if (!dirty) return; const f = (e: BeforeUnloadEvent) => e.preventDefault(); window.addEventListener("beforeunload", f); return () => window.removeEventListener("beforeunload", f); }, [dirty]);
   if (!dirty) return null;
   return (
     <div className="sticky bottom-3 z-10 mt-5 flex items-center gap-3 rounded-2xl border border-hms-line bg-white/95 px-4 py-3 shadow-[0_6px_24px_rgb(0_0_0/0.08)] backdrop-blur">
@@ -64,6 +66,11 @@ function ToggleRow({ title, desc, on, onChange, right }: { title: string; desc?:
 }
 const Grid = ({ children, cols = 2 }: { children: ReactNode; cols?: 2 | 3 }) => <div className={clsx("grid gap-4", cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>{children}</div>;
 const Go = ({ href, children }: { href: string; children: ReactNode }) => <Link href={href} className="inline-flex items-center gap-1 text-[13.5px] font-medium text-hms-blue hover:underline">{children}<ArrowUpRight className="size-3.5" /></Link>;
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const okPhone = (v: string) => { const d = v.replace(/\D/g, ""); return /^(?:880|0)1[3-9]\d{8}$/.test(d) || /^(?:880|0)[2-9]\d{6,9}$/.test(d); };
+/** Settings pages register “unsaved changes” here so the left list can ask before leaving. */
+export const unsaved = { dirty: false };
 
 // ============ Overview ============
 export function OverviewPage() {
@@ -130,7 +137,13 @@ export function ProfilePage() {
           <Grid cols={3}><Field label="Name"><Input value={p.billingName} onChange={set("billingName")} /></Field><Field label="Phone"><Input inputMode="tel" value={p.billingPhone} onChange={set("billingPhone")} /></Field><Field label="Email"><Input type="email" value={p.billingEmail} onChange={set("billingEmail")} /></Field></Grid>
         </Card>
       </div>
-      <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => { if (!p.name.trim()) return toast("Property name can't be empty"); save((x) => { x.profile = p; }, "Property profile updated"); toast("Property profile saved"); }} />
+      <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
+        if (!p.name.trim()) return toast("Property name can't be empty");
+        if (p.email && !EMAIL.test(p.email.trim())) return toast("Check the email address");
+        if (p.billingEmail && !EMAIL.test(p.billingEmail.trim())) return toast("Check the billing email");
+        if (p.phone && !okPhone(p.phone)) return toast("Check the phone number");
+        if (p.billingPhone && !okPhone(p.billingPhone)) return toast("Check the billing phone");
+        save((x) => { x.profile = p; }, "Property profile updated"); toast("Property profile saved"); }} />
     </>
   );
 }
@@ -212,7 +225,7 @@ export function PoliciesPage() {
         </Card>
         <Card title="Cancellation & no-show" desc="Bookings suggests this fee when staff cancel.">
           <Grid cols={3}>
-            <Field label="Free cancellation until" hint="days before arrival"><Num label="Free cancellation days" value={b.freeCancelDays} onChange={(n) => setB({ freeCancelDays: n })} /></Field>
+            <Field label="Free cancellation until" hint="days before arrival"><Num label="Free cancellation days" value={b.freeCancelDays} onChange={(n) => setB({ freeCancelDays: Math.min(60, Math.floor(n)) })} /></Field>
             <Field label="Late cancellation fee" hint="of the first night"><Num label="Late cancellation fee" value={b.cancelFeePct} onChange={(n) => setB({ cancelFeePct: Math.min(100, n) })} suffix="%" /></Field>
             <Field label="No-show fee" hint="of the first night"><Num label="No-show fee" value={b.noShowFeePct} onChange={(n) => setB({ noShowFeePct: Math.min(100, n) })} suffix="%" /></Field>
           </Grid>
@@ -233,6 +246,7 @@ export function PoliciesPage() {
         </Card>
       </div>
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
+        if (b.checkOut >= b.checkIn) return toast("Check-out time must be before check-in time");
         const nb = { ...b, earlyFee: p.early === "charge" ? b.earlyFee : 0, lateFee: p.late === "charge" ? b.lateFee : 0 };
         bk.saveSettings(nb); save((x) => { x.policy = { ...p, reviewed: true }; }, "Booking policies updated"); f.setD({ bk: nb, p: { ...p, reviewed: true } }); toast("Booking policies saved");
       }} />
@@ -262,7 +276,7 @@ export function TaxesPage() {
           <Card title="Price limits">
             <Grid cols={3}>
               <Field label="Lowest room price" hint="0 = no limit"><Num label="Lowest room price" value={t.minRate} onChange={(n) => f.setD({ ...t, minRate: n })} suffix="৳" /></Field>
-              <Field label="Front desk room discount up to"><Num label="Front desk discount limit" value={t.discountLimit} onChange={(n) => f.setD({ ...t, discountLimit: Math.min(100, n) })} suffix="%" /></Field>
+              <Field label="Front desk discount up to" hint="on rooms"><Num label="Front desk discount limit" value={t.discountLimit} onChange={(n) => f.setD({ ...t, discountLimit: Math.min(100, n) })} suffix="%" /></Field>
               <Field label="Bigger discounts by"><Sel label="Bigger discounts approved by" value={t.discountBy} onChange={(v) => f.setD({ ...t, discountBy: v as typeof t.discountBy })} options={["Manager", "Owner"]} /></Field>
             </Grid>
           </Card>
@@ -362,17 +376,21 @@ export function PaymentsPage() {
       <Card pad={false}>
         <div className="hidden grid-cols-[1.3fr_1.4fr_90px_90px_60px] gap-3 border-b border-hms-line px-5 py-2.5 text-[12.5px] font-semibold text-hms-muted md:grid"><span>Method</span><span>Account</span><span>At hotel</span><span>Website</span><span>On</span></div>
         {rows.map((r) => (
-          <div key={r.id} className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-hms-line px-5 py-3 last:border-b-0 md:grid-cols-[1.3fr_1.4fr_90px_90px_60px]">
-            <p className={clsx("text-[14.5px] font-medium", !r.enabled && "text-hms-muted")}>{r.name}{r.upcoming && <Badge tone="amber">Coming soon</Badge>}</p>
+          <div key={r.id} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2.5 border-b border-hms-line px-5 py-3 last:border-b-0 md:grid-cols-[1.3fr_1.4fr_90px_90px_60px]">
+            <p className={clsx("flex items-center gap-2 text-[14.5px] font-medium", !r.enabled && "text-hms-muted")}>{r.name}{r.upcoming && <Badge tone="amber">Coming soon</Badge>}</p>
+            <span className="justify-self-end md:order-last md:justify-self-start"><Toggle label={`${r.name} on`} on={r.enabled} disabled={r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { enabled: v })} /></span>
             <div className="col-span-2 md:col-span-1">{r.kind === "cash" ? <span className="text-[13.5px] text-hms-muted">Cashbox</span> : r.upcoming ? <span className="text-[13.5px] text-hms-muted">—</span> : <Input aria-label={`${r.name} account`} value={r.account} onChange={(e) => set(r.id, { account: e.target.value })} placeholder={r.kind === "mfs" ? "Merchant / personal number" : "Bank, account no., branch"} />}</div>
-            <span className="hidden md:block"><Toggle label={`${r.name} at the hotel`} on={r.atProperty} disabled={!r.enabled || r.upcoming} onChange={(v) => set(r.id, { atProperty: v })} /></span>
-            <span className="hidden md:block"><Toggle label={`${r.name} on website`} on={r.onWebsite} disabled={!r.enabled || r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { onWebsite: v })} /></span>
-            <span className="row-start-1 justify-self-end md:row-auto md:justify-self-start"><Toggle label={`${r.name} on`} on={r.enabled} disabled={r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { enabled: v })} /></span>
+            <label className="col-span-2 flex items-center gap-2 text-[13px] text-hms-muted md:col-span-1"><Toggle label={`${r.name} at the hotel`} on={r.enabled && r.atProperty} disabled={!r.enabled || r.upcoming} onChange={(v) => set(r.id, { atProperty: v })} /><span className="md:hidden">At the hotel</span></label>
+            <label className="col-span-2 flex items-center gap-2 text-[13px] text-hms-muted md:col-span-1"><Toggle label={`${r.name} on website`} on={r.enabled && r.onWebsite} disabled={!r.enabled || r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { onWebsite: v })} /><span className="md:hidden">On website</span></label>
           </div>
         ))}
       </Card>
       <p className="mt-3 text-[13px] text-hms-muted">Website payments are recorded by staff after checking — no live gateway in this prototype.</p>
-      <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => { save((x) => { x.payments = rows; }, "Guest payment methods updated"); toast("Payment methods saved"); }} />
+      <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
+        const miss = rows.find((r) => r.enabled && !r.upcoming && r.kind !== "cash" && r.kind !== "gateway" && r.id !== "card" && !r.account.trim());
+        if (miss) return toast(`Add the ${miss.name} account first`);
+        save((x) => { x.payments = rows; }, "Guest payment methods updated"); toast("Payment methods saved");
+      }} />
     </>
   );
 }
@@ -519,12 +537,12 @@ export function UsersPage() {
         {people.map((e) => {
           const role = s.userRoles[e.id] ?? roleFor(e); const [al, at] = ACCESS[e.access];
           return (
-            <div key={e.id} className="flex flex-wrap items-center gap-3 border-b border-hms-line px-5 py-3 last:border-b-0">
+            <div key={e.id} className="grid grid-cols-[36px_1fr_auto] items-center gap-x-3 gap-y-2 border-b border-hms-line px-5 py-3 last:border-b-0 sm:flex">
               <span className="grid size-9 place-items-center rounded-full bg-hms-hover text-[13px] font-semibold">{e.name.split(" ").map((x) => x[0]).slice(0, 2).join("")}</span>
-              <div className="min-w-0 flex-1"><p className="text-[14px] font-medium">{e.name}</p><p className="text-[12.5px] text-hms-muted">{e.position} · {e.phone}</p></div>
-              <span className="w-[84px] text-right"><Badge tone={at}>{al}</Badge></span>
-              <div className="w-40"><Sel label={`Role of ${e.name}`} value={role} onChange={(v) => { save((x) => { x.userRoles[e.id] = v; }, `${e.name} → ${s.roles.find((r) => r.id === v)?.name ?? "no role"}`); toast("Role changed"); }} options={[["", "No role"], ...s.roles.filter((r) => !r.locked).map((r) => [r.id, r.name] as [string, string])]} /></div>
-              <span className="flex w-[92px] justify-end">
+              <div className="min-w-0 flex-1"><p className="truncate text-[14px] font-medium">{e.name}</p><p className="truncate text-[12.5px] text-hms-muted">{e.position} · {e.phone}</p></div>
+              <span className="text-right sm:w-[84px]"><Badge tone={at}>{al}</Badge></span>
+              <div className="col-start-2 min-w-0 sm:w-40"><Sel label={`Role of ${e.name}`} value={role} onChange={(v) => { save((x) => { x.userRoles[e.id] = v; }, `${e.name} → ${s.roles.find((r) => r.id === v)?.name ?? "no role"}`); toast("Role changed"); }} options={[["", "No role"], ...s.roles.filter((r) => !r.locked).map((r) => [r.id, r.name] as [string, string])]} /></div>
+              <span className="col-start-3 flex justify-end sm:w-[92px]">
                 {e.access === "not-invited" && <Btn variant="outline" disabled={!role} onClick={() => setAccess(e, "invited")} aria-label={`Invite ${e.name}`}>Invite</Btn>}
                 {(e.access === "linked" || e.access === "invited") && <Btn variant="ghost" onClick={() => setAccess(e, "disabled")} aria-label={`Turn off access for ${e.name}`}>Turn off</Btn>}
                 {e.access === "disabled" && <Btn variant="outline" onClick={() => setAccess(e, "linked")} aria-label={`Turn on access for ${e.name}`}>Turn on</Btn>}

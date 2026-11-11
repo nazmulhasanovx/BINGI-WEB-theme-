@@ -32,6 +32,8 @@ export type Settings = {
   log: { at: string; by: string; text: string }[];
 };
 
+/** Bangladesh hotel default before the owner sets their own (HOTEL_TAX itself changes per property). */
+const DEFAULT_TAX = { vat: 15, service: 10 };
 const all = (p: Perm) => Object.fromEntries(AREAS.map((a) => [a, p])) as Record<Area, Perm>;
 const perms = (edit: Area[], view: Area[] = []) => Object.fromEntries(AREAS.map((a) => [a, edit.includes(a) ? "edit" : view.includes(a) ? "view" : "none"])) as Record<Area, Perm>;
 export const DEFAULT_ROLES: Role[] = [
@@ -48,7 +50,7 @@ const seed = (h: Hotel): Settings => ({
   branding: {},
   regional: { tz: "Asia/Dhaka (GMT+6)", currency: "BDT · Bangladeshi Taka", dateFmt: "DD MMM YYYY", timeFmt: "12", lang: "English", lang2: "Bangla" },
   policy: { early: "request", late: "request", childFreeAge: 5, childNote: "", extraBed: true, extraBedPrice: 1500, websitePay: "advance", advancePct: 30, reviewed: false },
-  tax: { vat: HOTEL_TAX.vat, service: HOTEL_TAX.service, minRate: 0, discountBy: "Manager", discountLimit: 10 },
+  tax: { vat: DEFAULT_TAX.vat, service: DEFAULT_TAX.service, minRate: 0, discountBy: "Manager", discountLimit: 10 },
   hk: { dirtyOnCheckout: true, inspection: false, autoRelease: true, priority: "Normal" },
   payments: [
     { id: "cash", name: "Cash", kind: "cash", account: "Cashbox", enabled: true, atProperty: true, onWebsite: false },
@@ -82,7 +84,7 @@ const cache = new Map<string, Settings>();
 const listeners = new Set<() => void>();
 const SERVER = new Map<string, Settings>();
 function read(h: Hotel): Settings {
-  const c = cache.get(h.slug); if (c) return c;
+  const c = cache.get(h.slug); if (c) { applyTax(c); return c; }
   let s = seed(h);
   try { const raw = localStorage.getItem(KEY(h.slug)); if (raw) { const v = JSON.parse(raw); s = { ...s, ...v, profile: { ...s.profile, ...v.profile }, policy: { ...s.policy, ...v.policy }, tax: { ...s.tax, ...v.tax }, hk: { ...s.hk, ...v.hk }, docs: { ...s.docs, ...v.docs, contract: { ...s.docs.contract, ...v.docs?.contract } }, messages: { ...s.messages, ...v.messages } }; } } catch {}
   cache.set(h.slug, s);
