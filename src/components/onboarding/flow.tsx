@@ -478,7 +478,7 @@ function Plan({ d, units }: { d: Draft; units: number }) {
   const rec = recommend(d);
   const n = (v: number) => num(money(v), lang);
   return (
-    <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms. ${TRIAL_DAYS} days free.`)}>
+    <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব${units < MIN_BILLED ? ` (কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল)` : ""}। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms${units < MIN_BILLED ? ` (minimum ${MIN_BILLED} billed)` : ""}. ${TRIAL_DAYS} days free.`)}>
       <div role="radiogroup" aria-label={t("বিলিং", "Billing")} className="inline-flex rounded-lg border border-[#858c97] bg-white p-1">
         {([1, 6, 12] as Cycle[]).map((c) => <button key={c} role="radio" aria-checked={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })} className={clsx("h-9 rounded-md px-3.5 text-[14px] font-semibold", d.cycle === c ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:bg-[#e9edf2]")}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className={clsx("ml-1.5 text-[12.5px]", d.cycle === c ? "text-[#ffb4ad]" : "text-[#b11c29]")}>−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</button>)}
       </div>
@@ -488,8 +488,8 @@ function Plan({ d, units }: { d: Draft; units: number }) {
           const low = planRank(p) < planRank(rec);
           return (
             <button key={p} role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })}
-              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "border-[#b11c29] shadow-[inset_0_0_0_1px_#b11c29]" : "border-[#c6ccd4] hover:border-[#9aa0ac]")}>
-              <span className="flex items-center justify-between gap-2"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#b11c29] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
+              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "order-first border-[#b11c29] shadow-[inset_0_0_0_1px_#b11c29] sm:order-none" : "border-[#c6ccd4] hover:border-[#9aa0ac]")}>
+              <span className="flex items-center justify-between gap-2 pr-7"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#b11c29] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
               <span className="mt-1 text-[13.5px] text-[#4d5664]">{t(P.forBn, P.for)}</span>
               <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8e1621]">{t(bn, en)}</span>)}</span>
               <span className="mt-3 text-[28px] font-semibold leading-none">{P.perUnitRegular && <s className="mr-1.5 text-[16px] font-normal text-[#4d5664]">৳{num(P.perUnitRegular, lang)}</s>}৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#4d5664]"> /{t("রুম/মাস", "room/month")}</span></span>

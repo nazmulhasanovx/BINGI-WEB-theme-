@@ -63,10 +63,13 @@ def walk(b, W, en=True):
   axe(); t(tag+"axe clean on every step", not bad); print(bad[:3])
   pg.get_by_role("button",name=re.compile("Submit|জমা")).last.click(); pg.wait_for_timeout(600)
   t(tag+"submitted", re.search("Setup submitted|জমা হয়েছে|সেটআপ জমা", pg.locator("body").inner_text()) is not None)
+  pg.get_by_role("button",name=re.compile("Go to dashboard|ড্যাশবোর্ডে")).first.click(); pg.wait_for_timeout(1500)
+  t(tag+"HMS opens for the new property", "/hms" in pg.url and "Hill View Hotel" in pg.locator("body").inner_text())
   t(tag+"no page errors", not errs); print(errs[:2])
   pg.close()
 with sync_playwright() as p:
   b=p.chromium.launch()
   walk(b,1440,True); walk(b,390,True); walk(b,1440,False)
+  if '--all' in sys.argv: walk(b,768,True); walk(b,390,False)
   b.close()
 print("FAILED:",F) if F else print("ALL PASS")
