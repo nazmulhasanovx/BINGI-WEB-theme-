@@ -65,7 +65,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
   const ex = useExtras(b);
   const guest = guests.get(b.guestId);
   const details = mode === "details";
-  const [panel, setPanel] = useState<Panel>(start === "checkin" && b.status === "Confirmed" && b.from <= TODAY ? "checkin" : start === "checkout" && b.status === "Checked in" ? "checkout" : null);
+  const [panel, setPanel] = useState<Panel>(start === "checkin" && b.status === "Confirmed" && b.from <= TODAY ? "checkin" : start === "checkout" && b.status === "Checked in" ? "checkout" : start === "pay" ? "pay" : null);
   const [tab, setTab] = useState<Tab>("overview");
   const [more, setMore] = useState(false);
   const active = b.status === "Confirmed" || b.status === "Checked in";
