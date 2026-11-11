@@ -1,4 +1,5 @@
 "use client";
+import { can, minPlanLabel } from "@/lib/plan";
 import { useLicences } from "@/lib/licences";
 import { isPaid } from "@/themes/paid";
 import { hrefFor } from "@/lib/href";
@@ -256,18 +257,17 @@ export function OnlinePage() {
     { k: "booking", label: "Website booking", desc: "Guests can book rooms on your website" },
     { k: "marketplace", label: "BinGi Marketplace", desc: "Guests can find and book you on bingi.app" },
     { k: "ordering", label: "Website food ordering", desc: "Guests order from your menu online", lock: !ultra },
-    { k: "qr", label: "QR ordering", desc: "Guests order by scanning the table QR", lock: !ultra },
+    { k: "qr", label: "QR ordering", desc: "Guests order by scanning the table QR", lock: !can(hotel, "qrOrdering") },
   ];
   return (
     <>
       <PageHead title="Online On/Off" desc="Pause new bookings or orders anytime." />
-      <NotWired what="Channel switches" />
-      <p className="mb-4 text-[13px] text-hms-muted">Pausing stops new requests only. Existing bookings stay.</p>
+      <p className="mb-4 text-[13px] text-hms-muted">Applies at once on your website — no publish needed. Pausing stops new requests only; existing bookings stay.</p>
       <Card pad={false}>
         {rows.map((r) => (
           <div key={r.k} className="flex items-center gap-4 border-b border-hms-line px-5 py-4 last:border-b-0">
             <div className="min-w-0 flex-1"><p className={clsx("text-[15px] font-medium", r.lock && "text-hms-muted")}>{r.label}</p><p className="text-[13px] text-hms-muted">{r.desc}</p></div>
-            {r.lock ? <PlanLock plan={`${PLAN_LABEL.ultra}+`} /> : <><Badge tone={o[r.k] ? "green" : "gray"}>{o[r.k] ? "Accepting" : "Paused"}</Badge><Toggle label={r.label} on={o[r.k]} onChange={(v) => site.mutate((x) => { x.online[r.k] = v; })} /></>}
+            {r.lock ? <PlanLock plan={`${r.k === "qr" ? minPlanLabel("qrOrdering") : PLAN_LABEL.ultra}+`} /> : <><Badge tone={o[r.k] ? "green" : "gray"}>{o[r.k] ? "Accepting" : "Paused"}</Badge><Toggle label={r.label} on={o[r.k]} onChange={(v) => site.mutate((x) => { x.online[r.k] = v; })} /></>}
           </div>
         ))}
       </Card>

@@ -14,6 +14,8 @@ import { buildNav } from "@/components/site/nav";
 import { SitePaused } from "@/components/site/SitePaused";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { LangSync } from "@/lib/i18n";
+import { SeoTitle } from "@/components/site/SeoTitle";
+import { BookingPausedBar } from "@/components/site/BookingPaused";
 
 export function generateStaticParams() {
   return listHotelSlugs().map((slug) => ({ slug }));
@@ -53,6 +55,8 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
           Skip to content
         </a>
         <LangSync />
+        <SeoTitle slug={slug} name={hotel.name} />
+        <BookingPausedBar hotel={hotel} />
         <PreviewBridge />
         <Suspense fallback={null}>
           <ThemePreview slug={hotel.slug} defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} master={hotel.theme.master} />

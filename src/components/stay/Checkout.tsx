@@ -1,5 +1,6 @@
 "use client";
 
+import { BookingPausedCard, useBookingPaused } from "@/components/site/BookingPaused";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -56,6 +57,11 @@ function Section({ n, title, children, done }: { n: number; title: string; child
 const input = "h-12 w-full rounded-2xl border border-line bg-surface px-4 text-[16px] outline-none focus:border-action";
 
 export function Checkout({ hotel }: { hotel: Hotel }) {
+  if (useBookingPaused(hotel.slug)) return <BookingPausedCard hotel={hotel} />;
+  return <CheckoutForm hotel={hotel} />;
+}
+
+function CheckoutForm({ hotel }: { hotel: Hotel }) {
   const router = useRouter();
   const base = `/hotel/${hotel.slug}`;
   const { cart, session, addBooking, signIn, ready: loaded } = useGuestState(hotel.slug);

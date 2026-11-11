@@ -201,6 +201,11 @@ export function useSiteView(slug: string): SiteDoc | null {
   if (!rec) return null;
   return isPreview ? rec.draft : rec.published;
 }
+/** Online On/Off switches as the public site sees them (they apply at once, no publish step). */
+export function useOnline(slug: string): Online | null {
+  const rec = useSyncExternalStore(subscribe, () => readRecord(slug), () => null);
+  return rec?.online ?? null;
+}
 /** Any embedded view inside the admin (draft preview or theme screenshot) — hides the designer bar. */
 export function useIsPreview() {
   return useSyncExternalStore(subscribe, () => currentSearch().has("preview"), () => false);
