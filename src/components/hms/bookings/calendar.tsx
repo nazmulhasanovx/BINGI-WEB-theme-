@@ -3,10 +3,11 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Wrench } from "lucide-react";
-import { TODAY, type Unit } from "@/lib/rooms/store";
+import { TODAY, oooOn, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { channelLabel, dm, dow, dueOf, holds, overlaps, tk, type Booking } from "@/lib/bookings/store";
 import { useRates } from "@/lib/rates/store";
+import { useHousekeeping } from "@/lib/housekeeping/store";
 import { useProperty } from "../property";
 import { BookingsFrame, card, channelIcon, statusLabel, useBk } from "./ui";
 
@@ -25,6 +26,7 @@ function Calendar() {
   const { bk, guests, mode, open, toast } = useBk();
   const router = useRouter();
   const rates = useRates(useProperty());
+  const hk = useHousekeeping(useProperty());
   const [drag, setDrag] = useState<Drag | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [perr, setPerr] = useState("");
@@ -50,7 +52,7 @@ function Calendar() {
   const unassigned = bk.list.filter((b) => holds(b) && !b.unit && inRange(b));
   const name = (b: Booking) => guests.get(b.guestId)?.name ?? "Guest";
   const step = mode === "easy" ? 7 : Math.max(7, Math.floor(span / 2));
-  const freeOn = (catUnits: Unit[], d: string) => catUnits.filter((u) => !u.ooo && !bk.list.some((b) => b.unit === u.code && holds(b) && overlaps(b, d, addDays(d, 1)))).length;
+  const freeOn = (catUnits: Unit[], d: string) => catUnits.filter((u) => !oooOn(u, d, addDays(d, 1)) && !bk.list.some((b) => b.unit === u.code && holds(b) && overlaps(b, d, addDays(d, 1)))).length;
 
   const bar = (b: Booking) => {
     const s = b.from < start ? start : b.from;
@@ -108,6 +110,7 @@ function Calendar() {
     if (!pending || !pb) return;
     const e = bk.moveStay(pending.code, pending.unit, pending.from, pending.to, priceAt(pending.unit));
     if (e) return setPerr(e);
+    if (pb.status === "Checked in" && pb.unit && pb.unit !== pending.unit) hk.vacated(pb.unit, pb.code);
     toast(`${pending.code} → Room ${pending.unit} · ${dm(pending.from)}–${dm(pending.to)}`); setPending(null);
   };
   const newTotal = pending && pb ? (() => { const old = new Map(pb.nights.map((n) => [n.date, n.base])); const f = priceAt(pending.unit); let s0 = 0; for (let d = pending.from; d < pending.to; d = addDays(d, 1)) s0 += old.get(d) ?? f(d); return s0; })() : 0;
@@ -139,6 +142,7 @@ function Calendar() {
           <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded border border-[#86cfa3] bg-[#dcf3e5]" />In house</span>
           <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#d97706]" />Payment due</span>
           <span className="inline-flex items-center gap-1.5"><span className="hms-hatch size-3 rounded border border-[#e9b949]" />Out of order</span>
+          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#d92d20]" />Needs cleaning</span>
           <span className="inline-flex items-center gap-1.5"><span className="font-semibold text-[#16693a]">৳</span>Deal price</span>
         </div>
       </div>
@@ -201,18 +205,20 @@ function Calendar() {
                 <div key={u.code} className="flex border-b border-hms-line last:border-b-0">
                   <div className="sticky left-0 z-[2] flex w-24 shrink-0 items-center gap-1.5 border-r border-hms-line bg-white px-3 py-2">
                     <span className="text-[14.5px] font-bold">{u.code}</span>
-                    {u.ooo && <span title={`Out of order · ${u.ooo.reason}`} className="text-[#b26a00]"><Wrench className="size-3.5" aria-label="Out of order" /></span>}
+                    {!hk.isReady(u.code) && <span title={`Housekeeping: ${hk.stateOf(u.code)}`} className={clsx("size-2 rounded-full", hk.stateOf(u.code) === "Dirty" ? "bg-[#d92d20]" : "bg-[#d97706]")}><span className="sr-only">{hk.stateOf(u.code)}</span></span>}
+                    {u.ooo && oooOn(u, start, end) && <span title={`Out of order · ${u.ooo.reason}${u.ooo.until ? ` until ${dm(u.ooo.until)}` : ""}`} className="text-[#b26a00]"><Wrench className="size-3.5" aria-label="Out of order" /></span>}
                   </div>
-                  <div data-room={u.ooo ? undefined : u.code} className={clsx("relative flex", u.ooo && "hms-hatch", drag?.moved && drag.kind === "move" && drag.room === u.code && "bg-[#eef3ff] outline-2 -outline-offset-2 outline-[#7aa2f7]")} style={{ width: span * W, height: 44 }}>
+                  <div data-room={u.code} className={clsx("relative flex", drag?.moved && drag.kind === "move" && drag.room === u.code && "bg-[#eef3ff] outline-2 -outline-offset-2 outline-[#7aa2f7]")} style={{ width: span * W, height: 44 }}>
                     {dates.map((d) => {
                       const busy = bk.list.some((b) => b.unit === u.code && holds(b) && overlaps(b, d, addDays(d, 1)));
-                      const can = !u.ooo && !busy && d >= TODAY;
-                      const cls = clsx("h-full shrink-0 border-r border-hms-line last:border-r-0", d === TODAY && "bg-hms-coral-soft/40", can && "hover:bg-[#f0f4ff]", d < TODAY && "bg-[#fafbfc]");
+                      const off = oooOn(u, d, addDays(d, 1));
+                      const can = !off && !busy && d >= TODAY;
+                      const cls = clsx("h-full shrink-0 border-r border-hms-line last:border-r-0", off && "hms-hatch", d === TODAY && "bg-hms-coral-soft/40", can && "hover:bg-[#f0f4ff]", d < TODAY && "bg-[#fafbfc]");
                       const inSel = sel?.room === u.code && d >= (sel.a < sel.b ? sel.a : sel.b) && d <= (sel.a < sel.b ? sel.b : sel.a);
                       return can ? <button key={d} tabIndex={-1} onClick={() => { if (!justDragged.current) newAt(u.code, d); }} onPointerDown={(e) => { if (e.pointerType !== "touch" && e.button === 0) setSel({ room: u.code, a: d, b: d }); }} onPointerEnter={() => { if (sel?.room === u.code) setSel({ ...sel, b: d }); }} aria-label={`New booking, Room ${u.code}, ${dm(d)}`} style={{ width: W }} className={clsx(cls, inSel && "!bg-[#dfe8ff]")} /> : <div key={d} style={{ width: W }} className={cls} />;
                     })}
                     {bk.list.filter((b) => b.unit === u.code && inRange(b)).map(bar)}
-                    {u.ooo && <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 rounded bg-white/90 px-1.5 text-[12px] font-semibold text-[#8a4b00]">Out of order · {u.ooo.reason}</span>}
+                    {u.ooo && oooOn(u, start, end) && <span style={{ left: Math.max(0, (Date.parse(u.ooo.since.slice(0, 10) > start ? u.ooo.since.slice(0, 10) : start) - Date.parse(start)) / 864e5) * W + 8 }} className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded bg-white/90 px-1.5 text-[12px] font-semibold text-[#8a4b00]">Out of order · {u.ooo.reason}{u.ooo.until ? ` → ${dm(u.ooo.until)}` : ""}</span>}
                   </div>
                 </div>
               ))}

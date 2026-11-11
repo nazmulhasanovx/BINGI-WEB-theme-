@@ -1,13 +1,14 @@
 "use client";
 import clsx from "clsx";
 import { useMemo, useState, type ReactNode } from "react";
-import { BedDouble, CircleAlert, LogIn, LogOut, X as XIcon } from "lucide-react";
+import { BedDouble, Brush, CircleAlert, LogIn, LogOut, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { METHODS, bill, dm, dmy, dueOf, nightsBetween, paidOf, policyFee, tk, totalOf, type Booking, type Night, type PayMethod } from "@/lib/bookings/store";
 import { useServices, orderTotal, STATUS_LABEL, statusOf, type WorkStatus } from "@/lib/services/store";
 import { bill as mealBill } from "@/lib/meals/seed";
 import { validId, type IdType } from "@/lib/guests/store";
+import { useHousekeeping } from "@/lib/housekeeping/store";
 import { useProperty } from "../property";
 import { useRestaurant } from "../meals/shared";
 import { input, lbl } from "../guests/ui";
@@ -85,6 +86,7 @@ const money = (v: string) => v.replace(/[^\d]/g, "");
 
 export function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: ViewProps & { extras: number; takeCash: (n: number, ref: string) => string }) {
   const { bk, guests, g } = useBk();
+  const hk = useHousekeeping(useProperty());
   const guest = guests.get(b.guestId);
   const free = bk.freeUnits(TODAY > b.from ? TODAY : b.from, b.to, b.code);
   const [unit, setUnit] = useState(b.unit && free.some((u) => u.code === b.unit) ? b.unit : b.unit || "");
@@ -134,6 +136,7 @@ export function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: Vi
           <input aria-label="ID number" value={idNo} onChange={(e) => setIdNo(e.target.value.trim())} placeholder={idType === "NID" ? "10, 13 or 17 digits" : "Number"} className={input} />
         </div>
       </div>
+      {unit && !hk.isReady(unit) && <p role="note" className="mt-3 flex items-start gap-2 rounded-xl bg-[#fff4e0] px-3.5 py-2.5 text-[13.5px] text-[#6b4309]"><Brush className="mt-0.5 size-4 shrink-0" /><span>Room {unit} is <b>{hk.stateOf(unit)}</b> — not cleaned yet. Pick a clean room above, or check in and let the guest wait.</span></p>}
       <GuestAlerts b={b} />
       <label className="mt-4 flex items-center gap-3 rounded-xl border border-hms-line px-3.5 py-2.5 text-[14px]"><input type="checkbox" checked={early} onChange={(e) => setEarly(e.target.checked)} className="size-4 accent-[#b11c29]" /><span className="flex-1">Early check-in (before {S.checkIn})</span><b className="tabular-nums">+{tk(S.earlyFee)}</b></label>
       <div className="mt-2 rounded-xl border border-hms-line px-3.5 py-2.5">
@@ -172,6 +175,7 @@ export function GuestAlerts({ b }: { b: Booking }) {
 
 export function CheckOutView({ b, extras, onBack, onClose, onDone, takeCash, giveCash }: ViewProps & { extras: ReturnType<typeof useExtras>; takeCash: (n: number, ref: string) => string; giveCash?: (n: number, ref: string) => string }) {
   const { bk, guests } = useBk();
+  const hk = useHousekeeping(useProperty());
   const guest = guests.get(b.guestId);
   const early = b.to > TODAY;
   const stayed = b.nights.filter((n) => n.date < TODAY);
@@ -203,6 +207,7 @@ export function CheckOutView({ b, extras, onBack, onClose, onDone, takeCash, giv
     if (dep) bk.settleDeposit(b.code, depUsed);
     if (a > 0) bk.pay(b.code, a, method, "At check-out");
     const e = bk.checkOut(b.code, { shorten, leaveDue, extras: extras.total }); if (e) return setErr(e);
+    hk.vacated(b.unit, b.code);
     if (left === 0) extras.settle();
     onDone(`${guest?.name ?? "Guest"} checked out of Room ${b.unit}${left ? ` · ${tk(left)} still due` : ""}${back > 0 ? ` · return ${tk(back)} deposit` : ""}`);
   };
@@ -270,6 +275,7 @@ export function PayView({ b, balance, onBack, onClose, onDone, takeCash, refund 
 
 export function MoveView({ b, onBack, onClose, onDone, priceOn }: ViewProps & { priceOn: (d: string) => number }) {
   const { bk, mode } = useBk();
+  const hk = useHousekeeping(useProperty());
   const from = b.status === "Checked in" && TODAY > b.from ? TODAY : b.from;
   const free = bk.freeUnits(from, b.to, b.code).filter((u) => u.code !== b.unit);
   const [unit, setUnit] = useState("");
@@ -287,6 +293,7 @@ export function MoveView({ b, onBack, onClose, onDone, priceOn }: ViewProps & { 
       nights = b.nights.map((n) => (n.date < from ? n : { date: n.date, base: priceOn(n.date) }));
     }
     const e = bk.assign(b.code, unit, nights); if (e) return setErr(e);
+    if (b.status === "Checked in" && b.unit) hk.vacated(b.unit, b.code);
     onDone(b.unit ? `Moved to Room ${unit}` : `Room ${unit} assigned`);
   };
   return (

@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ArrowLeft, LogIn, LogOut, Minus, Plus, UserRound, Users, Wrench } from "lucide-react";
-import { TODAY, taxOf, type Unit } from "@/lib/rooms/store";
+import { TODAY, oooOn, taxOf, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { bill, dm, dueOf, holds, overlaps, paidOf, tk, totalOf, useBookings, type Booking, type PayMethod } from "@/lib/bookings/store";
 import { phoneKey, useGuests } from "@/lib/guests/store";
@@ -12,6 +12,7 @@ import { useRates } from "@/lib/rates/store";
 import { postCash } from "@/lib/cashbox/store";
 import { useProperty } from "../property";
 import { useCashboxData } from "../cashbox/pages";
+import { useHousekeeping } from "@/lib/housekeeping/store";
 import { input, lbl } from "../guests/ui";
 import { BookingsFrame, ChannelBadge, PayPill, StatusPill, Toast, bMain, bSoft, card, useBk } from "./ui";
 
@@ -30,10 +31,11 @@ const DOT: Record<RState, string> = { free: "bg-[#22a35a]", arriving: "bg-[#2563
 
 function Board() {
   const { bk, guests, open } = useBk();
+  const hk = useHousekeeping(useProperty());
   const router = useRouter();
   const [f, setF] = useState<RState | "all">("all");
   const stateOf = (u: Unit): { s: RState; b?: Booking } => {
-    if (u.ooo) return { s: "ooo" };
+    if (oooOn(u, TODAY, addDays(TODAY, 1))) return { s: "ooo" };
     const here = bk.list.filter((b) => b.unit === u.code && holds(b));
     const ins = here.find((b) => b.status === "Checked in");
     if (ins) return { s: ins.to <= TODAY ? "leaving" : "inhouse", b: ins };
@@ -77,10 +79,10 @@ function Board() {
                       <span className="flex w-full items-center gap-2"><b className="text-[18px] tabular-nums">{u.code}</b><span className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3a414c]"><span className={clsx("size-2 rounded-full", DOT[s])} />{RS[s][0]}</span></span>
                       {b ? <>
                         <span className="mt-1 truncate text-[14px] font-semibold">{guests.get(b.guestId)?.name ?? "Guest"}</span>
-                        <span className="text-[12.5px] text-hms-muted">{s === "arriving" ? `${b.nights.length} night${b.nights.length > 1 ? "s" : ""}` : `Until ${dm(b.to)}`}</span>
+                        <span className="text-[12.5px] text-hms-muted">{s === "arriving" ? (hk.isReady(u.code) ? `${b.nights.length} night${b.nights.length > 1 ? "s" : ""} · room ready` : <b className="text-[#b42318]">Room {hk.stateOf(u.code).toLowerCase()}</b>) : `Until ${dm(b.to)}`}</span>
                         <span className="mt-auto text-[12.5px] font-semibold">{due > 0 ? <span className="text-[#b42318]">{tk(due)} due</span> : <span className="text-[#16693a]">Paid</span>}</span>
                       </> : s === "ooo" ? <span className="mt-1 flex items-center gap-1.5 text-[13px] text-[#8a4b00]"><Wrench className="size-3.5" />{u.ooo?.reason}</span>
-                        : <><span className="mt-1 text-[13px] font-semibold text-[#16693a]">Ready to sell</span><span className="mt-auto text-[12.5px] text-hms-muted">{nb ? `Next: ${dm(nb.from)}` : "No upcoming booking"}</span></>}
+                        : <><span className={clsx("mt-1 text-[13px] font-semibold", hk.isReady(u.code) ? "text-[#16693a]" : "text-[#b42318]")}>{hk.isReady(u.code) ? "Ready to sell" : `${hk.stateOf(u.code)} — needs cleaning`}</span><span className="mt-auto text-[12.5px] text-hms-muted">{nb ? `Next: ${dm(nb.from)}` : "No upcoming booking"}</span></>}
                     </button>
                   </li>
                 );
@@ -89,7 +91,7 @@ function Board() {
           </section>
         );
       })}
-      <p className="mt-4 text-[12.5px] text-hms-muted">Tap a free room to check in a walk-in. Cleaning status comes from Housekeeping.</p>
+      <p className="mt-4 text-[12.5px] text-hms-muted">Tap a free room to check in a walk-in. Cleaning status comes from <Link href="/hms/housekeeping" className="font-semibold text-hms-red">Housekeeping</Link>.</p>
     </>
   );
 }

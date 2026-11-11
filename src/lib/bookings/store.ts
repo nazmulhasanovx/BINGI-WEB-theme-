@@ -8,7 +8,7 @@
 // Every other module (Dashboard, Guests, Rooms, Cashbox, Other Services, Restaurant) reads stays from here via useStays().
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
-import { TODAY, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
+import { TODAY, oooOn, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { DEMO_GUESTS, addDays, demoStays, hash, type Stay } from "./demo";
 
 export type BStatus = "Confirmed" | "Checked in" | "Checked out" | "Cancelled" | "No-show";
@@ -270,7 +270,7 @@ export function useBookings(h: Hotel) {
   [st]);
   const unitByCode = useMemo(() => new Map(units.map((u) => [u.code, u])), [units]);
   /** Rooms free for the dates (published, not out of order, no active booking). */
-  const freeUnits = useCallback((from: string, to: string, except?: string) => units.filter((u) => !u.ooo && !clash(u.code, from, to, except)), [units, clash]);
+  const freeUnits = useCallback((from: string, to: string, except?: string) => units.filter((u) => !oooOn(u, from, to) && !clash(u.code, from, to, except)), [units, clash]);
 
   const create = useCallback((items: NewBooking[]): Result => {
     if (!items.length) return { ok: false, error: "Pick at least one room" };
@@ -279,7 +279,7 @@ export function useBookings(h: Hotel) {
       if (it.unit) {
         const u = unitByCode.get(it.unit);
         if (!u) return { ok: false, error: `Room ${it.unit} is not bookable` };
-        if (u.ooo) return { ok: false, error: `Room ${it.unit} is out of order (${u.ooo.reason})` };
+        if (oooOn(u, it.from, it.to)) return { ok: false, error: `Room ${it.unit} is out of order (${u.ooo!.reason})` };
         const c = clash(it.unit, it.from, it.to);
         if (c) return { ok: false, error: `Room ${it.unit} was just booked (${c.code}) — pick another room` };
       }
@@ -309,8 +309,8 @@ export function useBookings(h: Hotel) {
     const b0 = find(now(), code);
     const u = unitByCode.get(unit);
     if (!u) return "Pick a room";
-    if (u.ooo) return `Room ${unit} is out of order`;
     const from = b0.status === "Checked in" ? (TODAY > b0.from ? TODAY : b0.from) : b0.from;
+    if (oooOn(u, from, b0.to)) return `Room ${unit} is out of order`;
     const c = clash(unit, from, b0.to, code);
     if (c) return `Room ${unit} is taken by ${c.code} on these dates`;
     save((s) => {
@@ -329,7 +329,7 @@ export function useBookings(h: Hotel) {
     if (b.from > TODAY) return `Check-in date is ${dmy(b.from)} — change the dates to check in early`;
     if (!b.unit) return "Assign a room first";
     const u = unitByCode.get(b.unit);
-    if (u?.ooo) return `Room ${b.unit} is out of order — move the guest to another room`;
+    if (u && oooOn(u, TODAY, addDays(TODAY, 1))) return `Room ${b.unit} is out of order — move the guest to another room`;
     const inRoom = now().list.find((x) => x.code !== code && x.unit === b.unit && x.status === "Checked in");
     if (inRoom) return `Room ${b.unit} still has a guest (${inRoom.code}) — check them out or move this guest`;
     save((s) => { const x = find(s, code); x.status = "Checked in"; x.checkedInAt = stamp(); log(x, `Checked in · Room ${x.unit}`); });
@@ -386,7 +386,7 @@ export function useBookings(h: Hotel) {
     if (b.status === "Confirmed" && from < TODAY) return "Check-in can't be in the past";
     const u = unitByCode.get(unit);
     if (!u) return "Pick a room";
-    if (u.ooo) return `Room ${unit} is out of order (${u.ooo.reason})`;
+    if (oooOn(u, from, to)) return `Room ${unit} is out of order (${u.ooo!.reason})`;
     const c = clash(unit, b.status === "Checked in" && TODAY > from ? TODAY : from, to, code);
     if (c) return `Room ${unit} is taken by ${c.code} on these dates`;
     save((s) => {

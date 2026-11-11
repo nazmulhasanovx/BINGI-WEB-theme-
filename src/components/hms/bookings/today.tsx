@@ -5,6 +5,9 @@ import { CircleAlert, LogIn, LogOut, Search } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { dm, dueOf, holds, tk, type Booking } from "@/lib/bookings/store";
+import { useHousekeeping } from "@/lib/housekeeping/store";
+import { useProperty } from "../property";
+import { WebRequests } from "./web";
 import { BookingsFrame, ChannelBadge, Flags, bDark, bSmall, card, useBk } from "./ui";
 
 export function TodayPage() { return <BookingsFrame tab="today"><Today /></BookingsFrame>; }
@@ -50,6 +53,7 @@ function Today() {
         <label className="flex h-11 w-full items-center gap-2 rounded-xl border border-hms-line bg-white px-3.5 focus-within:border-hms-ink lg:ml-auto lg:w-[300px]"><Search className="size-[18px] text-hms-muted" /><span className="sr-only">Find a guest</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, phone or room" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" /></label>
       </div>
 
+      <WebRequests />
       {mode === "details" && attention.length > 0 && (
         <section aria-label="Needs attention" className="mt-4 overflow-hidden rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec]">
           <h2 className="flex items-center gap-2 px-4 pt-3 text-[14.5px] font-bold text-[#6b4309]"><CircleAlert className="size-4" />Needs attention</h2>
@@ -76,6 +80,8 @@ function Today() {
 
 function Row({ b, name, kind }: { b: Booking; name: string; kind: Seg }) {
   const { open, mode, guests } = useBk();
+  const hk = useHousekeeping(useProperty());
+  const dirty = kind === "arriving" && !!b.unit && !hk.isReady(b.unit);
   const d = dueOf(b);
   const vip = guests.get(b.guestId)?.vip;
   const late = b.status === "Checked in" && b.to < TODAY;
@@ -85,7 +91,7 @@ function Row({ b, name, kind }: { b: Booking; name: string; kind: Seg }) {
       <button onClick={() => open(b.code)} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4" aria-label={`${name}${b.unit ? `, Room ${b.unit}` : ""}`}>
         <span className={clsx("grid h-12 w-14 shrink-0 place-items-center rounded-xl text-[16px] font-bold tabular-nums", !b.unit ? "bg-[#fff4e0] text-[#8a4b00]" : kind === "inhouse" ? "bg-[#e5f5ec] text-[#16693a]" : kind === "leaving" ? "bg-[#fdefe7] text-[#c2410c]" : "bg-[#e8f0fe] text-[#1d4ed8]")}>{b.unit || "—"}</span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2"><span className="truncate text-[15.5px] font-semibold">{name}</span>{vip && <span className="rounded bg-[#fdf3d9] px-1.5 text-[11px] font-bold text-[#7a4a0b]">VIP</span>}<span className="hidden sm:inline-flex"><ChannelBadge b={b} /></span></span>
+          <span className="flex items-center gap-2"><span className="truncate text-[15.5px] font-semibold">{name}</span>{vip && <span className="rounded bg-[#fdf3d9] px-1.5 text-[11px] font-bold text-[#7a4a0b]">VIP</span>}{dirty && <span className="whitespace-nowrap rounded bg-[#fdecec] px-1.5 text-[11px] font-bold text-[#b42318]">Room {hk.stateOf(b.unit).toLowerCase()}</span>}<span className="hidden sm:inline-flex"><ChannelBadge b={b} /></span></span>
           <span className="block truncate text-[13px] text-hms-muted">
             {kind === "inhouse" ? `Until ${dm(b.to)}` : `${n} night${n > 1 ? "s" : ""} · ${b.adults + b.children} guest${b.adults + b.children > 1 ? "s" : ""}`}
             {mode === "details" ? ` · ${b.code}${b.channelRef ? ` · ${b.channelRef}` : ""}` : ""}
