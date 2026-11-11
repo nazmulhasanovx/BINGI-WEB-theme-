@@ -148,7 +148,7 @@ function Wizard({ draftId, type, category }: { draftId: string | null; type: str
   };
 
   return (
-    <Steps title={`Add ${pr ? pr.label.toLowerCase() : "accommodation"}`} steps={STEPS} step={step} onStep={go} maxDone={maxDone}
+    <Steps title={`Add ${pr ? pr.label.toLowerCase() : "room / accommodation"}`} steps={STEPS} step={step} onStep={go} maxDone={maxDone}
       footer={<>
         <Btn disabled={step === 0} onClick={() => go(step - 1)}>Back</Btn>
         {step === 2 && <span className="text-[14px] font-medium text-[#4d5664] lg:hidden" aria-live="polite">{picks.length} selected</span>}

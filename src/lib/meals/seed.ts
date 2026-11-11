@@ -8,28 +8,36 @@ export type Service = "dinein" | "room" | "takeaway" | "delivery";
 export type Source = "pos" | "table_qr" | "room_qr" | "general_qr";
 export type Status = "approval" | "queued" | "preparing" | "ready" | "served" | "declined" | "cancelled";
 export type PayState = "unpaid" | "paid" | "room";
-export type PayMethod = "cash" | "card" | "bkash" | "room";
+export type PayMethod = "cash" | "card" | "bkash" | "room" | "split";
 export type Category = { id: string; name: string };
-export type Item = { id: string; name: string; cat: string; price: number; prep: number; available: boolean; pos: boolean; qr: boolean; veg?: boolean; short?: string; photo?: string };
+export type Size = { name: string; price: number };
+/** sizes: e.g. Half / Full — when set, each size has its own price and `price` is the smallest. */
+export type Item = { id: string; name: string; cat: string; price: number; prep: number; available: boolean; pos: boolean; qr: boolean; veg?: boolean; short?: string; photo?: string; sizes?: Size[] };
 export type Place = { id: string; name: string; kind: "table" | "room" | "general"; seats?: number; note?: string; visible: boolean; accepting: boolean };
-export type Line = { item: string; name: string; price: number; qty: number; note?: string };
+/** round: 1 = first order, 2+ = items added later to the same (running) order. */
+export type Line = { item: string; name: string; price: number; qty: number; note?: string; size?: string; round?: number };
+export type Discount = { kind: "percent" | "fixed"; value: number; reason: string };
+export type Payment = { method: Exclude<PayMethod, "split">; amount: number };
 export type Order = {
   id: string; no: string; outlet: string; at: string; source: Source; service: Service; place?: string; room?: string; guest?: string;
   lines: Line[]; sc: number; vat: number; status: Status; pay: PayState; method?: PayMethod; paidAt?: string; reason?: string; by: string;
+  round?: number; discount?: Discount; payments?: Payment[];
 };
 export type Settings = { sc: number; vat: number; services: Record<Service, boolean>; qrApproval: boolean; posApproval: boolean; paused: boolean; opens: string; closes: string };
 
 export const SERVICE_LABEL: Record<Service, string> = { dinein: "Dine-in", room: "Room service", takeaway: "Takeaway", delivery: "Delivery" };
 export const SOURCE_LABEL: Record<Source, string> = { pos: "Staff POS", table_qr: "Table QR", room_qr: "Room QR", general_qr: "General QR" };
 export const STATUS_LABEL: Record<Status, string> = { approval: "Needs approval", queued: "Queued", preparing: "Preparing", ready: "Ready", served: "Served", declined: "Declined", cancelled: "Cancelled" };
-export const METHOD_LABEL: Record<PayMethod, string> = { cash: "Cash", card: "Card", bkash: "bKash", room: "Charged to room" };
+export const METHOD_LABEL: Record<PayMethod, string> = { cash: "Cash", card: "Card", bkash: "bKash", room: "Charged to room", split: "Split" };
 
 /** Bill: subtotal + service charge, VAT on (subtotal + service charge) — same rule as rooms. */
-export function bill(o: Pick<Order, "lines" | "sc" | "vat">) {
+export function bill(o: Pick<Order, "lines" | "sc" | "vat"> & { discount?: Discount }) {
   const sub = o.lines.reduce((s, l) => s + l.price * l.qty, 0);
-  const sc = Math.round((sub * o.sc) / 100);
-  const vat = Math.round(((sub + sc) * o.vat) / 100);
-  return { sub, sc, vat, total: sub + sc + vat, count: o.lines.reduce((s, l) => s + l.qty, 0) };
+  const disc = !o.discount ? 0 : o.discount.kind === "percent" ? Math.round((sub * o.discount.value) / 100) : Math.min(o.discount.value, sub);
+  const base = sub - disc;
+  const sc = Math.round((base * o.sc) / 100);
+  const vat = Math.round(((base + sc) * o.vat) / 100);
+  return { sub, disc, sc, vat, total: base + sc + vat, count: o.lines.reduce((s, l) => s + l.qty, 0) };
 }
 export const tk = (n: number) => `৳${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
 export const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -52,17 +60,17 @@ export function seedMenu(h: Hotel): { categories: Category[]; items: Item[] } {
   const fromHotel: Item[] = (h.menu ?? []).map((m) => ({ id: m.id, name: m.name, cat: catFor(m.tags), price: m.price, prep: m.tags.includes("Dessert") ? 5 : m.tags.includes("Grill") ? 25 : 15, available: true, pos: true, qr: true, short: m.short, photo: m.photo, veg: m.tags.includes("Fresh") && !/salmon|chicken|beef/i.test(m.name) }));
   const extra: Item[] = [
     { id: "x1", name: "Paratha & egg bhaji", cat: "c-bf", price: 320, prep: 10, available: true, pos: true, qr: true, veg: true },
-    { id: "x2", name: "Full English breakfast", cat: "c-bf", price: 780, prep: 15, available: true, pos: true, qr: true },
+    { id: "x2", name: "Full English breakfast", cat: "c-bf", price: 780, prep: 15, available: true, pos: true, qr: true, photo: "/demo/tea-valley/breakfast.jpg" },
     { id: "x3", name: "Vegetable pakora", cat: "c-st", price: 380, prep: 10, available: true, pos: true, qr: true, veg: true },
-    { id: "x4", name: "Beef kala bhuna", cat: "c-lo", price: 1050, prep: 20, available: true, pos: true, qr: true },
-    { id: "x5", name: "Prawn malai curry", cat: "c-lo", price: 1350, prep: 20, available: true, pos: true, qr: true },
-    { id: "x6", name: "Plain rice", cat: "c-lo", price: 150, prep: 5, available: true, pos: true, qr: true, veg: true },
+    { id: "x4", name: "Beef kala bhuna", cat: "c-lo", price: 650, prep: 20, available: true, pos: true, qr: true, sizes: [{ name: "Half", price: 650 }, { name: "Full", price: 1050 }] },
+    { id: "x5", name: "Prawn malai curry", cat: "c-lo", price: 800, prep: 20, available: true, pos: true, qr: true, sizes: [{ name: "Half", price: 800 }, { name: "Full", price: 1350 }] },
+    { id: "x6", name: "Plain rice", cat: "c-lo", price: 150, prep: 5, available: true, pos: true, qr: true, veg: true, photo: "/demo/matir/rice-close.jpg" },
     { id: "x7", name: "Club sandwich & fries", cat: "c-in", price: 720, prep: 15, available: true, pos: true, qr: true },
     { id: "x8", name: "Chicken pasta alfredo", cat: "c-in", price: 890, prep: 18, available: false, pos: true, qr: true },
     { id: "x9", name: "Mishti doi", cat: "c-de", price: 220, prep: 2, available: true, pos: true, qr: true, veg: true },
     { id: "x10", name: "Fresh lime soda", cat: "c-dr", price: 220, prep: 3, available: true, pos: true, qr: true, veg: true },
-    { id: "x11", name: "Mango lassi", cat: "c-dr", price: 320, prep: 4, available: true, pos: true, qr: true, veg: true },
-    { id: "x12", name: "Masala tea", cat: "c-dr", price: 160, prep: 4, available: true, pos: true, qr: true, veg: true },
+    { id: "x11", name: "Mango lassi", cat: "c-dr", price: 320, prep: 4, available: true, pos: true, qr: true, veg: true, sizes: [{ name: "Regular", price: 320 }, { name: "Large", price: 420 }] },
+    { id: "x12", name: "Masala tea", cat: "c-dr", price: 160, prep: 4, available: true, pos: true, qr: true, veg: true, photo: "/demo/tea-valley/tea-cup.jpg" },
     { id: "x13", name: "Cappuccino", cat: "c-dr", price: 360, prep: 4, available: true, pos: true, qr: true, veg: true },
     { id: "x14", name: "Mineral water (1 L)", cat: "c-dr", price: 120, prep: 1, available: true, pos: true, qr: false, veg: true },
   ];
@@ -84,7 +92,7 @@ export function seedOrders(h: Hotel, inHouse: { room: string; guest: string }[],
   const live = items.filter((i) => i.available);
   const outlet = outletsOf(h)[0];
   const rso = roomServiceOutlet(h) ?? outlet;
-  const pick = (k: number, n: number): Line[] => Array.from({ length: n }, (_, j) => { const it = live[(k * 7 + j * 5) % live.length]; return { item: it.id, name: it.name, price: it.price, qty: 1 + ((k + j) % 2) }; });
+  const pick = (k: number, n: number): Line[] => Array.from({ length: n }, (_, j) => { const it = live[(k * 7 + j * 5) % live.length]; const sz = it.sizes?.[it.sizes.length - 1]; return { item: it.id, name: sz ? `${it.name} (${sz.name})` : it.name, price: sz?.price ?? it.price, size: sz?.name, qty: 1 + ((k + j) % 2) }; });
   const room = (i: number) => inHouse[i % Math.max(1, inHouse.length)];
   const out: Order[] = [];
   let no = 5100;

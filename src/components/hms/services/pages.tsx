@@ -63,7 +63,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
   const prev = o?.k === "preview" ? svc.st.services.find((x) => x.id === o.id) : undefined;
   return (
     <C.Provider value={{ svc, open: setO, act, toast: setToast }}>
-      <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[1280px] p-4 sm:p-6">
+      <div className="h-full overflow-y-auto"><div className="hms-page">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Other Services</h1><p className="flex flex-wrap items-center gap-x-2 text-[14px] text-hms-muted">Sell, schedule and deliver guest services.<Link href="/hms/other-services/setup#roles" className="inline-flex items-center gap-1 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664] hover:text-hms-ink"><UserRound className="size-3.5" aria-hidden />{ROLE_LABEL[svc.role]}</Link></p></div>
           <div className="flex flex-wrap gap-2">

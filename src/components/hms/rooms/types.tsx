@@ -1,42 +1,20 @@
 "use client";
 // Room / Accommodation — room types first, the way the live HMS Rooms page works (photo cards, availability KPIs,
 // one filter bar, grid/list), on top of the prototype rooms store. Room numbers and Setup stay as their own tabs.
+import { imgSrc } from "@/lib/img";
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Check, LayoutGrid, List, Maximize2, Pencil, Plus, Search, Users, Wrench } from "lucide-react";
+import { BedDouble, Check, ImagePlus, LayoutGrid, List, Maximize2, Pencil, Plus, Search, Users, Wrench, X } from "lucide-react";
 import { useProperty } from "../property";
-import { HOTEL_TAX, TODAY, priceBreak, taxOf, useRooms, type Category, type MealMode, type RoomsState, type Unit } from "@/lib/rooms/store";
+import { HOTEL_TAX, priceBreak, taxOf, useRooms, type Category, type MealMode, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { CORE, preset as presetOf, youtubeId } from "@/lib/rooms/catalog";
-import { demoStays } from "@/lib/bookings/demo";
 import { Area, Btn, Drawer, Empty, Field, Input, Menu } from "../staff/ui";
 import { AmenityPicker, PRESET_ICON, RoomsFrame, money, useToast } from "./parts";
 import { UnitDrawer } from "./pages";
-
-export type UnitState = "available" | "booked" | "ooo" | "draft" | "archived";
-export const STATE: Record<UnitState, { label: string; tone: "green" | "blue" | "amber" | "gray"; dot: string }> = {
-  available: { label: "Available", tone: "green", dot: "bg-[#1c7d45]" },
-  booked: { label: "Booked tonight", tone: "blue", dot: "bg-[#2457c5]" },
-  ooo: { label: "Out of order", tone: "amber", dot: "bg-[#b26a00]" },
-  draft: { label: "Draft", tone: "gray", dot: "bg-[#7b8190]" },
-  archived: { label: "Archived", tone: "gray", dot: "bg-[#7b8190]" },
-};
-
-/** Tonight's state per unit. Bookings come from the same demo stays as Dashboard and Guests (no bookings backend yet). */
-export function useUnitStates(st: RoomsState) {
-  const h = useProperty();
-  return useMemo(() => {
-    const cat = new Map(st.categories.map((c) => [c.id, c]));
-    const live = st.units.filter((u) => u.status === "published");
-    const list = live.length ? live : st.units.filter((u) => u.status !== "archived");
-    const stays = demoStays(h.slug, list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 })));
-    const tonight = new Set(stays.filter((s) => s.status !== "Checked out" && s.from <= TODAY && s.to > TODAY).map((s) => s.room));
-    const m = new Map<string, UnitState>();
-    for (const u of st.units) m.set(u.id, u.status !== "published" ? u.status : u.ooo ? "ooo" : tonight.has(u.code) ? "booked" : "available");
-    return m;
-  }, [st, h.slug]);
-}
+import { STATE, useUnitStates, type UnitState } from "./state";
+import { PhotoButton } from "../photo";
 
 type Filter = "all" | "available" | "full" | "ooo" | "draft";
 export function RoomTypesPage() {
@@ -142,7 +120,7 @@ function Kpi({ icon: I, tone, value, label, sub, onClick }: { icon: typeof BedDo
 function Photo({ c, className }: { c: Category; className?: string }) {
   const Icon = PRESET_ICON[c.preset];
   return c.photo
-    ? <img src={c.photo} alt="" className={clsx("object-cover", className)} />
+    ? <img src={imgSrc(c.photo)} alt="" className={clsx("object-cover", className)} />
     : <span className={clsx("grid place-items-center bg-[#e9edf2] text-[#7b8190]", className)}><Icon className="size-10" aria-hidden /></span>;
 }
 
@@ -232,7 +210,9 @@ function RoomTypeDrawer({ st, c, state, onClose, onUnit }: { st: RoomsState; c: 
   const own = units.filter((u) => u.rate !== undefined).length;
   const tax = d.syncTax ? HOTEL_TAX : { vat: d.vat ?? 0, service: d.service ?? 0 };
   const p = priceBreak(d.baseRate || 0, tax);
-  const photos = useMemo(() => [...new Set([c.photo, ...h.rooms.flatMap((r) => r.photos)].filter(Boolean) as string[])].slice(0, 12), [c.photo, h.rooms]);
+  const mine = d.photos;
+  const [photoErr, setPhotoErr] = useState("");
+  const photos = useMemo(() => [...new Set([...(mine ?? []), c.photo, ...h.rooms.flatMap((r) => r.photos)].filter(Boolean) as string[])].slice(0, 16), [mine, c.photo, h.rooms]);
   const errs: Record<string, string> = {
     name: !d.name.trim() ? "Name is required" : st.categories.some((x) => x.id !== c.id && x.name.trim().toLowerCase() === d.name.trim().toLowerCase()) ? "Another room type has this name" : "",
     price: !(d.baseRate > 0) ? "Base price is required" : "",
@@ -293,11 +273,19 @@ function RoomTypeDrawer({ st, c, state, onClose, onUnit }: { st: RoomsState; c: 
         </section>
 
         <section className={box} aria-labelledby="rt-photo">
-          <h3 id="rt-photo" className={h2}>Cover photo</h3>
-          <div role="radiogroup" aria-label="Cover photo" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {photos.map((src, i) => <button key={src} type="button" role="radio" aria-checked={d.photo === src} aria-label={`Photo ${i + 1}`} onClick={() => set("photo", src)} className={clsx("relative aspect-[4/3] overflow-hidden rounded-lg border-2", d.photo === src ? "border-[#b11c29]" : "border-transparent")}><img src={src} alt="" className="size-full object-cover" />{d.photo === src && <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-[#b11c29] text-white"><Check className="size-3.5" aria-hidden /></span>}</button>)}
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 id="rt-photo" className="text-[16px] font-semibold">Photos <span className="font-normal text-[#4d5664]">· {(mine ?? []).length}/10 uploaded</span></h3>
+            <PhotoButton label="Upload photo" onPhoto={(src) => { setPhotoErr(""); setD((x) => ({ ...x, photos: [...(x.photos ?? []), src].slice(0, 10), photo: x.photo ?? src })); }} onError={setPhotoErr} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#d3d8df] px-3 text-[14px] font-medium hover:bg-[#f4f6f8] disabled:opacity-40"><ImagePlus className="size-4" aria-hidden />Upload photo</PhotoButton></div>
+          {photoErr && <p role="alert" className="mb-2 text-[13px] font-medium text-[#b11c29]">{photoErr}</p>}
+          <p className="mb-2 text-[13px] text-[#4d5664]">Tap a photo to make it the cover guests see first.</p>
+          <div role="radiogroup" aria-label="Cover photo" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {photos.map((src, i) => { const up = (mine ?? []).includes(src); return (
+              <span key={src.slice(0, 80) + i} className="relative">
+                <button type="button" role="radio" aria-checked={d.photo === src} aria-label={`Photo ${i + 1}${up ? " (uploaded)" : ""}`} onClick={() => set("photo", src)} className={clsx("relative block aspect-[4/3] w-full overflow-hidden rounded-lg border-2", d.photo === src ? "border-[#b11c29]" : "border-transparent")}><img src={imgSrc(src)} alt="" className="size-full object-cover" />{d.photo === src && <span className="absolute left-1 top-1 rounded bg-[#b11c29] px-1.5 text-[11px] font-semibold text-white">Cover</span>}</button>
+                {up && <button type="button" onClick={() => setD((x) => ({ ...x, photos: (x.photos ?? []).filter((p) => p !== src), photo: x.photo === src ? undefined : x.photo }))} aria-label={`Remove uploaded photo ${i + 1}`} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white"><X className="size-3.5" /></button>}
+              </span>
+            ); })}
           </div>
-          <p className="mt-2 text-[12.5px] text-[#4d5664]">Choosing from the property&apos;s photos. Uploading new photos (up to 10, auto-compressed) is in the live HMS; not connected in this prototype.</p>
+          <p className="mt-2 text-[12.5px] text-[#4d5664]">Up to 10 photos, shrunk automatically. In this prototype uploads stay in this browser; the live HMS stores them with the room type.</p>
         </section>
 
         <section className={box} aria-labelledby="rt-desc">

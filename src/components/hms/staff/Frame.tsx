@@ -57,7 +57,7 @@ export function StaffFrame({
   return (
     <>
       <div className="h-full overflow-y-auto bg-[#f4f6f8]">
-        <div className="mx-auto max-w-[1480px] px-6 py-5 lg:px-7">
+        <div className="hms-page">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>

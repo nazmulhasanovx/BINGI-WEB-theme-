@@ -26,7 +26,7 @@ export function ModulePlaceholder({ id }: { id: string }) {
   const item = ALL_ITEMS.find((i) => i.id === id);
   const [about, where] = ABOUT[id] ?? ["", "Live in HMS"];
   return (
-    <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[1280px] p-4 sm:p-6">
+    <div className="h-full overflow-y-auto"><div className="hms-page">
       <h1 className="text-[24px] font-bold tracking-[-0.01em]">{item?.label ?? "Module"}</h1>
       <p className="text-[14px] text-hms-muted">{about}</p>
       <section className="mt-5 rounded-xl border border-hms-line bg-white p-6 sm:p-8">

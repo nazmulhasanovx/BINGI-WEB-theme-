@@ -53,7 +53,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
   return (
     <>
       <div className="h-full overflow-y-auto bg-[#f4f6f8]">
-        <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-7">
+        <div className="hms-page">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>

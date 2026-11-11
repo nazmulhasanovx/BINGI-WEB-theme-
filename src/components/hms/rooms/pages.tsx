@@ -9,6 +9,7 @@ import { TODAY, leaves, nodePath, publishIssues, unitRate, useRooms, type Catego
 import { CORE, TEMPLATES, preset as presetOf, propertyTypeFor, youtubeId, type CoreType } from "@/lib/rooms/catalog";
 import { Btn, Chip, Drawer, Empty, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
+import { STATE, useUnitStates } from "./state";
 
 const fmtStamp = (s?: string) => (s ? `${s.slice(8, 10)} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(s.slice(5, 7)) - 1]} ${s.slice(0, 4)}${s.length > 10 ? `, ${s.slice(11, 16)}` : ""}` : "—");
 
@@ -41,6 +42,7 @@ export function UnitsPage() {
     toast(blocked ? `${ok.length} published · ${blocked} need fixing first` : `${ok.length} units published`);
   };
   const u = open ? st.units.find((x) => x.id === open) : undefined;
+  const tonight = useUnitStates(st);
 
   return (
     <RoomsFrame tab="units">
@@ -102,8 +104,8 @@ export function UnitsPage() {
                       <span className="flex items-center justify-between gap-2"><span className="font-mono text-[17px] font-semibold">{x.code}</span><Icon className="size-4 text-[#4d5664]" aria-label={presetOf(x.preset).label} /></span>
                       <span className="mt-0.5 block truncate text-[13.5px] text-[#4d5664]">{cat(x.category)?.name}</span>
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <Chip tone={x.status === "published" ? "green" : x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "published" ? "Published" : x.status === "draft" ? "Draft" : "Archived"}</Chip>
-                        {x.ooo && <Chip tone="amber" className="!px-2 !py-0.5 !text-[12.5px]">Out of order</Chip>}
+                        {x.status === "published" ? (() => { const k = tonight.get(x.id) ?? "available"; return <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold"><span aria-hidden className={clsx("size-2 rounded-full", STATE[k].dot)} />{STATE[k].label}</span>; })()
+                          : <Chip tone={x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "draft" ? "Draft · not bookable" : "Archived"}</Chip>}
                       </span>
                     </button>
                   </li>

@@ -28,7 +28,7 @@ export function MealsFrame({ tab, children, toast, outlets = [], wide, sub }: { 
   const h = useProperty();
   const [outlet, setOutlet] = useOutlet(outlets);
   return (
-    <div className="h-full overflow-y-auto"><div className={clsx("mx-auto p-4 sm:p-6", wide ? "max-w-[1560px]" : "max-w-[1320px]")}>
+    <div className="h-full overflow-y-auto"><div className={"hms-page"}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[24px] font-bold tracking-[-0.01em]">Restaurant &amp; Bar</h1>
@@ -44,7 +44,7 @@ export function MealsFrame({ tab, children, toast, outlets = [], wide, sub }: { 
           <Link key={id} href={href} aria-current={tab === id ? "page" : undefined} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}</Link>
         ))}
       </nav>
-      <div className="mt-5">{children}</div>
+      <div key={tab} className="hms-page-in mt-5">{children}</div>
     </div>
     {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{toast}</div>}
     </div>

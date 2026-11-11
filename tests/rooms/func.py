@@ -53,7 +53,7 @@ with sync_playwright() as p:
   t("total unchanged", kp("Total rooms")==tot)
   # edit type
   c0.get_by_role("button",name="Edit Deluxe Garden View").click(); pg.wait_for_timeout(400); dlg=pg.get_by_role("dialog")
-  t("edit sections", all(s in dlg.inner_text() for s in ["Basic information","Price","Room numbers · 8","Cover photo","Description","Amenities","Meals"]))
+  t("edit sections", all(s in dlg.inner_text() for s in ["Basic information","Price","Room numbers · 8","Photos","Description","Amenities","Meals"]))
   t("tax synced", dlg.get_by_label("VAT (%)").is_disabled())
   dlg.get_by_label("Use hotel defaults").uncheck(); dlg.get_by_label("VAT (%)").fill("5"); dlg.get_by_label("Service charge (%)").fill("0")
   t("breakdown", "৳12,600" in dlg.inner_text())
@@ -63,6 +63,8 @@ with sync_playwright() as p:
   dlg.get_by_role("radiogroup",name="lunch option").get_by_role("radio",name="Paid").click(); dlg.get_by_role("button",name="Save room type").click()
   t("meal price required", "Add a price for each paid meal" in dlg.inner_text())
   dlg.get_by_label("lunch price per person").fill("900")
+  dlg.locator("input[type=file]").set_input_files("/tmp/ml/dish.jpg"); pg.wait_for_timeout(600)
+  t("room photo uploaded", "1/10 uploaded" in dlg.inner_text() and dlg.get_by_role("radio",name="Photo 1 (uploaded)").count()==1)
   dlg.get_by_role("radiogroup",name="Cover photo").get_by_role("radio").nth(2).click()
   dlg.get_by_label("Description guests see").fill("Quiet garden rooms.")
   dlg.get_by_role("button",name="Save room type").click(); pg.wait_for_timeout(400)
@@ -77,6 +79,7 @@ with sync_playwright() as p:
   t("rates sees rename", "Garden Deluxe" in pg.get_by_role("main").inner_text())
   # room numbers tab
   pg.goto(B+"/numbers"); pg.wait_for_timeout(1200)
+  t("numbers tab tonight states", "Booked tonight" in pg.get_by_role("main").inner_text() and "Available" in pg.get_by_role("main").inner_text())
   t("numbers tab ooo chips", pg.get_by_role("main").inner_text().count("Out of order")>=2)
   pg.goto(B+"/categories"); pg.wait_for_timeout(1000)
   t("old categories url", pg.get_by_role("heading",name="Room / Accommodation").is_visible())

@@ -10,7 +10,7 @@ def chk(pg,tag,w,sel="main"):
   if ov>0 or v: bad+=1; print(w,tag,"ov",ov,v)
 with sync_playwright() as p:
   b=p.chromium.launch()
-  for w in (390,768,1024,1440):
+  for w in (390,768,1024,1440,2560):
     pg=b.new_page(viewport={"width":w,"height":900}); pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: m.type=="error" and errs.append(m.text))
     pg.goto(B); pg.evaluate("localStorage.clear()"); pg.goto(B); pg.wait_for_timeout(1500)
     chk(pg,"grid",w); pg.screenshot(path=f"/tmp/rm/grid-{w}.png",full_page=True)

@@ -306,3 +306,12 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 #hotel-theme[data-master="roots"] { font-family:"Quicksand Variable", "Hind Siliguri", system-ui, sans-serif; }
 #hotel-theme[data-master="morning"] { font-family:"Outfit Variable", "Hind Siliguri", system-ui, sans-serif; }
 #hotel-theme[data-master="matir"] { font-family:"Hind Siliguri", "Hind Siliguri", system-ui, sans-serif; }
+
+/* One page frame for every HMS module: same width, same padding, so nothing jumps between modules. */
+.hms-page { margin-inline: auto; width: 100%; max-width: 1600px; padding: 16px; }
+@media (min-width: 640px) { .hms-page { padding: 24px; } }
+@media (min-width: 1280px) { .hms-page { padding: 28px 32px; } }
+/* Big screens (27" at 2560 px, 4K): scale the whole app so text and controls stay comfortable. */
+@media (min-width: 1880px) { .hms-app { zoom: 1.12; height: calc(100dvh / 1.12) !important; } }
+@media (min-width: 2300px) { .hms-app { zoom: 1.28; height: calc(100dvh / 1.28) !important; } }
+@media (min-width: 3200px) { .hms-app { zoom: 1.6; height: calc(100dvh / 1.6) !important; } }
