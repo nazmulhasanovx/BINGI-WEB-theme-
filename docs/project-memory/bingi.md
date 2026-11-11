@@ -110,7 +110,17 @@
 - **Services:** pickup ৳3,500, extra bed ৳2,500, breakfast ৳1,200 / ৳600, spa ৳4,500, …
 - **Restaurant:** "Ocean Table".
 
+## HMS prototype state (12 Nov 2026)
+- Every sidebar module is now a real prototype screen (no placeholders). Prototype only; demo data in the browser.
+- Decisions D1–D6 (11 Nov) applied: Communication Center owns message rules and texts; Payroll stays in Staff (Expenses shows it as a cost); subscription invoices only in Settings › Billing; sidebar "Operations" renamed "Expenses" (route unchanged); Reports is the full home (Bookings › Reports keeps a short view); Chat owns quick replies, payment note and location.
+- Money path: Bookings / Restaurant / Services → Payments (read-only ledger) → Cashbox (cash) → Finance (money paid online through BinGi, fees, payouts) → Reports. Nothing is stored twice.
+- Plan entitlements live in one helper (`src/lib/plan.ts`) that matches the public pricing table: Housekeeping, Restaurant (Business limited = 1 outlet; Ultra full), QR, Expenses, Other services = Business+; HRM, Inventory = Ultra.
+- Onboarding v7.4 (rounds 1–3): address typed on the page, sensible defaults preselected (moderate cancellation, BinGi Payments later, best-fit plan, best-fit website look), short review.
+- Tests: `tests/run_all.sh` (20+ suites), `tests/sweep.py` (all routes × 4 properties × 4 widths), `tests/themes/all.py`, `tests/onboarding/flow.py --all`.
+- Status doc: project doc `claude/design/HMS_Remaining_Modules_v1_Status_2026-11-12.md`.
+
 ## Open items
+- **Need Nazmul's decision (12 Nov):** Restaurant in Business (public pricing) vs "Ultra only" (project rule); messaging cost rule and prices; gateway fee rate; expense approval limit; role permissions inside the new modules; Bangla text for the new modules.
 - **To verify:** pricing per plan, trial, App Store, OTA, payments, backend for redesigned screens, AI, restaurant/KDS/QR live status.
 - **The 1 Nov 2026 audit** (146 points) is in `bingi-audit-2026-11-01.md`.
 - **Agreed phases:**
