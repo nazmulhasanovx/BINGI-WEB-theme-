@@ -74,6 +74,7 @@ export function GuestFields({ g, set, tried, details, hidePhone }: { g: GuestDra
         <F id="g-idt" label="ID type"><select id="g-idt" value={g.idType} onChange={(x) => set({ idType: x.target.value as IdType })} className={input}>{(foreign ? ["Passport"] : ["NID", "Passport", "Driving licence"]).map((t) => <option key={t}>{t}</option>)}</select></F>
         <F id="g-idn" label={<>{g.idType || "ID"} number {opt}</>} err={e.idNo}><input id="g-idn" value={g.idNo} onChange={(x) => set({ idNo: x.target.value.trim() })} className={input} placeholder={g.idType === "NID" ? "10, 13 or 17 digits" : "Number"} /></F>
       </div>
+      <p className="-mt-1 flex items-center gap-2 text-[12.5px] text-hms-muted"><button type="button" disabled className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-[#c9ced6] px-2.5 font-semibold text-[#6b7280]">Scan ID</button>Auto-fill from an NID/passport photo · Coming soon</p>
       {foreign && (
         <div className="grid gap-3 sm:grid-cols-2">
           <F id="g-visa" label={<>Visa number {opt}</>}><input id="g-visa" value={g.visaNo ?? ""} onChange={(x) => set({ visaNo: x.target.value })} className={input} /></F>

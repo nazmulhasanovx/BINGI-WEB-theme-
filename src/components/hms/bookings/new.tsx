@@ -61,10 +61,10 @@ export function NewBookingPage() {
   const [from, setFrom] = useState(start);
   const qTo = sp.get("to");
   const [to, setTo] = useState(qTo && qTo > start ? qTo : addDays(start, 1));
-  const [adults, setAdults] = useState(2);
+  const [adults, setAdults] = useState(() => Math.max(1, Math.min(8, Number(sp.get("adults")) || 2)));
   const [children, setChildren] = useState(0);
   const [picked, setPicked] = useState<string[]>(() => (sp.get("room") ? [sp.get("room")!] : []));
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(() => sp.get("phone") ?? "");
   const [useId, setUseId] = useState<string | null>(() => sp.get("guest"));
   const [gd, setGd] = useState<GuestDraft | null>(null);
   const [stay, setStay] = useState<StayDraft>(emptyStay);
@@ -118,7 +118,7 @@ export function NewBookingPage() {
   const found = !useId && phoneKey(phone).length >= 8 ? g.findByPhone(phone) : undefined;
   const guest = useId ? g.rows.find((r) => r.id === useId) : undefined;
   const showForm = !!guest || (!found && phoneKey(phone).length >= 8);
-  const draft: GuestDraft = gd ?? (guest ? guestToDraft(guest) : { ...emptyGuest(), phone });
+  const draft: GuestDraft = gd ?? (guest ? guestToDraft(guest) : { ...emptyGuest(), name: sp.get("name") ?? "", phone });
   const shown: GuestDraft = guest ? draft : { ...draft, phone };
   const setDraft = (p: Partial<GuestDraft>) => setGd({ ...shown, ...p });
 

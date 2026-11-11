@@ -28,7 +28,7 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
   checkIn: "14:00", checkOut: "12:00", earlyFee: 1500, lateFee: 1500, freeCancelDays: 2, cancelFeePct: 50, noShowFeePct: 100, depositDefault: 2000,
   confirmMsg: "Dear {guest}, your booking {code} at {hotel} is confirmed: {room}, {from} to {to} ({nights} nights). Total {total}, paid {paid}. Check-in from {checkin}. See you soon!",
-  preArrivalMsg: "Hi {guest}, we look forward to welcoming you at {hotel} on {from}. Check-in is from {checkin}. Please bring your NID/passport. Reply with your arrival time. Booking {code}.",
+  preArrivalMsg: "Hi {guest}, we look forward to welcoming you at {hotel} on {from}. Check-in is from {checkin}. Save time at the desk — pre-check-in here: {link} . Booking {code}.",
 };
 export type Audit = { date: string; at: string; by: string; arrivals: number; departures: number; noShows: number; inHouse: number; revenue: number; collected: number };
 export type Wait = { id: string; name: string; phone: string; from: string; to: string; category?: string; adults: number; note: string; at: string; done?: string };
@@ -54,6 +54,8 @@ export type Booking = {
   booker?: { name: string; phone: string };
   /** Meals added to every night (e.g. dinner for all adults) — part of the room package, taxed like the room. */
   mealPlan?: { name: string; perNight: number };
+  /** Guest filled the online pre-check-in form (prototype: this browser only). */
+  precheck?: { at: string; idType?: string; idNo?: string; note?: string };
   /** Extra charges on the bill (early check-in, late check-out, minibar, damage…). Amounts include VAT. */
   charges?: Charge[];
   /** Security deposit — held, not part of the bill. Returned, or used to pay the bill. */
@@ -376,6 +378,12 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st, clash]);
 
+  const precheckIn = useCallback((code: string, p: { eta?: string; idType?: string; idNo?: string; note?: string }) => save((s) => {
+    const x = find(s, code); x.precheck = { at: stamp(), idType: p.idType, idNo: p.idNo, note: p.note };
+    if (p.eta) x.eta = p.eta;
+    log(x, `Guest pre-checked in online${p.eta ? ` · arriving ${p.eta}` : ""}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [st]);
   /** Drag on the calendar: new room and/or new dates in one step. Booked nights keep their price; new nights take `price`. */
   const moveStay = useCallback((code: string, unit: string, from: string, to: string, price: (date: string) => number): string => {
     const b = find(now(), code);
@@ -462,7 +470,7 @@ export function useBookings(h: Hotel) {
   [st]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
 
-  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
+  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, precheckIn, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
 }
 export type Bk = ReturnType<typeof useBookings>;
 export type { Unit };

@@ -2,7 +2,10 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useState, type ReactNode } from "react";
-import { CircleCheck, Lock, Moon, Plane } from "lucide-react";
+import { CircleCheck, Lock, Moon, Plane, Printer } from "lucide-react";
+import { formCHtml, registerHtml } from "@/lib/bookings/docs";
+import { printHtml } from "../meals/print";
+import { useProperty } from "../property";
 import { TODAY } from "@/lib/rooms/store";
 import { DEFAULT_SETTINGS, OTAS, bill, dm, dmy, dueOf, policyFee, timeOf, tk, type Settings } from "@/lib/bookings/store";
 import { input, lbl } from "../guests/ui";
@@ -50,7 +53,7 @@ function SettingsBody() {
       <Box title="Security deposit">
         <div className="max-w-xs"><F id="st-dp" label="Default amount (৳)" hint="Held at check-in, not part of the bill."><input id="st-dp" {...num("depositDefault")} className={input} /></F></div>
       </Box>
-      <Box title="Messages" sub="Words in {braces} fill in by themselves: {guest} {code} {hotel} {room} {from} {to} {nights} {total} {paid} {checkin}">
+      <Box title="Messages" sub="Words in {braces} fill in by themselves: {guest} {code} {hotel} {room} {from} {to} {nights} {total} {paid} {checkin} {link}">
         <div className="grid gap-4 lg:grid-cols-2">
           <F id="st-cm" label="Booking confirmation"><textarea id="st-cm" rows={4} value={s.confirmMsg} onChange={(e) => setS({ ...s, confirmMsg: e.target.value })} className={clsx(input, "h-auto py-2")} /></F>
           <F id="st-pm" label="Before arrival"><textarea id="st-pm" rows={4} value={s.preArrivalMsg} onChange={(e) => setS({ ...s, preArrivalMsg: e.target.value })} className={clsx(input, "h-auto py-2")} /></F>
@@ -76,6 +79,7 @@ export function DayClosePage() {
   return <BookingsFrame tab="close"><DayCloseBody /></BookingsFrame>;
 }
 function DayCloseBody() {
+  const h = useProperty();
   const { bk, guests, toast, open } = useBk();
   const S = bk.settings;
   const L = bk.list;
@@ -120,6 +124,14 @@ function DayCloseBody() {
           {owing.length ? <ul className="divide-y divide-hms-line">{owing.map((b) => <li key={b.code} className="flex items-center gap-3 py-2.5"><button onClick={() => open(b.code)} className="min-w-0 flex-1 text-left"><b className="block text-[14px]">{name(b.guestId)}</b><span className="text-[12.5px] text-hms-muted">Room {b.unit}</span></button><b className="tabular-nums text-[#b42318]">{tk(dueOf(b))}</b></li>)}</ul> : <Ok text="All in-house guests are paid up." />}
         </Box>
       </div>
+      <Box title="Registers for tonight" sub="Daily guest register and foreign-guest list (Form-C) — print or save as PDF.">
+        {(() => { const rows = L.filter((b) => b.status === "Checked in").sort((a, c) => a.unit.localeCompare(c.unit, undefined, { numeric: true })).map((b) => ({ b, g: guests.get(b.guestId) })); const foreign = rows.filter((r) => r.g && r.g.country !== "Bangladesh"); const missing = rows.filter((r) => !r.g?.idNo).length; return (
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => printHtml(registerHtml(h, TODAY, rows))} className={clsx(bSoft, "!h-10")}><Printer className="size-4" />Guest register · {rows.length}</button>
+            <button onClick={() => printHtml(formCHtml(h, TODAY, foreign))} className={clsx(bSoft, "!h-10")}><Printer className="size-4" />Form-C · {foreign.length} foreign</button>
+            {missing > 0 && <span className="text-[13px] font-semibold text-[#a15c00]">{missing} guest{missing > 1 ? "s" : ""} without ID number</span>}
+          </div>); })()}
+      </Box>
       <Box title="Closed days">
         {bk.audits.length ? <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-[13.5px]"><thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="py-2 font-semibold">Date</th><th className="font-semibold">Arrived</th><th className="font-semibold">Left</th><th className="font-semibold">In house</th><th className="font-semibold">No-shows</th><th className="text-right font-semibold">Revenue</th><th className="text-right font-semibold">Collected</th></tr></thead>
           <tbody className="divide-y divide-hms-line">{bk.audits.map((a) => <tr key={a.date + a.at}><td className="py-2 font-semibold">{dm(a.date)}<span className="block text-[12px] font-normal text-hms-muted">{timeOf(a.at)} · {a.by}</span></td><td>{a.arrivals}</td><td>{a.departures}</td><td>{a.inHouse}</td><td>{a.noShows}</td><td className="text-right tabular-nums">{tk(a.revenue)}</td><td className="text-right tabular-nums">{tk(a.collected)}</td></tr>)}</tbody></table></div>

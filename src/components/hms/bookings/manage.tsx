@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarRange, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { bill, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
-import { confirmationHtml, fillMsg, invoiceHtml, receiptHtml, regCardHtml } from "@/lib/bookings/docs";
+import { confirmationHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, regCardHtml } from "@/lib/bookings/docs";
 import { printHtml } from "../meals/print";
 import { useBkMode } from "@/lib/bookings/mode";
 import { useRates } from "@/lib/rates/store";
@@ -358,6 +358,7 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
     ["Registration card", "Guest details, ID and signature — at check-in", () => regCardHtml(h, b, g)],
     [b.payer?.kind === "Company" ? `Invoice to ${b.payer.name}` : "Invoice", "Every charge, payments and balance", () => invoiceHtml(h, b, g, extras)],
   ];
+  const link = precheckUrl(h, b);
   const msgs: [string, string][] = [["Confirmation message", fillMsg(S.confirmMsg, h, b, g, S)], ["Pre-arrival message", fillMsg(S.preArrivalMsg, h, b, g, S)]];
   const wa = (t: string) => `https://wa.me/${(g?.phone ?? "").replace(/\D/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(t)}`;
   const copy = async (t: string) => { try { await navigator.clipboard.writeText(t); toast("Message copied"); } catch { toast("Copy not allowed here — select the text"); } };
@@ -369,6 +370,12 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
           {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button></li>)}
         </ul>
         <p className="mt-2 text-[12.5px] text-hms-muted">Choose “Save as PDF” in the print dialog to keep or send a file.</p>
+        {b.status === "Confirmed" && <div className="mt-3 rounded-xl bg-[#f7f8fa] p-3">
+          <p className="text-[13px] font-semibold">Online pre-check-in {b.precheck ? <span className="text-[#16693a]">· done {dm(b.precheck.at.slice(0, 10))} {timeOf(b.precheck.at)}</span> : <span className="font-normal text-hms-muted">· not yet</span>}</p>
+          <p className="mt-1 break-all text-[12.5px] text-[#3a414c]">{link}</p>
+          <div className="mt-2 flex gap-2"><button onClick={() => copy(link)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy link</button><a href={link} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}>Open</a></div>
+          <p className="mt-1.5 text-[12px] text-hms-muted">Guest confirms with the last 4 digits of their phone. Prototype: answers save in this browser only.</p>
+        </div>}
       </Box>
       <Box title="Messages to the guest">
         {msgs.map(([t, m]) => (

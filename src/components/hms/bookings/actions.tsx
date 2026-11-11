@@ -90,8 +90,8 @@ export function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: Vi
   const guest = guests.get(b.guestId);
   const free = bk.freeUnits(TODAY > b.from ? TODAY : b.from, b.to, b.code);
   const [unit, setUnit] = useState(b.unit && free.some((u) => u.code === b.unit) ? b.unit : b.unit || "");
-  const [idType, setIdType] = useState<IdType>(guest?.idType || "NID");
-  const [idNo, setIdNo] = useState(guest?.idNo ?? "");
+  const [idType, setIdType] = useState<IdType>(guest?.idNo ? guest.idType : (b.precheck?.idType as IdType) || guest?.idType || "NID");
+  const [idNo, setIdNo] = useState(guest?.idNo || b.precheck?.idNo || "");
   const owe = Math.max(0, dueOf(b) + extras);
   // Never pre-filled: taking money is always a deliberate tap.
   const [amt, setAmt] = useState("");
@@ -136,6 +136,7 @@ export function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: Vi
           <input aria-label="ID number" value={idNo} onChange={(e) => setIdNo(e.target.value.trim())} placeholder={idType === "NID" ? "10, 13 or 17 digits" : "Number"} className={input} />
         </div>
       </div>
+      {b.precheck && <p className="mt-3 flex items-start gap-2 rounded-xl bg-[#e5f5ec] px-3.5 py-2.5 text-[13.5px] text-[#14532d]"><CircleAlert className="mt-0.5 size-4 shrink-0" /><span>Pre-checked in online{b.eta ? ` · arriving ${b.eta}` : ""}{b.precheck.note ? ` · “${b.precheck.note}”` : ""}. Check the ID matches.</span></p>}
       {unit && !hk.isReady(unit) && <p role="note" className="mt-3 flex items-start gap-2 rounded-xl bg-[#fff4e0] px-3.5 py-2.5 text-[13.5px] text-[#6b4309]"><Brush className="mt-0.5 size-4 shrink-0" /><span>Room {unit} is <b>{hk.stateOf(unit)}</b> — not cleaned yet. Pick a clean room above, or check in and let the guest wait.</span></p>}
       <GuestAlerts b={b} />
       <label className="mt-4 flex items-center gap-3 rounded-xl border border-hms-line px-3.5 py-2.5 text-[14px]"><input type="checkbox" checked={early} onChange={(e) => setEarly(e.target.checked)} className="size-4 accent-[#b11c29]" /><span className="flex-1">Early check-in (before {S.checkIn})</span><b className="tabular-nums">+{tk(S.earlyFee)}</b></label>

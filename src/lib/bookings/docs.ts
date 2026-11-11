@@ -98,7 +98,13 @@ ${rows.map(({ b, g }, i) => `<tr><td>${i + 1}</td><td class="b">${esc(g?.name)}<
 }
 
 /** Fill a message template ({guest}, {code}, {hotel}, {room}, {from}, {to}, {nights}, {total}, {paid}, {checkin}). */
+/** Guest-facing pre-check-in page for this booking (works on the Next app and the hash-routed preview). */
+export function precheckUrl(h: Hotel, b: Booking) {
+  if (typeof window === "undefined") return `/hotel/${h.slug}/precheckin?b=${b.code}`;
+  const { origin, pathname, hash } = window.location;
+  return hash.startsWith("#/") ? `${origin}${pathname}#/hotel/${h.slug}/precheckin?b=${b.code}` : `${origin}/hotel/${h.slug}/precheckin?b=${b.code}`;
+}
 export function fillMsg(t: string, h: Hotel, b: Booking, g: Guest | undefined, s: Settings) {
-  const map: Record<string, string> = { guest: g?.name ?? "Guest", code: b.code, hotel: h.name, room: b.unit ? `Room ${b.unit} (${b.type})` : b.type, from: dmy(b.from), to: dmy(b.to), nights: String(b.nights.length), total: tk(totalOf(b)), paid: tk(paidOf(b)), checkin: s.checkIn };
+  const map: Record<string, string> = { link: precheckUrl(h, b), guest: g?.name ?? "Guest", code: b.code, hotel: h.name, room: b.unit ? `Room ${b.unit} (${b.type})` : b.type, from: dmy(b.from), to: dmy(b.to), nights: String(b.nights.length), total: tk(totalOf(b)), paid: tk(paidOf(b)), checkin: s.checkIn };
   return t.replace(/\{(\w+)\}/g, (m, k) => map[k] ?? m);
 }
