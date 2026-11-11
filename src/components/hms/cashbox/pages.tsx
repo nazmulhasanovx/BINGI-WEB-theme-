@@ -6,7 +6,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, Banknote, ChevronRight, CircleCheck, Lock, RotateCcw, Search, Settings2, Undo2, UtensilsCrossed, Wallet } from "lucide-react";
 import { TODAY, useRooms } from "@/lib/rooms/store";
-import { demoStays, DEMO_GUESTS } from "@/lib/bookings/demo";
+import { useStays } from "@/lib/bookings/store";
+import { useGuestNames } from "@/lib/guests/store";
 import { APPROVAL_LIMIT, IN_FOR, IN_LABEL, MAIN, NOTES, OUT_FOR, OUT_LABEL, PETTY, fmtDate, fmtTime, label, tk, totals, useCashbox, type Cashbox, type Day, type InSource, type Movement, type OutReason } from "@/lib/cashbox/store";
 import { useProperty } from "../property";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
@@ -20,18 +21,14 @@ export function useCashboxData(drawerId = MAIN) { return useData(drawerId); }
 function useData(drawerId = MAIN) {
   const h = useProperty();
   const { st: rooms } = useRooms(h);
-  const stays = useMemo(() => {
-    const cat = new Map(rooms.categories.map((c) => [c.id, c]));
-    const live = rooms.units.filter((u) => u.status === "published");
-    const list = live.length ? live : rooms.units.filter((u) => u.status !== "archived");
-    return demoStays(h.slug, list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 })));
-  }, [h.slug, rooms]);
-  const names = useMemo(() => new Map(DEMO_GUESTS.map((g) => [g.id, g.name])), []);
+  const stays = useStays(h);
+  const gmap = useGuestNames(h);
+  const names = useMemo(() => new Map([...gmap].map(([id, g]) => [id, g.name])), [gmap]);
   const refs = useMemo(() => stays.filter((s) => s.status !== "Checked out").map((s) => ({ code: s.code, guest: names.get(s.guestId) ?? "Guest" })), [stays, names]);
   const unpaid = stays.filter((s) => s.due > 0 && ((s.status === "Confirmed" && s.from === TODAY) || (s.status === "Checked in" && s.to === TODAY))).length;
   const ooo = rooms.units.filter((u) => u.status === "published" && u.ooo).length;
   const cb = useCashbox(h, refs, drawerId);
-  return { h, cb, refs, unpaid, ooo, stays };
+  return { h, cb, refs, unpaid, ooo, stays, names };
 }
 
 type Tab = "today" | "moves" | "days" | "settings";

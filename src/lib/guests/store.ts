@@ -4,8 +4,9 @@
 // (reply and publication are moderated by BinGi Super Admin). Stays come from bookings.
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
-import { TODAY, useRooms } from "@/lib/rooms/store";
-import { DEMO_GUESTS, demoReviews, demoStays, type Review, type Stay } from "@/lib/bookings/demo";
+import { TODAY } from "@/lib/rooms/store";
+import { DEMO_GUESTS, demoReviews, type Review, type Stay } from "@/lib/bookings/demo";
+import { useStays } from "@/lib/bookings/store";
 
 export type IdType = "NID" | "Passport" | "Driving licence" | "";
 export type Guest = {
@@ -56,13 +57,7 @@ export type GuestRow = Guest & { stays: Stay[]; state: GuestState; spent: number
 
 export function useGuests(h: Hotel) {
   const st = useSyncExternalStore(sub, () => read(h.slug), () => BASE);
-  const { st: rooms } = useRooms(h);
-  const stays = useMemo(() => {
-    const cat = new Map(rooms.categories.map((c) => [c.id, c]));
-    const live = rooms.units.filter((u) => u.status === "published");
-    const list = live.length ? live : rooms.units.filter((u) => u.status !== "archived");
-    return demoStays(h.slug, list.map((u) => ({ code: u.code, type: cat.get(u.category)?.name ?? "Room", rate: u.rate ?? cat.get(u.category)?.baseRate ?? 0 })));
-  }, [h.slug, rooms]);
+  const stays = useStays(h);
   const reviews: (Review & ReviewAct)[] = useMemo(() => demoReviews(stays).map((r) => ({ ...r, ...st.acts[r.id] })).sort((a, b) => b.date.localeCompare(a.date)), [stays, st.acts]);
   const rows: GuestRow[] = useMemo(() => st.guests.map((g) => {
     const s = stays.filter((x) => x.guestId === g.id).sort((a, b) => b.from.localeCompare(a.from));
@@ -92,3 +87,9 @@ export const bdt = (n: number) => `BDT ${new Intl.NumberFormat("en-IN").format(M
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 export const dateShort = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 export const dm = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]}`;
+
+/** Guest names by id (includes guests added in Bookings or Guests). */
+export function useGuestNames(h: Hotel) {
+  const st = useSyncExternalStore(sub, () => read(h.slug), () => BASE);
+  return useMemo(() => new Map(st.guests.map((g) => [g.id, g])), [st.guests]);
+}

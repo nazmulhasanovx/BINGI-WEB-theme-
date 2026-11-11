@@ -249,8 +249,18 @@ export function postCash(h: Hotel, stays: StayRef[], outlet: string, m: { amount
   const to = drawerFor(h, stays, outlet);
   if (!to.open) return `${to.name} is not open — open it before taking cash`;
   const s = structuredClone(read(h, stays));
-  const source: InSource = to.id === MAIN ? "restaurant" : m.source;
+  // Restaurant cash landing in the main drawer shows as "Restaurant"; bookings and services keep their own source.
+  const source: InSource = to.id === MAIN && (m.source === "dinein" || m.source === "takeaway" || m.source === "roomservice") ? "restaurant" : m.source;
   s.moves.push({ id: `m${s.seq++}`, drawer: to.id, day: TODAY, at: stamp(), kind: "in", amount: m.amount, source, ref: m.ref, party: m.party, by: ME, auto: true });
+  write(h.slug, s);
+  return "";
+}
+/** Cash paid back to a guest from the main drawer (auto-posted). Returns an error or "". */
+export function postCashOut(h: Hotel, stays: StayRef[], m: { amount: number; ref: string; party?: string }) {
+  const s0 = read(h, stays);
+  if (!isOpen(s0, MAIN)) return "Main cashbox is not open — open it before paying cash";
+  const s = structuredClone(s0);
+  s.moves.push({ id: `m${s.seq++}`, drawer: MAIN, day: TODAY, at: stamp(), kind: "out", amount: m.amount, reason: "refund", ref: m.ref, party: m.party, by: ME, auto: true });
   write(h.slug, s);
   return "";
 }

@@ -56,7 +56,7 @@ export function GuestProfilePage({ id }: { id: string }) {
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-4">
           <section aria-labelledby="stays" className="rounded-xl border border-hms-line bg-white">
-            <h3 id="stays" className="px-5 pb-2 pt-4 text-[16px] font-bold">Stays</h3>
+            <div className="flex items-center justify-between px-5 pb-2 pt-4"><h3 id="stays" className="text-[16px] font-bold">Stays</h3>{!g.blocked && <Link href={`/hms/bookings/new?guest=${g.id}`} className="text-[13.5px] font-semibold text-hms-red">+ New booking</Link>}</div>
             {g.stays.length ? (
               <div className="overflow-x-auto px-2 pb-2" tabIndex={0} role="region" aria-label="Stays table">
                 <table className="w-full min-w-[560px] text-[14px]">
@@ -64,7 +64,7 @@ export function GuestProfilePage({ id }: { id: string }) {
                   <tbody>
                     {g.stays.map((s) => (
                       <tr key={s.code} className="border-t border-hms-line">
-                        <td className="px-3 py-2.5"><span className="font-mono text-[13px]">{s.code}</span><span className="block text-[12px] text-hms-muted">{s.channel}</span></td>
+                        <td className="px-3 py-2.5"><Link href={`/hms/bookings/list?b=${s.code}`} className="font-mono text-[13px] font-semibold text-hms-red hover:underline">{s.code}</Link><span className="block text-[12px] text-hms-muted">{s.channel}</span></td>
                         <td className="px-3 py-2.5">{s.room}<span className="block max-w-[140px] truncate text-[12px] text-hms-muted">{s.type}</span></td>
                         <td className="whitespace-nowrap px-3 py-2.5 tabular-nums">{dm(s.from)} – {dm(s.to)}<span className="block text-[12px] text-hms-muted">{s.nights} night{s.nights > 1 ? "s" : ""}</span></td>
                         <td className="px-3 py-2.5"><Tag tone={s.status === "Checked in" ? "gray" : s.status === "Confirmed" ? "green" : "gray"}>{s.status}</Tag></td>
