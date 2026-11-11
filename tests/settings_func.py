@@ -1,0 +1,137 @@
+import re, json
+from playwright.sync_api import sync_playwright
+B="http://localhost:3100"
+AXE=open("/tmp/axe/node_modules/axe-core/axe.min.js").read()
+ok=0;n=0;fails=[]
+def t(m,c):
+  global ok,n; n+=1; ok+=bool(c); print(("PASS " if c else "FAIL ")+m, flush=True)
+  if not c: fails.append(m)
+def axe(pg,label):
+  pg.add_script_tag(content=AXE)
+  r=pg.evaluate("axe.run(document,{runOnly:['wcag2a','wcag2aa']}).then(r=>r.violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>v.id+':'+v.nodes.length+':'+v.nodes[0].target))")
+  t(f"axe {label} {r}", not r)
+IDS=["overview","profile","branding","regional","policies","taxes","housekeeping","restaurant","channels","payments","documents","billing","messages","users","security","properties","activity","preferences"]
+with sync_playwright() as p:
+  b=p.chromium.launch(); errs=[]
+  pg=b.new_page(viewport={"width":1440,"height":900}); pg.on("pageerror",lambda e: errs.append(str(e)[:200]))
+  M=lambda: pg.locator("main").inner_text()
+  ST=lambda: pg.get_by_role("status").inner_text() if pg.get_by_role("status").count() else ""
+  save=lambda: (pg.get_by_role("button",name="Save",exact=True).click(), pg.wait_for_timeout(300))
+  pg.goto(B+"/hms/settings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
+  nav=pg.get_by_role("complementary",name="Settings")
+  t("17 pages + overview in nav", nav.get_by_role("link").count()==18)
+  t("no placeholder", "Not redesigned yet" not in M() and "Setup checklist" in M())
+  # every page loads + axe
+  for i in IDS:
+    pg.goto(B+"/hms/settings/"+i); pg.wait_for_timeout(700)
+    t(f"page {i} loads", pg.locator("main h1").count()>=1)
+    if i in ("overview","policies","payments","users","documents","messages","taxes","activity","preferences","channels"): axe(pg,i)
+  # search
+  pg.goto(B+"/hms/settings"); pg.wait_for_timeout(900)
+  pg.get_by_label("Search settings").fill("vat"); pg.wait_for_timeout(200)
+  t("search filters nav", nav.get_by_role("link").count()<=3 and nav.get_by_role("link",name="Taxes & pricing").count()==1)
+  pg.get_by_label("Search settings").fill("")
+  # profile save -> checklist + docs
+  pg.goto(B+"/hms/settings/profile"); pg.wait_for_timeout(900)
+  t("save bar hidden until change", pg.get_by_role("button",name="Save",exact=True).count()==0)
+  pg.get_by_label("VAT BIN").fill("000123456-0101"); pg.get_by_label("Name",exact=True).fill("Rafiq Owner")
+  t("save bar shows", pg.get_by_role("button",name="Save",exact=True).count()==1)
+  save(); t(f"profile saved ({ST()})", "saved" in ST().lower())
+  pg.goto(B+"/hms/settings"); pg.wait_for_timeout(900)
+  t("checklist updated (BIN + billing)", "4 of 7" in M() and "Property profile updated" in M())
+  # taxes -> rooms/bookings use new VAT
+  pg.goto(B+"/hms/settings/taxes"); pg.wait_for_timeout(900)
+  pg.get_by_label("VAT",exact=True).fill("10"); pg.wait_for_timeout(100)
+  t("tax example live", "VAT 10%" in M())
+  save()
+  pg.goto(B+"/hms/bookings/walkin"); pg.wait_for_timeout(1200)
+  pg.get_by_role("radio").filter(has_text=re.compile(r"^\d")).first.click(); pg.wait_for_timeout(200)
+  tot=int(re.search(r"৳([\d,]+)\s*incl", M()).group(1).replace(",",""))
+  pg.goto(B+"/hms/settings/taxes"); pg.wait_for_timeout(900); pg.get_by_label("VAT",exact=True).fill("15"); save()
+  pg.goto(B+"/hms/bookings/walkin"); pg.wait_for_timeout(1200)
+  pg.get_by_role("radio").filter(has_text=re.compile(r"^\d")).first.click(); pg.wait_for_timeout(200)
+  tot2=int(re.search(r"৳([\d,]+)\s*incl", M()).group(1).replace(",",""))
+  t(f"bookings follow hotel VAT ({tot} → {tot2})", tot2>tot)
+  # policies -> bookings settings (one home)
+  pg.goto(B+"/hms/settings/policies"); pg.wait_for_timeout(900)
+  pg.get_by_label("Late check-out",exact=True).select_option("charge"); pg.get_by_label("Late check-out fee").fill("2500")
+  pg.get_by_label("No-show fee").fill("80"); save()
+  t(f"policies saved ({ST()})", "saved" in ST().lower())
+  bks=pg.evaluate("(()=>{const k=Object.keys(localStorage).find(k=>k.includes('bookings')&&k.includes('azure'));return JSON.parse(localStorage.getItem(k)).settings})()")
+  t(f"bookings store got policy {bks and (bks.get('lateFee'),bks.get('noShowFeePct'))}", bks and bks["lateFee"]==2500 and bks["noShowFeePct"]==80)
+  pg.goto(B+"/hms/bookings/settings"); pg.wait_for_timeout(1500)
+  t("old bookings settings → Settings policies", "/hms/settings/policies" in pg.url)
+  t("bookings has no Settings tab", pg.get_by_role("navigation",name="Bookings sections").count()==0 or pg.goto(B+"/hms/bookings") or pg.get_by_role("navigation",name="Bookings sections").get_by_role("link",name="Settings").count()==0)
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1000)
+  t("bookings tabs without Settings", pg.get_by_role("navigation",name="Bookings sections").get_by_role("link",name="Settings").count()==0)
+  # housekeeping rules -> inspection required
+  pg.goto(B+"/hms/settings/housekeeping"); pg.wait_for_timeout(900)
+  pg.get_by_role("switch",name="Inspection before Ready").click(); t("flow shows Inspected", "Inspected" in M()); save()
+  pg.goto(B+"/hms/housekeeping"); pg.wait_for_timeout(1300)
+  t("HK easy shows Mark inspected", pg.get_by_role("button",name=re.compile("^Mark inspected room")).count()>0)
+  pg.goto(B+"/hms/settings/housekeeping"); pg.wait_for_timeout(800); pg.get_by_role("switch",name="Inspection before Ready").click(); save()
+  # payments
+  pg.goto(B+"/hms/settings/payments"); pg.wait_for_timeout(900)
+  pg.get_by_label("bKash account").fill("01711-000000"); save()
+  t("payments saved", "saved" in ST().lower())
+  t("cash can't be turned off", pg.get_by_role("switch",name="Cash on",exact=True).is_disabled())
+  # documents -> invoice uses prefix + footer + BIN
+  pg.goto(B+"/hms/settings/documents"); pg.wait_for_timeout(900)
+  pg.get_by_label("Number starts with").fill("AZB-"); pg.get_by_label(re.compile("^Footer")).fill("Shukriya, see you again")
+  save()
+  pg.get_by_role("button",name=re.compile("Preview")).first.click(); pg.wait_for_timeout(80)
+  fr=pg.evaluate("[...document.querySelectorAll('iframe[aria-hidden]')].map(f=>f.contentDocument.body.innerText).join(' ')")
+  t("invoice uses settings (prefix, footer, BIN)", "AZB-" in fr and "Shukriya" in fr and "000123456-0101" in fr)
+  pg.wait_for_timeout(1500)
+  pg.get_by_role("radio",name="Stay agreement").click() if pg.get_by_role("radio",name="Stay agreement").count() else pg.get_by_role("button",name="Stay agreement").click()
+  pg.get_by_role("switch",name="Use a stay agreement").click(); pg.get_by_label("House rules & terms").fill("No smoking in rooms."); save()
+  pg.get_by_role("button",name=re.compile("Preview")).first.click(); pg.wait_for_timeout(80)
+  fr=pg.evaluate("[...document.querySelectorAll('iframe[aria-hidden]')].map(f=>f.contentDocument.body.innerText).join(' ')")
+  t("registration card has agreement", "No smoking in rooms." in fr)
+  pg.wait_for_timeout(1500)
+  # messages -> bookings templates
+  pg.goto(B+"/hms/settings/messages"); pg.wait_for_timeout(900)
+  pg.get_by_role("button",name="Message texts").click(); pg.get_by_label("Booking confirmation").fill("Hi {guest}, see you on {from}. {code}"); save()
+  bks=pg.evaluate("(()=>{const k=Object.keys(localStorage).find(k=>k.includes('bookings')&&k.includes('azure'));return JSON.parse(localStorage.getItem(k)).settings})()")
+  t("confirmation text saved to bookings", bks["confirmMsg"].startswith("Hi {guest}"))
+  pg.get_by_role("button",name="Chat replies").click(); pg.get_by_label("Quick reply name").fill("Breakfast"); pg.get_by_label("Quick reply text").fill("7-10 am"); pg.get_by_role("button",name="Add").click(); save()
+  t("quick reply saved", "Breakfast" in M())
+  # users & roles
+  pg.goto(B+"/hms/settings/users"); pg.wait_for_timeout(1000)
+  inv=pg.get_by_role("button",name=re.compile("^Invite "))
+  c0=inv.count(); inv.first.click(); pg.wait_for_timeout(300)
+  t("invite sends", "Invite sent" in ST() and pg.get_by_role("button",name=re.compile("^Invite ")).count()==c0-1)
+  pg.get_by_role("button",name="Roles").click(); pg.wait_for_timeout(200)
+  pg.get_by_label("Front office · Money").select_option("edit")
+  pg.get_by_label("New role name").fill("Night auditor"); pg.get_by_role("button",name="Add role").click(); save()
+  t("roles saved + new role", "Night auditor" in M() and "Roles saved" in ST())
+  pg.get_by_role("button",name="Users").click(); pg.wait_for_timeout(200)
+  t("new role selectable", "Night auditor" in pg.get_by_role("combobox").first.inner_text())
+  # properties switch
+  pg.goto(B+"/hms/settings/properties"); pg.wait_for_timeout(900)
+  t("properties list", pg.get_by_role("button",name="Open").count()>=5 and "Open now" in M())
+  # activity
+  pg.goto(B+"/hms/settings/activity"); pg.wait_for_timeout(1200)
+  t("activity merges modules", all(x in M() for x in ["Settings","Bookings"]) and "Booking policies updated" in M())
+  pg.get_by_label("Area").select_option("Settings"); pg.wait_for_timeout(200)
+  t("activity filter", "Booked ·" not in M())
+  # preferences
+  pg.goto(B+"/hms/settings/preferences"); pg.wait_for_timeout(900)
+  pg.get_by_role("button",name="Large",exact=True).click(); pg.wait_for_timeout(200)
+  t("text size applies", pg.evaluate("getComputedStyle(document.querySelector('main')).zoom")=="1.1")
+  pg.get_by_role("button",name="Normal",exact=True).click()
+  pg.get_by_role("button",name="Fold groups").click(); pg.wait_for_timeout(200)
+  t("sidebar style shared with sidebar switch", pg.evaluate("localStorage.getItem('hms-sidebar-mode')")=="expandable")
+  pg.get_by_role("button",name="Show all").click()
+  # billing single home
+  pg.goto(B+"/hms"); pg.wait_for_timeout(1000)
+  t("sidebar billing → settings", pg.get_by_role("link",name="Billing & Subscription").first.get_attribute("href").endswith("/hms/settings/billing"))
+  pg.goto(B+"/hms/billing"); pg.wait_for_timeout(800)
+  t("old /hms/billing gone", "404" in pg.locator("body").inner_text() or "not found" in pg.locator("body").inner_text().lower())
+  # mobile
+  m=b.new_page(viewport={"width":390,"height":844})
+  for i in ["overview","policies","payments","users","documents","messages"]:
+    m.goto(B+"/hms/settings/"+i); m.wait_for_timeout(1000)
+    t(f"mobile {i} no overflow", m.evaluate("document.documentElement.scrollWidth<=window.innerWidth+1"))
+  t(f"no page errors {errs}", not errs)
+  print(f"{ok}/{n}"); print("FAILS:",fails)

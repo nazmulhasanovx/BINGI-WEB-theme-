@@ -1,14 +1,13 @@
 "use client";
 import Link from "next/link";
 import clsx from "clsx";
-import { useState, type ReactNode } from "react";
-import { CircleCheck, Lock, Moon, Plane, Printer } from "lucide-react";
+import { type ReactNode } from "react";
+import { CircleCheck, Lock, Moon, Printer } from "lucide-react";
 import { formCHtml, registerHtml } from "@/lib/bookings/docs";
 import { printHtml } from "../meals/print";
 import { useProperty } from "../property";
 import { TODAY } from "@/lib/rooms/store";
-import { DEFAULT_SETTINGS, OTAS, bill, dm, dmy, dueOf, policyFee, timeOf, tk, type Settings } from "@/lib/bookings/store";
-import { input, lbl } from "../guests/ui";
+import { bill, dm, dmy, dueOf, policyFee, timeOf, tk } from "@/lib/bookings/store";
 import { BookingsFrame, ChannelBadge, bMain, bSoft, card, useBk } from "./ui";
 
 function Box({ title, sub, children, action }: { title: string; sub?: string; children: ReactNode; action?: ReactNode }) {
@@ -17,60 +16,6 @@ function Box({ title, sub, children, action }: { title: string; sub?: string; ch
       <div className="mb-3 flex items-start justify-between gap-3"><div><h2 className="text-[16px] font-bold">{title}</h2>{sub && <p className="text-[13px] text-hms-muted">{sub}</p>}</div>{action}</div>
       {children}
     </section>
-  );
-}
-
-// ---------------- Settings ----------------
-function F({ id, label, children, hint }: { id: string; label: string; children: ReactNode; hint?: string }) {
-  return <div><label htmlFor={id} className={lbl}>{label}</label>{children}{hint && <p className="mt-1 text-[12.5px] text-hms-muted">{hint}</p>}</div>;
-}
-export function SettingsPage() {
-  return <BookingsFrame tab="settings"><SettingsBody /></BookingsFrame>;
-}
-function SettingsBody() {
-  const { bk, toast, mode } = useBk();
-  const [s, setS] = useState<Settings>(bk.settings);
-  const dirty = JSON.stringify(s) !== JSON.stringify(bk.settings);
-  const num = (k: keyof Settings) => ({ value: String(s[k]), inputMode: "numeric" as const, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [k]: Number(e.target.value.replace(/\D/g, "")) || 0 }) });
-  const pct = Math.min(100, s.cancelFeePct), nsp = Math.min(100, s.noShowFeePct);
-  return (
-    <div className="space-y-4 pb-24">
-      <Box title="Check-in & check-out" sub="Shown on confirmations and used for early / late fees.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <F id="st-ci" label="Check-in from"><input id="st-ci" type="time" value={s.checkIn} onChange={(e) => setS({ ...s, checkIn: e.target.value })} className={input} /></F>
-          <F id="st-co" label="Check-out by"><input id="st-co" type="time" value={s.checkOut} onChange={(e) => setS({ ...s, checkOut: e.target.value })} className={input} /></F>
-          <F id="st-ef" label="Early check-in fee (৳)"><input id="st-ef" {...num("earlyFee")} className={input} /></F>
-          <F id="st-lf" label="Late check-out fee (৳)"><input id="st-lf" {...num("lateFee")} className={input} /></F>
-        </div>
-      </Box>
-      <Box title="Cancellation & no-show" sub="The fee is suggested by itself when staff cancel — they can still change it.">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <F id="st-fd" label="Free cancellation until" hint={`${s.freeCancelDays} day${s.freeCancelDays === 1 ? "" : "s"} before arrival`}><input id="st-fd" {...num("freeCancelDays")} className={input} /></F>
-          <F id="st-cf" label="Late cancellation fee (%)" hint={`${pct}% of the first night`}><input id="st-cf" {...num("cancelFeePct")} className={input} /></F>
-          <F id="st-nf" label="No-show fee (%)" hint={`${nsp}% of the first night`}><input id="st-nf" {...num("noShowFeePct")} className={input} /></F>
-        </div>
-      </Box>
-      <Box title="Security deposit">
-        <div className="max-w-xs"><F id="st-dp" label="Default amount (৳)" hint="Held at check-in, not part of the bill."><input id="st-dp" {...num("depositDefault")} className={input} /></F></div>
-      </Box>
-      <Box title="Messages" sub="Words in {braces} fill in by themselves: {guest} {code} {hotel} {room} {from} {to} {nights} {total} {paid} {checkin} {link}">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <F id="st-cm" label="Booking confirmation"><textarea id="st-cm" rows={4} value={s.confirmMsg} onChange={(e) => setS({ ...s, confirmMsg: e.target.value })} className={clsx(input, "h-auto py-2")} /></F>
-          <F id="st-pm" label="Before arrival"><textarea id="st-pm" rows={4} value={s.preArrivalMsg} onChange={(e) => setS({ ...s, preArrivalMsg: e.target.value })} className={clsx(input, "h-auto py-2")} /></F>
-        </div>
-      </Box>
-      {mode === "details" && <Box title="OTA connections" sub="Bookings from OTAs are entered by staff with the OTA booking ID.">
-        <ul className="divide-y divide-hms-line">
-          {OTAS.map((o) => <li key={o} className="flex items-center gap-3 py-2.5"><Plane className="size-4 text-[#5b45c9]" /><b className="flex-1 text-[14px]">{o}</b><span className="rounded-full bg-[#eef0f3] px-2.5 py-1 text-[12px] font-semibold text-[#4d5664]">Not connected · Coming soon</span></li>)}
-        </ul>
-        <p className="mt-2 text-[12.5px] text-hms-muted">Live OTA sync (rates, availability, bookings) is not built in this prototype.</p>
-      </Box>}
-      <div className="sticky bottom-0 z-10 -mx-1 flex items-center gap-2 rounded-2xl border border-hms-line bg-white/95 p-3 backdrop-blur">
-        <span className="flex-1 text-[13.5px] text-hms-muted">{dirty ? "You have unsaved changes" : "All saved"}</span>
-        <button onClick={() => setS(DEFAULT_SETTINGS)} className={bSoft}>Use defaults</button>
-        <button disabled={!dirty} onClick={() => { bk.saveSettings(s); toast("Booking settings saved"); }} className={clsx(bMain, !dirty && "opacity-50")}>Save</button>
-      </div>
-    </div>
   );
 }
 

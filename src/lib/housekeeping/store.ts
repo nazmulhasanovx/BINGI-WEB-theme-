@@ -7,6 +7,7 @@ import { TODAY, useRooms } from "@/lib/rooms/store";
 import { useStays } from "@/lib/bookings/store";
 import { hash } from "@/lib/bookings/demo";
 import { useHrm } from "@/lib/hrm/store";
+import { useSettings } from "@/lib/settings/store";
 
 export type Clean = "Dirty" | "Cleaning" | "Clean" | "Inspected";
 export const CLEAN: Clean[] = ["Dirty", "Cleaning", "Clean", "Inspected"];
@@ -59,6 +60,7 @@ export function useHousekeeping(h: Hotel) {
   const { st: rooms } = useRooms(h);
   const stays = useStays(h);
   const hrm = useHrm();
+  const rules = useSettings(h).st.hk;
   const units = useMemo(() => rooms.units.filter((u) => u.status === "published").map((u) => u.code), [rooms.units]);
   const ready = stays.length > 0 || units.length === 0;
   const mk = useCallback(() => {
@@ -70,7 +72,8 @@ export function useHousekeeping(h: Hotel) {
   const save = useCallback((fn: (s: State) => void) => { const n = structuredClone(read(h.slug, mk)); fn(n); write(h.slug, n); }, [h.slug, mk]);
   const log = (s: State, text: string) => { s.log.unshift({ at: stamp(), text, by: ME }); s.log = s.log.slice(0, 200); };
   const stateOf = useCallback((room: string): Clean => st.rooms[room]?.s ?? "Inspected", [st]);
-  const isReady = useCallback((room: string) => { const s = stateOf(room); return s === "Clean" || s === "Inspected"; }, [stateOf]);
+  /** Settings → Housekeeping rules: with "inspection required", only Inspected rooms are ready. */
+  const isReady = useCallback((room: string) => { const s = stateOf(room); return s === "Inspected" || (s === "Clean" && !rules.inspection); }, [stateOf, rules.inspection]);
   const staff = useMemo(() => hrm.st.employees.filter((e) => e.dept === "Housekeeping" && e.status === "active").map((e) => e.name), [hrm.st.employees]);
 
   const setClean = useCallback((room: string, s: Clean, by = ME) => save((x) => {
@@ -98,12 +101,13 @@ export function useHousekeeping(h: Hotel) {
   /** Guest left (check-out or room move): room becomes Dirty and a cleaning task opens. */
   const vacated = useCallback((room: string, ref?: string) => save((x) => {
     if (!room) return;
+    if (!rules.dirtyOnCheckout) { log(x, `Room ${room} vacated${ref ? ` (${ref})` : ""}`); return; }
     x.rooms[room] = { s: "Dirty", at: stamp(), by: ME };
     if (!x.tasks.some((t) => t.room === room && t.status !== "Done" && t.kind === "Check-out clean")) x.tasks.unshift({ id: `t${Date.now().toString(36)}${x.tasks.length}`, room, kind: "Check-out clean", status: "Open", at: stamp(), ref });
     for (const t of x.tasks) if (t.room === room && t.kind === "Stay-over" && t.status !== "Done") { t.status = "Done"; t.done = stamp(); }
     log(x, `Room ${room} vacated${ref ? ` (${ref})` : ""} → Dirty`);
-  }), [save]);
+  }), [save, rules.dirtyOnCheckout]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
-  return { st, ready: st !== EMPTY, units, stateOf, isReady, staff, setClean, addTask, assign, start, finish, vacated, reset };
+  return { st, ready: st !== EMPTY, units, rules, stateOf, isReady, staff, setClean, addTask, assign, start, finish, vacated, reset };
 }
 export type HK = ReturnType<typeof useHousekeeping>;

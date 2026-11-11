@@ -7,6 +7,9 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import clsx from "clsx";
+import { usePrefs } from "@/lib/settings/prefs";
+import { S_PAGES } from "./settings/frame";
+import { useSettings } from "@/lib/settings/store";
 import {
   Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
   Landmark, LayoutGrid, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
@@ -48,7 +51,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { id: "cashbox", label: "Cashbox", icon: Wallet, href: "/hms/cashbox" },
       { id: "finance", label: "Finance", icon: Landmark, href: "/hms/finance" },
       { id: "operations", label: "Operations", icon: Activity, href: "/hms/operations" },
-      { id: "billing", label: "Billing & Subscription", icon: ReceiptText, href: "/hms/billing" },
+      { id: "billing", label: "Billing & Subscription", icon: ReceiptText, href: "/hms/settings/billing" },
     ],
   },
   {
@@ -89,6 +92,8 @@ export function HmsShell({ children }: { children: ReactNode }) {
 }
 
 function ShellInner({ children }: { children: ReactNode }) {
+  const [prefs] = usePrefs();
+  useSettings(useProperty()); // keeps the hotel VAT / service charge in step with Settings for every module
   const path = usePathname();
   const collapsedStored = useSyncExternalStore(modeSub, readMode, () => false);
   const [collapsed, setCollapsed] = useState<boolean | null>(null);
@@ -109,7 +114,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenu={() => setDrawer(true)} />
         <SetupModeBanner />
-        <main className="min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
+        <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className={clsx("min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0", prefs.reduceMotion && "hms-no-motion")}>{children}</main>
       </div>
       <TabBar activeId={active.id} onMore={() => setDrawer(true)} />
       {drawer && <MobileDrawer activeId={active.id} onClose={() => setDrawer(false)} />}
@@ -141,7 +146,7 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
 const MODE_KEY = "hms-sidebar-mode";
 const modeSubs = new Set<() => void>();
 const readNavMode = () => { try { return localStorage.getItem(MODE_KEY) === "expandable" ? "expandable" : "flat"; } catch { return "flat"; } };
-function useNavMode() {
+export function useNavMode() {
   const mode = useSyncExternalStore((f) => { modeSubs.add(f); return () => { modeSubs.delete(f); }; }, readNavMode, () => "flat");
   const set = (m: "flat" | "expandable") => { try { localStorage.setItem(MODE_KEY, m); } catch {} modeSubs.forEach((f) => f()); };
   return [mode, set] as const;
@@ -337,6 +342,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
 }
 
 function useCrumbs(path: string): { label: string; href?: string }[] {
+  if (path.startsWith("/hms/settings")) {
+    const id = path.split("/")[3] ?? "overview";
+    const page = S_PAGES.find((p) => p.id === id);
+    return id === "overview" ? [{ label: "Settings" }] : [{ label: "Settings", href: "/hms/settings" }, { label: page?.label ?? "Overview" }];
+  }
   if (path.startsWith("/hms/website")) {
     const id = path.split("/")[3] ?? "overview";
     const page = WM_PAGES.find((p) => p.id === id);

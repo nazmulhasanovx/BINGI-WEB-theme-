@@ -7,7 +7,7 @@ with sync_playwright() as p:
   for slug in ["sea-pearl","mistwood","tea-valley","wave-bunk"]:
     pg=b.new_page(viewport={"width":1440,"height":900}); pg.on("pageerror",lambda e: errs.append(slug+str(e)[:150]))
     pg.goto(B+"/hms"); pg.evaluate(f"localStorage.clear(); localStorage.setItem('hms-property', {json.dumps(slug)})")
-    for r in ["/hms/bookings","/hms/bookings/calendar","/hms/bookings/list","/hms/bookings/new","/hms/bookings/view?b=BK-2401","/hms/bookings/board","/hms/bookings/reports","/hms/bookings/close","/hms/bookings/waitlist","/hms/bookings/settings","/hms/bookings/walkin","/hms/housekeeping"]:
+    for r in ["/hms/bookings","/hms/bookings/calendar","/hms/bookings/list","/hms/bookings/new","/hms/bookings/view?b=BK-2401","/hms/bookings/board","/hms/bookings/reports","/hms/bookings/close","/hms/bookings/waitlist","/hms/settings/policies","/hms/bookings/walkin","/hms/housekeeping"]:
       pg.goto(B+r); pg.wait_for_timeout(1400)
       t=pg.locator("main").inner_text()
       print(slug, r, "| loading" if "Loading" in t else "", "| overflow" if pg.evaluate("document.documentElement.scrollWidth-innerWidth")>0 else "", t.replace("\n"," ")[:160])
