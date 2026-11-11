@@ -18,7 +18,7 @@ function Ratio({ a, b, min, pass }: { a: string; b: string; min: number; pass: s
 export default function ThemeLab() {
   return (
     <main className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6 md:py-14">
-      <Image src="/brand/bingi-logo.png" alt="BinGi" width={96} height={32} className="h-8 w-auto" />
+      <Image src="/brand/bingi-master.svg" alt="BinGi" width={96} height={32} className="h-8 w-auto" />
       <p className="mt-4 text-sm font-semibold text-muted">Web Themes · GRAND</p>
       <h1 className="mt-1 text-3xl font-bold md:text-4xl">10 colour themes</h1>
       <p className="mt-2 max-w-2xl text-muted">

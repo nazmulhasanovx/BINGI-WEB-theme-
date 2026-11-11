@@ -123,7 +123,7 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
       {/* Official BinGi HMS logo (the property shows in the switcher at the bottom). */}
       <Link href="/hms" aria-label="BinGi HMS — Dashboard" className={clsx("flex h-16 shrink-0 items-center", collapsed ? "justify-center px-2" : "px-5")}>
         {/* eslint-disable-next-line @next/next/no-img-element -- brand asset, inlined in the single-file preview */}
-        <img src={imgSrc(collapsed ? "/brand/bingi-hms-mark.png" : "/brand/bingi-hms.png")} alt="BinGi HMS" className={collapsed ? "size-10 object-contain" : "h-11 w-auto"} />
+        <img src={imgSrc(collapsed ? "/brand/bingi-hms-mark.svg" : "/brand/bingi-hms.svg")} alt="BinGi HMS" className={collapsed ? "h-9 w-auto object-contain" : "h-8 w-auto"} />
       </Link>
       <NavList activeId={activeId} collapsed={collapsed} />
       <div className="shrink-0 border-t border-hms-line p-3">
@@ -216,7 +216,7 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
   return (
     <div className="hms-fade fixed inset-0 z-[80] bg-black/30 md:hidden" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest("a")) onClose(); }} className="hms-drawer-l flex h-full w-[min(300px,86vw)] flex-col bg-white shadow-2xl">
-        <div className="flex h-14 shrink-0 items-center justify-between px-4">{/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}<img src={imgSrc("/brand/bingi-hms.png")} alt="BinGi HMS" className="h-10 w-auto" /><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
+        <div className="flex h-14 shrink-0 items-center justify-between px-4">{/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}<img src={imgSrc("/brand/bingi-hms.svg")} alt="BinGi HMS" className="h-7 w-auto" /><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
         <NavList activeId={activeId} collapsed={false} big />
         <div className="shrink-0 border-t border-hms-line p-3"><PropertySwitcher collapsed={false} /></div>
       </div>

@@ -16,7 +16,7 @@ export function Header({ right, title }: { right?: ReactNode; title?: ReactNode 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#e3e7ec] bg-white px-4 sm:px-6">
       <Link href="/onboarding" className="flex shrink-0 items-center" aria-label="BinGi">
-        <Image src="/brand/bingi-logo.png" alt="BinGi" width={84} height={28} className="h-7 w-auto" priority />
+        <Image src="/brand/bingi-master.svg" alt="BinGi" width={84} height={28} className="h-7 w-auto" priority />
       </Link>
       {title && <span className="hidden h-6 w-px bg-[#e3e7ec] sm:block" />}
       {title && <span className="hidden min-w-0 truncate text-[14.5px] font-medium text-[#4d5664] sm:block">{title}</span>}

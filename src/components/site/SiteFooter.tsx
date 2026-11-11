@@ -94,7 +94,7 @@ export function SiteFooter({ hotel, nav }: { hotel: Hotel; nav: NavItem[] }) {
           <span>© {hotel.name}</span>
           <a href="https://technology.bingi.com.bd" className="flex min-h-10 items-center gap-2 hover:text-ink">
             <T>Website & booking by</T>
-            <Image src="/brand/bingi-logo.png" alt="BinGi" width={66} height={22} className="h-[22px] w-auto" />
+            <Image src="/brand/bingi-master.svg" alt="BinGi" width={66} height={22} className="h-[22px] w-auto" />
           </a>
         </div>
       </div>

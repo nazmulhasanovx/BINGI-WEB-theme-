@@ -6,7 +6,7 @@ import { MANIFESTS } from "@/themes/manifest";
 export default function Index() {
   return (
     <main className="mx-auto max-w-xl px-6 py-20">
-      <Image src="/brand/bingi-logo.png" alt="BinGi" width={120} height={40} className="h-10 w-auto" priority />
+      <Image src="/brand/bingi-master.svg" alt="BinGi" width={120} height={40} className="h-10 w-auto" priority />
       <p className="mt-6 text-sm font-semibold text-action">Web Themes · {MASTERS.length} included + {PAID_MASTERS.length} paid</p>
       <h1 className="mt-2 text-3xl font-bold">Theme preview</h1>
       <ul className="mt-8 space-y-3">
