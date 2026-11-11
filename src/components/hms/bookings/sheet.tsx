@@ -211,7 +211,8 @@ function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: ViewProps
   const [idType, setIdType] = useState<IdType>(guest?.idType || "NID");
   const [idNo, setIdNo] = useState(guest?.idNo ?? "");
   const owe = Math.max(0, dueOf(b) + extras);
-  const [amt, setAmt] = useState(owe > 0 ? String(owe) : "");
+  // Never pre-filled: taking money is always a deliberate tap.
+  const [amt, setAmt] = useState("");
   const [method, setMethod] = useState<PayMethod>("Cash");
   const [err, setErr] = useState("");
   const same = free.filter((u) => u.category === b.categoryId);
@@ -246,7 +247,8 @@ function CheckInView({ b, extras, onBack, onClose, onDone, takeCash }: ViewProps
       <div className="mt-4 rounded-xl border border-hms-line px-3.5 py-2.5">
         <Row k="Room bill" v={tk(totalOf(b))} />{extras > 0 && <Row k="Extras on the bill" v={tk(extras)} />}<Row k="Paid" v={tk(paidOf(b))} /><Row strong k="Balance" v={tk(owe)} />
       </div>
-      <div className="mt-3"><label htmlFor="ci-amt" className={lbl}>Take payment now (optional)</label><input id="ci-amt" inputMode="numeric" value={amt} onChange={(e) => setAmt(money(e.target.value))} placeholder="0" className={input} /></div>
+      <div className="mt-3"><label htmlFor="ci-amt" className={lbl}>Take payment now (optional)</label><input id="ci-amt" inputMode="numeric" value={amt} onChange={(e) => setAmt(money(e.target.value))} placeholder="0" className={input} />
+        {owe > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{[owe, Math.round(owe / 2)].filter((v, i, a) => v > 0 && a.indexOf(v) === i).map((v, i) => <button key={v} type="button" onClick={() => setAmt(String(v))} className="rounded-full bg-[#eef0f3] px-3 py-1 text-[13px] font-semibold hover:bg-[#e3e6eb]">{i === 0 ? "Full" : "Half"} · {tk(v)}</button>)}</div>}</div>
       {Number(amt) > 0 && <div className="mt-2"><MethodPick value={method} onChange={setMethod} /></div>}
       {err && <Err>{err}</Err>}
     </ActionSheet>
