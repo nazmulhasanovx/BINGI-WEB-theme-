@@ -5,10 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Wrench } from "lucide-react";
 import { TODAY, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
-import { dm, dow, dueOf, holds, overlaps, tk, type Booking } from "@/lib/bookings/store";
+import { channelLabel, dm, dow, dueOf, holds, overlaps, tk, type Booking } from "@/lib/bookings/store";
 import { useRates } from "@/lib/rates/store";
 import { useProperty } from "../property";
-import { BookingsFrame, card, statusLabel, useBk } from "./ui";
+import { BookingsFrame, card, channelIcon, statusLabel, useBk } from "./ui";
 
 export function CalendarPage() { return <BookingsFrame tab="calendar"><Calendar /></BookingsFrame>; }
 
@@ -51,11 +51,12 @@ function Calendar() {
     const right = ((Date.parse(e) - Date.parse(start)) / 864e5) * W + (b.to <= end ? W / 2 : 0);
     const d = dueOf(b);
     return (
-      <button key={b.code} onClick={() => open(b.code)} title={`${name(b)} · ${b.code}`}
-        aria-label={`${b.code} ${name(b)}${b.unit ? `, Room ${b.unit}` : ""}, ${dm(b.from)} to ${dm(b.to)}, ${statusLabel(b.status)}${d > 0 ? ", payment due" : ""}`}
+      <button key={b.code} onClick={() => open(b.code)} title={`${name(b)} · ${b.code} · ${channelLabel(b)}`}
+        aria-label={`${b.code} ${name(b)}${b.unit ? `, Room ${b.unit}` : ""}, ${dm(b.from)} to ${dm(b.to)}, ${statusLabel(b.status)}, ${channelLabel(b)}${d > 0 ? ", payment due" : ""}`}
         style={{ left: left + 2, width: Math.max(18, right - left - 4) }}
         className={clsx("absolute top-1.5 bottom-1.5 z-[1] flex items-center gap-1 overflow-hidden rounded-lg border px-2 text-left text-[12.5px] font-semibold shadow-[0_1px_0_rgb(0_0_0/0.04)] transition hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-hms-ink", BAR[b.status] ?? BAR.Confirmed)}>
         {d > 0 && <span className="size-1.5 shrink-0 rounded-full bg-[#d97706]" aria-hidden />}
+        {(() => { const I = channelIcon(b.channel); return <I className="size-3.5 shrink-0 opacity-70" aria-hidden />; })()}
         <span className="truncate">{name(b)}</span>
         {mode === "details" && right - left > 150 && <span className="ml-auto shrink-0 font-normal">{b.code}</span>}
       </button>

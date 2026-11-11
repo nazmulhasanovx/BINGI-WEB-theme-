@@ -3,17 +3,21 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { CalendarDays, CircleCheck, List, Plus, Sun } from "lucide-react";
+import { Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, List, Phone, Plus, Store, Sun, Plane } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
-import { dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type PayState } from "@/lib/bookings/store";
+import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type Channel, type PayState } from "@/lib/bookings/store";
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
 import { useGuests, type GuestRow } from "@/lib/guests/store";
 import { useProperty } from "../property";
 import { Menu } from "../staff/ui";
-import { BookingSheet } from "./sheet";
 
 type Ctx = { bk: Bk; guests: Map<string, GuestRow>; g: ReturnType<typeof useGuests>; mode: BkMode; open: (code: string | null, view?: "checkin" | "checkout") => void; toast: (t: string) => void };
 const C = createContext<Ctx | null>(null);
+export const BkCtx = C;
+export type BkCtxValue = Ctx;
+export function Toast({ text }: { text: string }) {
+  return <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{text}</div>;
+}
 export const useBk = () => useContext(C)!;
 
 export type BkTab = "today" | "calendar" | "list";
@@ -46,15 +50,13 @@ export function BookingsFrame({ tab, children, sub }: { tab: BkTab; children: Re
   const [toastText, setToast] = useState(() => sp.get("made") ?? "");
   useEffect(() => { if (!toastText) return; const t = setTimeout(() => setToast(""), 2800); return () => clearTimeout(t); }, [toastText]);
   const guests = useMemo(() => new Map(g.rows.map((r) => [r.id, r])), [g.rows]);
+  // Old links (?b=CODE on a list) go straight to the booking page.
   const code = sp.get("b");
+  useEffect(() => { if (code) router.replace(`/hms/bookings/view?b=${code}${sp.get("do") ? `&do=${sp.get("do")}` : ""}`); }, [code, router, sp]);
+  // Bookings open as one full page with tabs (like the live HMS Manage Booking), never a side panel.
   const open = useCallback((c: string | null, view?: "checkin" | "checkout") => {
-    const q = new URLSearchParams(sp.toString());
-    if (c) q.set("b", c); else q.delete("b");
-    if (view) q.set("do", view); else q.delete("do");
-    const s = q.toString();
-    router.replace(s ? `${path}?${s}` : path, { scroll: false });
-  }, [sp, router, path]);
-  const cur = code ? bk.list.find((b) => b.code === code) : undefined;
+    if (c) router.push(`/hms/bookings/view?b=${c}${view ? `&do=${view}` : ""}&from=${encodeURIComponent(path)}`);
+  }, [router, path]);
   const msg = sp.get("made");
   useEffect(() => { if (msg) { const q = new URLSearchParams(sp.toString()); q.delete("made"); router.replace(`${path}?${q}`, { scroll: false }); } }, [msg, sp, router, path]);
   return (
@@ -79,8 +81,7 @@ export function BookingsFrame({ tab, children, sub }: { tab: BkTab; children: Re
         {sub}
         <div key={tab} className="hms-page-in mt-5">{bk.ready ? children : <p role="status" className="py-10 text-[14px] text-hms-muted">Loading bookings…</p>}</div>
       </div></div>
-      {cur && <BookingSheet key={cur.code + (sp.get("do") ?? "")} b={cur} start={sp.get("do") === "checkin" || sp.get("do") === "checkout" ? (sp.get("do") as "checkin" | "checkout") : undefined} onClose={() => open(null)} />}
-      {toastText && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{toastText}</div>}
+      {toastText && <Toast text={toastText} />}
     </C.Provider>
   );
 }
@@ -100,6 +101,16 @@ export function PayPill({ b }: { b: Booking }) {
   const p = payState(b);
   return <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] font-semibold", PS[p])}>{p}</span>;
 }
+const CH: Record<Channel, [typeof Globe, string]> = {
+  "Walk-in": [DoorOpen, "bg-[#eef0f3] text-[#3a414c]"], Phone: [Phone, "bg-[#eef0f3] text-[#3a414c]"], Website: [Globe, "bg-[#e8f0fe] text-[#1d4ed8]"],
+  Marketplace: [Store, "bg-hms-coral-soft text-hms-red"], OTA: [Plane, "bg-[#f1edff] text-[#5b45c9]"], Agent: [Briefcase, "bg-[#fdf3d9] text-[#7a4a0b]"], Corporate: [Building2, "bg-[#e5f5ec] text-[#16693a]"],
+};
+/** Where the booking came from — shown everywhere the same way. */
+export function ChannelBadge({ b }: { b: Pick<Booking, "channel" | "ota"> }) {
+  const [I, tone] = CH[b.channel] ?? CH["Walk-in"];
+  return <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[12px] font-semibold", tone)}><I className="size-3.5" aria-hidden />{channelLabel(b)}</span>;
+}
+export const channelIcon = (c: Channel) => (CH[c] ?? CH["Walk-in"])[0];
 export function Flags({ b }: { b: Booking }) {
   const f = flags(b);
   if (!f.length) return null;

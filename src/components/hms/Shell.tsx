@@ -354,7 +354,7 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   }
   if (path.startsWith("/hms/bookings")) {
     const seg = path.split("/")[3];
-    const names: Record<string, string> = { calendar: "Calendar", list: "All bookings", new: "New booking" };
+    const names: Record<string, string> = { calendar: "Calendar", list: "All bookings", new: "New booking", view: "Booking" };
     return [{ label: "Bookings", href: seg ? "/hms/bookings" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/cashbox")) {
