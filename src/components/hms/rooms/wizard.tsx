@@ -1,6 +1,6 @@
 "use client";
 // Add accommodation — one 5-step wizard for all 14 cards / 6 Core Types (spec 02-accommodation-flows/00).
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState, useSyncExternalStore } from "react";
@@ -25,6 +25,7 @@ export function AddPage() {
 }
 
 function AddPageInner() {
+  const q = useSearchParams();
   const base = useRoomsBase();
   const ready = useSyncExternalStore(noop, () => true, () => false);
   const h = useProperty();
@@ -40,8 +41,8 @@ function AddPageInner() {
       </div>
     );
   }
-  const q = new URLSearchParams(window.location.search.length > 1 ? window.location.search : window.location.hash.split("?")[1] ?? "");
-  return <Wizard key={h.slug} draftId={q.get("draft")} type={q.get("type")} category={q.get("category")} />;
+  // Read the query through the router (not window.location): on a client-side jump the URL may not be updated yet.
+  return <Wizard key={`${h.slug}|${q.get("draft")}|${q.get("type")}|${q.get("category")}`} draftId={q.get("draft")} type={q.get("type")} category={q.get("category")} />;
 }
 
 const blankCat = (core: CoreType, p: PresetSlug): Category => ({

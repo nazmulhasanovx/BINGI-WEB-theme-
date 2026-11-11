@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { Building2, MapPin, Plus, Search } from "lucide-react";
 import { useProperty } from "../property";
-import { leaves, nodePath, publishIssues, unitRate, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
+import { TODAY, leaves, nodePath, publishIssues, unitRate, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { CORE, TEMPLATES, preset as presetOf, propertyTypeFor, youtubeId, type CoreType } from "@/lib/rooms/catalog";
 import { Btn, Chip, Drawer, Empty, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
@@ -103,6 +103,7 @@ export function UnitsPage() {
                       <span className="mt-0.5 block truncate text-[13.5px] text-[#4d5664]">{cat(x.category)?.name}</span>
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
                         <Chip tone={x.status === "published" ? "green" : x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "published" ? "Published" : x.status === "draft" ? "Draft" : "Archived"}</Chip>
+                        {x.ooo && <Chip tone="amber" className="!px-2 !py-0.5 !text-[12.5px]">Out of order</Chip>}
                       </span>
                     </button>
                   </li>
@@ -127,7 +128,7 @@ function Stat({ label, value, tone, sub }: { label: string; value: number; tone?
   );
 }
 
-function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () => void }) {
+export function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () => void }) {
   const h = useProperty();
   const { update } = useRooms(h);
   const toast = useToast();
@@ -166,6 +167,7 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
         {u.status === "draft" && issues.length > 0 && (
           <div role="alert" className="rounded-xl border border-[#f3c4c0] bg-[#ffe7e4] px-3.5 py-2.5 text-[14px] text-[#a3261f]"><p className="font-semibold">Can&apos;t publish yet</p>{issues.map((i) => <p key={i}>{i}</p>)}</div>
         )}
+        {u.status === "published" && <OutOfOrder u={u} />}
         <div className="space-y-3 border-t border-[#e3e7ec] pt-4">
           <p className="text-[14px] font-semibold">Only for this unit</p>
           <Field label="Own price (leave empty to use category)" hint={badRate ? "Must be more than 0" : undefined}><Input type="number" min={0} value={rate} placeholder={String(cat?.baseRate ?? "")} onChange={(e) => setRate(e.target.value)} /></Field>
@@ -173,9 +175,34 @@ function UnitDrawer({ st, u, onClose }: { st: RoomsState; u: Unit; onClose: () =
           {video === "replace" && <Field label="YouTube link" hint={url && badUrl ? "Only YouTube links" : undefined}><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtu.be/…" /></Field>}
           <Field label="Note for staff (optional)"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Connecting door to 103" /></Field>
         </div>
-        <p className="text-[13px] text-[#4d5664]">Room readiness and maintenance are in Housekeeping; reservations in Bookings. Moving a booked unit to draft is checked against bookings by the HMS backend.</p>
+        <p className="text-[13px] text-[#4d5664]">Cleaning / readiness is in Housekeeping; reservations in Bookings. Moving a booked unit to draft is checked against bookings by the HMS backend.</p>
       </div>
     </Drawer>
+  );
+}
+
+/** Out of order = maintenance. Separate from publish status and from bookings; it stops new sales of this room. */
+function OutOfOrder({ u }: { u: Unit }) {
+  const h = useProperty();
+  const { update } = useRooms(h);
+  const toast = useToast();
+  const [reason, setReason] = useState("");
+  if (u.ooo) return (
+    <div className="rounded-xl border border-[#f1dfb8] bg-[#fffaf0] px-3.5 py-3 text-[14px]">
+      <p className="font-semibold text-[#7a4a0b]">Out of order since {fmtStamp(u.ooo.since)}</p>
+      <p className="text-[#4d5664]">{u.ooo.reason}. Not sold until it&apos;s back.</p>
+      <Btn className="mt-2 h-9" onClick={() => { update((s) => { delete s.units.find((x) => x.id === u.id)!.ooo; }, `${u.code} back in service`); toast(`${u.code} is back in service`); }}>Back in service</Btn>
+    </div>
+  );
+  return (
+    <div className="space-y-2 rounded-xl border border-[#e3e7ec] px-3.5 py-3">
+      <p className="text-[14px] font-semibold">Out of order (maintenance)</p>
+      <div className="flex gap-2">
+        <Input aria-label="Out of order reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason, e.g. AC repair" />
+        <Btn className="shrink-0" disabled={!reason.trim()} onClick={() => { update((s) => { s.units.find((x) => x.id === u.id)!.ooo = { reason: reason.trim(), since: TODAY }; }, `${u.code} out of order: ${reason.trim()}`); toast(`${u.code} marked out of order`); setReason(""); }}>Mark out of order</Btn>
+      </div>
+      <p className="text-[12.5px] text-[#4d5664]">Existing bookings are not changed — move guests from Bookings if needed.</p>
+    </div>
   );
 }
 
@@ -187,7 +214,7 @@ export function CategoriesPage() {
   const [edit, setEdit] = useState<string | null>(null);
   const c = edit ? st.categories.find((x) => x.id === edit) : undefined;
   return (
-    <RoomsFrame tab="categories">
+    <RoomsFrame tab="types">
       {!st.categories.length && <div className="rounded-2xl border border-[#e3e7ec] bg-white"><Empty icon={<Building2 className="size-6" />} title="No categories yet" text="Categories are created while adding units." /></div>}
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {st.categories.filter((x) => !x.archived).map((x) => {
