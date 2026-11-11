@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import clsx from "clsx";
 import { useState } from "react";
 import { CircleAlert, LogIn, LogOut, Search } from "lucide-react";
@@ -54,6 +55,7 @@ function Today() {
       </div>
 
       <WebRequests />
+      {mode === "easy" && <NextActions />}
       {mode === "details" && attention.length > 0 && (
         <section aria-label="Needs attention" className="mt-4 overflow-hidden rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec]">
           <h2 className="flex items-center gap-2 px-4 pt-3 text-[14.5px] font-bold text-[#6b4309]"><CircleAlert className="size-4" />Needs attention</h2>
@@ -75,6 +77,24 @@ function Today() {
         )}
       </section>
     </>
+  );
+}
+
+/** Easy mode: the few things that need someone now — each one tap away. */
+function NextActions() {
+  const { bk } = useBk();
+  const hk = useHousekeeping(useProperty());
+  const L = bk.list;
+  const notArrived = L.filter((b) => b.status === "Confirmed" && b.from < TODAY).length;
+  const noRoom = L.filter((b) => holds(b) && !b.unit && b.from <= addDays(TODAY, 7)).length;
+  const toClean = hk.units.filter((u) => !hk.isReady(u)).length;
+  const wait = bk.waitlist.filter((w) => !w.done && w.from >= TODAY && bk.freeUnits(w.from, w.to).some((u) => !w.category || u.category === w.category)).length;
+  const items: [number, string, string][] = ([[notArrived, `${notArrived} didn't arrive — mark no-show`, "/hms/bookings/close"], [noRoom, `${noRoom} booking${noRoom > 1 ? "s" : ""} without a room`, "/hms/bookings/calendar"], [toClean, `${toClean} room${toClean > 1 ? "s" : ""} to clean`, "/hms/housekeeping"], [wait, `${wait} waitlist guest${wait > 1 ? "s" : ""} can be booked`, "/hms/bookings/waitlist"]] as [number, string, string][]).filter((x) => x[0] > 0);
+  if (!items.length) return null;
+  return (
+    <nav aria-label="Next actions" className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
+      {items.map(([, t, href]) => <Link key={href} href={href} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-white px-3.5 text-[13.5px] font-semibold ring-1 ring-[#f1dfb8] hover:ring-[#d9b46a]"><span className="size-2 rounded-full bg-[#d97706]" />{t}<span aria-hidden className="text-hms-muted">→</span></Link>)}
+    </nav>
   );
 }
 
