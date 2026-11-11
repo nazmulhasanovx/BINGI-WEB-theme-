@@ -65,6 +65,8 @@ function Flow({ d }: { d: Draft }) {
   const cont = () => {
     if (errs.length) { setTried(true); return; }
     if (d.step === "2.2") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
+    // the "Best fit" plan counts as chosen unless the owner picks another (one tap less)
+    if (d.step === "6.1" && !d.planPicked) edit((x) => { x.plan = recommend(x); x.planPicked = true; });
     next();
   };
   const submit = () => {
@@ -141,7 +143,6 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
         e.push(t("সেটেলমেন্ট অ্যাকাউন্টের সব তথ্য দিন (রাউটিং ৯ সংখ্যা)।", "Complete the settlement account (routing is 9 digits)."));
     }
   }
-  if (d.step === "6.1" && !d.planPicked) e.push(t("একটা প্ল্যান বাছাই করুন।", "Choose a plan."));
   return e;
 }
 
@@ -167,8 +168,8 @@ function PropertyType({ d }: { d: Draft }) {
       <div role="radiogroup" aria-label={t("Property-র ধরন", "Property type")} className="grid gap-3 sm:grid-cols-2">
         {list.map((p) => <Tile key={p.slug} big role="radio" on={d.propertyType === p.slug} onClick={() => pick(p.slug)} icon={<p.icon className="size-6" />} title={t(p.bn, p.en)} sub={t(p.subBn, p.subEn)} />)}
       </div>
-      {!more && <button onClick={() => setMore(true)} className="mt-3 text-[15px] font-semibold text-[#b11c29]">+ {t("আরও ধরন দেখুন", "More types")}</button>}
-      <p className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#e9edf2] px-3 py-1.5 text-[13.5px] text-[#4d5664]"><MapPin className="size-4" /> {t("বাংলাদেশ · টাকা (৳)", "Bangladesh · Taka (৳)")}</p>
+      {!more && <button onClick={() => setMore(true)} className="mt-3 block text-[15px] font-semibold text-[#b11c29]">+ {t("আরও ধরন দেখুন", "More types")}</button>}
+      <p className="mt-5 flex w-fit items-center gap-1.5 rounded-full bg-[#e9edf2] px-3 py-1.5 text-[13.5px] text-[#4d5664]"><MapPin className="size-4" aria-hidden /> {t("বাংলাদেশ · টাকা (৳)", "Bangladesh · Taka (৳)")}</p>
     </Q>
   );
 }
@@ -185,24 +186,28 @@ function Name({ d }: { d: Draft }) {
   );
 }
 
+const DIVS: [string, string][] = [["Dhaka", "ঢাকা"], ["Chattogram", "চট্টগ্রাম"], ["Sylhet", "সিলেট"], ["Khulna", "খুলনা"], ["Rajshahi", "রাজশাহী"], ["Barishal", "বরিশাল"], ["Rangpur", "রংপুর"], ["Mymensingh", "ময়মনসিংহ"]];
+/** Round 1 (12 Nov): type the address right here; the map pin is optional (prototype map). */
 function Address({ d }: { d: Draft }) {
   const [open, setOpen] = useState(false);
+  const { edit } = useOnboarding();
   const { t } = useL();
-  const has = d.road && d.city;
+  const set = (k: "road" | "area" | "city" | "division" | "postcode", v: string) => edit((x) => { x[k] = v; x.address = [x.road, x.area, x.city, x.postcode].map((y) => y.trim()).filter(Boolean).join(", "); });
+  const inp = (k: "road" | "area" | "city" | "postcode", lab: string, ph: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+    <div><label htmlFor={`ad-${k}`} className={label}>{lab}</label><input id={`ad-${k}`} value={d[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} {...extra} className={field + " mt-1.5"} /></div>
+  );
   return (
-    <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests use the map to find you.")}>
-      {has ? (
-        <div className="flex items-start gap-3 rounded-xl border border-[#c6ccd4] bg-white p-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#ffe7e4] text-[#b11c29]"><MapPin className="size-6" /></span>
-          <div className="min-w-0 flex-1"><p className="text-[16px] font-semibold">{[d.road, d.area].filter(Boolean).join(", ")}</p><p className="text-[14.5px] text-[#4d5664]">{[d.city, d.division, d.postcode].filter(Boolean).join(", ")}</p></div>
-          <Ghost onClick={() => setOpen(true)} className="h-10">{t("বদলান", "Change")}</Ghost>
-        </div>
-      ) : (
-        <button onClick={() => setOpen(true)} className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] p-5 text-left hover:bg-[#fff4f3]">
-          <span className="grid size-14 place-items-center rounded-xl bg-[#b11c29] text-white"><MapPin className="size-7" /></span>
-          <span><span className="block text-[18px] font-semibold">{t("ম্যাপে পিন দিন", "Drop a pin on the map")}</span><span className="text-[14.5px] text-[#4d5664]">{t("তারপর ঠিকানা নিশ্চিত করুন", "Then confirm the address")}</span></span>
-        </button>
-      )}
+    <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests find you by this address; it goes on every booking confirmation.")}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">{inp("road", t("রাস্তা / বাড়ি", "Road / house"), t("যেমন: জিন্দাবাজার রোড", "e.g. Zindabazar Road"), { autoComplete: "address-line1" })}</div>
+        {inp("area", t("এলাকা (ঐচ্ছিক)", "Area (optional)"), t("যেমন: জিন্দাবাজার", "e.g. Zindabazar"))}
+        {inp("city", t("শহর / জেলা", "City / district"), t("যেমন: সিলেট", "e.g. Sylhet"), { autoComplete: "address-level2" })}
+        <div><label htmlFor="ad-div" className={label}>{t("বিভাগ (ঐচ্ছিক)", "Division (optional)")}</label><select id="ad-div" value={d.division} onChange={(e) => set("division", e.target.value)} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{DIVS.map(([en, bn]) => <option key={en} value={en}>{t(bn, en)}</option>)}</select></div>
+        {inp("postcode", t("পোস্টকোড (ঐচ্ছিক)", "Postcode (optional)"), "3100", { inputMode: "numeric", maxLength: 4 })}
+      </div>
+      <button onClick={() => setOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#c6ccd4] bg-white px-3.5 py-2.5 text-[14.5px] font-semibold hover:bg-[#f4f6f8]">
+        <MapPin className="size-4 text-[#b11c29]" aria-hidden />{d.pin ? t("ম্যাপের পিন বদলান", "Change map pin") : t("ম্যাপে পিন দিন (ঐচ্ছিক)", "Add a map pin (optional)")}
+      </button>
       {open && <AddressSheet d={d} onClose={() => setOpen(false)} />}
     </Q>
   );
@@ -467,7 +472,7 @@ function Plan({ d, units }: { d: Draft; units: number }) {
       </div>
       <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="mt-5 grid gap-3 md:grid-cols-3">
         {(Object.keys(PLANS) as PlanId[]).map((p) => {
-          const P = PLANS[p]; const on = d.planPicked && d.plan === p; const q = quote(p, units, d.cycle);
+          const P = PLANS[p]; const on = (d.planPicked ? d.plan : rec) === p; const q = quote(p, units, d.cycle);
           const low = planRank(p) < planRank(rec);
           return (
             <button key={p} role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })}
@@ -475,7 +480,7 @@ function Plan({ d, units }: { d: Draft; units: number }) {
               <span className="flex items-center justify-between gap-2"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#b11c29] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
               <span className="mt-1 text-[13.5px] text-[#4d5664]">{t(P.forBn, P.for)}</span>
               <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8e1621]">{t(bn, en)}</span>)}</span>
-              <span className="mt-3 text-[28px] font-semibold leading-none">৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#4d5664]"> /{t("রুম/মাস", "room/month")}</span></span>
+              <span className="mt-3 text-[28px] font-semibold leading-none">{P.perUnitRegular && <s className="mr-1.5 text-[16px] font-normal text-[#4d5664]">৳{num(P.perUnitRegular, lang)}</s>}৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#4d5664]"> /{t("রুম/মাস", "room/month")}</span></span>
               <span className="mt-3 space-y-1.5 border-t border-[#e3e7ec] pt-3 text-[13px] text-[#4d5664]">
                 <span className="block">{t(`${num(q.billed, lang)} রুম · ৳${n(q.monthly)}/মাস`, `${q.billed} rooms · ৳${n(q.monthly)}/month`)}</span>
                 <span className="block">{t(`বুকিং ফি: মার্কেটপ্লেস ${num(P.fees[0], lang)}% · ওয়েব ${num(P.fees[1], lang)}% · ওয়াক-ইন ${num(P.fees[2], lang)}%`, `Booking fees: Marketplace ${P.fees[0]}% · Web ${P.fees[1]}% · Walk-in ${P.fees[2]}%`)}</span>
