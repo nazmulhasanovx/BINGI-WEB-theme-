@@ -39,9 +39,11 @@ export type Order = {
 };
 export type Role = "frontdesk" | "dept" | "manager";
 export type Settings = { sc: number; vat: number; role: Role; discountLimit: number };
-type State = { v: 2; categories: SvcCategory[]; services: Service[]; orders: Order[]; cashboxOpen: boolean; next: number; resources: Resource[]; vendors: Vendor[]; settings: Settings };
+type State = { v: 2; photos?: 1; categories: SvcCategory[]; services: Service[]; orders: Order[]; cashboxOpen: boolean; next: number; resources: Resource[]; vendors: Vendor[]; settings: Settings };
 
 export const SAMPLE_ART = "sample:shuttle";
+/** Real demo photos for the seeded services (replaces the old sample artwork). */
+const PHOTO: Record<string, string> = { s1: "/demo/azure-bay/exp-transfer.jpg", s2: "/demo/sea-pearl/transfer.jpg", s4: "/demo/sea-pearl/room-extra.jpg", s5: "/demo/azure-bay/exp-beach.jpg", s7: "/demo/azure-bay/exp-spa.jpg" };
 export const UNIT_LABEL: Record<Unit, [string, string]> = { each: ["Quantity", "each"], person: ["Persons", "per person"], trip: ["Trips", "per trip"], night: ["Nights", "per night"], hour: ["Hours", "per hour"], piece: ["Pieces", "per piece"] };
 export const RES_LABEL: Record<ResType, string> = { car: "Vehicle", spa: "Spa room", guide: "Guide", venue: "Venue / setup", other: "Other" };
 export const STATUS_LABEL: Record<WorkStatus, string> = { requested: "New request", confirmed: "To assign", assigned: "Assigned", in_progress: "In progress", done: "Done", declined: "Declined" };
@@ -55,7 +57,7 @@ export const CAN = {
   settings: (r: Role) => r === "manager",
 };
 const cat = (id: string, name: string): SvcCategory => ({ id, name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-") });
-const SERVICES: Service[] = [
+const BASE: Service[] = [
   { id: "s1", name: "Airport Transfer", category: "t", duration: "45 min", price: 500, description: "Pick-up from the airport to the resort.", image: SAMPLE_ART, unit: "trip", dept: "Security", resourceType: "car", minutes: 60, variants: [{ id: "v1", name: "Sedan (3 guests)", price: 500 }, { id: "v2", name: "Microbus (8 guests)", price: 1200 }], guestRequest: true },
   { id: "s2", name: "City Drop-off", category: "t", duration: "30 min", price: 350, description: "Drop-off at any point in the city.", unit: "trip", dept: "Security", resourceType: "car", minutes: 45, guestRequest: true },
   { id: "s3", name: "Laundry Service", category: "g", duration: "24 hours", price: 150, description: "Wash and fold, priced per piece.", unit: "piece", dept: "Housekeeping", guestRequest: true, consumes: [{ item: "i8", qty: 0.05 }] },
@@ -65,11 +67,13 @@ const SERVICES: Service[] = [
   { id: "s7", name: "Spa Massage", category: "w", duration: "60 min", price: 4500, description: "Full-body massage in our spa.", unit: "person", dept: "Front Office", resourceType: "spa", minutes: 60, variants: [{ id: "v1", name: "60 min", price: 4500 }, { id: "v2", name: "90 min", price: 6000 }], guestRequest: true },
 ];
 
+const SERVICES: Service[] = BASE.map((x) => (PHOTO[x.id] ? { ...x, image: PHOTO[x.id] } : x));
+
 function seed(bookings: BookingRef[]): State {
   const b = (i: number) => bookings[i % Math.max(1, bookings.length)];
   const L = (at: string, text: string, by = "Md Yeapas") => ({ at, text, by });
   return {
-    v: 2, cashboxOpen: true, next: 1047,
+    v: 2, photos: 1, cashboxOpen: true, next: 1047,
     categories: [cat("t", "Transport"), cat("g", "Guest Services"), cat("e", "Experiences"), cat("w", "Wellness")],
     services: SERVICES,
     resources: [{ id: "r1", name: "Car 1 · Sedan", type: "car" }, { id: "r2", name: "Car 2 · Microbus", type: "car" }, { id: "r3", name: "Spa Room 1", type: "spa" }, { id: "r4", name: "Spa Room 2", type: "spa" }, { id: "r5", name: "Beach Guide", type: "guide" }, { id: "r6", name: "Picnic Kit", type: "venue" }],
@@ -110,7 +114,7 @@ function read(slug: string, bookings: BookingRef[]): State {
   const hit = cache.get(slug);
   if (hit && hit.raw === raw && (raw || hit.st.orders.length || !bookings.length)) return hit.st;
   let st = seed(bookings);
-  if (raw) try { const p = JSON.parse(raw); if (p?.v === 2 && Array.isArray(p.services)) st = p; } catch {}
+  if (raw) try { const p = JSON.parse(raw); if (p?.v === 2 && Array.isArray(p.services)) st = p.photos ? p : { ...p, photos: 1, services: p.services.map((x: Service) => (PHOTO[x.id] && (!x.image || x.image === SAMPLE_ART) ? { ...x, image: PHOTO[x.id] } : x)) }; } catch {}
   else try { const o = JSON.parse(localStorage.getItem(OLD(slug)) ?? "null"); if (o?.v === 1 && Array.isArray(o.services)) st = migrate(o, bookings); } catch {}
   cache.set(slug, { raw, st });
   return st;

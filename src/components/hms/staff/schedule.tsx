@@ -53,7 +53,7 @@ export function SchedulePage() {
         <div className="flex flex-wrap items-center gap-4">
           <span className={clsx("rounded-xl px-4 py-2 text-[16px] font-medium", status === "published" ? "bg-[#e3f5e8] text-[#1f8f4a]" : "bg-[#fdeee3] text-[#b11c29]")}>{status === "published" ? "Published" : "Draft"}</span>
           <span className="hidden h-8 w-px bg-[#e3e7ec] sm:block" />
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-[#e9edf2] px-4 py-2.5 text-[15.5px] text-[#4d5664]">
+          <div className="order-last flex w-full min-w-0 items-center gap-3 rounded-xl bg-[#e9edf2] px-4 py-2.5 text-[15px] text-[#4d5664] sm:order-none sm:w-auto sm:flex-1">
             <Info className="size-5 shrink-0" />
             {gaps.length ? (
               <span className="flex-1">Coverage gap: {gaps.length} shift{gaps.length > 1 ? "s are" : " is"} unassigned on {gaps.map((g) => `${dayName(g.date)} ${fmt(g.date)} (${g.shift})`).join(", ")}.</span>

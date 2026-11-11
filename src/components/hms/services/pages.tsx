@@ -4,8 +4,9 @@ import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { BarChart3, BedDouble, CalendarClock, CircleCheck, Flower2, History, KanbanSquare, Lock, MoreHorizontal, Package, Pencil, Plus, RefreshCw, Search, Settings2, Shirt, Smartphone, Sparkles, Tag, TriangleAlert, UserRound, Warehouse } from "lucide-react";
-import { CAN, RES_LABEL, ROLE_LABEL, SOURCE_LABEL, STATUS_LABEL, UNIT_LABEL, hasServices, orderSub, orderTotal, slotOf, statusOf, t12, tk, useServices, whenLabel, type Order, type Resource, type Role, type Service, type SvcCategory, type Vendor, type WorkStatus } from "@/lib/services/store";
+import { CAN, SAMPLE_ART, RES_LABEL, ROLE_LABEL, SOURCE_LABEL, STATUS_LABEL, UNIT_LABEL, hasServices, orderSub, orderTotal, slotOf, statusOf, t12, tk, useServices, whenLabel, type Order, type Resource, type Role, type Service, type SvcCategory, type Vendor, type WorkStatus } from "@/lib/services/store";
 import { useInventory } from "@/lib/inventory/store";
+import { imgSrc } from "@/lib/img";
 import { useHrm } from "@/lib/hrm/store";
 import { TODAY } from "@/lib/rooms/store";
 import { useProperty } from "../property";
@@ -75,7 +76,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
         <nav aria-label="Other Services sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
           {TABS.map((t) => { const n = t.id === "today" ? svc.st.orders.filter((x) => !x.cancelled && x.status === "requested").length : 0; return <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}><t.icon className="size-4" />{t.label}{n > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-[#b11c29] px-1.5 text-[11.5px] text-white">{n}<span className="sr-only"> new requests</span></span>}</Link>; })}
         </nav>
-        <div className="mt-5">{children}</div>
+        <div key={tab} className="hms-page-in mt-5">{children}</div>
       </div></div>
       {o?.k === "service" && <ServiceSheet svc={svc} item={o.item} invItems={inv.items} onClose={() => setO(null)} />}
       {o?.k === "order" && <OrderSheet svc={svc} order={o.order} serviceId={o.service} onClose={() => setO(null)} onDone={(_, m) => setToast(m)} />}
@@ -107,6 +108,14 @@ function SearchBox({ value, onChange, placeholder }: { value: string; onChange: 
   return <label className="flex h-10 min-w-[200px] flex-1 items-center gap-2 rounded-lg border border-hms-line bg-white px-3 focus-within:border-hms-ink sm:flex-none"><Search className="size-4 text-hms-muted" /><span className="sr-only">{placeholder}</span><input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none" /></label>;
 }
 
+/** Service photo when there is one (shown on the website and guest app), otherwise the category icon. */
+function Thumb({ s, I, tone, big }: { s: Service; I: typeof Package; tone: string; big?: boolean }) {
+  const sz = big ? "size-14 rounded-xl" : "size-11 rounded-lg";
+  // eslint-disable-next-line @next/next/no-img-element -- demo photo or uploaded data URL
+  if (s.image && s.image !== SAMPLE_ART) return <img src={imgSrc(s.image)} alt="" className={clsx(sz, "shrink-0 object-cover")} />;
+  return <span className={clsx("grid shrink-0 place-items-center", sz, tone)}><I className="size-5" /></span>;
+}
+
 // ---------------- Catalog ----------------
 export function CatalogPage() { const sp = useSearchParams(); return <Frame tab="catalog"><Catalog key={sp.get("category") ?? ""} /></Frame>; }
 function Catalog() {
@@ -126,12 +135,25 @@ function Catalog() {
         <select aria-label="Status" value={st} onChange={(e) => setSt(e.target.value as typeof st)} className={clsx(sel, st === "archived" && "border-[#e9b949] bg-[#fffaf0]")}><option value="active">Active services</option><option value="archived">Archived</option><option value="all">All services</option></select>
       </div>
       {list.length ? (
-        <div className="overflow-x-auto border-t border-hms-line" tabIndex={0} role="region" aria-label="Services">
+        <>
+        <ul className="divide-y divide-hms-line border-t border-hms-line md:hidden" aria-label="Services">
+          {list.map((s) => { const [I, tone] = iconFor(s.category); return (
+            <li key={s.id} className="flex items-center gap-3 px-4 py-3">
+              <Thumb s={s} I={I} tone={tone} big />
+              <button onClick={() => CAN.catalog(svc.role) && open({ k: "service", item: s })} className="min-w-0 flex-1 text-left">
+                <span className="block truncate font-semibold">{s.name}</span>
+                <span className="block text-[12.5px] text-hms-muted">{cats.get(s.category) ?? "—"}{s.archived ? " · Archived" : ""}</span>
+                <span className="block text-[13.5px] font-bold tabular-nums">{s.variants?.length ? `${tk(Math.min(...s.variants.map((v) => v.price)))}+` : tk(s.price)} <span className="font-normal text-hms-muted">{UNIT_LABEL[s.unit ?? "each"][1]}</span></span>
+              </button>
+              {!s.archived && CAN.create(svc.role) && <button onClick={() => open({ k: "order", service: s.id })} className={clsx(btnLine, "h-9 shrink-0 px-3")}><Plus className="size-4" />Order</button>}
+            </li>); })}
+        </ul>
+        <div className="hidden overflow-x-auto border-t border-hms-line md:block" tabIndex={0} role="region" aria-label="Services">
           <table className="w-full min-w-[820px] text-[14px]">
             <thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="px-5 py-2.5 font-medium">Service</th><th className="px-3 py-2.5 font-medium">Category</th><th className="px-3 py-2.5 font-medium">Done by</th><th className="px-3 py-2.5 text-right font-medium">Price</th><th className="px-3 py-2.5 font-medium">Status</th><th className="px-5 py-2.5 text-right font-medium">Actions</th></tr></thead>
             <tbody>{list.map((s) => { const [I, tone] = iconFor(s.category); return (
               <tr key={s.id} className="border-t border-hms-line">
-                <td className="px-5 py-2.5"><span className="flex items-center gap-3"><span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", tone)}><I className="size-4" /></span><span><span className="block font-semibold">{s.name}</span><span className="text-[12px] text-hms-muted">{[s.image && !s.archived && "On website", s.guestRequest && !s.archived && "Guests can request", s.vendor && "Vendor"].filter(Boolean).join(" · ")}</span></span></span></td>
+                <td className="px-5 py-2.5"><span className="flex items-center gap-3"><Thumb s={s} I={I} tone={tone} /><span><span className="block font-semibold">{s.name}</span><span className="text-[12px] text-hms-muted">{[s.image && !s.archived && "On website", s.guestRequest && !s.archived && "Guests can request", s.vendor && "Vendor"].filter(Boolean).join(" · ")}</span></span></span></td>
                 <td className="px-3 py-2.5">{cats.get(s.category) ?? "—"}</td><td className="px-3 py-2.5"><span className="block">{s.dept ?? "—"}</span><span className="text-[12.5px] text-hms-muted">{s.resourceType ? `Books a ${RES_LABEL[s.resourceType].toLowerCase()} · ${s.minutes ?? 60} min` : s.duration}</span></td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-right"><b className="tabular-nums">{s.variants?.length ? `${tk(Math.min(...s.variants.map((v) => v.price)))}+` : tk(s.price)}</b><span className="block text-[12.5px] text-hms-muted">{UNIT_LABEL[s.unit ?? "each"][1]}</span></td>
                 <td className="px-3 py-2.5">{s.archived ? <span className="inline-flex items-center gap-1.5 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664]"><span className="size-1.5 rounded-full bg-current" />Archived</span> : <span className="inline-flex items-center gap-1.5 rounded-md bg-[#e5f5ec] px-2 py-0.5 text-[12.5px] font-semibold text-[#16693a]"><span className="size-1.5 rounded-full bg-current" />Active</span>}</td>
@@ -143,6 +165,7 @@ function Catalog() {
               </tr>); })}</tbody>
           </table>
         </div>
+        </>
       ) : (
         <div className="border-t border-hms-line px-6 py-14 text-center"><p className="text-[16px] font-semibold">{st === "archived" ? "No archived services" : "No services found"}</p><p className="mt-1 text-[14px] text-hms-muted">{q ? "Try another name." : "Add your first service, like an airport transfer."}</p>
           {!q && st !== "archived" && <button onClick={() => open({ k: "service" })} className={clsx(btnPrimary, "mt-4")}><Plus className="size-4" />Add Service</button>}</div>
@@ -269,7 +292,17 @@ function Orders() {
           <input type="date" aria-label="Date" value={d} onChange={(e) => setD(e.target.value)} className={sel} />{d && <button onClick={() => setD("")} className="text-[13.5px] font-semibold text-hms-red">All dates</button>}
         </div>
         {list.length ? (
-          <div className="overflow-x-auto border-t border-hms-line" tabIndex={0} role="region" aria-label="Orders">
+          <>
+          <ul className="divide-y divide-hms-line border-t border-hms-line md:hidden" aria-label="Orders">
+            {list.map((o) => (
+              <li key={o.id}><button onClick={() => open({ k: "details", id: o.id })} className={clsx("block w-full px-4 py-3 text-left", o.cancelled && "text-hms-muted")}>
+                <span className="flex items-baseline justify-between gap-3"><b className="truncate">{name(o.service)}</b><b className={clsx("shrink-0 tabular-nums", o.cancelled && "line-through")}>{tk(orderTotal(o))}</b></span>
+                <span className="block text-[12.5px] text-hms-muted">{o.id} · {o.method === "booking" ? `Room ${o.booking?.room} · ${o.booking?.guest}` : "Walk-in"} · {whenLabel(o)}</span>
+                <span className="mt-1.5 flex flex-wrap gap-1.5"><WorkPill o={o} /><PayPill o={o} /></span>
+              </button></li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto border-t border-hms-line md:block" tabIndex={0} role="region" aria-label="Orders">
             <table className="w-full min-w-[980px] text-[14px]">
               <thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="px-5 py-2.5 font-medium">Service / Order</th><th className="px-3 py-2.5 font-medium">Booking / Walk-in</th><th className="px-3 py-2.5 font-medium">Requested Time</th><th className="px-3 py-2.5 font-medium">Work</th><th className="px-3 py-2.5 font-medium">Payment</th><th className="px-3 py-2.5 text-right font-medium">Total</th><th className="px-5 py-2.5 text-right font-medium">Actions</th></tr></thead>
               <tbody>{list.map((o) => (
@@ -292,6 +325,7 @@ function Orders() {
               ))}</tbody>
             </table>
           </div>
+          </>
         ) : <p className="border-t border-hms-line px-5 py-12 text-center text-[14px] text-hms-muted">No orders match these filters.</p>}
         <p className="border-t border-hms-line px-5 py-3 text-[13px] text-hms-muted">{list.length} service order{list.length === 1 ? "" : "s"} · booking charges are paid with the booking at checkout</p>
       </section>

@@ -1,7 +1,9 @@
 "use client";
 import clsx from "clsx";
 import { useState, type ReactNode } from "react";
-import { ArrowRight, ChevronDown, CircleAlert, Clock, Info, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ChevronDown, CircleAlert, Clock, ImagePlus, Info, SlidersHorizontal } from "lucide-react";
+import { imgSrc } from "@/lib/img";
+import { PhotoButton } from "../photo";
 import { BUY_UNITS, KIND_LABEL, MAIN, UNITS, fmtQty, q, tk, type Category, type Item, type Location, type StoreKind, type Supplier, type Unit } from "@/lib/inventory/store";
 import type { useInventory } from "@/lib/inventory/store";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
@@ -39,8 +41,9 @@ export function ItemSheet({ inv, item, onClose }: { inv: Inv; item?: Item; onClo
   const [f, setF] = useState(() => ({
     name: item?.name ?? "", unit: (item?.unit ?? "pcs") as Unit, opening: "", openStore: MAIN, category: item?.category ?? cats[0]?.id ?? "", sku: item?.sku ?? "",
     supplier: item?.supplier ?? "", reorder: item ? String(item.reorder) : "", par: item?.par ? String(item.par) : "", cost: item ? String(item.cost) : "",
-    buyUnit: item?.buyUnit ?? "", perBuy: item?.perBuy ? String(item.perBuy) : "",
+    buyUnit: item?.buyUnit ?? "", perBuy: item?.perBuy ? String(item.perBuy) : "", photo: item?.photo ?? "",
   }));
+  const [photoErr, setPhotoErr] = useState("");
   const [tried, setTried] = useState(false);
   const set = (k: keyof typeof f, v: string) => setF((x) => ({ ...x, [k]: v }));
   const sku = f.sku.trim() || inv.nextSku(f.category);
@@ -56,13 +59,25 @@ export function ItemSheet({ inv, item, onClose }: { inv: Inv; item?: Item; onClo
   const save = () => {
     setTried(true);
     if (errs.name || errs.sku || errs.buy || errs.par) return;
-    inv.saveItem({ id: item?.id ?? inv.newId("i"), name: f.name.trim(), sku: sku.toUpperCase(), unit: f.unit, category: f.category, supplier: f.supplier, reorder: q(Number(f.reorder) || 0), par: f.par ? q(Number(f.par)) : undefined, cost: Number(f.cost) || 0, qty: item?.qty ?? 0, stock: item?.stock ?? {}, buyUnit: f.buyUnit || undefined, perBuy: f.buyUnit ? per : undefined }, item ? undefined : Number(f.opening) || 0, f.openStore);
+    inv.saveItem({ id: item?.id ?? inv.newId("i"), name: f.name.trim(), sku: sku.toUpperCase(), unit: f.unit, category: f.category, supplier: f.supplier, reorder: q(Number(f.reorder) || 0), par: f.par ? q(Number(f.par)) : undefined, cost: Number(f.cost) || 0, qty: item?.qty ?? 0, stock: item?.stock ?? {}, buyUnit: f.buyUnit || undefined, perBuy: f.buyUnit ? per : undefined, photo: f.photo || undefined, archived: item?.archived }, item ? undefined : Number(f.opening) || 0, f.openStore);
     onClose();
   };
   return (
     <Sheet title={item ? "Edit Item" : "Add Item"} sub={item ? `${item.sku} · stock changes only through movements` : "Create an item and set its starting quantity."} onClose={onClose} footer={<Foot onClose={onClose} label="Save Item" onSave={save} />}>
       <div className="space-y-4">
         <p className="text-[14px] font-semibold">Item details</p>
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- uploaded data URL */}
+          {f.photo ? <img src={imgSrc(f.photo)} alt="" className="size-16 shrink-0 rounded-xl object-cover" /> : <span className="grid size-16 shrink-0 place-items-center rounded-xl bg-hms-hover text-hms-muted"><ImagePlus className="size-6" /></span>}
+          <div className="min-w-0">
+            <div className="flex flex-wrap gap-2">
+              <PhotoButton label={f.photo ? "Change item photo" : "Add item photo"} onPhoto={(v) => { setPhotoErr(""); set("photo", v); }} onError={setPhotoErr} className={clsx(btnLine, "h-9 px-3")}>{f.photo ? "Change photo" : "Add photo"}</PhotoButton>
+              {f.photo && <button type="button" onClick={() => set("photo", "")} className="h-9 px-2 text-[13.5px] font-semibold text-hms-red">Remove</button>}
+            </div>
+            <p className="mt-1 text-[12.5px] text-hms-muted">Optional — helps staff pick the right item.</p>
+            {photoErr && <Err>{photoErr}</Err>}
+          </div>
+        </div>
         <div><label htmlFor="it-name" className={lbl}>Item Name</label><input id="it-name" autoFocus value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Bath Mat" className={input} />{tried && errs.name && <Err>{errs.name}</Err>}</div>
         <div className="grid grid-cols-2 gap-3">
           <div><label htmlFor="it-unit" className={lbl}>Unit (how you use it)</label><select id="it-unit" value={f.unit} onChange={(e) => set("unit", e.target.value)} className={input}>{UNITS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>

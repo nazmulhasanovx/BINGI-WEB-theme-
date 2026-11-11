@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, BadgeDollarSign, Check, ChevronRight, CircleMinus, Clock, Download, History, Landmark, MoreHorizontal, Package, Pencil, Plus, Printer, Search, ShieldCheck, ShoppingCart, Store, Tag, TriangleAlert, Warehouse, X } from "lucide-react";
 import { CAN, KIND_LABEL, MAIN, MOVE_LABEL, ROLE_LABEL, TODAY, at, fmtQty, inBuy, statusOf, tk, type Item, type Move, type MoveType, type Role, type StockStatus } from "@/lib/inventory/store";
 import { btnLine, btnPrimary } from "../guests/ui";
+import { imgSrc } from "@/lib/img";
 import { InventoryFrame, StorePicker, useInv } from "./frame";
 
 const card = "rounded-xl border border-hms-line bg-white";
@@ -92,7 +93,20 @@ function Stock() {
             <button onClick={() => { setQ(""); setCat(""); setSt(""); }} className={clsx(btnLine, "mt-4")}>Clear search</button>
           </div>
         ) : (
-          <div className="overflow-x-auto border-t border-hms-line" tabIndex={0} role="region" aria-label="Stock items">
+          <>
+          <ul className="divide-y divide-hms-line border-t border-hms-line md:hidden" aria-label="Stock items">
+            {list.map((i) => { const n = at(i, store); return (
+              <li key={i.id} className="flex items-center gap-3 px-4 py-3">
+                <ItemThumb i={i} big />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{i.name}</span>
+                  <span className="block text-[12.5px] text-hms-muted">{i.sku} · {cats.get(i.category) ?? "—"}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-2"><b className="tabular-nums">{fmtQty(n, i.unit)}</b><Pill tone={TONE[statusIn(i, store)]}>{statusIn(i, store)}</Pill></span>
+                </span>
+                <RowMenu item={i} />
+              </li>); })}
+          </ul>
+          <div className="hidden overflow-x-auto border-t border-hms-line md:block" tabIndex={0} role="region" aria-label="Stock items">
             <table className="w-full min-w-[920px] text-[14px]">
               <thead><tr className="text-left text-[12.5px] text-hms-muted">
                 <th className="px-5 py-2.5 font-medium">Item / SKU</th><th className="px-3 py-2.5 font-medium">Category</th><th className="px-3 py-2.5 font-medium">Default Supplier</th>
@@ -104,7 +118,7 @@ function Stock() {
                   const split = Object.entries(i.stock).filter(([, v]) => v !== 0);
                   return (
                     <tr key={i.id} className="border-t border-hms-line">
-                      <td className="px-5 py-2.5"><span className="flex items-center gap-3"><span className={clsx("grid size-9 shrink-0 place-items-center rounded-lg", ICON_TONE[i.category] ?? "bg-hms-hover text-hms-muted")}><Package className="size-4" /></span><span><span className="block font-semibold">{i.name}</span><span className="text-[12.5px] text-hms-muted">{i.sku}{i.buyUnit ? ` · 1 ${i.buyUnit} = ${i.perBuy} ${i.unit}` : ""}</span></span></span></td>
+                      <td className="px-5 py-2.5"><span className="flex items-center gap-3"><ItemThumb i={i} /><span><span className="block font-semibold">{i.name}</span><span className="text-[12.5px] text-hms-muted">{i.sku}{i.buyUnit ? ` · 1 ${i.buyUnit} = ${i.perBuy} ${i.unit}` : ""}</span></span></span></td>
                       <td className="px-3 py-2.5">{cats.get(i.category) ?? "—"}</td>
                       <td className="px-3 py-2.5">{sups.get(i.supplier) ?? "—"}</td>
                       <td className="whitespace-nowrap px-3 py-2.5 text-right"><span className="block font-bold tabular-nums">{fmtQty(n, i.unit)}</span>{!store && split.length > 1 ? <span className="text-[12px] text-hms-muted">{split.map(([k, v]) => `${short.get(k)} ${v}`).join(" · ")}</span> : inBuy(i, n) ? <span className="text-[12px] text-hms-muted">{inBuy(i, n)}</span> : null}</td>
@@ -118,11 +132,20 @@ function Stock() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {inv.items.length > 0 && list.length > 0 && <p className="border-t border-hms-line px-5 py-3 text-[13px] text-hms-muted">Showing {list.length} of {scope.length} items</p>}
       </section>
     </>
   );
+}
+
+/** Item photo when one was added, otherwise a tinted box icon. */
+function ItemThumb({ i, big }: { i: Item; big?: boolean }) {
+  const sz = big ? "size-12 rounded-xl" : "size-10 rounded-lg";
+  // eslint-disable-next-line @next/next/no-img-element -- uploaded data URL
+  if (i.photo) return <img src={imgSrc(i.photo)} alt="" className={clsx(sz, "shrink-0 object-cover")} />;
+  return <span className={clsx("grid shrink-0 place-items-center", sz, ICON_TONE[i.category] ?? "bg-hms-hover text-hms-muted")}><Package className="size-4" /></span>;
 }
 
 /** Wastage / adjustments above the approval limit, recorded by a store keeper. */
@@ -138,7 +161,7 @@ function Approvals() {
       <div className="flex items-center gap-3 bg-[#fdf8ec] px-5 py-3"><Clock className="size-4 text-[#a76f00]" aria-hidden /><h2 id="appr" className="flex-1 text-[15px] font-bold">Waiting for approval · {list.length}</h2>{!can && <span className="text-[13px] text-[#6b4309]">A manager approves these</span>}</div>
       <ul>{list.map((a) => { const it = items.get(a.item); return (
         <li key={a.id} className="flex flex-wrap items-center gap-3 border-t border-hms-line px-5 py-3">
-          <span className="min-w-0 flex-1"><span className="block font-semibold">{a.kind === "wastage" ? "Wastage" : "Adjust to"} {fmtQty(a.amount, it?.unit ?? "")} · {it?.name}</span><span className="text-[13px] text-hms-muted">{stores.get(a.store)} · worth {tk(a.value)} · “{a.note}” · {a.by}</span></span>
+          <span className="min-w-[220px] flex-1 basis-full sm:basis-auto"><span className="block font-semibold">{a.kind === "wastage" ? "Wastage" : "Adjust to"} {fmtQty(a.amount, it?.unit ?? "")} · {it?.name}</span><span className="text-[13px] text-hms-muted">{stores.get(a.store)} · worth {tk(a.value)} · “{a.note}” · {a.by}</span></span>
           {can && <><button onClick={() => { const e = inv.decide(a.id, false); setErr(e ?? ""); if (!e) toast("Rejected — stock unchanged"); }} className={clsx(btnLine, "h-9 px-3")}><X className="size-4" />Reject</button>
             <button onClick={() => { const e = inv.decide(a.id, true); setErr(e ?? ""); if (!e) toast(`Approved — ${it?.name} updated`); }} className={clsx(btnPrimary, "h-9 px-3")}><Check className="size-4" />Approve</button></>}
         </li>

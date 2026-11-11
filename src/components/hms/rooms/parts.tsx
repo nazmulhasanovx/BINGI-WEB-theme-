@@ -74,7 +74,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
               ))}
             </nav>
           )}
-          <div className="mt-4">{st.config.configured ? children : <SetupIntro />}</div>
+          <div key={tab} className="hms-page-in mt-4">{st.config.configured ? children : <SetupIntro />}</div>
         </div>
       </div>
       {toast && <Toast key={toast} text={toast} onDone={() => showToast(null)} />}
