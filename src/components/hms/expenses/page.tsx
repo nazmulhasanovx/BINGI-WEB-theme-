@@ -451,3 +451,19 @@ function BillSheet({ d, b, onClose, done }: { d: Data; b: Bill; onClose: () => v
     </Sheet>
   );
 }
+
+/** Every payment out for costs (expense payments + petty cash), for Reports. Payroll is separate (Staff). */
+export function useSpentRows() {
+  const h = useProperty();
+  const ex = useExpenses(h);
+  const inv = useInventory(h);
+  const cbx = useCashboxData();
+  return useMemo(() => {
+    const cat = (id: string) => ex.st.categories.find((c) => c.id === id)?.name ?? id;
+    const payee = (id?: string) => (id ? ex.st.payees.find((p) => p.id === id)?.name ?? inv.st.suppliers.find((s) => s.id === id)?.name ?? "—" : "—");
+    return [
+      ...ex.st.expenses.flatMap((e) => e.payments.map((p) => ({ date: p.at.slice(0, 10), category: cat(e.category), payee: payee(e.payee), amount: p.amount, method: p.method as string, title: e.title, src: "expense" as const }))),
+      ...cbx.cb.st.moves.filter((m) => m.kind === "out" && m.reason === "petty" && !m.reversedBy && !m.reverses).map((m) => ({ date: m.day, category: PETTY_CAT[m.category ?? ""] ?? m.category ?? "Other", payee: m.party ?? "—", amount: m.amount, method: "Cash", title: m.note || "Petty cash", src: "petty" as const })),
+    ];
+  }, [ex.st, inv.st.suppliers, cbx.cb.st.moves]);
+}

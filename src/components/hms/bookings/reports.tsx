@@ -1,5 +1,6 @@
 "use client";
 import clsx from "clsx";
+import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { TODAY, oooOn } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
@@ -104,6 +105,7 @@ function Reports() {
           <p className="text-[14px]"><b className="text-[20px] tabular-nums">{data.pick.length}</b> booking{data.pick.length === 1 ? "" : "s"} · {data.pick.reduce((s, b) => s + b.nights.length, 0)} room-nights</p>
         </Box>
       </div>
+      <p className="text-[13.5px]"><Link href="/hms/reports?r=occupancy" className="font-semibold text-hms-red underline underline-offset-2">All reports</Link> <span className="text-hms-muted">— sales, profit, payments, guests and more, with PDF / Excel export.</span></p>
       <p className="text-[12.5px] text-hms-muted">Occupancy counts rooms that are not out of order. Revenue here is the room price only — meals, services and fees are in Cashbox and their own modules.</p>
     </div>
   );
