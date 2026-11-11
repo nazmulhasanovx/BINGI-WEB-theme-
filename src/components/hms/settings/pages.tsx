@@ -471,48 +471,19 @@ export function BillingPage() {
 
 // ============ Messages ============
 export function MessagesPage() {
-  const { h, s, save, toast } = useS();
-  const bk = useBookings(h);
-  const [tab, setTab] = useState<"auto" | "texts" | "chat">("auto");
-  const f = useDraft({ m: s.messages, confirm: bk.settings.confirmMsg, pre: bk.settings.preArrivalMsg }); const { m } = f.d;
-  const [st, setSt] = useState(""); const [sx, setSx] = useState("");
+  const { s } = useS();
+  const on = s.messages.rules.filter((r) => r.email || r.sms).length;
   return (
     <>
-      <PageHead title="Guest messages" actions={<Segmented value={tab} onChange={setTab} options={[{ v: "auto", label: "Automatic" }, { v: "texts", label: "Message texts" }, { v: "chat", label: "Chat replies" }]} />} />
-      {tab === "auto" && <>
-        <Card pad={false}>
-          <div className="grid grid-cols-[1fr_64px_64px_80px] gap-2 border-b border-hms-line px-5 py-2.5 text-[12.5px] font-semibold text-hms-muted"><span>When</span><span>Email</span><span>SMS</span><span>WhatsApp</span></div>
-          {m.rules.map((r) => (
-            <div key={r.id} className="grid grid-cols-[1fr_64px_64px_80px] items-center gap-2 border-b border-hms-line px-5 py-3 last:border-b-0">
-              <p className="text-[14px]">{r.label} <span className="text-[12.5px] text-hms-muted">· {r.to}</span></p>
-              {(["email", "sms", "whatsapp"] as const).map((k) => <Toggle key={k} label={`${r.label} by ${k}`} on={r[k]} onChange={(v) => f.setD({ ...f.d, m: { ...m, rules: m.rules.map((x) => (x.id === r.id ? { ...x, [k]: v } : x)) } })} />)}
-            </div>
-          ))}
+      <PageHead title="Guest messages" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Automatic emails & SMS" desc={`${on} of ${s.messages.rules.length} messages are on. Rules, texts, credits and delivery are managed in one place.`}>
+          <Link href="/hms/communication?tab=auto" className="inline-flex h-10 items-center rounded-lg border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Open Communication Center</Link>
         </Card>
-        <p className="mt-3 text-[13px] text-hms-muted">Email, SMS and WhatsApp senders are not connected yet — staff send from the booking’s Documents & messages tab.</p>
-      </>}
-      {tab === "texts" && <Card desc="Words in {braces} fill in by themselves: {guest} {code} {hotel} {room} {from} {to} {nights} {total} {paid} {checkin} {link}">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Field label="Booking confirmation"><TextArea value={f.d.confirm} onChange={(e) => f.setD({ ...f.d, confirm: e.target.value })} className="min-h-[130px]" /></Field>
-          <Field label="Day before arrival"><TextArea value={f.d.pre} onChange={(e) => f.setD({ ...f.d, pre: e.target.value })} className="min-h-[130px]" /></Field>
-        </div>
-      </Card>}
-      {tab === "chat" && <div className="space-y-4">
-        <Card>
-          <Grid><Field label="Payment note"><TextArea value={m.paymentNote} onChange={(e) => f.setD({ ...f.d, m: { ...m, paymentNote: e.target.value } })} placeholder="e.g. Send bKash to 01XXX… and share the TrxID" /></Field>
-            <Field label="Location / directions"><TextArea value={m.location} onChange={(e) => f.setD({ ...f.d, m: { ...m, location: e.target.value } })} placeholder="Map link and landmark" /></Field></Grid>
-          <p className="mt-2 text-[12.5px] text-hms-muted">Active payment methods come from <Link href="/hms/settings/payments" className="text-hms-blue underline underline-offset-2">Guest payments</Link>.</p>
+        <Card title="Chat replies" desc={`${s.messages.shortcuts.length} quick replies, payment note and location for guest chat.`}>
+          <Link href="/hms/chat" className="inline-flex h-10 items-center rounded-lg border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Open Chat</Link>
         </Card>
-        <Card title="Quick replies">
-          {m.shortcuts.length > 0 && <ul className="mb-4 divide-y divide-hms-line">{m.shortcuts.map((x) => <li key={x.id} className="flex items-start gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{x.title}</b><span className="text-[13px] text-hms-muted">{x.text}</span></span><button aria-label={`Remove ${x.title}`} onClick={() => f.setD({ ...f.d, m: { ...m, shortcuts: m.shortcuts.filter((y) => y.id !== x.id) } })} className="grid size-8 place-items-center rounded-lg text-hms-muted hover:bg-hms-hover"><Trash2 className="size-4" /></button></li>)}</ul>}
-          <div className="grid gap-2 sm:grid-cols-[200px_1fr_auto]">
-            <Input aria-label="Quick reply name" value={st} onChange={(e) => setSt(e.target.value)} placeholder="Name, e.g. Breakfast" />
-            <Input aria-label="Quick reply text" value={sx} onChange={(e) => setSx(e.target.value)} placeholder="Breakfast is 7–10 am on the 1st floor." />
-            <Btn variant="outline" disabled={!st.trim() || !sx.trim()} onClick={() => { f.setD({ ...f.d, m: { ...m, shortcuts: [...m.shortcuts, { id: `q${Date.now().toString(36)}`, title: st.trim(), text: sx.trim() }] } }); setSt(""); setSx(""); }}><Plus className="size-4" />Add</Btn>
-          </div>
-        </Card>
-      </div>}
-      <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => { bk.saveSettings({ ...bk.settings, confirmMsg: f.d.confirm, preArrivalMsg: f.d.pre }); save((x) => { x.messages = m; }, "Guest messages updated"); toast("Guest messages saved"); }} />
+      </div>
     </>
   );
 }

@@ -14,7 +14,7 @@ import { addDays, postExpenseOut } from "@/lib/cashbox/store";
 import { useInventory } from "@/lib/inventory/store";
 import { runTotals, useHrm } from "@/lib/hrm/store";
 import { sums } from "@/lib/payments/ledger";
-import { METHODS, STATUS_LABEL, dueOf, paidOf, payState, useExpenses, type Category, type Ex, type Expense, type Method, type NewExpense, type PayState, type Payee, type PayeeKind } from "@/lib/expenses/store";
+import { METHODS, STATUS_LABEL, dueOf, paidOf, payState, useExpenses, type Category, type Expense, type Method, type NewExpense, type PayState, type Payee, type PayeeKind } from "@/lib/expenses/store";
 import { useProperty } from "../property";
 import { useCashboxData } from "../cashbox/pages";
 import { usePaymentRows } from "../payments/page";

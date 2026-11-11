@@ -72,7 +72,7 @@ export function ReportsWorkspace() {
   const [a, z] = span(p, cf, ct);
   const bad = p === "custom" && (!cf || !ct || cf > ct || ct > TODAY);
   const { input } = useData(a, z);
-  const rep = useMemo(() => build(id, input), [id, input]);
+  const rep = build(id, input);
   const pick = (r: string) => router.replace(`/hms/reports?r=${r}`, { scroll: false });
   const groups = [...new Set(list.map((r) => r.group))];
   const title = `${h.name} · ${rep.label} · ${dmy(a)}${a !== z ? ` – ${dmy(z)}` : ""}`;

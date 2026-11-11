@@ -89,13 +89,13 @@ with sync_playwright() as p:
   fr=pg.evaluate("[...document.querySelectorAll('iframe[aria-hidden]')].map(f=>f.contentDocument.body.innerText).join(' ')")
   t("registration card has agreement", "No smoking in rooms." in fr)
   pg.wait_for_timeout(1500)
-  # messages -> bookings templates
+  # messages: one home is Communication Center (texts) + Chat (quick replies) — D1 / D6
   pg.goto(B+"/hms/settings/messages"); pg.wait_for_timeout(900)
-  pg.get_by_role("button",name="Message texts").click(); pg.get_by_label("Booking confirmation").fill("Hi {guest}, see you on {from}. {code}"); save()
+  t("messages page links to Communication + Chat", pg.get_by_role("link",name="Open Communication Center").count()==1 and pg.get_by_role("link",name="Open Chat").count()==1)
+  pg.goto(B+"/hms/communication?tab=auto"); pg.wait_for_timeout(1200)
+  pg.get_by_role("button",name="Edit text for Booking confirmed").click(); pg.locator("#tpl").fill("Hi {guest}, see you on {from}. {code}"); pg.get_by_role("button",name="Save text").click(); pg.wait_for_timeout(400)
   bks=pg.evaluate("(()=>{const k=Object.keys(localStorage).find(k=>k.includes('bookings')&&k.includes('azure'));return JSON.parse(localStorage.getItem(k)).settings})()")
   t("confirmation text saved to bookings", bks["confirmMsg"].startswith("Hi {guest}"))
-  pg.get_by_role("button",name="Chat replies").click(); pg.get_by_label("Quick reply name").fill("Breakfast"); pg.get_by_label("Quick reply text").fill("7-10 am"); pg.get_by_role("button",name="Add").click(); save()
-  t("quick reply saved", "Breakfast" in M())
   # users & roles
   pg.goto(B+"/hms/settings/users"); pg.wait_for_timeout(1000)
   inv=pg.get_by_role("button",name=re.compile("^Invite "))
