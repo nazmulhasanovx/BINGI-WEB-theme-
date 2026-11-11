@@ -59,7 +59,8 @@ export function NewBookingPage() {
   const [ota, setOta] = useState(OTAS[0]);
   const [ref, setRef] = useState("");
   const [from, setFrom] = useState(start);
-  const [to, setTo] = useState(addDays(start, 1));
+  const qTo = sp.get("to");
+  const [to, setTo] = useState(qTo && qTo > start ? qTo : addDays(start, 1));
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [picked, setPicked] = useState<string[]>(() => (sp.get("room") ? [sp.get("room")!] : []));

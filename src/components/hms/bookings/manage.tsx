@@ -96,7 +96,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
               <span className="font-mono font-semibold text-[#4d5664]">{b.code}</span>
               <ChannelBadge b={b} />{b.channelRef && <span className="text-hms-muted">{b.channelRef}</span>}
               <StatusPill s={b.status} /><PayPill b={b} /><Flags b={b} />
-              {b.group && <span className="rounded-md bg-hms-hover px-2 py-0.5 text-[12px] font-semibold text-[#4d5664]">Group {b.group}</span>}
+              {b.group && <Link href={`/hms/bookings/group?g=${b.group}`} className="rounded-md bg-hms-hover px-2 py-0.5 text-[12px] font-semibold text-[#4d5664] hover:text-hms-ink">Group {b.group} · {bk.list.filter((x) => x.group === b.group).length} rooms →</Link>}
             </div>
             <p className="mt-2 text-[15px]"><b>{b.unit ? `Room ${b.unit}` : <span className="text-[#a15c00]">No room yet</span>}</b> <span className="text-hms-muted">· {b.type}</span> · {dow(b.from)} {dm(b.from)} → {dow(b.to)} {dm(b.to)} · {b.nights.length} night{b.nights.length > 1 ? "s" : ""} · {b.adults + b.children} guest{b.adults + b.children > 1 ? "s" : ""}</p>
           </div>

@@ -376,6 +376,32 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st, clash]);
 
+  /** Drag on the calendar: new room and/or new dates in one step. Booked nights keep their price; new nights take `price`. */
+  const moveStay = useCallback((code: string, unit: string, from: string, to: string, price: (date: string) => number): string => {
+    const b = find(now(), code);
+    if (b.status !== "Confirmed" && b.status !== "Checked in") return "Only upcoming or in-house bookings can move";
+    if (from >= to) return "Check-out must be after check-in";
+    if (b.status === "Checked in" && from !== b.from) return "Guest is in house — only the room or the check-out date can change";
+    if (b.status === "Checked in" && to <= TODAY) return "To end today, use Check out";
+    if (b.status === "Confirmed" && from < TODAY) return "Check-in can't be in the past";
+    const u = unitByCode.get(unit);
+    if (!u) return "Pick a room";
+    if (u.ooo) return `Room ${unit} is out of order (${u.ooo.reason})`;
+    const c = clash(unit, b.status === "Checked in" && TODAY > from ? TODAY : from, to, code);
+    if (c) return `Room ${unit} is taken by ${c.code} on these dates`;
+    save((s) => {
+      const x = find(s, code); const old = new Map(x.nights.map((n) => [n.date, n.base]));
+      const n: Night[] = []; for (let d = from; d < to; d = addDays(d, 1)) n.push({ date: d, base: old.get(d) ?? price(d) });
+      const parts: string[] = [];
+      if (x.unit !== unit) parts.push(x.unit ? `Room ${x.unit} → ${unit}` : `Room ${unit} assigned`);
+      if (x.from !== from || x.to !== to) parts.push(`${dm(x.from)}–${dm(x.to)} → ${dm(from)}–${dm(to)}`);
+      x.unit = unit; x.categoryId = u.category; x.type = cats.get(u.category)?.name ?? x.type; x.from = from; x.to = to; x.nights = n;
+      log(x, `Moved on calendar · ${parts.join(" · ")}`);
+    });
+    return "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st, clash, unitByCode, cats]);
+
   const update = useCallback((code: string, patch: Partial<Pick<Booking, "adults" | "children" | "note" | "channel" | "discount" | "purpose" | "comingFrom" | "goingTo" | "eta" | "companions" | "booker" | "payer">>, text = "Details updated") => save((s) => { Object.assign(find(s, code), patch); log(find(s, code), text); }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
@@ -436,7 +462,7 @@ export function useBookings(h: Hotel) {
   [st]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
 
-  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
+  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
 }
 export type Bk = ReturnType<typeof useBookings>;
 export type { Unit };

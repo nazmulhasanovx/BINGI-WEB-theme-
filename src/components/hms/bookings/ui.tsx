@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, List, Moon, Phone, Plus, Settings2, Store, Sun, Plane } from "lucide-react";
+import { Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, LayoutGrid, List, Moon, UserPlus, Phone, Plus, Settings2, Store, Sun, Plane } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type Channel, type PayState } from "@/lib/bookings/store";
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
@@ -24,6 +24,7 @@ export type BkTab = "today" | "calendar" | "board" | "list" | "waitlist" | "repo
 const TABS: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
   { id: "today", label: "Today", href: "/hms/bookings", icon: Sun },
   { id: "calendar", label: "Calendar", href: "/hms/bookings/calendar", icon: CalendarDays },
+  { id: "board", label: "Room board", href: "/hms/bookings/board", icon: LayoutGrid },
   { id: "list", label: "All bookings", href: "/hms/bookings/list", icon: List },
   { id: "close", label: "Day close", href: "/hms/bookings/close", icon: Moon },
   { id: "settings", label: "Settings", href: "/hms/bookings/settings", icon: Settings2 },
@@ -71,7 +72,8 @@ export function BookingsFrame({ tab, children, sub }: { tab: BkTab; children: Re
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <ModeSwitch />
-            <Link href="/hms/bookings/new" className={clsx(bMain, "ml-auto sm:ml-0")}><Plus className="size-4" />New booking</Link>
+            <Link href="/hms/bookings/walkin" className={clsx(bSoft, "ml-auto sm:ml-0")}><UserPlus className="size-4" /><span className="hidden sm:inline">Walk-in</span><span className="sr-only sm:hidden">Walk-in</span></Link>
+            <Link href="/hms/bookings/new" className={bMain}><Plus className="size-4" />New booking</Link>
             <Menu label="More actions" items={[{ label: "Reset demo bookings", onClick: () => { bk.reset(); setToast("Demo bookings reset"); }, danger: true }]} />
           </div>
         </div>
