@@ -12,7 +12,25 @@ export type Perm = "none" | "view" | "edit";
 export const AREAS = ["Bookings", "Rooms & housekeeping", "Guests", "Restaurant", "Inventory", "Staff", "Money", "Reports", "Website", "Settings"] as const;
 export type Area = (typeof AREAS)[number];
 export type Role = { id: string; name: string; locked?: boolean; perms: Record<Area, Perm> };
-export type MsgRule = { id: string; label: string; to: "Guest" | "Staff"; email: boolean; sms: boolean; whatsapp: boolean };
+/** Automatic messages (edited in Communication Center). New ids are merged into saved settings on read. */
+export const DEFAULT_RULES: MsgRule[] = [
+  { id: "confirm", group: "Booking", label: "Booking confirmed", when: "A booking is made or confirmed", to: "Guest", email: true, sms: true, whatsapp: false },
+  { id: "pending", group: "Booking", label: "Booking request received", when: "A website request waits for the hotel", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "modified", group: "Booking", label: "Booking changed", when: "Dates or room change", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "cancel", group: "Booking", label: "Booking cancelled", when: "A booking is cancelled", to: "Guest", email: true, sms: true, whatsapp: false },
+  { id: "prearrival", group: "Stay", label: "Day before arrival", when: "The day before check-in, with the online check-in link", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "roomready", group: "Stay", label: "Room ready", when: "Housekeeping marks the room ready", to: "Guest", email: false, sms: false, whatsapp: false },
+  { id: "welcome", group: "Stay", label: "Welcome after check-in", when: "Guest is checked in", to: "Guest", email: false, sms: false, whatsapp: false },
+  { id: "checkout", group: "Stay", label: "Thank you + review", when: "After check-out", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "payment", group: "Payments", label: "Payment received", when: "A payment is recorded on the booking", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "refund", group: "Payments", label: "Refund made", when: "A refund is recorded", to: "Guest", email: true, sms: false, whatsapp: false },
+  { id: "order", group: "Restaurant & services", label: "Order received", when: "A QR / room-service order or service request is placed", to: "Guest", email: false, sms: false, whatsapp: false },
+  { id: "service", group: "Restaurant & services", label: "Service confirmed", when: "An extra service is confirmed", to: "Guest", email: false, sms: false, whatsapp: false },
+  { id: "newweb", group: "Team alerts", label: "New website request", when: "A guest books or asks on the website", to: "Staff", email: true, sms: false, whatsapp: false },
+  { id: "newchat", group: "Team alerts", label: "New chat message", when: "A guest writes in Chat", to: "Staff", email: false, sms: false, whatsapp: false },
+  { id: "lowstock", group: "Team alerts", label: "Low stock", when: "An item reaches its reorder level", to: "Staff", email: false, sms: false, whatsapp: false },
+];
+export type MsgRule = { id: string; label: string; to: "Guest" | "Staff"; email: boolean; sms: boolean; whatsapp: boolean; group?: string; when?: string };
 export type Printer = { id: string; name: string; kind: "Receipt (80 mm)" | "Kitchen (KOT)" | "A4"; where: string };
 
 export type Settings = {
@@ -63,14 +81,7 @@ const seed = (h: Hotel): Settings => ({
   docs: { prefix: "INV-", next: 1001, terms: "", footer: "Thank you for staying with us.", showLogo: true, paper: "A4", contract: { on: false, title: "Stay agreement", intro: "This agreement confirms the reservation and the terms accepted by the guest.", rules: "", signBefore: "Check-in", block: false } },
   printers: [],
   messages: {
-    rules: [
-      { id: "confirm", label: "Booking confirmed", to: "Guest", email: true, sms: true, whatsapp: false },
-      { id: "prearrival", label: "Day before arrival", to: "Guest", email: true, sms: false, whatsapp: false },
-      { id: "checkout", label: "After check-out (thank you + review)", to: "Guest", email: true, sms: false, whatsapp: false },
-      { id: "payment", label: "Payment received", to: "Guest", email: true, sms: false, whatsapp: false },
-      { id: "cancel", label: "Booking cancelled", to: "Guest", email: true, sms: true, whatsapp: false },
-      { id: "newweb", label: "New website request", to: "Staff", email: true, sms: false, whatsapp: false },
-    ],
+    rules: DEFAULT_RULES,
     paymentNote: "", location: "", shortcuts: [],
   },
   roles: DEFAULT_ROLES,
@@ -83,10 +94,15 @@ const KEY = (slug: string) => `bingi.settings.v1.${slug}`;
 const cache = new Map<string, Settings>();
 const listeners = new Set<() => void>();
 const SERVER = new Map<string, Settings>();
+/** Saved rules keep their toggles; new default events are added; labels/groups follow the defaults. */
+function mergeRules(saved?: MsgRule[]): MsgRule[] {
+  if (!Array.isArray(saved)) return DEFAULT_RULES;
+  return DEFAULT_RULES.map((d) => { const x = saved.find((r) => r.id === d.id); return x ? { ...d, email: x.email, sms: x.sms, whatsapp: x.whatsapp } : d; });
+}
 function read(h: Hotel): Settings {
   const c = cache.get(h.slug); if (c) { applyTax(c); return c; }
   let s = seed(h);
-  try { const raw = localStorage.getItem(KEY(h.slug)); if (raw) { const v = JSON.parse(raw); s = { ...s, ...v, profile: { ...s.profile, ...v.profile }, policy: { ...s.policy, ...v.policy }, tax: { ...s.tax, ...v.tax }, hk: { ...s.hk, ...v.hk }, docs: { ...s.docs, ...v.docs, contract: { ...s.docs.contract, ...v.docs?.contract } }, messages: { ...s.messages, ...v.messages } }; } } catch {}
+  try { const raw = localStorage.getItem(KEY(h.slug)); if (raw) { const v = JSON.parse(raw); s = { ...s, ...v, profile: { ...s.profile, ...v.profile }, policy: { ...s.policy, ...v.policy }, tax: { ...s.tax, ...v.tax }, hk: { ...s.hk, ...v.hk }, docs: { ...s.docs, ...v.docs, contract: { ...s.docs.contract, ...v.docs?.contract } }, messages: { ...s.messages, ...v.messages, rules: mergeRules(v.messages?.rules) } }; } } catch {}
   cache.set(h.slug, s);
   applyTax(s);
   return s;

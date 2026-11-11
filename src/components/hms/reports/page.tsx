@@ -164,7 +164,7 @@ function TableView({ t }: { t: Table }) {
         <button onClick={() => download(`${t.title.toLowerCase().replace(/\W+/g, "-")}.csv`, csvOf(t), "text/csv")} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-hms-muted hover:bg-hms-hover" aria-label={`Download ${t.title} as CSV`}><Download className="size-3.5" aria-hidden />CSV</button>
       </div>
       {t.rows.length === 0 ? <p className="px-4 py-6 text-[14px] text-hms-muted">{t.empty ?? "Nothing in this period."}</p> : (
-        <div className="mt-2 overflow-x-auto">
+        <div tabIndex={0} role="region" aria-label={t.title} className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[480px] text-[14px]">
             <thead><tr className="border-b border-hms-line text-[12.5px] text-hms-muted">{t.cols.map((c) => (
               <th key={c.k} aria-sort={sort?.k === c.k ? (sort.up ? "ascending" : "descending") : undefined} className={clsx("px-4 py-2 font-semibold", num(c.fmt) ? "text-right" : "text-left")}>
