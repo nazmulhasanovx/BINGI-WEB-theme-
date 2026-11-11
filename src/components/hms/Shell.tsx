@@ -65,7 +65,7 @@ export const ALL_ITEMS = [...GROUPS.flatMap((g) => g.items), { id: "settings", l
 const SEARCH_TARGETS: NavTarget[] = [
   ...[...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }].map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
   { label: "Guest reviews", href: "/hms/guests/reviews", icon: Star }, { label: "Inventory history", href: "/hms/inventory/history", icon: Boxes },
-  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles },
+  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles },
   { label: "Room categories", href: "/hms/rooms/categories", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
 ];
@@ -351,7 +351,7 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   }
   if (path.startsWith("/hms/other-services")) {
     const seg = path.split("/")[3];
-    const names: Record<string, string> = { orders: "Order History", categories: "Categories" };
+    const names: Record<string, string> = { orders: "Orders", categories: "Setup", catalog: "Service Catalog", reports: "Reports", setup: "Setup" };
     return [{ label: "Other Services", href: seg ? "/hms/other-services" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/inventory")) {
