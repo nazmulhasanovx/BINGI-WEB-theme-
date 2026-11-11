@@ -28,13 +28,25 @@ const sel = "h-10 rounded-lg border border-[#858c97] bg-white px-3 text-[14px] o
 const since = (p: Period) => (p === "all" ? "0000" : p === "today" ? TODAY : addDays(TODAY, -(Number(p) - 1)));
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
+/** Every guest payment row for the current property (shared with Expenses › Overview and Reports). */
+export function usePaymentRows() {
+  const h = useProperty();
+  const bk = useBookings(h);
+  const gmap = useGuestNames(h);
+  const rest = useRestaurant();
+  const svc = useServices(h);
+  return useMemo(() => ledger({
+    bookings: bk.list, guestName: (id) => gmap.get(id)?.name ?? "Guest",
+    meals: can(h, "restaurant") ? rest.m.st.orders : [],
+    services: can(h, "services") ? svc.st.orders : [], serviceName: (id) => svc.st.services.find((s) => s.id === id)?.name ?? "Service",
+  }), [bk.list, gmap, h, rest.m.st.orders, svc.st.orders, svc.st.services]);
+}
+
 export function PaymentsPage() {
   const h = useProperty();
   const sp = useSearchParams();
   const bk = useBookings(h);
   const gmap = useGuestNames(h);
-  const rest = useRestaurant();
-  const svc = useServices(h);
   const [tab, setTab] = useState<Tab>((["all", "collect", "refunds"] as Tab[]).find((t) => t === sp.get("tab")) ?? "all");
   const [period, setPeriod] = useState<Period>("30");
   const [q, setQ] = useState("");
@@ -43,11 +55,7 @@ export function PaymentsPage() {
   const [kind, setKind] = useState<"" | Row["kind"]>("");
   const [open, setOpen] = useState<Row | null>(null);
 
-  const rows = useMemo(() => ledger({
-    bookings: bk.list, guestName: (id) => gmap.get(id)?.name ?? "Guest",
-    meals: can(h, "restaurant") ? rest.m.st.orders : [],
-    services: can(h, "services") ? svc.st.orders : [], serviceName: (id) => svc.st.services.find((s) => s.id === id)?.name ?? "Service",
-  }), [bk.list, gmap, h, rest.m.st.orders, svc.st.orders, svc.st.services]);
+  const rows = usePaymentRows();
   const inPeriod = useMemo(() => rows.filter((r) => r.at.slice(0, 10) >= since(period) && r.at.slice(0, 10) <= TODAY), [rows, period]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();

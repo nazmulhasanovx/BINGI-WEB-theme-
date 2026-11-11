@@ -12,7 +12,7 @@ import { TODAY } from "@/lib/rooms/store";
 import { seedCash } from "@/lib/meals/seed";
 
 export type InSource = "booking" | "restaurant" | "service" | "other" | "dinein" | "takeaway" | "roomservice" | "handover";
-export type OutReason = "owner" | "bank" | "transfer" | "petty" | "refund" | "handover";
+export type OutReason = "owner" | "bank" | "transfer" | "petty" | "refund" | "handover" | "expense";
 export type Movement = {
   id: string; drawer: string; day: string; at: string; kind: "in" | "out"; amount: number;
   source?: InSource; reason?: OutReason; ref?: string; party?: string; account?: string; category?: string; note?: string;
@@ -33,7 +33,7 @@ export const IN_LABEL: Record<InSource, string> = {
   booking: "Room booking", restaurant: "Restaurant & bar", service: "Other services", other: "Other income",
   dinein: "Dine-in / counter", takeaway: "Takeaway", roomservice: "Room service (cash)", handover: "Outlet handover",
 };
-export const OUT_LABEL: Record<OutReason, string> = { owner: "Owner withdrawal", bank: "Bank deposit", transfer: "Cash transfer", petty: "Petty cash expense", refund: "Guest refund", handover: "Handed to main cashbox" };
+export const OUT_LABEL: Record<OutReason, string> = { owner: "Owner withdrawal", bank: "Bank deposit", transfer: "Cash transfer", petty: "Petty cash expense", refund: "Guest refund", handover: "Handed to main cashbox", expense: "Expense paid" };
 /** What each kind of drawer can record by hand. */
 export const IN_FOR = (kind: Drawer["kind"], separate: boolean): InSource[] => kind === "fnb" ? ["dinein", "takeaway", "roomservice", "other"] : separate ? ["booking", "service", "other"] : ["booking", "restaurant", "service", "other"];
 export const OUT_FOR = (kind: Drawer["kind"]): OutReason[] => kind === "fnb" ? ["handover", "petty", "refund", "bank"] : ["owner", "bank", "transfer", "petty", "refund"];
@@ -261,6 +261,18 @@ export function postCashOut(h: Hotel, stays: StayRef[], m: { amount: number; ref
   if (!isOpen(s0, MAIN)) return "Main cashbox is not open — open it before paying cash";
   const s = structuredClone(s0);
   s.moves.push({ id: `m${s.seq++}`, drawer: MAIN, day: TODAY, at: stamp(), kind: "out", amount: m.amount, reason: "refund", ref: m.ref, party: m.party, by: ME, auto: true });
+  write(h.slug, s);
+  return "";
+}
+/** Cash paid out of the main drawer for an approved expense / supplier bill (auto-posted from Expenses). Returns an error or "". */
+export function postExpenseOut(h: Hotel, stays: StayRef[], m: { amount: number; ref: string; party?: string; category?: string; note?: string }) {
+  const s0 = read(h, stays);
+  if (!isOpen(s0, MAIN)) return "Main cashbox is not open — open it, or pay by bank / bKash";
+  const day = s0.days.find((d) => d.drawer === MAIN && d.date === TODAY);
+  const have = totals(day, s0.moves).now;
+  if (m.amount > have) return `Only ${tk(have)} cash in the main cashbox`;
+  const s = structuredClone(s0);
+  s.moves.push({ id: `m${s.seq++}`, drawer: MAIN, day: TODAY, at: stamp(), kind: "out", amount: m.amount, reason: "expense", ref: m.ref, party: m.party, category: m.category, note: m.note, by: ME, auto: true });
   write(h.slug, s);
   return "";
 }
