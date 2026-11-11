@@ -34,7 +34,7 @@ with sync_playwright() as p:
   # mobile
   m=b.new_page(viewport={"width":390,"height":844}); m.goto(B+"/hms/bookings/reports"); m.wait_for_timeout(1500)
   t("mobile no horizontal overflow", m.evaluate("document.documentElement.scrollWidth<=window.innerWidth+1"))
-  for path in ["/hms/bookings","/hms/bookings/board","/hms/bookings/waitlist","/hms/bookings/close","/hms/bookings/settings","/hms/housekeeping","/hms/bookings/walkin"]:
+  for path in ["/hms/bookings","/hms/bookings/board","/hms/bookings/waitlist","/hms/bookings/close","/hms/settings/policies","/hms/housekeeping","/hms/bookings/walkin"]:
     m.goto(B+path); m.wait_for_timeout(1200)
     t(f"mobile ok {path}", m.evaluate("document.documentElement.scrollWidth<=window.innerWidth+1"))
   t(f"no page errors {errs}", not errs)

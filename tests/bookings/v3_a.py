@@ -17,11 +17,12 @@ with sync_playwright() as p:
   M=lambda: pg.locator("main").inner_text()
   ST=lambda: pg.get_by_role("status").inner_text() if pg.get_by_role("status").count() else ""
   pg.goto(B+"/hms/bookings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
-  t("Day close + Settings tabs", pg.get_by_role("link",name="Day close").count()==1 and pg.get_by_role("link",name="Settings").count()>=1)
-  # ---- settings
-  pg.get_by_role("navigation",name="Bookings sections").get_by_role("link",name="Settings").click(); pg.wait_for_timeout(1200)
-  t("settings page", "/hms/bookings/settings" in pg.url and "Cancellation & no-show" in M())
-  f=pg.get_by_label("Late check-out fee (৳)"); f.fill(""); f.type("2000"); t("typing keeps focus", f.input_value()=="2000")
+  t("Day close tab", pg.get_by_role("link",name="Day close").count()==1)
+  # ---- booking policies live in Settings (one home)
+  pg.goto(B+"/hms/settings/policies"); pg.wait_for_timeout(1200)
+  t("settings page", "Cancellation & no-show" in M())
+  pg.get_by_label("Late check-out",exact=True).select_option("charge")
+  f=pg.get_by_label("Late check-out fee"); f.fill(""); f.type("2000"); t("typing keeps focus", f.input_value()=="2000")
   pg.get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300); t("settings saved", "saved" in ST())
   axe(pg,"settings")
   # ---- in-house booking: bill tab, charges, deposit, docs

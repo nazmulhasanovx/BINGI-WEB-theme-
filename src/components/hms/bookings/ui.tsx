@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ChartColumn, Hourglass, Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, LayoutGrid, List, Moon, UserPlus, Phone, Plus, Settings2, Store, Sun, Plane } from "lucide-react";
+import { ChartColumn, Hourglass, Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, LayoutGrid, List, Moon, UserPlus, Phone, Plus, Store, Sun, Plane } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type Channel, type PayState } from "@/lib/bookings/store";
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
@@ -29,7 +29,6 @@ const TABS: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
   { id: "reports", label: "Reports", href: "/hms/bookings/reports", icon: ChartColumn },
   { id: "waitlist", label: "Waitlist", href: "/hms/bookings/waitlist", icon: Hourglass },
   { id: "close", label: "Day close", href: "/hms/bookings/close", icon: Moon },
-  { id: "settings", label: "Settings", href: "/hms/bookings/settings", icon: Settings2 },
 ];
 
 /** Easy / Details switch — same data, more or fewer fields. */

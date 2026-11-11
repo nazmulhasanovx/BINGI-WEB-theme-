@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ModulePlaceholder } from "@/components/hms/Placeholder";
 
-const MODULES = ["chat", "payments", "finance", "operations", "billing", "reports", "communication", "settings"];
+const MODULES = ["chat", "payments", "finance", "operations", "reports", "communication"];
 
 export function generateStaticParams() {
   return MODULES.map((module) => ({ module }));

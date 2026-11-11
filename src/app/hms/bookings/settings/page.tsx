@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-import { SettingsPage } from "@/components/hms/bookings/admin";
+import { redirect } from "next/navigation";
 
+/** Booking policies have one home: Settings › Booking policies. */
 export default function Page() {
-  return <Suspense><SettingsPage /></Suspense>;
+  redirect("/hms/settings/policies");
 }

@@ -48,7 +48,7 @@ export function HousekeepingPage() {
   const shown = units.filter((u) => f === "all" || (f === "arrivals" ? waiting.includes(u) : !off(u) && hk.stateOf(u.code) === f));
   const open = hk.st.tasks.filter((t) => t.status !== "Done").sort((a, b) => Number(waiting.some((u) => u.code === b.room)) - Number(waiting.some((u) => u.code === a.room)) || a.at.localeCompare(b.at));
   const doneToday = hk.st.tasks.filter((t) => t.status === "Done" && (t.done ?? "").startsWith(TODAY));
-  const next = (s: Clean): [Clean, string] | null => s === "Dirty" ? ["Cleaning", "Start cleaning"] : s === "Cleaning" ? ["Clean", "Mark clean"] : s === "Clean" && details ? ["Inspected", "Inspected"] : null;
+  const next = (s: Clean): [Clean, string] | null => s === "Dirty" ? ["Cleaning", "Start cleaning"] : s === "Cleaning" ? ["Clean", "Mark clean"] : s === "Clean" && (details || hk.rules.inspection) ? ["Inspected", "Mark inspected"] : null;
 
   if (!hk.ready || !bk.ready) return <div className="hms-page"><p role="status" className="py-10 text-[14px] text-hms-muted">Loading housekeeping…</p></div>;
   return (

@@ -2,6 +2,7 @@
 // Printed through the browser dialog (Save as PDF works). Same data as the booking page.
 import type { Hotel } from "@/lib/types";
 import type { Guest } from "@/lib/guests/store";
+import { settingsOf } from "@/lib/settings/store";
 import { bill, channelLabel, dmy, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, type Booking, type Pay, type Settings } from "./store";
 
 const esc = (s: string | undefined | null) => (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -17,7 +18,9 @@ th { background: #f5f6f8; font-size: 11.5px; text-transform: uppercase; letter-s
 .badge { display: inline-block; border: 1px solid #b11c29; color: #b11c29; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
 small { color: #666; }
 </style></head><body>${body}</body></html>`;
-const head = (h: Hotel, title: string, sub: string) => `<div class="top"><div><h1>${esc(h.name)}</h1><div class="m">${esc(h.address)}<br>${esc(h.phone)} · ${esc(h.email)}</div></div><div class="r"><div class="b" style="font-size:17px">${esc(title)}</div><div class="m">${sub}</div></div></div>`;
+/** Name, address, logo and tax numbers come from Settings → Property profile / Branding / Invoices. */
+const head = (h: Hotel, title: string, sub: string) => { const st = settingsOf(h); const p = st.profile; const logo = st.docs.showLogo && st.branding.logo ? `<img src="${st.branding.logo}" alt="" style="height:44px;max-width:160px;object-fit:contain;margin-bottom:6px;display:block">` : "";
+  return `<div class="top"><div>${logo}<h1>${esc(p.name || h.name)}</h1><div class="m">${esc(p.address || h.address)}<br>${esc(p.phone || h.phone)} · ${esc(p.email || h.email)}${p.bin ? `<br>VAT reg. (BIN) ${esc(p.bin)}` : ""}</div></div><div class="r"><div class="b" style="font-size:17px">${esc(title)}</div><div class="m">${sub}</div></div></div>`; };
 const stayBlock = (b: Booking, g?: Guest) => `<div class="grid">
 <div class="kv"><span>Guest</span><b>${esc(g?.name)}</b></div><div class="kv"><span>Booking</span><b>${b.code}</b></div>
 <div class="kv"><span>Phone</span><span>${esc(g?.phone)}</span></div><div class="kv"><span>Source</span><span>${esc(channelLabel(b))}${b.channelRef ? ` · ${esc(b.channelRef)}` : ""}</span></div>
@@ -51,13 +54,14 @@ export function invoiceHtml(h: Hotel, b: Booking, g: Guest | undefined, extras: 
   const total = totalOf(b) + extras.reduce((s, e) => s + e.amount, 0);
   const paid = paidOf(b);
   const to = b.payer?.kind === "Company" ? `<b>${esc(b.payer.name)}</b><br><small>For guest ${esc(g?.name)}</small>` : `<b>${esc(g?.name)}</b><br><small>${esc(g?.address)}</small>`;
-  return page(`Invoice ${b.code}`, `${head(h, "Invoice", `INV-${b.code.slice(3)} · ${dmy(b.checkedOutAt?.slice(0, 10) ?? b.to)}`)}
+  return page(`Invoice ${b.code}`, `${head(h, "Invoice", `${esc(settingsOf(h).docs.prefix)}${b.code.slice(3)} · ${dmy(b.checkedOutAt?.slice(0, 10) ?? b.to)}`)}
 <div class="grid" style="margin-bottom:10px"><div><small>Bill to</small><br>${to}</div><div class="r"><small>Stay</small><br>${dmy(b.from)} → ${dmy(b.to)}<br>Room ${esc(b.unit || "—")} · ${esc(b.type)}</div></div>
 <table><tr><th>Description</th><th class="r">Amount</th></tr>${rows.map(([l, a]) => `<tr><td>${esc(l)}</td><td class="r">${a < 0 ? "−" : ""}${tk(Math.abs(a))}</td></tr>`).join("")}</table>
 <table class="tot" style="margin-top:8px"><tr><td class="r">Total</td><td class="r b" style="width:140px">${tk(total)}</td></tr>
 ${b.payments.map((p) => `<tr><td class="r m">${p.amount < 0 ? "Refund" : "Paid"} · ${esc(p.method)} · ${dmy(p.at.slice(0, 10))}</td><td class="r">${p.amount < 0 ? "+" : "−"}${tk(Math.abs(p.amount))}</td></tr>`).join("")}
 <tr><td class="r big">Balance</td><td class="r big">${tk(total - paid)}</td></tr></table>
-<div class="sign"><div>Guest signature</div><div>Front desk</div></div>`);
+${settingsOf(h).docs.terms ? `<p class="m" style="margin-top:14px">${esc(settingsOf(h).docs.terms)}</p>` : ""}
+<div class="sign"><div>Guest signature</div><div>Front desk</div></div>${settingsOf(h).docs.footer ? `<p class="m" style="text-align:center;margin-top:18px">${esc(settingsOf(h).docs.footer)}</p>` : ""}`);
 }
 
 export function receiptHtml(h: Hotel, b: Booking, g: Guest | undefined, p: Pay) {
@@ -76,6 +80,7 @@ ${g?.country !== "Bangladesh" ? `${row("Visa no.", g?.visaNo)}${row("Visa valid 
 ${row("Address", g?.address)}${row("Purpose of visit", b.purpose)}${row("Coming from", b.comingFrom)}${row("Going to", b.goingTo)}
 ${row("Room", b.unit)}${row("Arrival", `${dmy(b.from)}${b.eta ? ` · ${b.eta}` : ""}`)}${row("Departure", dmy(b.to))}${row("Booked through", channelLabel(b))}</div>
 ${b.companions?.length ? `<h2>Other guests in the room</h2><table><tr><th>Name</th><th>ID</th><th>Relation</th></tr>${b.companions.map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.idType)} ${esc(c.idNo)}</td><td>${esc(c.relation)}</td></tr>`).join("")}</table>` : ""}
+${(() => { const c = settingsOf(h).docs.contract; return c.on ? `<h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p>${c.rules ? `<p style="white-space:pre-wrap">${esc(c.rules)}</p>` : ""}` : ""; })()}
 <p class="m" style="margin-top:14px">I agree to the hotel's terms. Check-out by the agreed time; the hotel is not responsible for valuables not deposited at the front desk.</p>
 <div class="sign"><div>Guest signature</div><div>Front desk</div></div>`);
 }

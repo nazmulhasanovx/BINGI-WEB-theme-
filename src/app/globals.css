@@ -330,3 +330,6 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 /* Nested page fades never stack. */
 .hms-page-in .hms-page-in { animation: none; }
+
+/* My preferences → Reduce motion: switch off page/drawer animations inside the HMS. */
+.hms-no-motion *, .hms-no-motion *::before, .hms-no-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
