@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AlertTriangle, ArrowLeftRight, CalendarDays, Check, ChevronRight, Clock, Hourglass, Plus, User, Users } from "lucide-react";
 import { TODAY, fmt, fmtShort, fmtStamp, useHrm, type Dept, type Employee } from "@/lib/hrm/store";
 import { addEmployee, pendingCounts } from "@/lib/hrm/actions";
+import { useHrmMode } from "@/lib/hrm/mode";
+import { EasyTeam } from "./easy";
 import { StaffFrame, DateBox, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Field, Input, Select, Table } from "./ui";
 
@@ -19,6 +21,12 @@ export function useDay(date: string) {
   const notMarked = active.filter((e) => !recs[e.id]).length;
   const late = active.filter((e) => /Late/.test(recs[e.id]?.remark ?? "")).length;
   return { active, recs, present, leave, absent, notMarked, late };
+}
+
+/** /hms/staff — Easy mode shows the simple team screen, Full mode the HR overview. */
+export function StaffHome() {
+  const { mode } = useHrmMode();
+  return mode === "easy" ? <EasyTeam /> : <OverviewPage />;
 }
 
 export function OverviewPage() {

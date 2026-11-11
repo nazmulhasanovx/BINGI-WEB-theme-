@@ -6,6 +6,8 @@ import { ChevronDown, Filter, Search, Settings } from "lucide-react";
 import { useProperty } from "../property";
 import { useHrm } from "@/lib/hrm/store";
 import { Menu, Toast } from "./ui";
+import { useHrmMode } from "@/lib/hrm/mode";
+import { ModeSwitch } from "./easy";
 
 export type StaffTab = "overview" | "people" | "attendance" | "schedule" | "leave" | "payroll" | "hiring" | "operations" | "settings";
 const MAIN: { id: StaffTab; label: string; href: string }[] = [
@@ -39,6 +41,7 @@ export function StaffFrame({
   const { st, reset } = useHrm();
   const toast = useSyncExternalStore(subToast, () => toastText, () => null);
   const setToast = showToast;
+  const { mode, setMode } = useHrmMode();
   const [more, setMore] = useState(false);
   const [fOpen, setFOpen] = useState(false);
   const inMore = MORE.some((m) => m.id === tab);
@@ -60,13 +63,21 @@ export function StaffFrame({
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
               <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ModeSwitch />
               <Link href="/hms/staff/settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><Settings className="size-[18px]" /> Settings</Link>
               {action}
               <Menu label="More actions" items={[{ label: "Export staff (CSV)", onClick: exportCsv }, { label: "Reset demo data", onClick: () => { reset(); setToast("Demo data reset"); } , danger: true }]} />
             </div>
           </div>
 
+          {mode === "easy" && (
+            <div role="status" className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-2.5 text-[14px] text-[#6b4309]">
+              <span>This is a Full HR page. Easy mode only shows your team list.</span>
+              <Link href="/hms/staff" className="font-semibold underline underline-offset-4">Back to Team</Link>
+              <button onClick={() => setMode("full")} className="font-semibold underline underline-offset-4">Stay in Full HR</button>
+            </div>
+          )}
           <nav className="mt-4 flex flex-wrap items-end gap-1 border-b border-hms-line" aria-label="Team & HR">
             {MAIN.map((t) => (
               <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
