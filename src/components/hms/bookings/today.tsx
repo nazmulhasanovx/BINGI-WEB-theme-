@@ -5,7 +5,7 @@ import { CircleAlert, LogIn, LogOut, Search } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { dm, dueOf, holds, tk, type Booking } from "@/lib/bookings/store";
-import { BookingsFrame, Flags, bDark, bSmall, card, useBk } from "./ui";
+import { BookingsFrame, ChannelBadge, Flags, bDark, bSmall, card, useBk } from "./ui";
 
 export function TodayPage() { return <BookingsFrame tab="today"><Today /></BookingsFrame>; }
 
@@ -85,10 +85,10 @@ function Row({ b, name, kind }: { b: Booking; name: string; kind: Seg }) {
       <button onClick={() => open(b.code)} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4" aria-label={`${name}${b.unit ? `, Room ${b.unit}` : ""}`}>
         <span className={clsx("grid h-12 w-14 shrink-0 place-items-center rounded-xl text-[16px] font-bold tabular-nums", !b.unit ? "bg-[#fff4e0] text-[#8a4b00]" : kind === "inhouse" ? "bg-[#e5f5ec] text-[#16693a]" : kind === "leaving" ? "bg-[#fdefe7] text-[#c2410c]" : "bg-[#e8f0fe] text-[#1d4ed8]")}>{b.unit || "—"}</span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2"><span className="truncate text-[15.5px] font-semibold">{name}</span>{vip && <span className="rounded bg-[#fdf3d9] px-1.5 text-[11px] font-bold text-[#7a4a0b]">VIP</span>}</span>
+          <span className="flex items-center gap-2"><span className="truncate text-[15.5px] font-semibold">{name}</span>{vip && <span className="rounded bg-[#fdf3d9] px-1.5 text-[11px] font-bold text-[#7a4a0b]">VIP</span>}<span className="hidden sm:inline-flex"><ChannelBadge b={b} /></span></span>
           <span className="block truncate text-[13px] text-hms-muted">
             {kind === "inhouse" ? `Until ${dm(b.to)}` : `${n} night${n > 1 ? "s" : ""} · ${b.adults + b.children} guest${b.adults + b.children > 1 ? "s" : ""}`}
-            {mode === "details" ? ` · ${b.code} · ${b.channel}` : ""}
+            {mode === "details" ? ` · ${b.code}${b.channelRef ? ` · ${b.channelRef}` : ""}` : ""}
             {kind !== "inhouse" && d > 0 && <b className="text-[#b42318] sm:hidden"> · {tk(d)} due</b>}
           </span>
         </span>

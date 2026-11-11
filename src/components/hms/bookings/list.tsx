@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { CHANNELS, dm, dueOf, paidOf, payState, totalOf, tk, type Booking } from "@/lib/bookings/store";
-import { BookingsFrame, Flags, PayPill, StatusPill, card, useBk } from "./ui";
+import { BookingsFrame, ChannelBadge, Flags, PayPill, StatusPill, card, useBk } from "./ui";
 
 export function ListPage() { return <BookingsFrame tab="list"><AllBookings /></BookingsFrame>; }
 
@@ -31,8 +31,8 @@ function AllBookings() {
   };
   const base = useMemo(() => bk.list.filter((b) => {
     if (q.trim()) { const s = q.toLowerCase(); const g = guests.get(b.guestId); if (![b.code, b.unit, g?.name, g?.phone, b.group].some((x) => x?.toLowerCase().includes(s))) return false; }
+    if (channel && b.channel !== channel) return false;
     if (mode === "details") {
-      if (channel && b.channel !== channel) return false;
       if (pay && payState(b) !== pay) return false;
       if (from && b.to <= from) return false;
       if (to && b.from > to) return false;
@@ -44,18 +44,20 @@ function AllBookings() {
   const list = base.filter(test[chip]).sort((a, b) => rank(a) - rank(b) || (rank(a) < 2 ? a.from.localeCompare(b.from) : b.from.localeCompare(a.from)));
   const chips: [Chip, string][] = [["all", "All"], ["upcoming", "Upcoming"], ["inhouse", "In house"], ["due", "Payment due"], ["past", "Checked out"], ["cancelled", "Cancelled"]];
   const filters = [channel, pay, from, to].filter(Boolean).length;
+  const bySource = CHANNELS.map((c) => [c, base.filter((b) => b.channel === c).length] as const).filter(([, n]) => n);
   return (
     <section className={clsx(card, "overflow-hidden")}>
       <div className="flex flex-wrap items-center gap-2 px-4 pt-4">
         <label className="flex h-10 min-w-[220px] flex-1 items-center gap-2 rounded-lg border border-hms-line bg-white px-3 focus-within:border-hms-ink sm:max-w-[360px]"><Search className="size-4 text-hms-muted" /><span className="sr-only">Search bookings</span><input value={q} onChange={(e) => { setQ(e.target.value); setShown(25); }} placeholder="Name, phone, room or BK-code" className="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none" /></label>
+        <select aria-label="Source" value={channel} onChange={(e) => setChannel(e.target.value)} className={sel}><option value="">All sources</option>{CHANNELS.map((c) => <option key={c} value={c}>{c === "OTA" ? "OTA (Booking.com, Agoda…)" : c}</option>)}</select>
         {mode === "details" && <>
-          <select aria-label="Channel" value={channel} onChange={(e) => setChannel(e.target.value)} className={sel}><option value="">All channels</option>{CHANNELS.map((c) => <option key={c}>{c}</option>)}</select>
           <select aria-label="Payment" value={pay} onChange={(e) => setPay(e.target.value)} className={sel}><option value="">All payments</option><option>Paid</option><option>Partly paid</option><option>Due</option><option>Refund due</option></select>
           <label className="flex items-center gap-1.5 text-[13px] text-hms-muted">Stay between<input type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} className={sel} /></label>
           <input type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} className={sel} />
-          {filters > 0 && <button onClick={() => { setChannel(""); setPay(""); setFrom(""); setTo(""); }} className="text-[13.5px] font-semibold text-hms-red">Clear filters</button>}
         </>}
+        {filters > 0 && <button onClick={() => { setChannel(""); setPay(""); setFrom(""); setTo(""); }} className="text-[13.5px] font-semibold text-hms-red">Clear filters</button>}
       </div>
+      {mode === "details" && !channel && <p className="px-4 pt-3 text-[13px] text-hms-muted">By source: {bySource.map(([c, n]) => <button key={c} onClick={() => setChannel(c)} className="mr-2 font-semibold text-hms-ink hover:underline">{c} {n}</button>)}</p>}
       <div role="tablist" aria-label="Booking status" className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto px-4 pb-3">
         {chips.map(([id, l]) => { const n = base.filter(test[id]).length; return <button key={id} role="tab" aria-selected={chip === id} onClick={() => { setChip(id); setShown(25); }} className={clsx("shrink-0 rounded-full border px-3 py-1.5 text-[13.5px] font-semibold", chip === id ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{l} <span className="tabular-nums opacity-70">{n}</span></button>; })}
       </div>
@@ -66,15 +68,15 @@ function AllBookings() {
             <li key={b.code}><button onClick={() => open(b.code)} className="block w-full px-4 py-3 text-left">
               <span className="flex items-baseline justify-between gap-2"><b className="truncate">{name(b)}</b><span className="shrink-0 text-[13px] font-semibold">{b.unit ? `Room ${b.unit}` : "No room"}</span></span>
               <span className="block text-[12.5px] text-hms-muted">{dm(b.from)} → {dm(b.to)} · {b.nights.length}n · {b.code}</span>
-              <span className="mt-1.5 flex flex-wrap items-center gap-2"><StatusPill s={b.status} /><PayPill b={b} />{dueOf(b) > 0 && <b className="text-[12.5px] text-[#b42318]">{tk(dueOf(b))}</b>}<Flags b={b} /></span>
+              <span className="mt-1.5 flex flex-wrap items-center gap-2"><StatusPill s={b.status} /><ChannelBadge b={b} /><PayPill b={b} />{dueOf(b) > 0 && <b className="text-[12.5px] text-[#b42318]">{tk(dueOf(b))}</b>}<Flags b={b} /></span>
             </button></li>
           ))}
         </ul>
         <div className="hidden overflow-x-auto border-t border-hms-line md:block" role="region" aria-label="Bookings table" tabIndex={0}>
           <table className={clsx("w-full text-[14px]", mode === "details" ? "min-w-[1100px]" : "min-w-[760px]")}>
             <thead><tr className="text-left text-[12.5px] text-hms-muted">
-              <th className="px-4 py-2.5 font-medium">Guest</th><th className="px-3 py-2.5 font-medium">Room</th><th className="px-3 py-2.5 font-medium">Stay</th><th className="px-3 py-2.5 font-medium">Status</th>
-              {mode === "details" && <><th className="px-3 py-2.5 font-medium">Channel</th><th className="px-3 py-2.5 text-right font-medium">Total</th><th className="px-3 py-2.5 text-right font-medium">Paid</th></>}
+              <th className="px-4 py-2.5 font-medium">Guest</th><th className="px-3 py-2.5 font-medium">Room</th><th className="px-3 py-2.5 font-medium">Stay</th><th className="px-3 py-2.5 font-medium">Status</th><th className="px-3 py-2.5 font-medium">Source</th>
+              {mode === "details" && <><th className="px-3 py-2.5 text-right font-medium">Total</th><th className="px-3 py-2.5 text-right font-medium">Paid</th></>}
               <th className="px-3 py-2.5 text-right font-medium">Due</th><th className="px-4 py-2.5 text-right font-medium"><span className="sr-only">Open</span></th>
             </tr></thead>
             <tbody>{list.slice(0, shown).map((b) => (
@@ -83,7 +85,8 @@ function AllBookings() {
                 <td className="px-3 py-2.5">{b.unit ? <b>{b.unit}</b> : <span className="font-semibold text-[#a15c00]">Not assigned</span>}<span className="block max-w-[150px] truncate text-[12.5px] text-hms-muted">{b.type}</span></td>
                 <td className="whitespace-nowrap px-3 py-2.5">{dm(b.from)} → {dm(b.to)}<span className="block text-[12.5px] text-hms-muted">{b.nights.length} night{b.nights.length > 1 ? "s" : ""}{mode === "details" ? ` · ${b.adults}A${b.children ? ` ${b.children}C` : ""}` : ""}{b.from === TODAY && b.status === "Confirmed" ? " · today" : ""}</span></td>
                 <td className="px-3 py-2.5"><span className="flex flex-wrap items-center gap-1.5"><StatusPill s={b.status} /><Flags b={b} /></span></td>
-                {mode === "details" && <><td className="px-3 py-2.5">{b.channel}</td><td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{tk(totalOf(b))}</td><td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{tk(paidOf(b))}</td></>}
+                <td className="px-3 py-2.5"><ChannelBadge b={b} />{mode === "details" && b.channelRef && <span className="block text-[12px] text-hms-muted">{b.channelRef}</span>}</td>
+                {mode === "details" && <><td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{tk(totalOf(b))}</td><td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{tk(paidOf(b))}</td></>}
                 <td className="whitespace-nowrap px-3 py-2.5 text-right">{dueOf(b) > 0 ? <><span className="block font-bold tabular-nums text-[#b42318]">{tk(dueOf(b))}</span><PayPill b={b} /></> : <PayPill b={b} />}</td>
                 <td className="px-4 py-2.5 text-right"><button onClick={(e) => { e.stopPropagation(); open(b.code); }} aria-label={`Open ${b.code}`} className="h-9 rounded-lg border border-hms-line bg-white px-3 text-[13.5px] font-semibold hover:bg-hms-hover">Open</button></td>
               </tr>

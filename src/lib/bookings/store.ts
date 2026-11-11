@@ -12,8 +12,15 @@ import { TODAY, taxOf, useRooms, type Category, type RoomsState, type Unit } fro
 import { DEMO_GUESTS, addDays, demoStays, hash, type Stay } from "./demo";
 
 export type BStatus = "Confirmed" | "Checked in" | "Checked out" | "Cancelled" | "No-show";
-export type Channel = "Walk-in" | "Phone" | "Website" | "Marketplace" | "Agent" | "Corporate";
-export const CHANNELS: Channel[] = ["Walk-in", "Phone", "Website", "Marketplace", "Agent", "Corporate"];
+/** Where a booking came from. OTA bookings carry the OTA name + its reference (recorded here; no live OTA sync in this prototype). */
+export type Channel = "Walk-in" | "Phone" | "Website" | "Marketplace" | "OTA" | "Agent" | "Corporate";
+export const CHANNELS: Channel[] = ["Walk-in", "Phone", "Website", "Marketplace", "OTA", "Agent", "Corporate"];
+export const OTAS = ["Booking.com", "Agoda", "Expedia", "Airbnb"];
+export const channelLabel = (b: Pick<Booking, "channel" | "ota">) => (b.channel === "OTA" ? b.ota || "OTA" : b.channel);
+/** Meal pre-ordered with the booking. Held on the booking until sent to the kitchen (then it is a Restaurant order charged to the room). */
+export type Companion = { name: string; idType: string; idNo: string; relation: string; age?: string };
+export const PURPOSES = ["Holiday", "Business", "Family visit", "Event / wedding", "Medical", "Other"];
+export type PreMeal = { id: string; item: string; name: string; price: number; qty: number; date: string; time: string; note?: string; sc: number; vat: number; sent?: string };
 export type PayMethod = "Cash" | "bKash" | "Card" | "Bank";
 export const METHODS: PayMethod[] = ["Cash", "bKash", "Card", "Bank"];
 export type Pay = { id: string; at: string; amount: number; method: PayMethod; by: string; note?: string };
@@ -23,7 +30,14 @@ export type Booking = {
   /** Room number; "" = not assigned yet. */
   unit: string; categoryId: string; type: string;
   from: string; to: string; adults: number; children: number;
-  status: BStatus; channel: Channel;
+  status: BStatus; channel: Channel; ota?: string; channelRef?: string;
+  payer?: { kind: "Guest" | "Company"; name?: string };
+  preMeals?: PreMeal[];
+  /** Guest register for this stay. */
+  purpose?: string; comingFrom?: string; goingTo?: string; eta?: string;
+  companions?: Companion[];
+  /** Person who made the booking, when not the guest (agent, family member, office). */
+  booker?: { name: string; phone: string };
   /** Price before VAT/service for each night (from Discounts & Rates when booked). */
   nights: Night[]; tax: { service: number; vat: number };
   /** Discount on room charges (before VAT/service). */
@@ -56,9 +70,12 @@ export function bill(b: Pick<Booking, "nights" | "discount" | "tax">) {
   const vat = Math.round(((base + service) * b.tax.vat) / 100);
   return { rooms, discount: Math.min(b.discount, rooms), base, service, vat, total: base + service + vat };
 }
+export const preMealTotal = (m: PreMeal) => { const sub = m.price * m.qty; const sc = Math.round((sub * m.sc) / 100); return sub + sc + Math.round(((sub + sc) * m.vat) / 100); };
+/** Meals pre-ordered and not yet sent to the kitchen (they are charged on the room bill). */
+export const heldMeals = (b: Booking) => (b.preMeals ?? []).filter((m) => !m.sent);
 export const paidOf = (b: Booking) => b.payments.reduce((s, p) => s + p.amount, 0);
 /** What the guest owes for the room bill. Cancelled: only what was kept as a fee counts. */
-export const totalOf = (b: Booking) => (b.status === "Cancelled" || b.status === "No-show" ? b.cancel?.keep ?? 0 : bill(b).total);
+export const totalOf = (b: Booking) => (b.status === "Cancelled" || b.status === "No-show" ? b.cancel?.keep ?? 0 : bill(b).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0));
 export const dueOf = (b: Booking) => Math.max(0, totalOf(b) - paidOf(b));
 export type PayState = "Paid" | "Partly paid" | "Due" | "Refund due";
 export const payState = (b: Booking): PayState => {
@@ -100,15 +117,18 @@ function seed(slug: string, rooms: RoomLite[], cats: Category[]): State {
     const r = byCode.get(s.room);
     const c = r ? cat.get(r.category) : undefined;
     const nights: Night[] = []; for (let d = s.from; d < s.to; d = addDays(d, 1)) nights.push({ date: d, base: r?.rate ?? 0 });
+    // Every 4th booking came through an OTA (recorded source only).
+    const ota = i % 4 === 3 ? OTAS[(i >> 2) % 3] : undefined;
     const b: Booking = {
       code: s.code, guestId: s.guestId, unit: s.room, categoryId: r?.category ?? "", type: s.type, from: s.from, to: s.to,
-      adults: PEOPLE[i % PEOPLE.length][0], children: PEOPLE[i % PEOPLE.length][1], status: s.status, channel: s.channel,
+      adults: PEOPLE[i % PEOPLE.length][0], children: PEOPLE[i % PEOPLE.length][1], status: s.status,
+      channel: ota ? "OTA" : (s.channel as Channel), ota, channelRef: ota ? `${ota.slice(0, 3).toUpperCase()}-${48210 + i * 37}` : s.channel === "Marketplace" ? `MKT-${9100 + i}` : undefined,
       nights, tax: c ? taxOf(c) : { service: 10, vat: 15 }, discount: 0, payments: [], note: "", created: addDays(s.from, -((i % 9) + 1)) + "T11:20",
-      log: [{ at: addDays(s.from, -((i % 9) + 1)) + "T11:20", text: `Booked · ${s.channel}`, by: s.channel === "Website" || s.channel === "Marketplace" ? "Guest (online)" : ME }], demo: true, ...extra,
+      log: [{ at: addDays(s.from, -((i % 9) + 1)) + "T11:20", text: `Booked · ${ota ?? s.channel}`, by: ota || s.channel === "Website" || s.channel === "Marketplace" ? "Guest (online)" : ME }], demo: true, ...extra,
     };
     const t = bill(b).total;
     const amt = s.pay === "Paid" ? t : s.pay === "Partly paid" ? Math.round(t / 2) : 0;
-    if (amt) b.payments.push({ id: `p${s.code}`, at: `${s.from}T${s.status === "Confirmed" ? "10:05" : "14:10"}`, amount: amt, method: METH[i % METH.length], by: s.channel === "Website" ? "Guest (online)" : ME });
+    if (amt) b.payments.push({ id: `p${s.code}`, at: `${s.from}T${s.status === "Confirmed" ? "10:05" : "14:10"}`, amount: amt, method: METH[i % METH.length], by: ME });
     if (s.status !== "Confirmed") { b.checkedInAt = `${s.from}T14:${String(10 + (i % 40)).padStart(2, "0")}`; b.log.push({ at: b.checkedInAt, text: `Checked in · Room ${s.room}`, by: ME }); }
     if (s.status === "Checked out") { b.checkedOutAt = `${s.to}T11:${String(5 + (i % 50)).padStart(2, "0")}`; b.log.push({ at: b.checkedOutAt, text: "Checked out", by: ME }); }
     return b;
@@ -130,7 +150,7 @@ function seed(slug: string, rooms: RoomLite[], cats: Category[]): State {
     while (busy(from, addDays(from, len)) && tries++ < 10) from = addDays(from, 1);
     if (busy(from, addDays(from, len))) continue;
     const g = free[k++];
-    list.push(mk({ code: `BK-${2501 + k}`, guestId: g.id, room: r.code, type: r.type, from, to: addDays(from, len), nights: len, status: "Confirmed", channel: (["Website", "Phone", "Marketplace", "Walk-in", "Agent"] as const)[k % 5], pay: k % 3 === 0 ? "Due" : "Partly paid" }, k + 3));
+    list.push(mk({ code: `BK-${2501 + k}`, guestId: g.id, room: r.code, type: r.type, from, to: addDays(from, len), nights: len, status: "Confirmed", channel: (["Website", "Phone", "Marketplace", "Walk-in", "Agent"] as const)[k % 5], pay: k % 3 === 0 ? "Due" : "Partly paid" }, k + 3, k % 3 === 1 ? { channel: "OTA", ota: OTAS[k % 4], channelRef: `${OTAS[k % 4].slice(0, 3).toUpperCase()}-${51800 + k * 13}` } : {}));
   }
   // One upcoming booking where front desk has not picked a room yet.
   // (a returning guest whose earlier stays are finished, if no new guest is left)
@@ -186,7 +206,7 @@ function write(slug: string, st: State) {
 /** Map a booking to the shared Stay shape the other modules read. Cancelled and no-show bookings are left out. */
 export const toStay = (b: Booking): Stay | null => (b.status === "Cancelled" || b.status === "No-show" ? null : {
   code: b.code, guestId: b.guestId, room: b.unit, type: b.type, from: b.from, to: b.to, nights: b.nights.length,
-  status: b.status, payment: payState(b) === "Refund due" ? "Paid" : (payState(b) as Stay["payment"]), total: totalOf(b), due: dueOf(b), channel: b.channel,
+  status: b.status, payment: payState(b) === "Refund due" ? "Paid" : (payState(b) as Stay["payment"]), total: totalOf(b), due: dueOf(b), channel: channelLabel(b),
 });
 
 function useRaw(h: Hotel) {
@@ -242,7 +262,7 @@ export function useBookings(h: Hotel) {
       for (const it of items) {
         const code = `BK-${s.next++}`; codes.push(code);
         const { advance, ...rest } = it;
-        const b: Booking = { ...rest, code, group, status: "Confirmed", payments: [], created: stamp(), log: [{ at: stamp(), text: `Booked · ${it.channel}${it.unit ? ` · Room ${it.unit}` : ""}`, by: ME }] };
+        const b: Booking = { ...rest, code, group, status: "Confirmed", payments: [], created: stamp(), log: [{ at: stamp(), text: `Booked · ${channelLabel(it)}${it.channelRef ? ` (${it.channelRef})` : ""}${it.unit ? ` · Room ${it.unit}` : ""}`, by: ME }] };
         if (advance && advance.amount > 0 && it === items[0]) { b.payments.push({ id: `p${Date.now().toString(36)}`, at: stamp(), amount: advance.amount, method: advance.method, by: ME, note: "Advance" }); log(b, `Advance ${tk(advance.amount)} · ${advance.method}`); }
         s.list.push(b);
       }
@@ -295,7 +315,7 @@ export function useBookings(h: Hotel) {
     if (b.status !== "Checked in") return "Only guests in house can be checked out";
     const nights = opts.shorten && b.to > TODAY ? b.nights.filter((n) => n.date < TODAY) : b.nights;
     const kept = nights.length ? nights : b.nights.slice(0, 1);
-    const due = Math.max(0, bill({ ...b, nights: kept }).total + (opts.extras ?? 0) - paidOf(b));
+    const due = Math.max(0, bill({ ...b, nights: kept }).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0) + (opts.extras ?? 0) - paidOf(b));
     if (due > 0 && !opts.leaveDue) return `${tk(due)} is still due — take the payment first`;
     save((s) => {
       const x = find(s, code);
@@ -328,7 +348,7 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st, clash]);
 
-  const update = useCallback((code: string, patch: Partial<Pick<Booking, "adults" | "children" | "note" | "channel" | "discount">>, text = "Details updated") => save((s) => { Object.assign(find(s, code), patch); log(find(s, code), text); }),
+  const update = useCallback((code: string, patch: Partial<Pick<Booking, "adults" | "children" | "note" | "channel" | "discount" | "purpose" | "comingFrom" | "goingTo" | "eta" | "companions" | "booker" | "payer">>, text = "Details updated") => save((s) => { Object.assign(find(s, code), patch); log(find(s, code), text); }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
 
@@ -339,9 +359,21 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [st]);
 
+  const addMeals = useCallback((code: string, meals: PreMeal[]) => save((s) => { const x = find(s, code); x.preMeals = [...(x.preMeals ?? []), ...meals]; log(x, `Meals added · ${meals.map((m) => `${m.qty}× ${m.name}`).join(", ")}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const removeMeal = useCallback((code: string, id: string) => save((s) => { const x = find(s, code); const m = x.preMeals?.find((y) => y.id === id); x.preMeals = (x.preMeals ?? []).filter((y) => y.id !== id); if (m) log(x, `Meal removed · ${m.qty}× ${m.name}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const mealSent = useCallback((code: string, id: string, orderNo: string) => save((s) => { const x = find(s, code); const m = x.preMeals?.find((y) => y.id === id); if (m) { m.sent = orderNo; log(x, `${m.qty}× ${m.name} sent to kitchen · ${orderNo}`); } }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const setSource = useCallback((code: string, channel: Channel, ota?: string, ref?: string) => save((s) => { const x = find(s, code); x.channel = channel; x.ota = channel === "OTA" ? ota : undefined; x.channelRef = ref || undefined; log(x, `Source set to ${channel === "OTA" ? ota : channel}${ref ? ` · ${ref}` : ""}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
 
-  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, update, cancel, reset };
+  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, update, cancel, addMeals, removeMeal, mealSent, setSource, reset };
 }
 export type Bk = ReturnType<typeof useBookings>;
 export type { Unit };

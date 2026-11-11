@@ -13,6 +13,8 @@ export type Guest = {
   id: string; name: string; phone: string; email: string; country: string; address: string;
   idType: IdType; idNo: string; idFront?: string; idBack?: string; verified: boolean;
   vip: boolean; blocked?: { reason: string; at: string }; prefs: string[]; notes: string; marketing: boolean; created: string;
+  /** Guest register (Bangladesh hotels keep these for every stay; foreigners also need visa details). */
+  gender?: "Male" | "Female" | "Other"; dob?: string; occupation?: string; visaNo?: string; visaExpiry?: string;
 };
 export type ReviewAct = { reply?: { text: string; at: string }; report?: { reason: string; at: string } };
 type State = { v: 1; guests: Guest[]; acts: Record<string, ReviewAct> };
