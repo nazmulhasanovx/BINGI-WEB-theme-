@@ -21,5 +21,11 @@ with sync_playwright() as p:
     pg.goto(B+"/days"); pg.wait_for_timeout(1000); chk(pg,"days",w); pg.screenshot(path=f"/tmp/cb/days-{w}.png",full_page=True)
     pg.goto(B); pg.wait_for_timeout(800); pg.locator("summary",has_text="Demo").click(); pg.get_by_role("button",name="Start today again (not opened)").click(); pg.wait_for_timeout(400)
     chk(pg,"open",w); pg.screenshot(path=f"/tmp/cb/open-{w}.png")
+    pg.goto("http://localhost:3100/hms/meals/cashbox"); pg.wait_for_timeout(1200); chk(pg,"fnb today",w); pg.screenshot(path=f"/tmp/cb/fnb-{w}.png",full_page=True)
+    for nm in ["Cash out","Close day"]:
+      pg.get_by_role("button",name=nm,exact=True).first.click(); pg.wait_for_timeout(400); chk(pg,"fnb sheet "+nm,w,"[role=dialog]"); pg.screenshot(path=f"/tmp/cb/fnb-sheet-{nm.replace(' ','')}-{w}.png"); pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
+    pg.goto("http://localhost:3100/hms/meals/cashbox?v=moves"); pg.wait_for_timeout(1000); chk(pg,"fnb moves",w)
+    pg.goto("http://localhost:3100/hms/meals/cashbox?v=days"); pg.wait_for_timeout(1000); chk(pg,"fnb days",w)
+    pg.goto("http://localhost:3100/hms/meals/cash-settings"); pg.wait_for_timeout(1000); chk(pg,"settings",w); pg.screenshot(path=f"/tmp/cb/settings-{w}.png",full_page=True)
     pg.close()
   print("checked",n,"bad",bad); print("errors",errs[:5])
