@@ -65,7 +65,7 @@ export const ALL_ITEMS = [...GROUPS.flatMap((g) => g.items), { id: "settings", l
 const SEARCH_TARGETS: NavTarget[] = [
   ...[...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }].map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
   { label: "Guest reviews", href: "/hms/guests/reviews", icon: Star }, { label: "Inventory history", href: "/hms/inventory/history", icon: Boxes },
-  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
+  { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "Cash movements", href: "/hms/cashbox/movements", icon: Wallet }, { label: "Cashbox closed days", href: "/hms/cashbox/days", icon: Wallet }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
   { label: "Room types", href: "/hms/rooms", icon: BedDouble }, { label: "Room numbers", href: "/hms/rooms/numbers", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
 ];
@@ -348,6 +348,10 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { categories: "Room types", numbers: "Room numbers", configuration: "Setup", setup: "Edit setup", new: "Add room type" };
     return [{ label: "Room / Accommodation", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+  }
+  if (path.startsWith("/hms/cashbox")) {
+    const seg = path.split("/")[3];
+    return [{ label: "Cashbox", href: seg ? "/hms/cashbox" : undefined }, ...(seg ? [{ label: seg === "movements" ? "Movements" : seg === "days" ? "Closed days" : seg }] : [])];
   }
   if (path.startsWith("/hms/discounts")) {
     const seg = path.split("/")[3];
