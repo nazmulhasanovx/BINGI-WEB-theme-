@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, List, Phone, Plus, Store, Sun, Plane } from "lucide-react";
+import { Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, List, Moon, Phone, Plus, Settings2, Store, Sun, Plane } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type Channel, type PayState } from "@/lib/bookings/store";
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
@@ -20,11 +20,13 @@ export function Toast({ text }: { text: string }) {
 }
 export const useBk = () => useContext(C)!;
 
-export type BkTab = "today" | "calendar" | "list";
+export type BkTab = "today" | "calendar" | "board" | "list" | "waitlist" | "reports" | "close" | "settings";
 const TABS: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
   { id: "today", label: "Today", href: "/hms/bookings", icon: Sun },
   { id: "calendar", label: "Calendar", href: "/hms/bookings/calendar", icon: CalendarDays },
   { id: "list", label: "All bookings", href: "/hms/bookings/list", icon: List },
+  { id: "close", label: "Day close", href: "/hms/bookings/close", icon: Moon },
+  { id: "settings", label: "Settings", href: "/hms/bookings/settings", icon: Settings2 },
 ];
 
 /** Easy / Details switch — same data, more or fewer fields. */
