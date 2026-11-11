@@ -45,7 +45,8 @@ export type Unit = {
   id: string; code: string; local: string; node: string; category: string; core: CoreType; preset: PresetSlug;
   /** draft = persisted, owns its code, not bookable · published = sellable on eligible dates · archived = kept for history, code stays reserved, frees capacity */
   /** Out of order (maintenance) — separate from publish status and from bookings; blocks new sales. */
-  ooo?: { reason: string; since: string };
+  /** Out of order (maintenance) from `since`; open-ended unless `until` (first day back in service). */
+  ooo?: { reason: string; since: string; until?: string };
   status: "draft" | "published" | "archived"; rate?: number; video: "inherit" | "replace" | "hide"; videoUrl?: string; note?: string;
   created: string;
 };
@@ -117,6 +118,8 @@ export function codeFor(c: Config, core: CoreType, p: PresetSlug, leaf: LocNode,
 export const sameCode = (a: string, b: string) => a.trim().toUpperCase() === b.trim().toUpperCase();
 /** Hotel defaults (Settings → Taxes in the live HMS; fixed here in the prototype). */
 export const HOTEL_TAX = { vat: 15, service: 10 };
+/** Is the room out of order on any night in [from, to)? */
+export const oooOn = (u: { ooo?: Unit["ooo"] }, from: string, to: string) => !!u.ooo && u.ooo.since.slice(0, 10) < to && (!u.ooo.until || u.ooo.until > from);
 export const taxOf = (c: Category) => (c.syncTax === false ? { vat: c.vat ?? 0, service: c.service ?? 0 } : HOTEL_TAX);
 /** Guest price for one night: base + service charge + VAT (VAT on base + service, as in Discounts & Rates). */
 export function priceBreak(base: number, t: { vat: number; service: number }) {

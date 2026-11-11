@@ -1,7 +1,8 @@
 "use client";
 // Tonight's state of each room (Available / Booked tonight / Out of order / Draft / Archived) — shared by Room types and Room numbers. Bookings come from the Bookings store.
 import { useMemo } from "react";
-import { TODAY, type RoomsState } from "@/lib/rooms/store";
+import { TODAY, oooOn, type RoomsState } from "@/lib/rooms/store";
+import { addDays } from "@/lib/bookings/demo";
 import { useStays } from "@/lib/bookings/store";
 import { useProperty } from "../property";
 
@@ -21,7 +22,7 @@ export function useUnitStates(st: RoomsState) {
   return useMemo(() => {
     const tonight = new Set(stays.filter((s) => s.status !== "Checked out" && s.from <= TODAY && s.to > TODAY).map((s) => s.room));
     const m = new Map<string, UnitState>();
-    for (const u of st.units) m.set(u.id, u.status !== "published" ? u.status : u.ooo ? "ooo" : tonight.has(u.code) ? "booked" : "available");
+    for (const u of st.units) m.set(u.id, u.status !== "published" ? u.status : oooOn(u, TODAY, addDays(TODAY, 1)) ? "ooo" : tonight.has(u.code) ? "booked" : "available");
     return m;
   }, [st, stays]);
 }

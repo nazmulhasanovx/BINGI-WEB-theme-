@@ -1,0 +1,75 @@
+import re, json
+from playwright.sync_api import sync_playwright
+B="http://localhost:3100"
+AXE=open("/tmp/axe/node_modules/axe-core/axe.min.js").read()
+ok=0;n=0;fails=[]
+def t(m,c):
+  global ok,n; n+=1; ok+=bool(c); print(("PASS " if c else "FAIL ")+m, flush=True)
+  if not c: fails.append(m)
+def axe(pg,label):
+  pg.add_script_tag(content=AXE)
+  r=pg.evaluate("axe.run(document,{runOnly:['wcag2a','wcag2aa']}).then(r=>r.violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>v.id+':'+v.nodes.length+':'+v.nodes[0].target))")
+  t(f"axe {label} {r}", not r)
+with sync_playwright() as p:
+  b=p.chromium.launch(); errs=[]
+  ctx=b.new_context(viewport={"width":1440,"height":900}); pg=ctx.new_page(); pg.on("pageerror",lambda e: errs.append(str(e)[:200]))
+  M=lambda: pg.locator("main").inner_text() if pg.locator("main").count() else pg.locator("body").inner_text()
+  ST=lambda: pg.get_by_role("status").inner_text() if pg.get_by_role("status").count() else ""
+  frames=lambda: pg.evaluate("[...document.querySelectorAll('iframe[aria-hidden]')].map(f=>f.contentDocument.body.innerText).join(' ')")
+  pg.goto(B+"/hms/bookings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
+  # ---- registers
+  pg.goto(B+"/hms/bookings/close"); pg.wait_for_timeout(1300)
+  pg.get_by_role("button",name=re.compile("^Guest register")).click(); pg.wait_for_timeout(60)
+  t("guest register printed", "Guest register" in frames())
+  pg.wait_for_timeout(1700)
+  pg.get_by_role("button",name=re.compile("^Form-C")).click(); pg.wait_for_timeout(60)
+  t("form-C printed", "Form-C" in frames())
+  # ---- waitlist
+  pg.get_by_role("link",name="Waitlist").click(); pg.wait_for_timeout(1200)
+  t("waitlist page", "/hms/bookings/waitlist" in pg.url and "No one is waiting" in M())
+  pg.get_by_role("button",name="Add to waitlist").click()
+  pg.get_by_label("Name").fill("Wait Guest"); pg.get_by_label("Phone").fill("01766554433")
+  pg.get_by_label("Check-in").fill("2026-11-20"); pg.get_by_label("Check-out").fill("2026-11-22")
+  pg.get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300)
+  t("waitlist added", "Wait Guest" in M() and ("free now" in M() or "Still full" in M()))
+  axe(pg,"waitlist")
+  bn=pg.get_by_role("link",name="Book Wait Guest")
+  if bn.count():
+    bn.click(); pg.wait_for_timeout(1300)
+    t("book from waitlist → wizard prefilled", "/hms/bookings/new" in pg.url and "from=2026-11-20" in pg.url and "22 Nov" in pg.locator("#nb-summary").inner_text())
+  # ---- ID scan coming soon
+  pg.goto(B+"/hms/bookings/new"); pg.wait_for_timeout(1200)
+  pg.get_by_role("button",name=re.compile(r"^Room \d")).first.click()
+  pg.locator("#nb-summary").get_by_role("button",name=re.compile("^Next")).click(); pg.wait_for_timeout(300)
+  pg.get_by_label("Phone number").fill("01811000222"); pg.wait_for_timeout(200)
+  t("scan ID coming soon (disabled)", pg.get_by_role("button",name="Scan ID").is_disabled() and "Coming soon" in M())
+  # ---- pre-check-in link from documents
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
+  arr=pg.get_by_role("region",name="Arriving",exact=True)
+  arr.get_by_role("button",name=re.compile(r", Room ")).first.click(); pg.wait_for_timeout(1300)
+  code=re.search(r"b=(BK-\d+)",pg.url).group(1)
+  pg.get_by_role("tab",name="Documents & messages").click(); pg.wait_for_timeout(300)
+  t("pre-check-in link shown", "Online pre-check-in" in M() and f"precheckin?b={code}" in M())
+  t("pre-arrival msg has link", M().count(f"precheckin?b={code}")>=2)
+  link=re.search(r"(http\S+precheckin\?b=BK-\d+)", M()).group(1)
+  phone=pg.evaluate("""(c)=>{const s=JSON.parse(localStorage.getItem('bingi-guests-v1-azure-bay')||'null');return null}""", code)
+  pg.get_by_role("tab",name="Guest",exact=True).click(); pg.wait_for_timeout(300)
+  ph=re.sub(r"\D","", pg.locator("main").get_by_label("Phone",exact=True).first.input_value())
+  print("phone",ph)
+  gp=ctx.new_page(); gp.on("pageerror",lambda e: errs.append(str(e)[:200]))
+  gp.goto(link); gp.wait_for_timeout(2000)
+  t("guest page opens", "Online check-in" in gp.locator("body").inner_text())
+  gp.get_by_label("Last 4 digits of your phone").fill("0000" if ph[-4:]!="0000" else "1111"); gp.get_by_role("button",name="Continue").click(); gp.wait_for_timeout(200)
+  t("wrong phone blocked", "doesn't match" in gp.locator("body").inner_text())
+  gp.get_by_label("Last 4 digits of your phone").fill(ph[-4:]); gp.get_by_role("button",name="Continue").click(); gp.wait_for_timeout(300)
+  gp.get_by_label("ID number").fill("1995264837"); gp.get_by_label("Arrival time").fill("15:30"); gp.get_by_label(re.compile("Anything we should know")).fill("Extra pillow")
+  gp.get_by_role("button",name="Finish pre-check-in").click(); gp.wait_for_timeout(500)
+  t("guest pre-checked", "pre-checked in" in gp.locator("body").inner_text())
+  axe(gp,"precheckin page")
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1300)
+  t("today shows Online ✓", "Online ✓" in M())
+  pg.goto(B+f"/hms/bookings/view?b={code}&do=checkin"); pg.wait_for_timeout(1300)
+  P=pg.get_by_role("region",name="Check in",exact=True)
+  t("check-in shows precheck + prefilled ID", "Pre-checked in online" in P.inner_text() and "15:30" in P.inner_text() and P.get_by_label("ID number").input_value()!="")
+  t(f"no page errors {errs}", not errs)
+  print(f"{ok}/{n}"); print("FAILS:",fails)

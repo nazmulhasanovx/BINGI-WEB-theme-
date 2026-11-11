@@ -19,7 +19,7 @@ const ABOUT: Record<string, [string, string]> = {
   communication: ["SMS, email and WhatsApp messaging to guests.", "Live in HMS"],
   settings: ["Property, team roles, taxes and connections.", "Live in HMS"],
 };
-const DONE = [["Dashboard", "/hms"], ["Bookings", "/hms/bookings"], ["Room / Accommodation", "/hms/rooms"], ["Discounts & Rates", "/hms/discounts"], ["Cashbox", "/hms/cashbox"], ["Restaurant & Bar", "/hms/meals"], ["Guests", "/hms/guests"], ["Staff", "/hms/staff"], ["Inventory", "/hms/inventory"], ["Other Services", "/hms/other-services"], ["Website", "/hms/website/overview"]];
+const DONE = [["Dashboard", "/hms"], ["Bookings", "/hms/bookings"], ["Room / Accommodation", "/hms/rooms"], ["Discounts & Rates", "/hms/discounts"], ["Cashbox", "/hms/cashbox"], ["Restaurant & Bar", "/hms/meals"], ["Guests", "/hms/guests"], ["Housekeeping", "/hms/housekeeping"], ["Staff", "/hms/staff"], ["Inventory", "/hms/inventory"], ["Other Services", "/hms/other-services"], ["Website", "/hms/website/overview"]];
 
 /** Modules not built in this repo yet. Truthful: no fake data — says where the module lives today. */
 export function ModulePlaceholder({ id }: { id: string }) {

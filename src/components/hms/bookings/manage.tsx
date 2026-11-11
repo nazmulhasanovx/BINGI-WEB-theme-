@@ -5,9 +5,11 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, CalendarRange, CreditCard, LogIn, LogOut, MoreHorizontal, MoveRight, Phone, Undo2, UserRound, X as XIcon } from "lucide-react";
+import { ArrowLeft, CalendarRange, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
-import { bill, channelLabel, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
+import { bill, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
+import { confirmationHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, regCardHtml } from "@/lib/bookings/docs";
+import { printHtml } from "../meals/print";
 import { useBkMode } from "@/lib/bookings/mode";
 import { useRates } from "@/lib/rates/store";
 import { useGuests } from "@/lib/guests/store";
@@ -22,7 +24,7 @@ import { ExtrasList, ExtrasPicker, MealPlan, hasRestaurant } from "./extras";
 import { GuestFields, StayFields, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
 
 type Panel = null | "checkin" | "checkout" | "pay" | "move" | "dates" | "cancel";
-type Tab = "overview" | "stay" | "guest" | "extras" | "bill" | "activity";
+type Tab = "overview" | "stay" | "guest" | "extras" | "bill" | "docs" | "activity";
 
 export function ManageBookingPage() {
   const h = useProperty();
@@ -80,7 +82,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
   const primary = canIn ? <button onClick={() => open("checkin")} className={bMain}><LogIn className="size-4" />Check in</button>
     : b.status === "Checked in" ? <button onClick={() => open("checkout")} className={bMain}><LogOut className="size-4" />Check out</button>
     : balance !== 0 ? <button onClick={() => open("pay")} className={bMain}>{balance < 0 ? "Refund" : "Take payment"}</button> : null;
-  const TABS: [Tab, string][] = [["overview", "Overview"], ["stay", "Stay & room"], ["guest", "Guest"], ["extras", "Meals & services"], ["bill", "Bill & payments"], ...(details ? [["activity", "Activity"] as [Tab, string]] : [])];
+  const TABS: [Tab, string][] = [["overview", "Overview"], ["stay", "Stay & room"], ["guest", "Guest"], ["extras", "Meals & services"], ["bill", "Bill & payments"], ["docs", "Documents & messages"], ...(details ? [["activity", "Activity"] as [Tab, string]] : [])];
   const extrasCount = (b.preMeals?.length ?? 0) + ex.svcOrders.length;
 
   return (
@@ -94,7 +96,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
               <span className="font-mono font-semibold text-[#4d5664]">{b.code}</span>
               <ChannelBadge b={b} />{b.channelRef && <span className="text-hms-muted">{b.channelRef}</span>}
               <StatusPill s={b.status} /><PayPill b={b} /><Flags b={b} />
-              {b.group && <span className="rounded-md bg-hms-hover px-2 py-0.5 text-[12px] font-semibold text-[#4d5664]">Group {b.group}</span>}
+              {b.group && <Link href={`/hms/bookings/group?g=${b.group}`} className="rounded-md bg-hms-hover px-2 py-0.5 text-[12px] font-semibold text-[#4d5664] hover:text-hms-ink">Group {b.group} · {bk.list.filter((x) => x.group === b.group).length} rooms →</Link>}
             </div>
             <p className="mt-2 text-[15px]"><b>{b.unit ? `Room ${b.unit}` : <span className="text-[#a15c00]">No room yet</span>}</b> <span className="text-hms-muted">· {b.type}</span> · {dow(b.from)} {dm(b.from)} → {dow(b.to)} {dm(b.to)} · {b.nights.length} night{b.nights.length > 1 ? "s" : ""} · {b.adults + b.children} guest{b.adults + b.children > 1 ? "s" : ""}</p>
           </div>
@@ -123,7 +125,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
 
       {panel && <div id="bk-panel" className="mt-4">
         {panel === "checkin" && <CheckInView {...vp} extras={ex.total} takeCash={takeCash} />}
-        {panel === "checkout" && <CheckOutView {...vp} extras={ex} takeCash={takeCash} />}
+        {panel === "checkout" && <CheckOutView {...vp} extras={ex} takeCash={takeCash} giveCash={(amount, ref) => postCashOut(h, cbx.refs, { amount, ref, party: guest?.name })} />}
         {panel === "pay" && <PayView {...vp} balance={balance} takeCash={takeCash} refund={(amount, ref) => postCashOut(h, cbx.refs, { amount, ref, party: guest?.name })} />}
         {panel === "move" && <MoveView {...vp} priceOn={priceOn} />}
         {panel === "dates" && <DatesView {...vp} priceOn={priceOn} />}
@@ -140,6 +142,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
         {tab === "guest" && <GuestTab b={b} />}
         {tab === "extras" && <ExtrasTab b={b} ex={ex} />}
         {tab === "bill" && <BillTab b={b} ex={ex} balance={balance} openPanel={open} />}
+        {tab === "docs" && <DocsTab b={b} ex={ex} />}
         {tab === "activity" && <Activity b={b} />}
       </div>
     </>
@@ -188,6 +191,8 @@ function Overview({ b, ex, folio, balance, go }: { b: Booking; ex: Ex; folio: nu
       <Box title="Bill" action={<Link2 onClick={() => go("bill")}>Open bill</Link2>}>
         <Row k="Room (incl. VAT & service)" v={tk(bill(b).total)} />
         {heldMeals(b).length > 0 && <Row k="Meals booked" v={tk(heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0))} />}
+        {chargesOf(b) > 0 && <Row k="Extra charges" v={tk(chargesOf(b))} />}
+        {b.deposit && !b.deposit.settled && <Row k="Deposit held (not on bill)" v={tk(b.deposit.amount)} tone="text-[#6b55e0]" />}
         {ex.total > 0 && <Row k="Services & restaurant" v={tk(ex.total)} />}
         <Row k="Paid" v={tk(paidOf(b))} tone="text-[#16693a]" />
         <div className="mt-1 border-t border-hms-line pt-1"><Row strong k={balance < 0 ? "To refund" : "Balance"} v={tk(Math.abs(balance))} tone={balance > 0 ? "text-[#b42318]" : ""} /></div>
@@ -290,25 +295,97 @@ function ExtrasTab({ b, ex }: { b: Booking; ex: Ex }) {
 }
 
 function BillTab({ b, ex, balance, openPanel }: { b: Booking; ex: Ex; balance: number; openPanel: (p: Panel) => void }) {
+  const h = useProperty();
+  const { bk, toast, guests } = useCtx();
+  const cbx = useCashboxData();
   const rb = bill(b);
   const held = heldMeals(b);
   const active = b.status === "Confirmed" || b.status === "Checked in";
+  const [label, setLabel] = useState("Minibar");
+  const [amount, setAmount] = useState("");
+  const [depAmt, setDepAmt] = useState(String(bk.settings.depositDefault));
+  const [depM, setDepM] = useState<"Cash" | "bKash" | "Card" | "Bank">("Cash");
+  const [err, setErr] = useState("");
+  const guest = guests.get(b.guestId);
+  const dep = b.deposit;
+  const addCharge = () => { const a = Number(amount) || 0; if (!label.trim() || a <= 0) return setErr("Enter what it is and the amount"); bk.addCharge(b.code, label.trim(), a); setAmount(""); setErr(""); toast(`${label} ${tk(a)} added to the bill`); };
+  const takeDep = () => { const a = Number(depAmt) || 0; if (a <= 0) return; if (depM === "Cash") { const e = postCash(h, cbx.refs, "front-desk", { amount: a, source: "booking", ref: `${b.code} deposit`, party: guest?.name }); if (e) return setErr(e); } bk.takeDeposit(b.code, a, depM); setErr(""); toast(`Deposit ${tk(a)} taken`); };
+  const returnDep = (used: number) => { if (!dep) return; const back = dep.amount - used; if (back > 0 && dep.method === "Cash") { const e = postCashOut(h, cbx.refs, { amount: back, ref: `${b.code} deposit`, party: guest?.name }); if (e) return setErr(e); } bk.settleDeposit(b.code, used); toast(used ? `${tk(used)} of the deposit used for the bill${back ? ` · ${tk(back)} returned` : ""}` : `Deposit ${tk(back)} returned`); };
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
       <Box title="Charges">
-        <Row k={`Room · ${b.nights.length} night${b.nights.length > 1 ? "s" : ""}`} v={tk(rb.rooms)} />
+        <Row k={`Room · ${b.nights.length} night${b.nights.length > 1 ? "s" : ""}${b.mealPlan ? ` incl. ${b.mealPlan.name}` : ""}`} v={tk(rb.rooms)} />
         {rb.discount > 0 && <Row k="Discount" v={`−${tk(rb.discount)}`} tone="text-[#16693a]" />}
         <Row k={`Service charge ${b.tax.service}%`} v={tk(rb.service)} />
         <Row k={`VAT ${b.tax.vat}%`} v={tk(rb.vat)} />
         {held.map((m) => <Row key={m.id} k={`${m.qty}× ${m.name} · ${dm(m.date)}`} v={tk(preMealTotal(m))} />)}
+        {(b.charges ?? []).map((c) => <div key={c.id} className="flex items-center gap-2"><div className="flex-1"><Row k={c.label} v={tk(c.amount)} /></div>{active && <button onClick={() => { bk.removeCharge(b.code, c.id); toast(`${c.label} removed`); }} aria-label={`Remove ${c.label}`} className="text-[12.5px] font-semibold text-[#b42318]">Remove</button>}</div>)}
         {active && ex.lines.map((l, i) => <Row key={i} k={<span>{l.label}<span className="block text-[12px] text-hms-muted">{l.from}</span></span>} v={tk(l.amount)} />)}
-        {(b.status === "Cancelled" || b.status === "No-show") && <Row k={`${b.status} · fee kept`} v={tk(totalOf(b))} />}
+        {(b.status === "Cancelled" || b.status === "No-show") && <Row k={`${b.status} · fee`} v={tk(totalOf(b))} />}
         <div className="mt-1 border-t border-hms-line pt-1"><Row strong k="Total" v={tk(totalOf(b) + (active ? ex.total : 0))} /></div>
+        {active && <div className="mt-3 rounded-xl bg-[#f7f8fa] p-3">
+          <p className="text-[13px] font-semibold">Add a charge</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">{["Minibar", "Laundry", "Damage", "Extra bed", "Room service", "Other"].map((x) => <button key={x} onClick={() => setLabel(x)} className={clsx("rounded-full px-3 py-1 text-[12.5px] font-semibold", label === x ? "bg-hms-ink text-white" : "bg-white ring-1 ring-hms-line")}>{x}</button>)}</div>
+          <div className="mt-2 flex gap-2"><input aria-label="Charge name" value={label} onChange={(e) => setLabel(e.target.value)} className="h-10 min-w-0 flex-1 rounded-lg border border-hms-line bg-white px-3 text-[14px]" /><input aria-label="Charge amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} placeholder="৳ incl. VAT" className="h-10 w-32 rounded-lg border border-hms-line bg-white px-3 text-[14px]" /><button onClick={addCharge} className={clsx(bMain, "!h-10 px-4")}>Add</button></div>
+        </div>}
       </Box>
-      <Box title="Payments" action={balance !== 0 ? <button onClick={() => openPanel("pay")} className={clsx(bMain, "!h-9 px-3.5 text-[13.5px]")}>{balance < 0 ? "Refund" : "Take payment"}</button> : undefined}>
-        {b.payments.length ? b.payments.map((p) => <Row key={p.id} k={<span>{p.amount < 0 ? "Refund" : p.note ?? "Payment"} · {p.method}<span className="block text-[12px] text-hms-muted">{dm(p.at.slice(0, 10))} {timeOf(p.at)} · {p.by}</span></span>} v={tk(p.amount)} tone={p.amount < 0 ? "text-[#6b55e0]" : "text-[#16693a]"} />) : <p className="py-2 text-[14px] text-hms-muted">No payments yet.</p>}
-        <div className="mt-1 border-t border-hms-line pt-1"><Row strong k={balance < 0 ? "To refund" : "Balance"} v={tk(Math.abs(balance))} tone={balance > 0 ? "text-[#b42318]" : ""} /></div>
-        {b.payer?.kind === "Company" && <p className="mt-2 text-[13px] text-hms-muted">Bill to: <b>{b.payer.name}</b></p>}
+      <div className="space-y-4">
+        <Box title="Payments" action={balance !== 0 ? <button onClick={() => openPanel("pay")} className={clsx(bMain, "!h-9 px-3.5 text-[13.5px]")}>{balance < 0 ? "Refund" : "Take payment"}</button> : undefined}>
+          {b.payments.length ? b.payments.map((p) => <Row key={p.id} k={<span>{p.amount < 0 ? "Refund" : p.note ?? "Payment"} · {p.method}<span className="block text-[12px] text-hms-muted">{dm(p.at.slice(0, 10))} {timeOf(p.at)} · {p.by}</span></span>} v={tk(p.amount)} tone={p.amount < 0 ? "text-[#6b55e0]" : "text-[#16693a]"} />) : <p className="py-2 text-[14px] text-hms-muted">No payments yet.</p>}
+          <div className="mt-1 border-t border-hms-line pt-1"><Row strong k={balance < 0 ? "To refund" : "Balance"} v={tk(Math.abs(balance))} tone={balance > 0 ? "text-[#b42318]" : ""} /></div>
+          {b.payer?.kind === "Company" && <p className="mt-2 text-[13px] text-hms-muted">Bill to: <b>{b.payer.name}</b></p>}
+        </Box>
+        <Box title="Security deposit">
+          {!dep ? (active ? <div className="flex flex-wrap items-center gap-2"><input aria-label="Deposit amount" inputMode="numeric" value={depAmt} onChange={(e) => setDepAmt(e.target.value.replace(/\D/g, ""))} className="h-10 w-28 rounded-lg border border-hms-line px-3 text-[14px]" /><select aria-label="Deposit method" value={depM} onChange={(e) => setDepM(e.target.value as typeof depM)} className="h-10 rounded-lg border border-hms-line bg-white px-2 text-[14px]">{["Cash", "bKash", "Card", "Bank"].map((m) => <option key={m}>{m}</option>)}</select><button onClick={takeDep} className={clsx(bSoft, "!h-10")}>Take deposit</button></div> : <p className="text-[14px] text-hms-muted">No deposit.</p>)
+            : dep.settled ? <p className="text-[14px]">{tk(dep.amount)} · {dep.method} — {dep.settled.used ? `${tk(dep.settled.used)} used for the bill` : ""}{dep.settled.used && dep.settled.returned ? ", " : ""}{dep.settled.returned ? `${tk(dep.settled.returned)} returned` : ""}</p>
+            : <><p className="text-[14px]">Holding <b>{tk(dep.amount)}</b> · {dep.method} · {dm(dep.at.slice(0, 10))}</p><p className="text-[12.5px] text-hms-muted">Not part of the bill.</p>
+              <div className="mt-2 flex flex-wrap gap-2"><button onClick={() => returnDep(0)} className={clsx(bSoft, "!h-9 text-[13.5px]")}>Return all</button>{balance > 0 && <button onClick={() => returnDep(Math.min(dep.amount, balance))} className={clsx(bSoft, "!h-9 text-[13.5px]")}>Use {tk(Math.min(dep.amount, balance))} for the bill</button>}</div></>}
+        </Box>
+        {err && <p role="alert" className="rounded-lg bg-[#fdecec] px-3 py-2 text-[13.5px] font-medium text-[#b42318]">{err}</p>}
+      </div>
+    </div>
+  );
+}
+
+function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
+  const h = useProperty();
+  const { bk, guests, toast } = useCtx();
+  const g = guests.get(b.guestId);
+  const S = bk.settings;
+  const extras = (b.status === "Confirmed" || b.status === "Checked in") ? ex.lines : [];
+  const docs: [string, string, () => string][] = [
+    ["Booking confirmation", "Dates, room, price and policy — send before arrival", () => confirmationHtml(h, b, g, S)],
+    ["Registration card", "Guest details, ID and signature — at check-in", () => regCardHtml(h, b, g)],
+    [b.payer?.kind === "Company" ? `Invoice to ${b.payer.name}` : "Invoice", "Every charge, payments and balance", () => invoiceHtml(h, b, g, extras)],
+  ];
+  const link = precheckUrl(h, b);
+  const msgs: [string, string][] = [["Confirmation message", fillMsg(S.confirmMsg, h, b, g, S)], ["Pre-arrival message", fillMsg(S.preArrivalMsg, h, b, g, S)]];
+  const wa = (t: string) => `https://wa.me/${(g?.phone ?? "").replace(/\D/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(t)}`;
+  const copy = async (t: string) => { try { await navigator.clipboard.writeText(t); toast("Message copied"); } catch { toast("Copy not allowed here — select the text"); } };
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Box title="Documents">
+        <ul className="divide-y divide-hms-line">
+          {docs.map(([t, s, f]) => <li key={t} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{t}</b><span className="text-[12.5px] text-hms-muted">{s}</span></span><button onClick={() => printHtml(f())} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print / PDF</button></li>)}
+          {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button></li>)}
+        </ul>
+        <p className="mt-2 text-[12.5px] text-hms-muted">Choose “Save as PDF” in the print dialog to keep or send a file.</p>
+        {b.status === "Confirmed" && <div className="mt-3 rounded-xl bg-[#f7f8fa] p-3">
+          <p className="text-[13px] font-semibold">Online pre-check-in {b.precheck ? <span className="text-[#16693a]">· done {dm(b.precheck.at.slice(0, 10))} {timeOf(b.precheck.at)}</span> : <span className="font-normal text-hms-muted">· not yet</span>}</p>
+          <p className="mt-1 break-all text-[12.5px] text-[#3a414c]">{link}</p>
+          <div className="mt-2 flex gap-2"><button onClick={() => copy(link)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy link</button><a href={link} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}>Open</a></div>
+          <p className="mt-1.5 text-[12px] text-hms-muted">Guest confirms with the last 4 digits of their phone. Prototype: answers save in this browser only.</p>
+        </div>}
+      </Box>
+      <Box title="Messages to the guest">
+        {msgs.map(([t, m]) => (
+          <div key={t} className="mb-3 rounded-xl bg-[#f7f8fa] p-3 last:mb-0">
+            <p className="text-[13px] font-semibold">{t}</p>
+            <p className="mt-1 whitespace-pre-wrap text-[13.5px] text-[#3a414c]">{m}</p>
+            <div className="mt-2 flex flex-wrap gap-2"><button onClick={() => copy(m)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy</button>{g?.phone && <a href={wa(m)} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><MessageCircle className="size-4" />WhatsApp</a>}</div>
+          </div>
+        ))}
+        <p className="text-[12.5px] text-hms-muted">Opens WhatsApp on this device. Automatic SMS/WhatsApp from BinGi is not connected in this prototype. Edit the text in Bookings → Settings.</p>
       </Box>
     </div>
   );

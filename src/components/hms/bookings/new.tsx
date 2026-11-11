@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, Check, Minus, Pencil, Plus, Search, UserRound } from "lucide-react";
-import { TODAY, taxOf, type Unit } from "@/lib/rooms/store";
+import { TODAY, taxOf, type Category as RoomCat, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { CHANNELS, METHODS, OTAS, bill, dm, dow, nightsBetween, preMealTotal, tk, useBookings, type Channel, type NewBooking, type Night, type PayMethod, type PreMeal } from "@/lib/bookings/store";
 import { useBkMode } from "@/lib/bookings/mode";
@@ -59,11 +59,12 @@ export function NewBookingPage() {
   const [ota, setOta] = useState(OTAS[0]);
   const [ref, setRef] = useState("");
   const [from, setFrom] = useState(start);
-  const [to, setTo] = useState(addDays(start, 1));
-  const [adults, setAdults] = useState(2);
+  const qTo = sp.get("to");
+  const [to, setTo] = useState(qTo && qTo > start ? qTo : addDays(start, 1));
+  const [adults, setAdults] = useState(() => Math.max(1, Math.min(8, Number(sp.get("adults")) || 2)));
   const [children, setChildren] = useState(0);
   const [picked, setPicked] = useState<string[]>(() => (sp.get("room") ? [sp.get("room")!] : []));
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(() => sp.get("phone") ?? "");
   const [useId, setUseId] = useState<string | null>(() => sp.get("guest"));
   const [gd, setGd] = useState<GuestDraft | null>(null);
   const [stay, setStay] = useState<StayDraft>(emptyStay);
@@ -72,6 +73,7 @@ export function NewBookingPage() {
   const [advance, setAdvance] = useState("");
   const [method, setMethod] = useState<PayMethod>("Cash");
   const [discount, setDiscount] = useState("");
+  const [plan, setPlan] = useState<("breakfast" | "lunch" | "dinner")[]>([]);
   const [tried, setTried] = useState<Record<number, boolean>>({});
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -98,7 +100,11 @@ export function NewBookingPage() {
   const lost = picked.filter((c) => !free.has(c));
   const roomsBase = lines.reduce((s, l) => s + l.nights.reduce((a, x) => a + x.base, 0), 0);
   const disc = Math.min(Number(discount) || 0, roomsBase);
-  const bills = lines.map((l, i) => bill({ nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0 }));
+  // Meal plan: extra (paid) meals every night for the adults in that room — billed with the room.
+  const lineAdults = (i: number) => (i === 0 ? Math.max(1, adults - (lines.length - 1)) : 1);
+  const planOf = (cat: RoomCat, ad: number) => { const ks = plan.filter((k) => cat.meals?.[k] === "extra" && cat.mealPrices?.[k]); return ks.length ? { name: ks.map((k) => k[0].toUpperCase() + k.slice(1)).join(" + ") + ` × ${ad}`, perNight: ks.reduce((s, k) => s + (cat.mealPrices![k] ?? 0), 0) * ad } : undefined; };
+  const planOpts = (["breakfast", "lunch", "dinner"] as const).filter((k) => lines.some((l) => l.cat.meals?.[k] === "extra" && l.cat.mealPrices?.[k]));
+  const bills = lines.map((l, i) => bill({ nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0, mealPlan: planOf(l.cat, lineAdults(i)) }));
   const roomTotal = bills.reduce((s, b) => s + b.total, 0);
   const mealsTotal = meals.reduce((s, m) => s + preMealTotal(m), 0);
   const svcTotal = services.reduce((s, x) => s + x.total, 0);
@@ -112,7 +118,7 @@ export function NewBookingPage() {
   const found = !useId && phoneKey(phone).length >= 8 ? g.findByPhone(phone) : undefined;
   const guest = useId ? g.rows.find((r) => r.id === useId) : undefined;
   const showForm = !!guest || (!found && phoneKey(phone).length >= 8);
-  const draft: GuestDraft = gd ?? (guest ? guestToDraft(guest) : { ...emptyGuest(), phone });
+  const draft: GuestDraft = gd ?? (guest ? guestToDraft(guest) : { ...emptyGuest(), name: sp.get("name") ?? "", phone });
   const shown: GuestDraft = guest ? draft : { ...draft, phone };
   const setDraft = (p: Partial<GuestDraft>) => setGd({ ...shown, ...p });
 
@@ -153,7 +159,7 @@ export function NewBookingPage() {
     const comps = stay.companions.filter((c) => c.name.trim());
     const items: NewBooking[] = lines.map((l, i) => ({
       guestId: guestId!, unit: l.code, categoryId: l.u.category, type: l.cat.name, from, to,
-      adults: i === 0 ? Math.max(1, adults - (lines.length - 1)) : 1, children: i === 0 ? children : 0,
+      adults: lineAdults(i), children: i === 0 ? children : 0, mealPlan: planOf(l.cat, lineAdults(i)),
       channel, ota: channel === "OTA" ? ota : undefined, channelRef: ref.trim() || undefined,
       nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0, note: stay.note.trim(),
       purpose: stay.purpose || undefined, comingFrom: stay.comingFrom || undefined, goingTo: stay.goingTo || undefined, eta: stay.eta || undefined,
@@ -187,7 +193,7 @@ export function NewBookingPage() {
         <p className="text-[13.5px] text-[#4d5664]">{datesOk ? `${dow(from)} ${dm(from)} → ${dow(to)} ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : "Pick dates"} · {adults + children} guest{adults + children > 1 ? "s" : ""}</p>
         {guestName && <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold"><UserRound className="size-4 text-hms-muted" />{guestName}</p>}
         <div className="mt-3 space-y-1 border-t border-hms-line pt-3 text-[14px]">
-          <div className="flex justify-between"><span className="text-[#4d5664]">Rooms</span><span className="tabular-nums">{tk(roomTotal)}</span></div>
+          <div className="flex justify-between"><span className="text-[#4d5664]">Rooms{plan.length && planOpts.length ? " + meal plan" : ""}</span><span className="tabular-nums">{tk(roomTotal)}</span></div>
           {disc > 0 && <div className="flex justify-between text-[#16693a]"><span>Discount</span><span>−{tk(disc)}</span></div>}
           {meals.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Meals ({meals.reduce((s, m) => s + m.qty, 0)})</span><span className="tabular-nums">{tk(mealsTotal)}</span></div>}
           {services.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Services ({services.length})</span><span className="tabular-nums">{tk(svcTotal)}</span></div>}
@@ -303,6 +309,12 @@ export function NewBookingPage() {
           </>}
 
           {step === 2 && <>
+            {planOpts.length > 0 && <Card title="Meal plan · every night">
+              <div className="flex flex-wrap gap-2">
+                {planOpts.map((k) => { const on = plan.includes(k); const price = lines.find((l) => l.cat.mealPrices?.[k])?.cat.mealPrices?.[k] ?? 0; return <button key={k} type="button" aria-pressed={on} onClick={() => setPlan(on ? plan.filter((x) => x !== k) : [...plan, k])} className={clsx("inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-[14px] font-semibold transition-colors", on ? "bg-hms-ink text-white" : "bg-white ring-1 ring-hms-line hover:ring-hms-ink")}>{on ? <Check className="size-4" /> : <Plus className="size-4" />}{k[0].toUpperCase() + k.slice(1)} · {tk(price)} / person</button>; })}
+              </div>
+              <p className="mt-2 text-[12.5px] text-hms-muted">{plan.length ? `Adds ${tk(lines.reduce((s, l, i) => s + (planOf(l.cat, lineAdults(i))?.perNight ?? 0), 0))} a night before VAT — on the room bill.` : "Included meals are already in the room price."}</p>
+            </Card>}
             <Card title="Meals & services" action={lines[0] ? <MealPlan cat={lines[0].cat} /> : undefined}>
               <ExtrasPicker h={h} from={from} to={to} room={room0} onMeals={(m) => { setMeals([...meals, ...m]); }} onServices={(s) => { setServices([...services, ...s]); }} />
             </Card>

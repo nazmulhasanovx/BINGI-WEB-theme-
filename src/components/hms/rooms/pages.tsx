@@ -189,10 +189,12 @@ function OutOfOrder({ u }: { u: Unit }) {
   const { update } = useRooms(h);
   const toast = useToast();
   const [reason, setReason] = useState("");
+  const [since, setSince] = useState(TODAY);
+  const [until, setUntil] = useState("");
   if (u.ooo) return (
     <div className="rounded-xl border border-[#f1dfb8] bg-[#fffaf0] px-3.5 py-3 text-[14px]">
-      <p className="font-semibold text-[#7a4a0b]">Out of order since {fmtStamp(u.ooo.since)}</p>
-      <p className="text-[#4d5664]">{u.ooo.reason}. Not sold until it&apos;s back.</p>
+      <p className="font-semibold text-[#7a4a0b]">Out of order {u.ooo.since.slice(0, 10) > TODAY ? "from" : "since"} {fmtStamp(u.ooo.since)}{u.ooo.until ? ` · back ${fmtStamp(u.ooo.until)}` : ""}</p>
+      <p className="text-[#4d5664]">{u.ooo.reason}. Not sold {u.ooo.until ? "on these dates" : "until it’s back"}.</p>
       <Btn className="mt-2 h-9" onClick={() => { update((s) => { delete s.units.find((x) => x.id === u.id)!.ooo; }, `${u.code} back in service`); toast(`${u.code} is back in service`); }}>Back in service</Btn>
     </div>
   );
@@ -201,7 +203,11 @@ function OutOfOrder({ u }: { u: Unit }) {
       <p className="text-[14px] font-semibold">Out of order (maintenance)</p>
       <div className="flex gap-2">
         <Input aria-label="Out of order reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason, e.g. AC repair" />
-        <Btn className="shrink-0" disabled={!reason.trim()} onClick={() => { update((s) => { s.units.find((x) => x.id === u.id)!.ooo = { reason: reason.trim(), since: TODAY }; }, `${u.code} out of order: ${reason.trim()}`); toast(`${u.code} marked out of order`); setReason(""); }}>Mark out of order</Btn>
+        <Btn className="shrink-0" disabled={!reason.trim() || (!!until && until <= since)} onClick={() => { update((s) => { s.units.find((x) => x.id === u.id)!.ooo = { reason: reason.trim(), since: since < TODAY ? TODAY : since, ...(until ? { until } : {}) }; }, `${u.code} out of order: ${reason.trim()}`); toast(`${u.code} marked out of order`); setReason(""); }}>Mark out of order</Btn>
+      </div>
+      <div className="flex flex-wrap gap-3 text-[13px]">
+        <label className="flex items-center gap-2">From <input type="date" aria-label="Out of order from" min={TODAY} value={since} onChange={(e) => setSince(e.target.value || TODAY)} className="h-9 rounded-lg border border-[#c9ced6] px-2" /></label>
+        <label className="flex items-center gap-2">Back on <input type="date" aria-label="Back in service on" min={since} value={until} onChange={(e) => setUntil(e.target.value)} className="h-9 rounded-lg border border-[#c9ced6] px-2" /><span className="text-[#4d5664]">(optional)</span></label>
       </div>
       <p className="text-[12.5px] text-[#4d5664]">Existing bookings are not changed — move guests from Bookings if needed.</p>
     </div>

@@ -8,7 +8,7 @@
 // Every other module (Dashboard, Guests, Rooms, Cashbox, Other Services, Restaurant) reads stays from here via useStays().
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
-import { TODAY, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
+import { TODAY, oooOn, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { DEMO_GUESTS, addDays, demoStays, hash, type Stay } from "./demo";
 
 export type BStatus = "Confirmed" | "Checked in" | "Checked out" | "Cancelled" | "No-show";
@@ -18,6 +18,20 @@ export const CHANNELS: Channel[] = ["Walk-in", "Phone", "Website", "Marketplace"
 export const OTAS = ["Booking.com", "Agoda", "Expedia", "Airbnb"];
 export const channelLabel = (b: Pick<Booking, "channel" | "ota">) => (b.channel === "OTA" ? b.ota || "OTA" : b.channel);
 /** Meal pre-ordered with the booking. Held on the booking until sent to the kitchen (then it is a Restaurant order charged to the room). */
+export type Charge = { id: string; label: string; amount: number; at: string };
+export type Settings = {
+  checkIn: string; checkOut: string; earlyFee: number; lateFee: number;
+  /** Free cancellation up to this many days before arrival; later cancellations keep feePct of the first night. */
+  freeCancelDays: number; cancelFeePct: number; noShowFeePct: number; depositDefault: number;
+  preArrivalMsg: string; confirmMsg: string;
+};
+export const DEFAULT_SETTINGS: Settings = {
+  checkIn: "14:00", checkOut: "12:00", earlyFee: 1500, lateFee: 1500, freeCancelDays: 2, cancelFeePct: 50, noShowFeePct: 100, depositDefault: 2000,
+  confirmMsg: "Dear {guest}, your booking {code} at {hotel} is confirmed: {room}, {from} to {to} ({nights} nights). Total {total}, paid {paid}. Check-in from {checkin}. See you soon!",
+  preArrivalMsg: "Hi {guest}, we look forward to welcoming you at {hotel} on {from}. Check-in is from {checkin}. Save time at the desk — pre-check-in here: {link} . Booking {code}.",
+};
+export type Audit = { date: string; at: string; by: string; arrivals: number; departures: number; noShows: number; inHouse: number; revenue: number; collected: number };
+export type Wait = { id: string; name: string; phone: string; from: string; to: string; category?: string; adults: number; note: string; at: string; done?: string };
 export type Companion = { name: string; idType: string; idNo: string; relation: string; age?: string };
 export const PURPOSES = ["Holiday", "Business", "Family visit", "Event / wedding", "Medical", "Other"];
 export type PreMeal = { id: string; item: string; name: string; price: number; qty: number; date: string; time: string; note?: string; sc: number; vat: number; sent?: string };
@@ -38,6 +52,14 @@ export type Booking = {
   companions?: Companion[];
   /** Person who made the booking, when not the guest (agent, family member, office). */
   booker?: { name: string; phone: string };
+  /** Meals added to every night (e.g. dinner for all adults) — part of the room package, taxed like the room. */
+  mealPlan?: { name: string; perNight: number };
+  /** Guest filled the online pre-check-in form (prototype: this browser only). */
+  precheck?: { at: string; idType?: string; idNo?: string; note?: string };
+  /** Extra charges on the bill (early check-in, late check-out, minibar, damage…). Amounts include VAT. */
+  charges?: Charge[];
+  /** Security deposit — held, not part of the bill. Returned, or used to pay the bill. */
+  deposit?: { amount: number; method: PayMethod; at: string; settled?: { returned: number; used: number; at: string } };
   /** Price before VAT/service for each night (from Discounts & Rates when booked). */
   nights: Night[]; tax: { service: number; vat: number };
   /** Discount on room charges (before VAT/service). */
@@ -47,7 +69,7 @@ export type Booking = {
   log: { at: string; text: string; by: string }[];
   demo?: boolean;
 };
-type State = { v: 1; sig: string; list: Booking[]; next: number };
+type State = { v: 1; sig: string; list: Booking[]; next: number; settings?: Settings; audits?: Audit[]; waitlist?: Wait[] };
 
 export const ME = "Md Yeapas";
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -63,8 +85,8 @@ export const timeOf = (at: string) => { const [H, M] = at.slice(11, 16).split(":
 
 // ---------- money ----------
 /** Room bill: nights − discount, then service charge, then VAT on (room + service). */
-export function bill(b: Pick<Booking, "nights" | "discount" | "tax">) {
-  const rooms = b.nights.reduce((s, n) => s + n.base, 0);
+export function bill(b: Pick<Booking, "nights" | "discount" | "tax"> & { mealPlan?: Booking["mealPlan"] }) {
+  const rooms = b.nights.reduce((s, n) => s + n.base, 0) + (b.mealPlan?.perNight ?? 0) * b.nights.length;
   const base = Math.max(0, rooms - b.discount);
   const service = Math.round((base * b.tax.service) / 100);
   const vat = Math.round(((base + service) * b.tax.vat) / 100);
@@ -75,7 +97,15 @@ export const preMealTotal = (m: PreMeal) => { const sub = m.price * m.qty; const
 export const heldMeals = (b: Booking) => (b.preMeals ?? []).filter((m) => !m.sent);
 export const paidOf = (b: Booking) => b.payments.reduce((s, p) => s + p.amount, 0);
 /** What the guest owes for the room bill. Cancelled: only what was kept as a fee counts. */
-export const totalOf = (b: Booking) => (b.status === "Cancelled" || b.status === "No-show" ? b.cancel?.keep ?? 0 : bill(b).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0));
+export const chargesOf = (b: Pick<Booking, "charges">) => (b.charges ?? []).reduce((s, c) => s + c.amount, 0);
+export const totalOf = (b: Booking) => (b.status === "Cancelled" || b.status === "No-show" ? b.cancel?.keep ?? 0 : bill(b).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0) + chargesOf(b));
+/** Cancellation / no-show fee by the property's policy (share of the first night's price incl. VAT). */
+export function policyFee(b: Booking, kind: "Cancelled" | "No-show", s: Settings, today = TODAY) {
+  const first = bill({ ...b, nights: b.nights.slice(0, 1), discount: 0 }).total;
+  if (kind === "No-show") return Math.round((first * s.noShowFeePct) / 100);
+  const days = nightsBetween(today, b.from);
+  return days >= s.freeCancelDays ? 0 : Math.round((first * s.cancelFeePct) / 100);
+}
 export const dueOf = (b: Booking) => Math.max(0, totalOf(b) - paidOf(b));
 export type PayState = "Paid" | "Partly paid" | "Due" | "Refund due";
 export const payState = (b: Booking): PayState => {
@@ -242,7 +272,7 @@ export function useBookings(h: Hotel) {
   [st]);
   const unitByCode = useMemo(() => new Map(units.map((u) => [u.code, u])), [units]);
   /** Rooms free for the dates (published, not out of order, no active booking). */
-  const freeUnits = useCallback((from: string, to: string, except?: string) => units.filter((u) => !u.ooo && !clash(u.code, from, to, except)), [units, clash]);
+  const freeUnits = useCallback((from: string, to: string, except?: string) => units.filter((u) => !oooOn(u, from, to) && !clash(u.code, from, to, except)), [units, clash]);
 
   const create = useCallback((items: NewBooking[]): Result => {
     if (!items.length) return { ok: false, error: "Pick at least one room" };
@@ -251,7 +281,7 @@ export function useBookings(h: Hotel) {
       if (it.unit) {
         const u = unitByCode.get(it.unit);
         if (!u) return { ok: false, error: `Room ${it.unit} is not bookable` };
-        if (u.ooo) return { ok: false, error: `Room ${it.unit} is out of order (${u.ooo.reason})` };
+        if (oooOn(u, it.from, it.to)) return { ok: false, error: `Room ${it.unit} is out of order (${u.ooo!.reason})` };
         const c = clash(it.unit, it.from, it.to);
         if (c) return { ok: false, error: `Room ${it.unit} was just booked (${c.code}) — pick another room` };
       }
@@ -281,8 +311,8 @@ export function useBookings(h: Hotel) {
     const b0 = find(now(), code);
     const u = unitByCode.get(unit);
     if (!u) return "Pick a room";
-    if (u.ooo) return `Room ${unit} is out of order`;
     const from = b0.status === "Checked in" ? (TODAY > b0.from ? TODAY : b0.from) : b0.from;
+    if (oooOn(u, from, b0.to)) return `Room ${unit} is out of order`;
     const c = clash(unit, from, b0.to, code);
     if (c) return `Room ${unit} is taken by ${c.code} on these dates`;
     save((s) => {
@@ -301,7 +331,7 @@ export function useBookings(h: Hotel) {
     if (b.from > TODAY) return `Check-in date is ${dmy(b.from)} — change the dates to check in early`;
     if (!b.unit) return "Assign a room first";
     const u = unitByCode.get(b.unit);
-    if (u?.ooo) return `Room ${b.unit} is out of order — move the guest to another room`;
+    if (u && oooOn(u, TODAY, addDays(TODAY, 1))) return `Room ${b.unit} is out of order — move the guest to another room`;
     const inRoom = now().list.find((x) => x.code !== code && x.unit === b.unit && x.status === "Checked in");
     if (inRoom) return `Room ${b.unit} still has a guest (${inRoom.code}) — check them out or move this guest`;
     save((s) => { const x = find(s, code); x.status = "Checked in"; x.checkedInAt = stamp(); log(x, `Checked in · Room ${x.unit}`); });
@@ -315,7 +345,7 @@ export function useBookings(h: Hotel) {
     if (b.status !== "Checked in") return "Only guests in house can be checked out";
     const nights = opts.shorten && b.to > TODAY ? b.nights.filter((n) => n.date < TODAY) : b.nights;
     const kept = nights.length ? nights : b.nights.slice(0, 1);
-    const due = Math.max(0, bill({ ...b, nights: kept }).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0) + (opts.extras ?? 0) - paidOf(b));
+    const due = Math.max(0, totalOf({ ...b, nights: kept }) + (opts.extras ?? 0) - paidOf(b));
     if (due > 0 && !opts.leaveDue) return `${tk(due)} is still due — take the payment first`;
     save((s) => {
       const x = find(s, code);
@@ -348,6 +378,38 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st, clash]);
 
+  const precheckIn = useCallback((code: string, p: { eta?: string; idType?: string; idNo?: string; note?: string }) => save((s) => {
+    const x = find(s, code); x.precheck = { at: stamp(), idType: p.idType, idNo: p.idNo, note: p.note };
+    if (p.eta) x.eta = p.eta;
+    log(x, `Guest pre-checked in online${p.eta ? ` · arriving ${p.eta}` : ""}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [st]);
+  /** Drag on the calendar: new room and/or new dates in one step. Booked nights keep their price; new nights take `price`. */
+  const moveStay = useCallback((code: string, unit: string, from: string, to: string, price: (date: string) => number): string => {
+    const b = find(now(), code);
+    if (b.status !== "Confirmed" && b.status !== "Checked in") return "Only upcoming or in-house bookings can move";
+    if (from >= to) return "Check-out must be after check-in";
+    if (b.status === "Checked in" && from !== b.from) return "Guest is in house — only the room or the check-out date can change";
+    if (b.status === "Checked in" && to <= TODAY) return "To end today, use Check out";
+    if (b.status === "Confirmed" && from < TODAY) return "Check-in can't be in the past";
+    const u = unitByCode.get(unit);
+    if (!u) return "Pick a room";
+    if (oooOn(u, from, to)) return `Room ${unit} is out of order (${u.ooo!.reason})`;
+    const c = clash(unit, b.status === "Checked in" && TODAY > from ? TODAY : from, to, code);
+    if (c) return `Room ${unit} is taken by ${c.code} on these dates`;
+    save((s) => {
+      const x = find(s, code); const old = new Map(x.nights.map((n) => [n.date, n.base]));
+      const n: Night[] = []; for (let d = from; d < to; d = addDays(d, 1)) n.push({ date: d, base: old.get(d) ?? price(d) });
+      const parts: string[] = [];
+      if (x.unit !== unit) parts.push(x.unit ? `Room ${x.unit} → ${unit}` : `Room ${unit} assigned`);
+      if (x.from !== from || x.to !== to) parts.push(`${dm(x.from)}–${dm(x.to)} → ${dm(from)}–${dm(to)}`);
+      x.unit = unit; x.categoryId = u.category; x.type = cats.get(u.category)?.name ?? x.type; x.from = from; x.to = to; x.nights = n;
+      log(x, `Moved on calendar · ${parts.join(" · ")}`);
+    });
+    return "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st, clash, unitByCode, cats]);
+
   const update = useCallback((code: string, patch: Partial<Pick<Booking, "adults" | "children" | "note" | "channel" | "discount" | "purpose" | "comingFrom" | "goingTo" | "eta" | "companions" | "booker" | "payer">>, text = "Details updated") => save((s) => { Object.assign(find(s, code), patch); log(find(s, code), text); }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
@@ -371,9 +433,44 @@ export function useBookings(h: Hotel) {
   const setSource = useCallback((code: string, channel: Channel, ota?: string, ref?: string) => save((s) => { const x = find(s, code); x.channel = channel; x.ota = channel === "OTA" ? ota : undefined; x.channelRef = ref || undefined; log(x, `Source set to ${channel === "OTA" ? ota : channel}${ref ? ` · ${ref}` : ""}`); }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
+  const addCharge = useCallback((code: string, label: string, amount: number) => save((s) => { const x = find(s, code); (x.charges ??= []).push({ id: `c${Date.now().toString(36)}`, label, amount, at: stamp() }); log(x, `Charge added · ${label} ${tk(amount)}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const removeCharge = useCallback((code: string, id: string) => save((s) => { const x = find(s, code); const c = x.charges?.find((y) => y.id === id); x.charges = (x.charges ?? []).filter((y) => y.id !== id); if (c) log(x, `Charge removed · ${c.label}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const takeDeposit = useCallback((code: string, amount: number, method: PayMethod) => save((s) => { const x = find(s, code); x.deposit = { amount, method, at: stamp() }; log(x, `Security deposit ${tk(amount)} · ${method}`); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  /** Settle the deposit: `used` goes to the bill as a payment, the rest is returned. */
+  const settleDeposit = useCallback((code: string, used: number) => save((s) => {
+    const x = find(s, code); const d = x.deposit; if (!d || d.settled) return;
+    const u = Math.max(0, Math.min(used, d.amount));
+    d.settled = { returned: d.amount - u, used: u, at: stamp() };
+    if (u > 0) x.payments.push({ id: `p${Date.now().toString(36)}d`, at: stamp(), amount: u, method: d.method, by: ME, note: "From deposit" });
+    log(x, `Deposit settled · ${u ? `${tk(u)} used for the bill` : ""}${u && d.amount - u ? " · " : ""}${d.amount - u ? `${tk(d.amount - u)} returned` : ""}`);
+  }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const setMealPlan = useCallback((code: string, plan: Booking["mealPlan"]) => save((s) => { const x = find(s, code); x.mealPlan = plan; log(x, plan ? `Meal plan · ${plan.name} (${tk(plan.perNight)}/night)` : "Meal plan removed"); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const settings = st.settings ?? DEFAULT_SETTINGS;
+  const saveSettings = useCallback((n: Settings) => save((s) => { s.settings = n; }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const closeDay = useCallback((a: Omit<Audit, "at" | "by">) => save((s) => { (s.audits ??= []).unshift({ ...a, at: stamp(), by: ME }); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const addWait = useCallback((w: Omit<Wait, "id" | "at">) => save((s) => { (s.waitlist ??= []).unshift({ ...w, id: `w${Date.now().toString(36)}`, at: stamp() }); }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
+  const closeWait = useCallback((id: string, how: string) => save((s) => { const w = s.waitlist?.find((x) => x.id === id); if (w) w.done = how; }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [st]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
 
-  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, update, cancel, addMeals, removeMeal, mealSent, setSource, reset };
+  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, precheckIn, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
 }
 export type Bk = ReturnType<typeof useBookings>;
 export type { Unit };

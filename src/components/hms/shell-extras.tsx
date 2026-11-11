@@ -10,6 +10,8 @@ import { useProperty } from "./property";
 import { useGuests } from "@/lib/guests/store";
 import { hasInventory, statusOf, useInventory } from "@/lib/inventory/store";
 import { hasServices, useServices } from "@/lib/services/store";
+import { channelLabel, dm, useBookings } from "@/lib/bookings/store";
+import { TODAY } from "@/lib/rooms/store";
 import { useHrm, TODAY as HRM_TODAY } from "@/lib/hrm/store";
 
 /** Click-outside + Escape for a small popover. */
@@ -164,6 +166,7 @@ function Palette({ items, onClose }: { items: NavTarget[]; onClose: () => void }
   const g = useGuests(h);
   const inv = useInventory(h);
   const svc = useServices(h);
+  const bk = useBookings(h);
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
   const back = useRef<HTMLElement | null>(null);
@@ -177,8 +180,12 @@ function Palette({ items, onClose }: { items: NavTarget[]; onClose: () => void }
     const guests = g.rows.filter((r) => m(r.name) || m(r.id) || (kd.length >= 3 && r.phone.replace(/\D/g, "").includes(kd))).slice(0, 5).map((r) => ({ label: r.name, sub: `${r.state} · ${r.phone}`, href: `/hms/guests/${r.id}`, group: "Guests" }));
     const stock = hasInventory(h) ? inv.items.filter((x) => m(x.name) || m(x.sku)).slice(0, 4).map((x) => ({ label: x.name, sub: `${x.sku} · ${x.qty} ${x.unit} · ${statusOf(x)}`, href: "/hms/inventory", group: "Inventory" })) : [];
     const services = hasServices(h) ? svc.st.services.filter((x) => !x.archived && m(x.name)).slice(0, 4).map((x) => ({ label: x.name, sub: `৳${x.price} · ${x.duration}`, href: "/hms/other-services", group: "Services" })) : [];
-    return [...pages.slice(0, 5), ...guests, ...stock, ...services];
-  }, [q, items, g.rows, inv.items, svc.st.services, h]);
+    const gname = new Map(g.rows.map((r) => [r.id, r]));
+    const bookings = bk.list.filter((b) => { const r = gname.get(b.guestId); return m(b.code) || (b.channelRef && m(b.channelRef)) || (b.unit && k === b.unit.toLowerCase()) || (r && (m(r.name) || (kd.length >= 3 && r.phone.replace(/\D/g, "").includes(kd)))); })
+      .sort((a, c) => Math.abs(Date.parse(a.from) - Date.parse(TODAY)) - Math.abs(Date.parse(c.from) - Date.parse(TODAY))).slice(0, 5)
+      .map((b) => ({ label: `${gname.get(b.guestId)?.name ?? "Guest"} · ${b.code}`, sub: `${b.unit ? `Room ${b.unit} · ` : ""}${dm(b.from)} → ${dm(b.to)} · ${b.status} · ${channelLabel(b)}`, href: `/hms/bookings/view?b=${b.code}`, group: "Bookings" }));
+    return [...pages.slice(0, 5), ...bookings, ...guests, ...stock, ...services];
+  }, [q, items, g.rows, inv.items, svc.st.services, h, bk.list]);
   const sel = Math.min(i, Math.max(0, hits.length - 1));
   const go = (x?: Hit) => { if (!x) return; onClose(); router.push(x.href); };
   const groups = [...new Set(hits.map((x) => x.group))];
@@ -189,7 +196,7 @@ function Palette({ items, onClose }: { items: NavTarget[]; onClose: () => void }
           <Search className="size-5 text-hms-muted" /><span className="sr-only">Search</span>
           <input autoFocus value={q} onChange={(e) => { setQ(e.target.value); setI(0); }} role="combobox" aria-expanded aria-controls="pal-list" aria-activedescendant={hits[sel] ? `pal-${sel}` : undefined}
             onKeyDown={(e) => { if (e.key === "ArrowDown") { e.preventDefault(); setI((x) => Math.min(hits.length - 1, x + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setI((x) => Math.max(0, x - 1)); } else if (e.key === "Enter") go(hits[sel]); else if (e.key === "Escape") onClose(); }}
-            placeholder="Search pages, guests, phone, stock or services" className="h-full flex-1 bg-transparent text-[16px] outline-none focus-visible:outline-none" />
+            placeholder="Search bookings, guests, phone, room, pages…" className="h-full flex-1 bg-transparent text-[16px] outline-none focus-visible:outline-none" />
           <kbd className="rounded-md border border-hms-line px-1.5 text-[11px] text-hms-muted">Esc</kbd>
         </label>
         <ul id="pal-list" role="listbox" aria-label="Results" className="max-h-[min(420px,60vh)] overflow-y-auto p-1.5">

@@ -13,3 +13,11 @@ export function useBkMode() {
   const setMode = useCallback((m: BkMode) => { try { localStorage.setItem(KEY, m); } catch {} subs.forEach((f) => f()); }, []);
   return { mode, setMode };
 }
+
+/** Same Easy / Details switch for another module, stored under its own key. */
+const subs2 = new Set<() => void>();
+export function useModeKey(key: string) {
+  const mode = useSyncExternalStore((f) => { subs2.add(f); return () => { subs2.delete(f); }; }, () => { try { return localStorage.getItem(key) === "details" ? "details" : "easy"; } catch { return "easy"; } }, () => "easy" as BkMode) as BkMode;
+  const setMode = useCallback((m: BkMode) => { try { localStorage.setItem(key, m); } catch {} subs2.forEach((f) => f()); }, [key]);
+  return { mode, setMode };
+}

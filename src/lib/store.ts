@@ -24,6 +24,8 @@ export interface GuestBooking {
   payment: { method: PaymentChoice; dueNow: number; reference?: string; provider?: string };
   bookingStatus: "pending" | "confirmed" | "cancelled";
   paymentStatus: "unpaid" | "pay-at-hotel" | "advance-submitted" | "paid";
+  /** Set when the hotel accepts it in BinGi HMS Bookings. */
+  hmsCode?: string;
 }
 
 export interface Session {
@@ -96,6 +98,9 @@ export function useGuestState(slug: string) {
     addBooking: (b: GuestBooking) => update((s) => ({ ...s, bookings: [b, ...s.bookings], cart: { stay: null, extras: [] } })),
     cancelBooking: (id: string) =>
       update((s) => ({ ...s, bookings: s.bookings.map((b) => (b.id === id ? { ...b, bookingStatus: "cancelled" as const } : b)) })),
+    /** Hotel side (HMS): accept / decline a website request — the guest sees the new status on their trip page. */
+    setStatus: (id: string, bookingStatus: GuestBooking["bookingStatus"], paymentStatus?: GuestBooking["paymentStatus"], hmsCode?: string) =>
+      update((s) => ({ ...s, bookings: s.bookings.map((b) => (b.id === id ? { ...b, bookingStatus, paymentStatus: paymentStatus ?? b.paymentStatus, hmsCode: hmsCode ?? b.hmsCode } : b)) })),
     signIn: (session: Session) => update((s) => ({ ...s, session })),
     signOut: () => update((s) => ({ ...s, session: null })),
   };
