@@ -67,7 +67,7 @@ export function Tag({ tone, children }: { tone: "vip" | "red" | "gray" | "green"
 }
 
 /** Right-side sheet, portaled so fixed positioning is never broken by a parent. */
-export function Sheet({ title, sub, onClose, children, footer }: { title: string; sub?: string; onClose: () => void; children: ReactNode; footer: ReactNode }) {
+export function Sheet({ title, sub, onClose, children, footer, wide }: { title: string; sub?: string; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
@@ -90,7 +90,7 @@ export function Sheet({ title, sub, onClose, children, footer }: { title: string
   }, []);
   return createPortal(
     <div className="hms-app hms-fade fixed inset-0 z-[90] flex justify-end bg-black/25" onClick={onClose}>
-      <div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className="hms-drawer-r flex h-full w-full max-w-[520px] flex-col bg-white shadow-2xl outline-none">
+      <div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className={`hms-drawer-r flex h-full w-full ${wide ? "max-w-[780px]" : "max-w-[520px]"} flex-col bg-white shadow-2xl outline-none`}>
         <div className="flex items-start gap-3 border-b border-hms-line px-5 py-4">
           <div className="flex-1"><h2 className="text-[18px] font-bold">{title}</h2>{sub && <p className="text-[13.5px] text-hms-muted">{sub}</p>}</div>
           <button onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button>
