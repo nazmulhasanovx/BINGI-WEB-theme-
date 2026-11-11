@@ -66,22 +66,22 @@ export const minutesLeft = (s: StepId) => Math.max(1, Math.ceil((ORDER.length - 
 
 // ---------- Pricing (confirmed by Nazmul 9–10 Nov 2026) ----------
 // Public site pricing ("Pay per room. Nothing hidden", Nazmul 10 Nov 2026).
-export type PlanInfo = { label: string; perUnit: number; activation: number; activationRegular?: number; for: string; forBn: string; tags: [string, string][]; fees: [number, number, number]; includes: [string, string][]; includesTitle: [string, string]; restaurant: boolean };
+export type PlanInfo = { label: string; perUnit: number; perUnitRegular?: number; activation: number; activationRegular?: number; for: string; forBn: string; tags: [string, string][]; fees: [number, number, number]; includes: [string, string][]; includesTitle: [string, string]; restaurant: boolean };
 export const PLANS: Record<PlanId, PlanInfo> = {
   starter: {
-    label: "Starter", perUnit: 30, activation: 0, for: "Rooms, bookings and your own website", forBn: "রুম, বুকিং আর নিজের ওয়েবসাইট",
+    label: "Starter", perUnit: 25, activation: 0, for: "Rooms, bookings and your own website", forBn: "রুম, বুকিং আর নিজের ওয়েবসাইট",
     tags: [["হোম / ফ্ল্যাট", "Home / flat"], ["গেস্ট হাউস", "Guest house"]], fees: [12, 1.5, 0], restaurant: false,
     includesTitle: ["Starter-এ আছে", "Starter includes"],
     includes: [["রুম / থাকার জায়গা ম্যানেজমেন্ট", "Room / accommodation management"], ["অনলাইন ও অফলাইন বুকিং", "Online & offline bookings"], ["ওয়েবসাইট ম্যানেজমেন্ট", "Website management"], ["ডোমেইন ম্যানেজমেন্ট", "Domain management"], ["সীমিত ওয়েবসাইট থিম", "Limited website themes"]],
   },
   business: {
-    label: "Business", perUnit: 50, activation: 4999, activationRegular: 14500, for: "Day-to-day hotel operations", forBn: "হোটেলের প্রতিদিনের কাজ",
+    label: "Business", perUnit: 70, perUnitRegular: 175, activation: 4999, activationRegular: 14500, for: "Day-to-day hotel operations", forBn: "হোটেলের প্রতিদিনের কাজ",
     tags: [["হোটেল", "Hotel"]], fees: [8, 1, 0], restaurant: true,
     includesTitle: ["Starter-এর সব, সাথে", "Everything in Starter, plus"],
     includes: [["হাউসকিপিং", "Housekeeping"], ["রেস্টুরেন্ট / মিল ম্যানেজমেন্ট", "Restaurant / meal management"], ["QR ফুড অর্ডার", "QR food ordering"], ["খরচের হিসাব", "Expense management"], ["অন্যান্য সার্ভিস", "Other services"]],
   },
   ultra: {
-    label: "Ultra", perUnit: 116, activation: 8999, for: "Staff, inventory and advanced operations", forBn: "স্টাফ, ইনভেন্টরি আর অ্যাডভান্সড অপারেশন",
+    label: "Ultra", perUnit: 116, perUnitRegular: 290, activation: 8999, activationRegular: 29500, for: "Staff, inventory and advanced operations", forBn: "স্টাফ, ইনভেন্টরি আর অ্যাডভান্সড অপারেশন",
     tags: [["রিসোর্ট", "Resort"]], fees: [4, 0.5, 0], restaurant: true,
     includesTitle: ["Business-এর সব, সাথে", "Everything in Business, plus"],
     includes: [["পূর্ণ HRM", "Full HRM"], ["ইনভেন্টরি", "Inventory"], ["অ্যাডভান্সড অপারেশন", "Advanced operations"], ["সব ওয়েবসাইট থিম", "Unlimited website themes"]],
@@ -92,13 +92,16 @@ export const MODULE_PLAN: Record<string, PlanId> = { frontdesk: "starter", house
 export const MIN_BILLED = 10;
 export const CYCLE_OFF: Record<Cycle, number> = { 1: 0, 6: 0.1, 12: 0.25 };
 export const TRIAL_DAYS = 7;
+const CYCLE_RATE: Record<number, Record<Cycle, number>> = { 25: { 1: 25, 6: 23, 12: 19 }, 70: { 1: 70, 6: 63, 12: 53 }, 116: { 1: 116, 6: 105, 12: 87 } };
 export function quote(plan: PlanId, units: number, cycle: Cycle) {
   const p = PLANS[plan];
   const billed = Math.max(MIN_BILLED, units);
   const monthly = billed * p.perUnit;
   const gross = monthly * cycle;
-  const off = Math.round(gross * CYCLE_OFF[cycle]);
-  const sub = gross - off;
+  // Per-room rate per cycle, rounded to whole taka — same table as the public pricing page (approved 11 Nov 2026).
+  const rate = CYCLE_RATE[p.perUnit]?.[cycle] ?? Math.round(p.perUnit * (1 - CYCLE_OFF[cycle]));
+  const sub = billed * rate * cycle;
+  const off = gross - sub;
   return { billed, monthly, gross, off, sub, activation: p.activation, activationRegular: p.activationRegular, total: sub + p.activation };
 }
 const RANK: Record<PlanId, number> = { starter: 0, business: 1, ultra: 2 };
