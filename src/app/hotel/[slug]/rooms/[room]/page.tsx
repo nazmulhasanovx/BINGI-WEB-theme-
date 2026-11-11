@@ -106,6 +106,6 @@ export default async function RoomPage(props: PageProps<"/hotel/[slug]/rooms/[ro
     </div>
   );
   const masters = [...(PLAN_RULES[hotel.plan].masters as readonly MasterTheme[]), ...PAID_IDS];
-  const views = Object.fromEntries(masters.map((m) => { const V = THEME_ROOM[m]; return [m, V ? <V key={m} hotel={hotel} room={room} /> : shared]; }));
+  const views = Object.fromEntries(masters.map((m) => { const V = THEME_ROOM[m]; return [m, V ? <V key={m} hotel={hotel} room={room} master={m} /> : shared]; }));
   return <MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={views} />;
 }

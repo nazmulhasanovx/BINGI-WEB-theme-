@@ -120,7 +120,7 @@ export const haorBilash: Hotel = {
     { title: "Life jackets on the deck edges", text: "Always when the boat is moving." },
     { title: "No plastic in the water", text: "Bins are on board." },
   ],
-  theme: { master: "drift", id: "lagoon", heading: "serif" },
+  theme: { master: "drift", id: "ocean", heading: "serif" },
   propertyType: "other",
   flags: { packages: false, events: false },
   plan: "business",

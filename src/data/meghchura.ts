@@ -74,7 +74,7 @@ export const meghchura: Hotel = {
     { time: "20:00", title: "The long table", text: "Dinner together. Hill cooking, slow conversation." },
     { time: "22:00", title: "Stars", text: "No city light for a hundred kilometres. Blankets by the fire." },
   ],
-  theme: { master: "summit", id: "terracotta", heading: "serif" },
+  theme: { master: "summit", id: "navy", heading: "serif" },
   propertyType: "resort",
   plan: "ultra",
 };

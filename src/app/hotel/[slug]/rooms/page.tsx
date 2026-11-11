@@ -32,6 +32,6 @@ export default async function RoomsPage(props: PageProps<"/hotel/[slug]/rooms">)
   );
   // A theme may own this page (e.g. ISLE); every other theme shows the shared layout.
   const masters = [...(PLAN_RULES[hotel.plan].masters as readonly MasterTheme[]), ...PAID_IDS];
-  const views = Object.fromEntries(masters.map((m) => { const V = THEME_ROOMS[m]; return [m, V ? <V key={m} hotel={hotel} /> : shared]; }));
+  const views = Object.fromEntries(masters.map((m) => { const V = THEME_ROOMS[m]; return [m, V ? <V key={m} hotel={hotel} master={m} /> : shared]; }));
   return <MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={views} />;
 }

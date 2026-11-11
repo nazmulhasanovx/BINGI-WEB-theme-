@@ -79,7 +79,7 @@ export const havenLalakhal: Hotel = {
     { time: "18:30", title: "Sound bath by the river", text: "Forty minutes of sound and water as the light goes." },
     { time: "21:00", title: "Quiet hours", text: "The whole retreat goes quiet until morning." },
   ],
-  theme: { master: "haven", id: "forest", heading: "serif" },
+  theme: { master: "haven", id: "sand", heading: "serif" },
   propertyType: "resort",
   plan: "ultra",
 };
