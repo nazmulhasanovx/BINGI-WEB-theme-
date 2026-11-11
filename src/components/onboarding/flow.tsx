@@ -60,6 +60,7 @@ function Flow({ d }: { d: Draft }) {
   const next = () => go(ORDER[Math.min(ORDER.length - 1, i + 1)]);
   const back = i > 0 ? () => go(ORDER[i - 1]) : () => router.push("/onboarding");
   const errs = errorsFor(d, counts.total, t);
+  const firstTheme = themesFor(d)[0]?.id;
   const cs = checks(d, counts);
   const pct = score(cs);
   const cont = () => {
@@ -67,6 +68,10 @@ function Flow({ d }: { d: Draft }) {
     if (d.step === "2.2") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
     // the "Best fit" plan counts as chosen unless the owner picks another (one tap less)
     if (d.step === "6.1" && !d.planPicked) edit((x) => { x.plan = recommend(x); x.planPicked = true; });
+    // the owner saw the price rules on this page — count them as checked (defaults are fine)
+    if (d.step === "3.1" && !d.rates.done) edit((x) => { x.rates.done = true; });
+    // no look picked and not "later": keep the best fit that is shown first
+    if (d.step === "5.2" && !d.site.theme && !d.site.later && firstTheme) edit((x) => { x.site.theme = firstTheme; });
     next();
   };
   const submit = () => {
@@ -319,6 +324,7 @@ const MODULES = [
   { id: "inventory", bn: "স্টক / ইনভেন্টরি", en: "Inventory", icon: Boxes },
   { id: "accounts", bn: "খরচের হিসাব", en: "Expense management", icon: Landmark },
   { id: "restaurant", bn: "রেস্টুরেন্ট ও মিল", en: "Restaurant & meals", icon: Utensils },
+  { id: "services", bn: "অন্যান্য সার্ভিস (লন্ড্রি, গাড়ি, ট্যুর)", en: "Other services (laundry, transport, tours)", icon: Sparkles },
 ];
 function Modules({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
@@ -431,14 +437,20 @@ function Payments({ d }: { d: Draft }) {
   );
 }
 
-function Website({ d }: { d: Draft }) {
-  const { edit } = useOnboarding();
-  const { t } = useL();
+/** The four looks shown for this property (best fits first) — the first one is kept if the owner picks none. */
+function themesFor(d: Draft) {
   const plan: PlanId = d.planPicked ? d.plan : recommend(d);
   const rank = (p: string) => PLAN_ORDER.indexOf(p as (typeof PLAN_ORDER)[number]);
   const old = hotelOf(d).propertyType;
   const fits = (x: (typeof MASTER_LIST)[number]) => x.bestFor.includes(old);
-  const themes = MASTER_LIST.filter((x) => rank(x.minPlan) <= rank(plan === "starter" ? "business" : plan)).sort((a, b) => Number(fits(b)) - Number(fits(a))).slice(0, 4);
+  return MASTER_LIST.filter((x) => rank(x.minPlan) <= rank(plan === "starter" ? "business" : plan)).sort((a, b) => Number(fits(b)) - Number(fits(a))).slice(0, 4);
+}
+function Website({ d }: { d: Draft }) {
+  const { edit } = useOnboarding();
+  const { t } = useL();
+  const old = hotelOf(d).propertyType;
+  const fits = (x: (typeof MASTER_LIST)[number]) => x.bestFor.includes(old);
+  const themes = themesFor(d);
   return (
     <Q title={t("আপনার ওয়েবসাইট দেখতে কেমন হবে?", "How should your website look?")} why={t("আপনার রুম, দাম আর ছবি দিয়ে আমরা সাজিয়ে দেব। অনুমোদনের আগে ড্রাফট থাকবে।", "We fill it with your rooms and prices. It stays a draft until approval.")}>
       <div role="radiogroup" aria-label={t("ওয়েবসাইটের লুক", "Website look")} className="grid gap-3 sm:grid-cols-2">
@@ -549,8 +561,10 @@ function Ready({ d, counts, go }: { d: Draft; counts: { total: number; published
           <p className="text-[14px] text-[#4d5664]">{num(counts.total, lang)} {t("টা রুম", "rooms")} · {d.city || "—"} · {d.planPicked ? PLANS[d.plan].label : "—"}{q ? ` · ৳${num(money(q.monthly), lang)}/${t("মাস", "mo")}` : ""}</p>
         </div>
       </div>
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-        {cs.map((c) => (
+      {cs.filter((c) => c.level === "required").every((c) => c.ok) && <p className="mt-4 flex items-center gap-2 rounded-xl border border-[#e3f1e7] bg-[#f6fbf7] px-3 py-2.5 text-[14.5px] font-medium"><span className="grid size-6 place-items-center rounded-full bg-[#1c7d45] text-white"><Check className="size-3.5" /></span>{t("জমা দেওয়ার মতো সব তৈরি", "Everything needed to submit is done")}</p>}
+      {cs.some((c) => !c.ok) && <h3 className="mt-5 text-[15px] font-semibold">{t("চাইলে এখন করুন — পরেও করা যাবে", "Optional — now or later")}</h3>}
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+        {cs.filter((c) => !c.ok).map((c) => (
           <li key={c.id} className={clsx("flex items-center gap-2.5 rounded-xl border px-3 py-2.5", c.ok ? "border-[#e3f1e7] bg-[#f6fbf7]" : c.level === "required" ? "border-[#f6cfcb] bg-[#fff6f5]" : "border-[#c6ccd4] bg-white")}>
             <span className={clsx("grid size-6 shrink-0 place-items-center rounded-full", c.ok ? "bg-[#1c7d45] text-white" : c.level === "required" ? "bg-[#b11c29] text-white" : "bg-[#e3e7ec] text-[#4d5664]")}>{c.ok ? <Check className="size-3.5" /> : c.level === "required" ? <CircleAlert className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}</span>
             <span className="min-w-0 flex-1 text-[14.5px] font-medium">{t(c.bn, c.label)}{c.level !== "required" && !c.ok && <span className="text-[12.5px] text-[#4d5664]"> · {t("পরে করা যাবে", "can wait")}</span>}</span>
@@ -558,6 +572,9 @@ function Ready({ d, counts, go }: { d: Draft; counts: { total: number; published
           </li>
         ))}
       </ul>
+      <details className="mt-4 rounded-xl border border-[#e3e7ec] bg-white px-3 py-2.5"><summary className="cursor-pointer text-[14px] font-semibold">{t(`সব দেখুন (${num(cs.filter((c) => c.ok).length, lang)}টা হয়েছে)`, `See everything (${cs.filter((c) => c.ok).length} done)`)}</summary>
+        <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">{cs.filter((c) => c.ok).map((c) => <li key={c.id} className="flex items-center gap-2 text-[14px]"><Check className="size-4 text-[#1c7d45]" aria-hidden />{t(c.bn, c.label)}</li>)}</ul>
+      </details>
     </Q>
   );
 }

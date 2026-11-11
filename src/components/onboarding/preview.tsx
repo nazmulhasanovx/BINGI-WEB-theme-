@@ -43,7 +43,7 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
         </div>
         <div className="space-y-2.5 p-4">
           <div>
-            <p className={d.name ? "text-[17px] font-semibold" : "text-[17px] font-semibold text-[#a3a8b3]"}>{d.name || t("আপনার property-র নাম", "Your property name")}</p>
+            <p className={d.name ? "text-[17px] font-semibold" : "text-[17px] font-semibold text-[#6b7280]"}>{d.name || t("আপনার property-র নাম", "Your property name")}</p>
             <p className="mt-0.5 flex items-center gap-1 text-[13.5px] text-[#4d5664]"><MapPin className="size-3.5 shrink-0" />{place || t("এলাকা, শহর", "Area, city")}</p>
           </div>
           <ul className="space-y-1.5 border-t border-[#e3e7ec] pt-2.5 text-[13.5px] text-[#4d5664]">
@@ -53,7 +53,7 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
             {d.seen.includes("5.1") && pays && <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0 text-[#8a909c]" />{pays}</li>}
           </ul>
           <div className="flex items-end justify-between border-t border-[#e3e7ec] pt-2.5">
-            {from ? <p className="text-[13px] text-[#4d5664]">{t("শুরু", "From")} <b className="text-[18px] text-[#0f1720]">{money(from)}</b> /{t("রাত", "night")}</p> : <p className="text-[13px] text-[#a3a8b3]">{t("দাম রুম যোগ করলে দেখাবে", "Price shows after rooms")}</p>}
+            {from ? <p className="text-[13px] text-[#4d5664]">{t("শুরু", "From")} <b className="text-[18px] text-[#0f1720]">{money(from)}</b> /{t("রাত", "night")}</p> : <p className="text-[13px] text-[#6b7280]">{t("দাম রুম যোগ করলে দেখাবে", "Price shows after rooms")}</p>}
           </div>
         </div>
       </div>

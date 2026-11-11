@@ -88,7 +88,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
   },
 };
 /** Which plan a module needs (public pricing page). */
-export const MODULE_PLAN: Record<string, PlanId> = { frontdesk: "starter", housekeeping: "business", restaurant: "business", accounts: "business", staff: "ultra", inventory: "ultra" };
+export const MODULE_PLAN: Record<string, PlanId> = { frontdesk: "starter", housekeeping: "business", restaurant: "business", accounts: "business", services: "business", staff: "ultra", inventory: "ultra" };
 export const MIN_BILLED = 10;
 export const CYCLE_OFF: Record<Cycle, number> = { 1: 0, 6: 0.1, 12: 0.25 };
 export const TRIAL_DAYS = 7;
