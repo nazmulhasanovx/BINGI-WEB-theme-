@@ -36,6 +36,8 @@ export type Category = {
   /** Paid meal price per person per night (only used when that meal is "extra"). */
   mealPrices?: { breakfast?: number; lunch?: number; dinner?: number };
   description?: string;
+  /** Photos uploaded for this room type (max 10). */
+  photos?: string[];
   /** Room-type tax. syncTax (default) = follow the hotel defaults from Settings. Snapshotted on each booking (backend). */
   vat?: number; service?: number; syncTax?: boolean;
 };

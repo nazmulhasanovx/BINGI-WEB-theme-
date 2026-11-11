@@ -32,7 +32,7 @@ export function WebsiteModule({ page }: { page: string }) {
           <PublishBar />
           <PhoneNav active={page} />
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-[1240px] px-6 py-7 lg:px-8">
+            <div className="hms-page">
               <Page />
             </div>
           </div>

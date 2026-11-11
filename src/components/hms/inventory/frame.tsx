@@ -71,7 +71,7 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
   return (
     <C.Provider value={{ inv, open: setO, store, setStore, toast: setToast }}>
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-[1320px] p-4 sm:p-6">
+        <div className="hms-page">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-[24px] font-bold tracking-[-0.01em]">Inventory</h1>

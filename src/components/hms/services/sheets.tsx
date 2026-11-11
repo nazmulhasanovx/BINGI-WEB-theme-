@@ -1,4 +1,5 @@
 "use client";
+import { imgSrc } from "@/lib/img";
 import clsx from "clsx";
 import { useState, type ReactNode } from "react";
 import { BedDouble, CircleAlert, ImagePlus, Info, Plus, Search, Trash2, TriangleAlert, X } from "lucide-react";
@@ -28,7 +29,7 @@ export const Seg = ({ value, options, onChange, label }: { value: string; option
 /** Illustrated sample artwork (design note: preview uses sample art); real photos come from upload. */
 export function ServiceImage({ src, className }: { src?: string; className?: string }) {
   // eslint-disable-next-line @next/next/no-img-element -- uploaded data URL
-  if (src && src !== SAMPLE_ART) return <img src={src} alt="" className={clsx("object-cover", className)} />;
+  if (src && src !== SAMPLE_ART) return <img src={imgSrc(src)} alt="" className={clsx("object-cover", className)} />;
   return (
     <svg viewBox="0 0 320 120" className={className} aria-hidden>
       <rect width="320" height="120" fill="#dfe9f1" /><circle cx="250" cy="34" r="16" fill="#f5c46b" />

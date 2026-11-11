@@ -76,7 +76,7 @@ function Frame({ tab, children, toast, cb }: { tab: Tab; children: ReactNode; to
     );
   }
   return (
-    <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[1280px] p-4 sm:p-6">
+    <div className="h-full overflow-y-auto"><div className="hms-page">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Cashbox</h1><p className="text-[14.5px] text-hms-muted">Main cash drawer (front desk) for {h.name} · business date {fmtDate(TODAY)}</p></div>
         {demo}

@@ -5,7 +5,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
 import { TODAY } from "@/lib/rooms/store";
-import { DEFAULT_SETTINGS, nowMin, outletsOf, seedMenu, seedOrders, seedPlaces, type Category, type Item, type Line, type Order, type PayMethod, type Place, type Service, type Settings, type Source, type Status } from "./seed";
+import { DEFAULT_SETTINGS, nowMin, outletsOf, seedMenu, seedOrders, seedPlaces, type Category, type Item, type Discount, type Line, type Order, type PayMethod, type Payment, type Place, type Service, type Settings, type Source, type Status } from "./seed";
 
 type State = { v: 1; categories: Category[]; items: Item[]; places: Place[]; orders: Order[]; settings: Settings; next: number };
 export type InHouse = { room: string; guest: string };
@@ -60,7 +60,16 @@ export function useMeals(h: Hotel, inHouse: InHouse[], rooms: string[]) {
       return made!;
     },
     setStatus: (id: string, status: Status, reason?: string) => setOrder(id, (o) => { o.status = status; if (reason) o.reason = reason; }),
-    pay: (id: string, method: PayMethod, room?: string) => setOrder(id, (o) => { o.pay = method === "room" ? "room" : "paid"; o.method = method; o.paidAt = stamp(); if (room) o.room = room; }),
+    pay: (id: string, method: PayMethod, room?: string, payments?: Payment[]) => setOrder(id, (o) => { o.pay = method === "room" ? "room" : "paid"; o.method = method; o.paidAt = stamp(); if (room) o.room = room; if (payments) o.payments = payments; }),
+    /** Running order: add more dishes to an unpaid order. They go to the kitchen as a new round. */
+    addLines: (id: string, lines: Line[]) => setOrder(id, (o) => {
+      if (o.pay !== "unpaid" || ["cancelled", "declined"].includes(o.status)) return;
+      const r = (o.round ?? 1) + 1;
+      o.round = r;
+      for (const l of lines) o.lines.push({ ...l, round: r });
+      if (o.status !== "approval") o.status = "queued";
+    }),
+    setDiscount: (id: string, d?: Discount) => setOrder(id, (o) => { o.discount = d; }),
     saveItem: (it: Item) => update((s) => { const i = s.items.findIndex((x) => x.id === it.id); if (i >= 0) s.items[i] = it; else s.items.push(it); }),
     removeItem: (id: string) => update((s) => { s.items = s.items.filter((x) => x.id !== id); }),
     saveCategory: (c: Category) => update((s) => { const i = s.categories.findIndex((x) => x.id === c.id); if (i >= 0) s.categories[i] = c; else s.categories.push(c); }),

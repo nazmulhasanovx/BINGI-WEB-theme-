@@ -21,7 +21,7 @@ const shiftMonth = (ym: string, k: number) => { const d = new Date(Date.UTC(Numb
 
 function Frame({ tab, children, rt, toast }: { tab: "calendar" | "discounts"; children: ReactNode; rt: Rates; toast: string }) {
   return (
-    <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[1440px] p-4 sm:p-6">
+    <div className="h-full overflow-y-auto"><div className="hms-page">
       <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Discounts &amp; Rates</h1><p className="text-[14px] text-hms-muted">Set every night&apos;s price from one calendar, and run discounts on top.</p></div>
       <nav aria-label="Discounts & Rates sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
         {([["calendar", "Rates calendar", "/hms/discounts"], ["discounts", `Discounts · ${rt.st.campaigns.filter((c) => campaignState(c) === "active").length} active`, "/hms/discounts/campaigns"]] as const).map(([id, l, href]) => (

@@ -177,7 +177,8 @@ export function KitchenPage() {
               <li key={o.id} className={clsx("rounded-xl border bg-white p-3 shadow-[0_1px_2px_rgb(0_0_0/0.04)]", late ? "border-[#f3c4c0]" : "border-white")}>
                 <div className="flex items-center gap-2"><Icon className="size-4 text-hms-muted" aria-hidden /><b className="flex-1 text-[15px]">{r.placeName(o)}</b><span className={clsx("flex items-center gap-1 text-[13px] font-semibold tabular-nums", late ? "text-[#b11c29]" : "text-hms-muted")}><Clock className="size-3.5" aria-hidden />{age} min</span></div>
                 <p className="text-[12.5px] text-hms-muted">{o.no} · {SERVICE_LABEL[o.service]}</p>
-                <ul className="mt-2 space-y-1 text-[14px]">{o.lines.map((ln, i) => <li key={i}><b className="tabular-nums">{ln.qty}×</b> {ln.name}{ln.note && <span className="block pl-5 text-[12.5px] font-semibold text-[#a4500f]">{ln.note}</span>}</li>)}</ul>
+                {(o.round ?? 1) > 1 && <p className="mt-2 rounded-md bg-[#fff1e6] px-2 py-1 text-[12.5px] font-semibold text-[#a4500f]">Added items · round {o.round}{o.lines.some((l) => (l.round ?? 1) < (o.round ?? 1)) ? ` · ${o.lines.filter((l) => (l.round ?? 1) < (o.round ?? 1)).reduce((a, l) => a + l.qty, 0)} earlier items already served` : ""}</p>}
+                <ul className="mt-2 space-y-1 text-[14px]">{o.lines.filter((ln) => (ln.round ?? 1) === (o.round ?? 1)).map((ln, i) => <li key={i}><b className="tabular-nums">{ln.qty}×</b> {ln.name}{ln.note && <span className="block pl-5 text-[12.5px] font-semibold text-[#a4500f]">{ln.note}</span>}</li>)}</ul>
                 {to && <button onClick={() => { r.m.setStatus(o.id, to); show(`${o.no}: ${msg.toLowerCase()}`); }} className={clsx(s === "ready" ? btnPrimary : btnLine, "mt-3 h-10 w-full")}>{btn}</button>}
               </li>
             ); })}</ul> : <p className="px-1 py-8 text-center text-[14px] text-hms-muted">No {l.toLowerCase()} orders.</p>}
@@ -199,7 +200,8 @@ export function ReportsPage() {
   const acc = os.filter((o) => !["approval", "cancelled", "declined"].includes(o.status));
   const sum = (l: Order[]) => l.reduce((s, o) => s + bill(o).total, 0);
   const paid = acc.filter((o) => o.pay !== "unpaid");
-  const byMethod = (["cash", "card", "bkash", "room"] as const).map((m) => [METHOD_LABEL[m], sum(paid.filter((o) => o.method === m))] as [string, number]);
+  const paidBy = (m: string) => paid.reduce((s, o) => s + (o.payments?.length ? o.payments.filter((p) => p.method === m).reduce((a, p) => a + p.amount, 0) : o.method === m ? bill(o).total : 0), 0);
+  const byMethod = (["cash", "card", "bkash", "room"] as const).map((m) => [METHOD_LABEL[m], paidBy(m)] as [string, number]);
   const items = new Map<string, { n: number; v: number }>();
   for (const o of acc) for (const l of o.lines) { const x = items.get(l.name) ?? { n: 0, v: 0 }; x.n += l.qty; x.v += l.qty * l.price; items.set(l.name, x); }
   const top = [...items.entries()].sort((a, b) => b[1].v - a[1].v).slice(0, 6);
