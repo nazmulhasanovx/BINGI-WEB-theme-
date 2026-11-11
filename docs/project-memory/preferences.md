@@ -1,0 +1,34 @@
+# Preferences: how Nazmul wants BinGi work done
+
+- Default language is natural Bangla with English technical terms. Use English for job posts, client messages and international marketing. Follow the language he asks for each deliverable.
+- Be direct, organized, specific and practical. No filler or generic advice. Don't re-ask for BinGi context that is already settled.
+- New products or big modules go in this order: full plan → module structure → workflow/diagram → screen/prompt counts → detailed prompts → execution/refinement.
+- Screenshot issue: name the exact problem, say why it matters, give a targeted fix. No unrelated redesign.
+- Give exact numbers when they are decided. Never make up missing figures or completion status.
+- Always say clearly which state something is in: existing, designed, backend-implemented, live integration, planned, or Coming Soon.
+- Deliver real usable files (PDF, ZIP, PNG, prompts, scripts, storyboards). Check download paths before sharing.
+- When he narrows the scope, keep it narrow. Architecture can be large, but everyday UI stays simple.
+- If there is enough context, start the work. Flag missing decisions honestly.
+- Rules live in project docs `claude/rules/00–07` (older `claude/BinGi-Daily-Rules.md` is superseded). Keep them updated whenever a new rule is agreed.
+- HMS design approach (1 Nov 2026):
+  - Plan modules first by use case: hotel, resort, 5–7 star.
+  - Each module gets an Easy mode and a Detailed mode. Easy is the default for small hotels.
+  - Both modes are clean, with no extra text, and daily use cases stay simple.
+- Save everything learned about BinGi to memory. Never misstate or drop what he said. Suggest new implementation ideas proactively.
+- Every rule he states goes point-wise into the rules files and is applied later without him repeating it.
+- Keep rules split by type (UI/UX, sidebar, planning, …) in `claude/rules/00_README.md … 07_Decision_Log.md`. Check them before every answer.
+- Keep a sidebar master (`claude/rules/02_Sidebar_Modules.md`) as a compact text diagram.
+- Don't just agree with him. Verify against the market (competitors, real hotel/guest behaviour, Bangladesh context) and give an honest verdict, including pushback.
+- Before building any module, show its text diagram first: what will and won't be in it.
+- (10 Nov 2026) Figma is dropped. All design and build are done in code with Claude Code. The text-diagram-before-build rule still applies.
+- (11 Nov 2026) Every HMS module must connect with the others: shared data, no contradictions, universal rules, no mistakes.
+- (11 Nov 2026) For the remaining HMS modules:
+  - After each module, run 3–5 steps of test and fix.
+  - The target is better than the current live HMS: more functional, easier, more organized, cleaner and more user-friendly.
+  - Give the plan and brief first, then wait for "start".
+- (11 Nov 2026, 22:49) Nonstop mode:
+  - Keep the project memory in GitHub too.
+  - Keep everything consistent with the public landing site and BinGi AI repos.
+  - After all modules, run a full-platform UI/UX test. Follow current HMS flows and backend structure.
+  - Test Website Management and the new themes.
+  - Write full LLM-readable documentation for the website.
