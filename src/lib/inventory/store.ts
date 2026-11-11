@@ -26,6 +26,8 @@ export type Item = {
   /** Order up to this total when reordering (par level). */
   par?: number;
   archived?: boolean;
+  /** Optional photo so staff recognise the item (data URL). */
+  photo?: string;
 };
 export type Category = { id: string; name: string };
 export type Supplier = { id: string; name: string; contact: string; phone: string; email: string; address: string };

@@ -109,7 +109,7 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
               );
             })}
           </nav>
-          <div className="mt-5">{children}</div>
+          <div key={tab} className="hms-page-in mt-5">{children}</div>
         </div>
       </div>
       {o?.k === "item" && <ItemSheet inv={inv} item={o.item} onClose={() => setO(null)} />}

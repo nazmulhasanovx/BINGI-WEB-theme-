@@ -63,9 +63,9 @@ export function StaffFrame({
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
               <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap sm:gap-2.5">
               <ModeSwitch />
-              <Link href="/hms/staff/settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><Settings className="size-[18px]" /> Settings</Link>
+              <Link href="/hms/staff/settings" aria-label="Settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-3 text-[14.5px] font-medium hover:bg-[#f4f6f8] sm:px-4"><Settings className="size-[18px]" /><span className="hidden sm:inline">Settings</span></Link>
               {action}
               <Menu label="More actions" items={[{ label: "Export staff (CSV)", onClick: exportCsv }, { label: "Reset demo data", onClick: () => { reset(); setToast("Demo data reset"); } , danger: true }]} />
             </div>
@@ -78,11 +78,11 @@ export function StaffFrame({
               <button onClick={() => setMode("full")} className="font-semibold underline underline-offset-4">Stay in Full HR</button>
             </div>
           )}
-          <nav className="mt-4 flex flex-wrap items-end gap-1 border-b border-hms-line" aria-label="Team & HR">
-            {MAIN.map((t) => (
-              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
+          <nav className="no-scrollbar mt-4 flex items-end gap-1 overflow-x-auto border-b border-hms-line sm:overflow-visible" aria-label="Team & HR">
+            {[...MAIN, ...MORE.map((m) => ({ ...m, mobile: true }))].map((t) => (
+              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", "mobile" in t && "sm:hidden", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
             ))}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", inMore ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
                 {inMore ? MORE.find((m) => m.id === tab)!.label : "More"} <ChevronDown className="size-4" />
               </button>
@@ -123,7 +123,7 @@ export function StaffFrame({
               </div>
             </div>
           )}
-          <div className="mt-4">{children}</div>
+          <div key={tab} className="hms-page-in mt-4">{children}</div>
         </div>
       </div>
       {toast && <Toast key={toast} text={toast} onDone={hideToast} />}

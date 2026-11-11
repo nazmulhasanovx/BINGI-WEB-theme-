@@ -32,7 +32,7 @@ export function WebsiteModule({ page }: { page: string }) {
           <PublishBar />
           <PhoneNav active={page} />
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="hms-page">
+            <div key={page} className="hms-page hms-page-in">
               <Page />
             </div>
           </div>

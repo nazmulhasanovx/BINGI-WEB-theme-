@@ -18,7 +18,7 @@ export function ModeSwitch({ className }: { className?: string }) {
   return (
     <div role="radiogroup" aria-label="Team & HR view" className={clsx("inline-flex h-10 rounded-xl border border-[#d3d8df] bg-white p-1", className)}>
       {([["easy", "Easy"], ["full", "Full HR"]] as [HrmMode, string][]).map(([m, l]) => (
-        <button key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={clsx("rounded-lg px-3.5 text-[14px] font-semibold transition-colors", mode === m ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>{l}</button>
+        <button key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={clsx("whitespace-nowrap rounded-lg px-3 text-[14px] sm:px-3.5 font-semibold transition-colors", mode === m ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>{l}</button>
       ))}
     </div>
   );

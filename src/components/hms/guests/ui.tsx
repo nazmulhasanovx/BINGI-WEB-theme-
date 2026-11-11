@@ -22,16 +22,16 @@ export function GuestsFrame({ tab, counts, action, children }: { tab: "guests" |
           </div>
           {action}
         </div>
-        <nav aria-label="Guests sections" className="mt-4 flex gap-1 border-b border-hms-line">
+        <nav aria-label="Guests sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
           {tabs.map((t) => (
             <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined}
-              className={clsx("-mb-px flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
+              className={clsx("-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
               {t.label}
               <span className={clsx("rounded-full px-1.5 text-[12px] font-semibold tabular-nums", t.hot ? "bg-hms-red text-white" : "bg-hms-hover text-[#4d5664]")}>{t.n}{t.hot ? " to reply" : ""}</span>
             </Link>
           ))}
         </nav>
-        <div className="mt-5">{children}</div>
+        <div key={tab} className="hms-page-in mt-5">{children}</div>
       </div>
     </div>
   );
