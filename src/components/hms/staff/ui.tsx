@@ -2,7 +2,7 @@
 // HRM UI kit — matches design-ref/hrm (Team & HR screens).
 import clsx from "clsx";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, X } from "lucide-react";
 import { initials } from "@/lib/hrm/store";
 
 export const RED = "btn-glow text-white";
@@ -192,7 +192,7 @@ export function Empty({ icon, title, text, action }: { icon: ReactNode; title: s
 export function Menu({ items, label = "Actions" }: { items: { label: string; onClick: () => void; danger?: boolean }[]; label?: string }) {
   return (
     <details className="relative">
-      <summary aria-label={label} className="grid size-10 cursor-pointer list-none place-items-center rounded-xl border border-[#d3d8df] bg-white text-[18px] leading-none hover:bg-[#f4f6f8] [&::-webkit-details-marker]:hidden">···</summary>
+      <summary aria-label={label} className="grid size-10 cursor-pointer list-none place-items-center rounded-xl border border-[#d3d8df] bg-white text-[18px] leading-none hover:bg-[#f4f6f8] [&::-webkit-details-marker]:hidden"><MoreHorizontal className="size-5" aria-hidden /></summary>
       <div className="hms-pop absolute right-0 top-full z-30 mt-1 w-[200px] rounded-xl border border-[#e3e7ec] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
         {items.map((i) => (
           <button key={i.label} onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; i.onClick(); }} className={clsx("block w-full rounded-lg px-3 py-2 text-left text-[14px] hover:bg-[#f4f6f8]", i.danger && "text-[#b11c29]")}>

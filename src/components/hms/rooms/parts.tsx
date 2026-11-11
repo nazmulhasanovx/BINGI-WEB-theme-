@@ -24,7 +24,8 @@ export function useTitle() {
   const { st } = useRooms(h);
   const en = st.config.enabled;
   const nonRoomData = st.categories.some((c) => c.core !== "ROOM") || st.units.some((u) => u.core !== "ROOM");
-  return st.config.configured && en.length === 1 && en[0] === "ROOM" && !nonRoomData ? "Rooms" : "Accommodations";
+  void en; void nonRoomData;
+  return "Room / Accommodation"; // one name for every property type (product decision, Nov 2026)
 }
 
 let toastText: string | null = null;
@@ -37,10 +38,10 @@ const BaseCtx = createContext("/hms/rooms");
 export const RoomsBase = BaseCtx.Provider;
 export const useRoomsBase = () => useContext(BaseCtx);
 
-export type RoomsTab = "units" | "categories" | "setup";
+export type RoomsTab = "types" | "units" | "setup";
 const TABS: { id: RoomsTab; label: string; href: string }[] = [
-  { id: "units", label: "Units", href: "/hms/rooms" },
-  { id: "categories", label: "Categories", href: "/hms/rooms/categories" },
+  { id: "types", label: "Room types", href: "/hms/rooms" },
+  { id: "units", label: "Room numbers", href: "/hms/rooms/numbers" },
   { id: "setup", label: "Setup", href: "/hms/rooms/configuration" },
 ];
 
@@ -56,10 +57,10 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>
-              <p className="mt-0.5 text-[15.5px] text-[#4d5664]">{h.name}</p>
+              <p className="mt-0.5 text-[15.5px] text-[#4d5664]">Manage your rooms, prices and availability · {h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white hover:bg-[#8e1621]"><Plus className="size-[18px]" /> Add accommodation</Link>}
+              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white hover:bg-[#8e1621]"><Plus className="size-[18px]" /> Add room type</Link>}
               <Menu label="More actions" items={[
                 { label: "Reset demo data", onClick: () => { reset(); showToast("Demo data reset"); } },
                 { label: "Start setup from scratch (demo)", onClick: () => { startFresh(); showToast("Setup cleared — start again"); }, danger: true },

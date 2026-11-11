@@ -21,6 +21,7 @@ export type Config = {
   numbering: Record<CoreType, Numbering>;
   prefixes: Partial<Record<PresetSlug, string>>;
 };
+export type MealMode = "none" | "included" | "extra";
 export type Category = {
   id: string; name: string; core: CoreType; preset: PresetSlug;
   bed: string; maxAdults: number; maxChildren: number; sizeSqft?: number; bedrooms?: number;
@@ -31,11 +32,18 @@ export type Category = {
   archived?: boolean;
   /** From the easy room builder (live HMS fields): Single/Double/Twin… and meal setup. */
   roomKind?: string;
-  meals?: { breakfast: "none" | "included" | "extra"; lunch: "none" | "included" | "extra" };
+  meals?: { breakfast: MealMode; lunch: MealMode; dinner?: MealMode };
+  /** Paid meal price per person per night (only used when that meal is "extra"). */
+  mealPrices?: { breakfast?: number; lunch?: number; dinner?: number };
+  description?: string;
+  /** Room-type tax. syncTax (default) = follow the hotel defaults from Settings. Snapshotted on each booking (backend). */
+  vat?: number; service?: number; syncTax?: boolean;
 };
 export type Unit = {
   id: string; code: string; local: string; node: string; category: string; core: CoreType; preset: PresetSlug;
   /** draft = persisted, owns its code, not bookable · published = sellable on eligible dates · archived = kept for history, code stays reserved, frees capacity */
+  /** Out of order (maintenance) — separate from publish status and from bookings; blocks new sales. */
+  ooo?: { reason: string; since: string };
   status: "draft" | "published" | "archived"; rate?: number; video: "inherit" | "replace" | "hide"; videoUrl?: string; note?: string;
   created: string;
 };
@@ -105,6 +113,14 @@ export function codeFor(c: Config, core: CoreType, p: PresetSlug, leaf: LocNode,
   return { local, code: t === "zone" && zone?.code ? `${zone.code}-${local}` : local };
 }
 export const sameCode = (a: string, b: string) => a.trim().toUpperCase() === b.trim().toUpperCase();
+/** Hotel defaults (Settings → Taxes in the live HMS; fixed here in the prototype). */
+export const HOTEL_TAX = { vat: 15, service: 10 };
+export const taxOf = (c: Category) => (c.syncTax === false ? { vat: c.vat ?? 0, service: c.service ?? 0 } : HOTEL_TAX);
+/** Guest price for one night: base + service charge + VAT (VAT on base + service, as in Discounts & Rates). */
+export function priceBreak(base: number, t: { vat: number; service: number }) {
+  const service = base * t.service / 100, vat = (base + service) * t.vat / 100;
+  return { base, service, vat, total: base + service + vat };
+}
 export const unitRate = (u: Unit, cat?: Category) => u.rate ?? cat?.baseRate ?? 0;
 
 /** Problems that stop a unit from being published (video is never one of them). */
@@ -161,7 +177,7 @@ export function seed(h: Hotel): RoomsState {
     const p = presetFor(r);
     const cat: Category = {
       id: `cat-${r.id}`, name: r.name, core, preset: p, bed: r.bed, maxAdults: r.maxAdults, maxChildren: r.maxChildren, sizeSqft: r.sizeSqft,
-      bedrooms: r.kind === "dorm" ? undefined : r.bedrooms, amenities: [...(r.amenities ?? []), ...(r.specs ?? [])].slice(0, 8), baseRate: r.fromPrice, photo: r.photos[0], created: at, approval: "approved",
+      bedrooms: r.kind === "dorm" ? undefined : r.bedrooms, amenities: [...(r.amenities ?? []), ...(r.specs ?? [])].slice(0, 8), baseRate: r.fromPrice, photo: r.photos[0], description: r.description, created: at, approval: "approved",
     };
     cats.push(cat);
     if (CORE[core].strategy === "floor") {
@@ -187,6 +203,10 @@ export function seed(h: Hotel): RoomsState {
       }
     }
   }
+  const oooCat = cats[2] ?? cats[0];
+  const oooUnit = oooCat && units.find((u) => u.category === oooCat.id);
+  if (oooUnit) oooUnit.ooo = { reason: "AC repair", since: "2026-11-09" };
+  for (const k of cats) { k.syncTax = true; k.meals = { breakfast: "included", lunch: "none", dinner: "extra" }; k.mealPrices = { dinner: 1200 }; }
   c.nodes = [...(floors.length ? [building, ...floors] : []), ...Object.values(zones)];
   return { v: 2, config: c, categories: cats, units, drafts: [], excluded, activity: [{ at, text: `Accommodation setup saved for ${h.name} (${propertyTypeOf(h.propertyType).label})` }] };
 }

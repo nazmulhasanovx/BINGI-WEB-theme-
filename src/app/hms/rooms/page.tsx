@@ -1,5 +1,5 @@
-import { UnitsPage } from "@/components/hms/rooms/pages";
+import { RoomTypesPage } from "@/components/hms/rooms/types";
 
 export default function Page() {
-  return <UnitsPage />;
+  return <RoomTypesPage />;
 }

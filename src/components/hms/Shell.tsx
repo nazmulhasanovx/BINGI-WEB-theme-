@@ -24,7 +24,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
     items: [
       { id: "dashboard", label: "Dashboard", icon: LayoutGrid, href: "/hms" },
       { id: "bookings", label: "Bookings", icon: CalendarCheck, href: "/hms/bookings" },
-      { id: "rooms", label: "Rooms", icon: BedDouble, href: "/hms/rooms" },
+      { id: "rooms", label: "Room / Accommodation", icon: BedDouble, href: "/hms/rooms" },
       { id: "housekeeping", label: "Housekeeping", icon: Brush, href: "/hms/housekeeping" },
       { id: "guests", label: "Guests", icon: UserPlus, href: "/hms/guests" },
       { id: "chat", label: "Chat", icon: MessageSquare, href: "/hms/chat" },
@@ -66,7 +66,7 @@ const SEARCH_TARGETS: NavTarget[] = [
   ...[...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }].map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
   { label: "Guest reviews", href: "/hms/guests/reviews", icon: Star }, { label: "Inventory history", href: "/hms/inventory/history", icon: Boxes },
   { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
-  { label: "Room categories", href: "/hms/rooms/categories", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
+  { label: "Room types", href: "/hms/rooms", icon: BedDouble }, { label: "Room numbers", href: "/hms/rooms/numbers", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
 ];
 
@@ -346,8 +346,8 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   }
   if (path.startsWith("/hms/rooms")) {
     const seg = path.split("/")[3];
-    const names: Record<string, string> = { categories: "Categories", configuration: "Setup", setup: "Edit setup", new: "Add accommodation" };
-    return [{ label: "Rooms", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+    const names: Record<string, string> = { categories: "Room types", numbers: "Room numbers", configuration: "Setup", setup: "Edit setup", new: "Add room type" };
+    return [{ label: "Room / Accommodation", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/discounts")) {
     const seg = path.split("/")[3];
