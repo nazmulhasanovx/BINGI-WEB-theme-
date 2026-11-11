@@ -29,6 +29,14 @@ export function usePop() {
 }
 const panel = "hms-pop absolute right-0 top-full z-50 mt-2 rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]";
 
+import { refundsDue, toCollect } from "@/lib/payments/ledger";
+import { useExpenses } from "@/lib/expenses/store";
+import { can } from "@/lib/plan";
+import { useChatData } from "./chat/page";
+import { useCommData } from "./communication/data";
+import { useRestaurant } from "./meals/shared";
+import { AlertTriangle, MessageSquare, QrCode, Receipt, RotateCcw, Wallet } from "lucide-react";
+
 // ---------------- Notifications (derived from real prototype data) ----------------
 type Note = { id: string; icon: LucideIcon; tone: string; title: string; sub: string; href: string };
 function useNotes(): Note[] {
@@ -37,8 +45,25 @@ function useNotes(): Note[] {
   const inv = useInventory(h);
   const svc = useServices(h);
   const { st: hrm } = useHrm();
+  const bk = useBookings(h);
+  const chat = useChatData().chat;
+  const ex = useExpenses(h);
+  const comm = useCommData().comm;
+  const rest = useRestaurant();
   return useMemo(() => {
     const out: Note[] = [];
+    const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    const col = toCollect(bk.list, TODAY).filter((x) => x.rank <= 3);
+    if (col.length) out.push({ id: `pay-${col.length}`, icon: Wallet, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(col.length, "guest")} to collect from`, sub: `${col.map((x) => x.b.code).slice(0, 3).join(", ")} · ৳${new Intl.NumberFormat("en-IN").format(col.reduce((s, x) => s + x.due, 0))}`, href: "/hms/payments?tab=collect" });
+    if (chat.unread) out.push({ id: `chat-${chat.unread}`, icon: MessageSquare, tone: "bg-[#e8f0fe] text-[#1d4ed8]", title: `${pl(chat.unread, "unread guest message")}`, sub: "Reply in Chat", href: "/hms/chat" });
+    const qr = can(h, "restaurant") ? rest.m.st.orders.filter((o) => o.status === "approval").length : 0;
+    if (qr) out.push({ id: `qr-${qr}`, icon: QrCode, tone: "bg-[#fdefe7] text-[#d9622b]", title: `${pl(qr, "order")} waiting for approval`, sub: "QR / POS orders in Restaurant & Bar", href: "/hms/meals/orders" });
+    const pend = can(h, "expenses") ? ex.st.expenses.filter((e) => e.status === "pending").length : 0;
+    if (pend) out.push({ id: `ex-${pend}`, icon: Receipt, tone: "bg-[#fdf3d9] text-[#a76f00]", title: `${pl(pend, "expense")} waiting approval`, sub: "Above the approval limit", href: "/hms/operations?tab=list" });
+    const rf = refundsDue(bk.list).length;
+    if (rf) out.push({ id: `rf-${rf}`, icon: RotateCcw, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(rf, "refund")} to give back`, sub: "Guests paid more than the bill", href: "/hms/payments?tab=refunds" });
+    const fail = comm.st.log.filter((m) => m.status === "failed").length;
+    if (fail) out.push({ id: `msg-${fail}`, icon: AlertTriangle, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(fail, "message")} not delivered`, sub: "Check the number or email, then resend", href: "/hms/communication?tab=history" });
     const arriving = g.rows.filter((r) => r.state === "Arriving today");
     if (arriving.length) out.push({ id: "arr", icon: CalendarCheck, tone: "bg-[#fdefe7] text-[#d9622b]", title: `${arriving.length} guest${arriving.length > 1 ? "s" : ""} arriving today`, sub: arriving.map((r) => r.name).slice(0, 3).join(", "), href: "/hms/guests" });
     const noId = g.rows.filter((r) => r.state === "In house" && r.idMissing);
@@ -57,7 +82,7 @@ function useNotes(): Note[] {
       if (sched) out.push({ id: "svc", icon: Sparkles, tone: "bg-[#e5f5ec] text-[#1c7d45]", title: `${sched} scheduled service order${sched > 1 ? "s" : ""}`, sub: "Check times in Other Services", href: "/hms/other-services/orders" });
     }
     return out;
-  }, [g.rows, g.reviews, inv.items, svc.st.orders, hrm, h]);
+  }, [g.rows, g.reviews, inv.items, svc.st.orders, hrm, h, bk.list, chat.unread, ex.st.expenses, comm.st.log, rest.m.st.orders]);
 }
 
 const READ_KEY = "hms-notes-read";

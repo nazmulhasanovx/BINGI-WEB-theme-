@@ -195,7 +195,7 @@ function Calendar() {
                   return (
                     <div key={d} style={{ width: W }} title={c.closed ? "Closed for sale" : `${tk(p)} per night before VAT & service${deal ? ` · ${deal.c.name}` : ""}${c.from === "custom" ? " · custom price" : ""}`}
                       className={clsx("shrink-0 border-r border-hms-line py-1 text-center leading-tight last:border-r-0", d === TODAY && "bg-hms-coral-soft/40")}>
-                      <span className={clsx("block text-[12px] font-semibold tabular-nums", c.closed ? "text-[#b42318]" : deal ? "text-[#16693a]" : f ? "text-hms-ink" : "text-[#6b7280] line-through")}>{c.closed ? "Closed" : W >= 70 ? new Intl.NumberFormat("en-IN").format(p) : `${Math.round(p / 100) / 10}k`}</span>
+                      <span className={clsx("block text-[12px] font-semibold tabular-nums", c.closed ? "text-[#b42318]" : deal ? "text-[#16693a]" : f ? "text-hms-ink" : "text-[#4d5664] line-through")}>{c.closed ? "Closed" : W >= 70 ? new Intl.NumberFormat("en-IN").format(p) : `${Math.round(p / 100) / 10}k`}</span>
                       {mode === "details" && <span className={clsx("block text-[11px] tabular-nums", f ? "text-hms-muted" : "font-semibold text-[#b42318]")}>{f ? `${f} free` : "Full"}</span>}
                     </div>
                   );

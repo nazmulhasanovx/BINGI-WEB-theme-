@@ -2,6 +2,9 @@
 // HMS shell — sidebar + header, 1:1 with the live HMS (hms.bingi.app, Nov 2026).
 // Every module page renders inside this, so other modules can be designed in this repo too.
 import { ChatBadge } from "./chat/page";
+import { can, type Feature } from "@/lib/plan";
+/** Sidebar items that need a plan feature: shown with a small lock when the plan does not include them. */
+const GATE: Record<string, Feature> = { housekeeping: "housekeeping", meals: "restaurant", inventory: "inventory", "other-services": "services", operations: "expenses" };
 import { MealsBadge } from "./meals/shared";
 import Link from "next/link";
 import { imgSrc } from "@/lib/img";
@@ -14,7 +17,7 @@ import { S_PAGES } from "./settings/frame";
 import { useSettings } from "@/lib/settings/store";
 import {
   Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
-  Landmark, LayoutGrid, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
+  Landmark, LayoutGrid, Lock, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
   UserPlus, Users, Wallet,
 } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
@@ -233,6 +236,7 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
 
 function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean; collapsed: boolean; big?: boolean }) {
   const Icon = item.icon;
+  const hotel = useProperty();
   return (
     <Link
       href={item.href}
@@ -247,6 +251,7 @@ function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean
     >
       <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+      {!collapsed && GATE[item.id] && !can(hotel, GATE[item.id]) ? <Lock aria-label={`Not in your plan`} className={clsx("size-3.5 shrink-0", active ? "text-white/80" : "text-hms-muted")} /> : null}
       {!collapsed && item.id === "chat" ? <ChatBadge active={active} /> : null}
       {!collapsed && item.id === "meals" ? <MealsBadge active={active} /> : null}
       {!collapsed && item.badge ? (

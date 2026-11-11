@@ -267,7 +267,7 @@ export function NewBookingPage() {
                   const photo = cat.photos?.[0] ?? cat.photo;
                   const ok = avail.length > 0 && !p?.closed;
                   return (
-                    <div key={id} className={clsx("overflow-hidden rounded-xl border transition-colors", units.some((u) => picked.includes(u.code)) ? "border-hms-red ring-1 ring-hms-red" : "border-hms-line", !ok && "opacity-70")}>
+                    <div key={id} className={clsx("overflow-hidden rounded-xl border transition-colors", units.some((u) => picked.includes(u.code)) ? "border-hms-red ring-1 ring-hms-red" : "border-hms-line", !ok && "bg-[#f7f8fa]")}>
                       <div className="flex gap-3 p-3">
                         {/* eslint-disable-next-line @next/next/no-img-element -- room photo */}
                         {photo ? <img src={imgSrc(photo)} alt="" className="h-[72px] w-[100px] shrink-0 rounded-lg object-cover" /> : <span className="h-[72px] w-[100px] shrink-0 rounded-lg bg-hms-hover" />}
