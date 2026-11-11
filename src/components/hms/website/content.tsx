@@ -191,7 +191,7 @@ export function ServicesPage() {
           ))}
         </Card>
       ) : !diningOk ? (
-        <Card><Empty icon={<Lock className="size-6" />} title="Dining page is on Ultra" desc={`Restaurant and bar pages come with the Ultra plan. You are on ${PLAN_LABEL[hotel.plan]}.`} action={<SourceLink href="/hms/billing" label="See plans" />} /></Card>
+        <Card><Empty icon={<Lock className="size-6" />} title="Dining page is on Ultra" desc={`Restaurant and bar pages come with the Ultra plan. You are on ${PLAN_LABEL[hotel.plan]}.`} action={<SourceLink href="/hms/settings/billing" label="See plans" />} /></Card>
       ) : (
         <Card pad={false} title="Restaurants & bars" action={<SourceLink href="/hms/meals" label="Menus in Meals" />}>
           {hotel.outlets.map((o) => (

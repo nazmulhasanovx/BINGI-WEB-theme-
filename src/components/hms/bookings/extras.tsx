@@ -1,4 +1,5 @@
 "use client";
+import { can } from "@/lib/plan";
 // Meals & other services for a booking — the same picker in New booking (step 3) and on the booking page.
 // Meals are held on the booking and sent to the kitchen on the day; services become real Other Services orders.
 import clsx from "clsx";
@@ -14,7 +15,7 @@ import { useRestaurant } from "../meals/shared";
 import { bMain, bSmall } from "./ui";
 
 export type SvcDraft = { id: string; service: string; name: string; qty: number; unitPrice: number; date: string; time: string; sc: number; vat: number; total: number };
-export const hasRestaurant = (h: Hotel) => h.plan === "ultra" || h.plan === "enterprise";
+export const hasRestaurant = (h: Hotel) => can(h, "restaurant");
 const uid = () => `x${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const toMin = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 

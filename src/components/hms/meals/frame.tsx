@@ -1,4 +1,6 @@
 "use client";
+import { can } from "@/lib/plan";
+import { PlanGate } from "../plan-gate";
 // Restaurant & Bar frame — same tabs as the live HMS Meal Management (Counter is folded into Orders/Overview
 // as "Needs approval"), plus Cashbox. No data imports here, so Cashbox pages can use it without a cycle.
 import Link from "next/link";
@@ -26,7 +28,10 @@ export function useOutlet(outlets: string[]) {
 
 export function MealsFrame({ tab, children, toast, outlets = [], wide, sub }: { tab: MealsTab; children: ReactNode; toast?: string; outlets?: string[]; wide?: boolean; sub?: string }) {
   const h = useProperty();
+  // Business = Restaurant "Limited" (one outlet); Ultra = full (several restaurants / bars).
+  if (!can(h, "restaurantFull")) outlets = outlets.slice(0, 1);
   const [outlet, setOutlet] = useOutlet(outlets);
+  if (!can(h, "restaurant")) return <PlanGate h={h} f="restaurant" title="Restaurant & Bar" text="Take restaurant orders, run the kitchen screen and QR menus, and charge meals to the guest's room." />;
   return (
     <div className="h-full overflow-y-auto"><div className={"hms-page"}>
       <div className="flex items-start justify-between gap-3">

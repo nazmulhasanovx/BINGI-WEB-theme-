@@ -157,7 +157,7 @@ export function ThemePage() {
                   {allowed ? (
                     <Btn disabled={selected} onClick={() => site.edit((x) => { x.master = m.id; })} className="flex-1 text-[13px]">{selected ? <><Check className="size-4" /> Selected</> : "Use this theme"}</Btn>
                   ) : (
-                    <Link href="/hms/billing" className="inline-flex h-9 flex-1 items-center justify-center rounded-full border border-hms-line text-[13px] font-medium text-hms-muted hover:bg-hms-hover">Upgrade to {PLAN_LABEL[m.minPlan]}</Link>
+                    <Link href="/hms/settings/billing" className="inline-flex h-9 flex-1 items-center justify-center rounded-full border border-hms-line text-[13px] font-medium text-hms-muted hover:bg-hms-hover">Upgrade to {PLAN_LABEL[m.minPlan]}</Link>
                   )}
                 </div>
               </div>

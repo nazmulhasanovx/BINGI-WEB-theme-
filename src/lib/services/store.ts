@@ -1,4 +1,5 @@
 "use client";
+import { can } from "@/lib/plan";
 // Other Services — v1 = Nazmul's 16 desktop screens (10 Nov 2026): catalog, orders (charge to booking / cash sale), categories.
 // v2 (11 Nov 2026) adds what a large hotel or resort needs to RUN services, not just charge them:
 //   work status (requested → confirmed → assigned → in progress → done) · assignment to staff (HRM) and resources
@@ -144,7 +145,7 @@ const nowHm = () => { const d = new Date(); return `${String(d.getHours()).padSt
 export const slotOf = (o: Order) => o.when === "now" ? { date: o.created.slice(0, 10), start: toMin(o.created.slice(11, 16)) } : { date: o.when.date, start: toMin(o.when.time) };
 /** Charges for a subtotal with the property's service charge + VAT. */
 export const charges = (sub: number, s: Settings, noTax?: boolean) => { if (noTax) return { sc: 0, vat: 0 }; const sc = Math.round((sub * s.sc) / 100); return { sc, vat: Math.round(((sub + sc) * s.vat) / 100) }; };
-export const hasServices = (h: Hotel) => h.plan !== "starter";
+export const hasServices = (h: Hotel) => can(h, "services");
 const addLog = (s: State, o: Order, text: string, by = ROLE_LABEL[s.settings.role]) => { (o.log ??= []).push({ at: `${TODAY}T${nowHm()}`, text, by }); };
 
 export function useServices(h: Hotel) {

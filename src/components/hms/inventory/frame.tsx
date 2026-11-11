@@ -62,7 +62,7 @@ export function InventoryFrame({ tab, children }: { tab: InvTab; children: React
         <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-hms-coral-soft text-hms-red"><Lock className="size-7" /></span>
         <h1 className="mt-4 text-[22px] font-bold">Inventory is part of Ultra</h1>
         <p className="mx-auto mt-2 max-w-[440px] text-[14.5px] text-hms-muted">Track amenities, linen, food and cleaning stock, record what is used, and get low-stock alerts. {h.name} is on the {h.plan[0].toUpperCase() + h.plan.slice(1)} plan.</p>
-        <Link href="/hms/billing" className={clsx(btnPrimary, "mt-5")}>See Ultra plan</Link>
+        <Link href="/hms/settings/billing" className={clsx(btnPrimary, "mt-5")}>See Ultra plan</Link>
       </div>
     </div></div>
   );

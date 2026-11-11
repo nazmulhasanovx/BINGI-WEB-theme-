@@ -1,4 +1,5 @@
 "use client";
+import { can } from "@/lib/plan";
 // HMS Dashboard (operating property). Layout from Nazmul's reference (10 Nov 2026):
 // greeting → 4 KPIs → Today's priorities + Website & booking → Arriving today + plan card.
 // Data: rooms come from the Rooms store, staff from the HRM store, website from Website Management.
@@ -53,14 +54,14 @@ export function Dashboard() {
   const revenue = inHouse.reduce((s, b) => s + b.total / b.nights, 0);
 
   const plan = h.plan;
-  const hasRestaurant = plan !== "starter";
-  const hasHrm = plan === "ultra" || plan === "enterprise";
+  const hasRestaurant = can(h, "restaurant");
+  const hasHrm = can(h, "hrm");
   const active = hrm.employees.filter((e) => e.status === "active");
   const att = hrm.attendance[HRM_TODAY] ?? {};
   const onDuty = active.filter((e) => att[e.id]?.status === "present" || att[e.id]?.status === "half").length;
   const attIssues = active.filter((e) => !att[e.id] || att[e.id].status === "absent").length;
 
-  const hk = plan !== "starter"; // Housekeeping is a Business+ tool (pricing page)
+  const hk = can(h, "housekeeping");
   const priorities = [
     { icon: Brush, text: departing.length ? `${departing.length} room${departing.length === 1 ? "" : "s"} need cleaning` : "No rooms to clean yet", href: "/hms/housekeeping", show: hk },
     { icon: CalendarCheck, text: departing.length ? `${departing.length} guest${departing.length === 1 ? "" : "s"} checking out` : "No check-outs today", href: "/hms/bookings", show: !hk },

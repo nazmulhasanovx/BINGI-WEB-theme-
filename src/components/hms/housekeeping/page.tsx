@@ -1,4 +1,6 @@
 "use client";
+import { can } from "@/lib/plan";
+import { PlanGate } from "../plan-gate";
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState, type ReactNode } from "react";
@@ -23,6 +25,12 @@ type Occ = "Vacant" | "Occupied" | "Arriving" | "Leaving";
 type Mode = "easy" | "details";
 
 export function HousekeepingPage() {
+  const h = useProperty();
+  if (!can(h, "housekeeping")) return <PlanGate h={h} f="housekeeping" title="Housekeeping" text="Plan room cleaning, assign attendants and track room readiness after every check-out." />;
+  return <HousekeepingBoard />;
+}
+
+function HousekeepingBoard() {
   const h = useProperty();
   const hk = useHousekeeping(h);
   const bk = useBookings(h);

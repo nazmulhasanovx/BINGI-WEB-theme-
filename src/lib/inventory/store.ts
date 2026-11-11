@@ -1,4 +1,5 @@
 "use client";
+import { can } from "@/lib/plan";
 // Inventory for one property (prototype: localStorage per property).
 // v1 = Nazmul's 20 desktop screens (10 Nov 2026). v2 (11 Nov) adds what a large hotel needs:
 //   stores/outlets + transfers · purchase orders → approval → receive (partial GRN) · stock count sessions ·
@@ -392,4 +393,4 @@ export function useInventory(h: Hotel) {
 }
 
 /** Inventory is an Ultra (and custom/Enterprise) tool per the public pricing page. */
-export const hasInventory = (h: Hotel) => h.plan === "ultra" || h.plan === "enterprise";
+export const hasInventory = (h: Hotel) => can(h, "inventory");
