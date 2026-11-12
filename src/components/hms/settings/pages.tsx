@@ -1,4 +1,5 @@
 "use client";
+import { can } from "@/lib/plan";
 import Link from "next/link";
 import clsx from "clsx";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -318,12 +319,12 @@ export function HousekeepingRulesPage() {
 
 export function RestaurantPage() {
   const { h } = useS();
-  if (!hasRestaurant(h)) return (<><PageHead title="Restaurant & inventory" /><Card><div className="flex items-center gap-3"><Lock className="size-5 text-hms-muted" /><p className="flex-1 text-[14.5px]">Restaurant & Bar and Inventory come with the Ultra plan.</p><Go href="/hms/settings/billing">See plan</Go></div></Card></>);
+  if (!hasRestaurant(h)) return (<><PageHead title="Restaurant & inventory" /><Card><div className="flex items-center gap-3"><Lock className="size-5 text-hms-muted" /><p className="flex-1 text-[14.5px]">Restaurant & Bar comes with Business (full on Ultra). Inventory comes with Ultra.</p><Go href="/hms/settings/billing">See plan</Go></div></Card></>);
   const links: [string, string, string][] = [
     ["Restaurant settings", "Order approval, opening hours, restaurant VAT & service charge", "/hms/meals/settings"],
     ["Menu", "Items, prices, recipes", "/hms/meals/menu"],
     ["Tables & QR", "Tables, rooms and QR codes", "/hms/meals/tables"],
-    ["Inventory setup", "Stores, units, approvals", "/hms/inventory/setup"],
+    ...(can(h, "inventory") ? [["Inventory setup", "Stores, units, approvals", "/hms/inventory/setup"] as [string, string, string]] : []),
     ["Printers", "Receipt and kitchen printers", "/hms/settings/documents"],
   ];
   return (

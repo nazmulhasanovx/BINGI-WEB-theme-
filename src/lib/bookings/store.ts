@@ -25,6 +25,15 @@ export type Settings = {
   freeCancelDays: number; cancelFeePct: number; noShowFeePct: number; depositDefault: number;
   preArrivalMsg: string; confirmMsg: string;
 };
+/** 24-hour "2:00 PM" → "14:00". */
+const to24 = (x: string) => { const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i.exec(x.trim()); if (!m) return ""; let hh = Number(m[1]) % 12; if (m[3]?.toUpperCase() === "PM") hh += 12; if (!m[3]) hh = Number(m[1]); return `${String(hh).padStart(2, "0")}:${m[2]}`; };
+/** Booking rules start from what the hotel already publishes (check-in times, cancellation days), so HMS and website agree. */
+export function defaultSettings(h: Hotel): Settings {
+  const c = h.policies?.cancellation ?? "";
+  const hrs = /(\d+)\s*hours?/i.exec(c), dys = /(\d+)\s*days?/i.exec(c), pct = /(\d+)%/.exec(c);
+  const free = hrs ? Math.max(1, Math.ceil(Number(hrs[1]) / 24)) : dys ? Number(dys[1]) : DEFAULT_SETTINGS.freeCancelDays;
+  return { ...DEFAULT_SETTINGS, checkIn: to24(h.checkIn) || DEFAULT_SETTINGS.checkIn, checkOut: to24(h.checkOut) || DEFAULT_SETTINGS.checkOut, freeCancelDays: free, cancelFeePct: pct ? Number(pct[1]) : DEFAULT_SETTINGS.cancelFeePct };
+}
 export const DEFAULT_SETTINGS: Settings = {
   checkIn: "14:00", checkOut: "12:00", earlyFee: 1500, lateFee: 1500, freeCancelDays: 2, cancelFeePct: 50, noShowFeePct: 100, depositDefault: 2000,
   confirmMsg: "Dear {guest}, your booking {code} at {hotel} is confirmed: {room}, {from} to {to} ({nights} nights). Total {total}, paid {paid}. Check-in from {checkin}. See you soon!",
@@ -455,7 +464,7 @@ export function useBookings(h: Hotel) {
   const setMealPlan = useCallback((code: string, plan: Booking["mealPlan"]) => save((s) => { const x = find(s, code); x.mealPlan = plan; log(x, plan ? `Meal plan · ${plan.name} (${tk(plan.perNight)}/night)` : "Meal plan removed"); }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
-  const settings = st.settings ?? DEFAULT_SETTINGS;
+  const settings = st.settings ?? defaultSettings(h);
   const saveSettings = useCallback((n: Settings) => save((s) => { s.settings = n; }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);

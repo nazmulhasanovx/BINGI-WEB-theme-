@@ -7,7 +7,7 @@ import { can } from "@/lib/plan";
 // only shows when there is something to do. Demo data in the prototype (header shows "Prototype · demo data").
 import Link from "next/link";
 import clsx from "clsx";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight, BedDouble, ChevronRight, Boxes, CalendarCheck, ChefHat, ClipboardCheck, Monitor, Plus, QrCode, Sparkles, UserRoundCheck, UsersRound, Wallet, Brush,
 } from "lucide-react";
@@ -22,12 +22,13 @@ import { type BookingStatus } from "@/lib/bookings/demo";
 import { useStays } from "@/lib/bookings/store";
 import { useGuestNames } from "@/lib/guests/store";
 import { useBookings } from "@/lib/bookings/store";
+import { useGuestState } from "@/lib/store";
 import { refundsDue, toCollect } from "@/lib/payments/ledger";
 import { useExpenses } from "@/lib/expenses/store";
 import { useRestaurant } from "./meals/shared";
 import { useChatData } from "./chat/page";
 import { useCommData } from "./communication/data";
-import { AlertTriangle, MessageSquare, Receipt, RotateCcw } from "lucide-react";
+import { AlertTriangle, Globe, MessageSquare, Receipt, RotateCcw } from "lucide-react";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const short = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)) - 1]}`;
@@ -36,6 +37,7 @@ const stay = (a: string, b: string) => (a.slice(0, 7) === b.slice(0, 7) ? `${a.s
 const bdt = (n: number) => `BDT ${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
 
 export function Dashboard() {
+  const [allPri, setAllPri] = useState(false);
   const h = useProperty();
   const { st } = useRooms(h);
   const { st: hrm } = useHrm();
@@ -81,7 +83,9 @@ export function Dashboard() {
   const exPending = can(h, "expenses") ? ex.st.expenses.filter((e) => e.status === "pending").length : 0;
   const failed = comm.st.log.filter((m) => m.status === "failed").length;
   const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
+  const webReq = useGuestState(h.slug).bookings.filter((b) => b.bookingStatus === "pending").length;
   const priorities = [
+    { icon: Globe, text: `${n(webReq, "website request")} to accept`, href: "/hms/bookings", show: webReq > 0 },
     { icon: Wallet, text: `${n(collect.length, "guest")} to collect from today`, href: "/hms/payments?tab=collect", show: collect.length > 0 },
     { icon: Brush, text: `${n(departing.length, "room")} to clean after check-out`, href: "/hms/housekeeping", show: hk && departing.length > 0 },
     { icon: CalendarCheck, text: `${n(departing.length, "guest")} checking out`, href: "/hms/bookings", show: !hk && departing.length > 0 },
@@ -132,11 +136,11 @@ export function Dashboard() {
             <div className="min-w-0 flex-1">
               <h2 id="pri" className="text-[18px] font-bold">Today&apos;s priorities</h2>
               <ul className="mt-2.5 space-y-2">
-                {priorities.slice(0, 5).map((p) => (
+                {priorities.slice(0, allPri ? 99 : 5).map((p) => (
                   <li key={p.text}><Link href={p.href} className="flex items-center gap-2.5 text-[14.5px] hover:text-hms-red"><p.icon className="size-[18px] shrink-0 text-hms-red" strokeWidth={1.8} />{p.text}</Link></li>
                 ))}
                 {priorities.length === 0 && <li className="text-[14.5px] text-hms-muted">All clear — nothing waiting right now.</li>}
-                {priorities.length > 5 && <li className="text-[13px] text-hms-muted">+{priorities.length - 5} more below in each module</li>}
+                {priorities.length > 5 && <li><button onClick={() => setAllPri(!allPri)} className="text-[13.5px] font-semibold text-hms-red underline underline-offset-2">{allPri ? "Show less" : `Show ${priorities.length - 5} more`}</button></li>}
               </ul>
             </div>
             <Link href={priorities[0]?.href ?? "/hms/bookings"} className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#0f1720] px-6 text-[14px] font-semibold text-white hover:bg-black">{priorities.length ? "Start with the first" : "Open bookings"}</Link>

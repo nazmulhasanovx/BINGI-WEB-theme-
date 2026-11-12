@@ -1,4 +1,5 @@
 import { presetFor } from "@/lib/presets";
+import { CancelShort } from "@/components/site/SiteRules";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BedDouble, Clock, MapPin, MessageCircle, Navigation, Phone, Quote, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Wallet } from "lucide-react";
@@ -19,7 +20,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
   const facts = [
     showRating(hotel) && { icon: Star, title: `${hotel.reviewScore} / 5 guest rating`, sub: `${hotel.reviewCount} verified reviews` },
     { icon: Clock, title: `Check-in ${hotel.checkIn}`, sub: `Check-out ${hotel.checkOut}` },
-    freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: cancelHours ? `Up to ${cancelHours} hours before arrival` : "See policy" },
+    freeCancel && { icon: ShieldCheck, title: "Free cancellation", sub: <CancelShort hotel={hotel} fallback={cancelHours ? `Up to ${cancelHours} hours before arrival` : "See policy"} /> },
     payAtHotel && { icon: Wallet, title: "Pay on arrival", sub: "No prepayment needed" },
   ].filter(Boolean) as { icon: typeof Star; title: string; sub: string }[];
 

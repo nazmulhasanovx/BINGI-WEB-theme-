@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AcceptedPayments, CancelPolicy } from "@/components/site/SiteRules";
 import type { Metadata } from "next";
 import { getHotel } from "@/lib/data";
 import { PageHero } from "@/components/site/PageHero";
@@ -11,16 +12,11 @@ export default async function PoliciesPage(props: PageProps<"/hotel/[slug]/polic
   const { slug } = await props.params;
   const hotel = await getHotel(slug);
   if (!hotel) notFound();
-  const pay = hotel.payments
-    .map((p) =>
-      p.kind === "pay-at-property" ? "Pay at the hotel (cash or card)" : p.kind === "mfs-manual" ? `${p.provider} (send money)` : p.kind === "advance" ? `${p.percent}% advance` : p.gatewayApproved ? "Card / online" : null,
-    )
-    .filter(Boolean);
   const sections = [
-    { id: "booking", title: "Booking & cancellation", body: [<DraftText key="c" slug={hotel.slug} k="policy.cancellation" fallback={hotel.policies.cancellation} />, "Bookings made on this website are confirmed by the hotel by SMS. Your booking reference starts with WBK."] },
+    { id: "booking", title: "Booking & cancellation", body: [<CancelPolicy key="c" hotel={hotel} />, "Bookings made on this website are confirmed by the hotel by SMS. Your booking reference starts with WBK."] },
     { id: "stay", title: "Check-in & house rules", body: [`Check-in from ${hotel.checkIn}. Check-out by ${hotel.checkOut}.`, "A government ID (NID or passport) is required for every adult guest at check-in.", <DraftText key="p" slug={hotel.slug} k="policy.pets" fallback={hotel.policies.pets} />] },
     { id: "children", title: "Children & extra beds", body: [<DraftText key="ch" slug={hotel.slug} k="policy.children" fallback={hotel.policies.children} />] },
-    { id: "payments", title: "Payments & tax", body: [`Accepted: ${pay.join(" · ")}.`, hotel.policies.tax, "Service charge is added to the room rate first; VAT is then charged on the rate plus service charge, as required in Bangladesh."] },
+    { id: "payments", title: "Payments & tax", body: [<AcceptedPayments key="ap" hotel={hotel} />, hotel.policies.tax, "Service charge is added to the room rate first; VAT is then charged on the rate plus service charge, as required in Bangladesh."] },
     { id: "privacy", title: "Privacy", body: [`${hotel.name} uses your details only to manage your stay. Booking data is stored on BinGi Hotel Management Technology, the hotel’s booking system. To ask about or delete your data, contact the hotel at ${hotel.email}.`] },
   ];
   return (

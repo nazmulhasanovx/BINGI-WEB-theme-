@@ -75,7 +75,7 @@ function PlanCard({ d }: { d: Draft }) {
   if (d.plan === "starter") {
     return (
       <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#b11c29] to-[#7a1320] p-5 text-white">
-        <div><Sparkles className="size-6" /><h2 className="mt-3 text-[19px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, staff, inventory and accounts.</p></div>
+        <div><Sparkles className="size-6" /><h2 className="mt-3 text-[19px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, restaurant, QR ordering, expenses and other services.</p></div>
         <Link href="/hms/settings/billing" className="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-[14px] font-semibold text-[#8e1621]">View Business</Link>
       </section>
     );

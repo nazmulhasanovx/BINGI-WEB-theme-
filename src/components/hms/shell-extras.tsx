@@ -11,6 +11,7 @@ import { useGuests } from "@/lib/guests/store";
 import { hasInventory, statusOf, useInventory } from "@/lib/inventory/store";
 import { hasServices, useServices } from "@/lib/services/store";
 import { channelLabel, dm, useBookings } from "@/lib/bookings/store";
+import { useGuestState } from "@/lib/store";
 import { TODAY } from "@/lib/rooms/store";
 import { useHrm, TODAY as HRM_TODAY } from "@/lib/hrm/store";
 
@@ -35,7 +36,7 @@ import { can } from "@/lib/plan";
 import { useChatData } from "./chat/page";
 import { useCommData } from "./communication/data";
 import { useRestaurant } from "./meals/shared";
-import { AlertTriangle, MessageSquare, QrCode, Receipt, RotateCcw, Wallet } from "lucide-react";
+import { AlertTriangle, Globe, MessageSquare, QrCode, Receipt, RotateCcw, Wallet } from "lucide-react";
 
 // ---------------- Notifications (derived from real prototype data) ----------------
 type Note = { id: string; icon: LucideIcon; tone: string; title: string; sub: string; href: string };
@@ -50,8 +51,10 @@ function useNotes(): Note[] {
   const ex = useExpenses(h);
   const comm = useCommData().comm;
   const rest = useRestaurant();
+  const web = useGuestState(h.slug).bookings.filter((b) => b.bookingStatus === "pending").length;
   return useMemo(() => {
     const out: Note[] = [];
+    if (web) out.push({ id: `web-${web}`, icon: Globe, tone: "bg-[#e8f0fe] text-[#1d4ed8]", title: `${web} website request${web === 1 ? "" : "s"} to accept`, sub: "Accept or decline in Bookings › Today", href: "/hms/bookings" });
     const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
     const col = toCollect(bk.list, TODAY).filter((x) => x.rank <= 3);
     if (col.length) out.push({ id: `pay-${col.length}`, icon: Wallet, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(col.length, "guest")} to collect from`, sub: `${col.map((x) => x.b.code).slice(0, 3).join(", ")} · ৳${new Intl.NumberFormat("en-IN").format(col.reduce((s, x) => s + x.due, 0))}`, href: "/hms/payments?tab=collect" });
@@ -82,7 +85,7 @@ function useNotes(): Note[] {
       if (sched) out.push({ id: "svc", icon: Sparkles, tone: "bg-[#e5f5ec] text-[#1c7d45]", title: `${sched} scheduled service order${sched > 1 ? "s" : ""}`, sub: "Check times in Other Services", href: "/hms/other-services/orders" });
     }
     return out;
-  }, [g.rows, g.reviews, inv.items, svc.st.orders, hrm, h, bk.list, chat.unread, ex.st.expenses, comm.st.log, rest.m.st.orders]);
+  }, [g.rows, g.reviews, inv.items, svc.st.orders, hrm, h, bk.list, chat.unread, ex.st.expenses, comm.st.log, rest.m.st.orders, web]);
 }
 
 const READ_KEY = "hms-notes-read";

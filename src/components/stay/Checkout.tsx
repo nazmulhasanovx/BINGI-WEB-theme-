@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteRules } from "@/lib/site-rules";
 import { BookingPausedCard, useBookingPaused } from "@/components/site/BookingPaused";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,8 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
   const [email, setEmail] = useState("");
   const [arrival, setArrival] = useState("");
   const [request, setRequest] = useState("");
-  const options = paymentOptions(hotel.payments);
+  const rules = useSiteRules(hotel);
+  const options = paymentOptions(rules.methods);
   const [pay, setPay] = useState<PaymentChoice>(options[0]?.id ?? "pay-at-property");
   const [ref, setRef] = useState("");
   const [agree, setAgree] = useState(false);
@@ -173,7 +175,7 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
           </Section>
 
           <Section n={3} title="Review" done={agree}>
-            <p className="text-[15px] text-muted">{hotel.policies.cancellation}</p>
+            <p className="text-[15px] text-muted">{rules.cancel}</p>
             <label className="mt-4 flex cursor-pointer items-start gap-3">
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-[var(--action)]" />
               <span className="text-[15px]">I agree to the <a href={`${base}/policies`} className="font-semibold text-action underline underline-offset-2">booking policies</a>.</span>
