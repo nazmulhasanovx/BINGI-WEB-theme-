@@ -27,7 +27,7 @@ with sync_playwright() as p:
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.on("dialog", lambda d: d.accept())
     pg.goto(B + "/hms/rooms/numbers"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(500)
-    check("seed: 24 units on Azure Bay", re.search(r"Units in use\s+24", pg.locator("main").inner_text()))
+    check("seed: 24 units on Azure Bay", re.search(r"24 rooms in use", pg.locator("main").inner_text()))
 
     # T1 add Room to existing category from the number library
     pg.goto(B + "/hms/rooms/new"); pg.wait_for_timeout(400)
@@ -81,7 +81,7 @@ with sync_playwright() as p:
     s = state(pg); cs = [u for u in s["units"] if u["code"] in ("C01", "C02")]
     cat = [c for c in s["categories"] if c["name"] == "Garden Cottage"]
     check("T3 drafts created, category saved with video + amenity", len(cs) == 2 and all(u["status"] == "draft" for u in cs) and cat and cat[0]["video"] and "Private pool" in cat[0]["amenities"])
-    check("T3 drafts counter", re.search(r"Drafts \(not bookable\)\s+2", pg.inner_text("main")))
+    check("T3 drafts counter", re.search(r"2 draft \(not bookable\)", pg.inner_text("main")))
     check("T3 new category is pending approval", cat and cat[0]["approval"] == "pending")
     pg.get_by_role("button", name=re.compile(r"^C01")).click(); pg.wait_for_timeout(200)
     check("T3 publish blocked before approval", pg.get_by_role("dialog").get_by_role("button", name="Publish", exact=True).is_disabled())
@@ -169,7 +169,7 @@ with sync_playwright() as p:
     dlg.get_by_role("button", name="Archive draft").click(); pg.wait_for_timeout(200)
     c2 = [u for u in state(pg)["units"] if u["code"] == "C02"]
     check("T14 draft archived, code kept", c2 and c2[0]["status"] == "archived")
-    check("T14 archived hidden + counted", pg.get_by_role("button", name=re.compile(r"^C02")).count() == 0 and re.search(r"Archived\s+1", pg.inner_text("main")))
+    check("T14 archived hidden + counted", pg.get_by_role("button", name=re.compile(r"^C02")).count() == 0 and re.search(r"1 archived", pg.inner_text("main")))
     pg.get_by_role("button", name=re.compile(r"^101")).first.click(); pg.wait_for_timeout(200)
     check("T14 published unit can't be deleted", pg.get_by_role("dialog").get_by_role("button", name="Archive draft").count() == 0)
     pg.get_by_role("dialog").get_by_role("button", name="Move to draft").click(); pg.wait_for_timeout(200)

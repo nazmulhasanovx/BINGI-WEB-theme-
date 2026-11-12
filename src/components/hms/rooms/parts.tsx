@@ -60,7 +60,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
               <p className="mt-0.5 text-[15.5px] text-[#4d5664]">Manage your rooms, prices and availability · {h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#b11c29] px-4 text-[14.5px] font-medium text-white hover:bg-[#8e1621]"><Plus className="size-[18px]" /> Add room type</Link>}
+              {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-11 items-center gap-2 rounded-xl btn-glow px-5 text-[14.5px] font-semibold text-white"><Plus className="size-[18px]" /> Add room type</Link>}
               <Menu label="More actions" items={[
                 { label: "Reset demo data", onClick: () => { reset(); showToast("Demo data reset"); } },
                 { label: "Start setup from scratch (demo)", onClick: () => { startFresh(); showToast("Setup cleared — start again"); }, danger: true },
@@ -70,7 +70,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
           {st.config.configured && (
             <nav className="no-scrollbar mt-4 flex items-center gap-1 overflow-x-auto border-b border-hms-line" aria-label={title}>
               {TABS.map((t) => (
-                <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("shrink-0 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
+                <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("shrink-0 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-[#c8232e] text-[#c8232e]" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
               ))}
             </nav>
           )}
@@ -93,7 +93,7 @@ function SetupIntro() {
           <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#e9edf2] text-[13px] font-semibold">{i + 1}</span>{s}</li>
         ))}
       </ol>
-      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#b11c29] px-5 text-[15px] font-medium text-white hover:bg-[#8e1621]">Start setup</Link>
+      <Link href={`${useRoomsBase()}/setup`} className="mt-6 inline-flex h-11 items-center rounded-xl btn-glow px-5 text-[15px] font-semibold text-white">Start setup</Link>
     </div>
   );
 }

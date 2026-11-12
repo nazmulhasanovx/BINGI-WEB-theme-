@@ -10,6 +10,7 @@ import { CORE, TEMPLATES, preset as presetOf, propertyTypeFor, youtubeId, type C
 import { Btn, Chip, Drawer, Empty, Field, Input, Select } from "../staff/ui";
 import { AmenityPicker, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
 import { STATE, useUnitStates } from "./state";
+import { useHousekeeping } from "@/lib/housekeeping/store";
 
 const fmtStamp = (s?: string) => (s ? `${s.slice(8, 10)} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(s.slice(5, 7)) - 1]} ${s.slice(0, 4)}${s.length > 10 ? `, ${s.slice(11, 16)}` : ""}` : "—");
 
@@ -21,10 +22,15 @@ export function UnitsPage() {
   const [q, setQ] = useState("");
   const [core, setCore] = useState<CoreType | "all">("all");
   const [status, setStatus] = useState<"all" | Unit["status"]>("all");
+  const [now, setNow] = useState<"" | "available" | "booked" | "dirty" | "ooo">("");
+  const hk = useHousekeeping(h);
   const [open, setOpen] = useState<string | null>(null);
   const cat = (id: string) => st.categories.find((c) => c.id === id);
+  const tonight = useUnitStates(st);
+  const dirty = (u: Unit) => u.status === "published" && !hk.isReady(u.code) && tonight.get(u.id) !== "ooo";
   const list = st.units.filter((u) =>
     (core === "all" || u.core === core) && (status === "all" ? u.status !== "archived" : u.status === status) &&
+    (!now || (now === "dirty" ? dirty(u) : tonight.get(u.id) === now)) &&
     (!q || `${u.code} ${cat(u.category)?.name ?? ""} ${presetOf(u.preset).label}`.toLowerCase().includes(q.toLowerCase())));
   const groups = useMemo(() => {
     const g = new Map<string, Unit[]>();
@@ -42,17 +48,18 @@ export function UnitsPage() {
     toast(blocked ? `${ok.length} published · ${blocked} need fixing first` : `${ok.length} units published`);
   };
   const u = open ? st.units.find((x) => x.id === open) : undefined;
-  const tonight = useUnitStates(st);
+  const count = (k: "available" | "booked" | "ooo") => st.units.filter((x) => tonight.get(x.id) === k).length;
 
   return (
     <RoomsFrame tab="units">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Units in use" value={used} sub="Count toward your package limit (shared by all types)" />
-        <Stat label="Published" value={st.units.filter((u) => u.status === "published").length} />
-        <Stat label="Drafts (not bookable)" value={drafts.length} tone={drafts.length ? "amber" : undefined} />
-        <Stat label="Archived" value={archived} sub="Codes kept, no capacity used" />
+      <div role="radiogroup" aria-label="Rooms tonight" className="grid grid-cols-2 overflow-hidden rounded-[20px] border border-hms-line bg-white md:grid-cols-4">
+        {([["available", "Available tonight", count("available"), "bg-[#1c7d45]"], ["booked", "Booked tonight", count("booked"), "bg-[#2457c5]"], ["dirty", "Needs cleaning", st.units.filter(dirty).length, "bg-[#c2410c]"], ["ooo", "Out of order", count("ooo"), "bg-[#b26a00]"]] as const).map(([id, l, c, dot], i) => (
+          <button key={id} role="radio" aria-checked={now === id} onClick={() => setNow(now === id ? "" : id)} className={clsx("flex items-center gap-2.5 px-4 py-3.5 text-left transition-colors", i % 2 === 1 && "border-l border-hms-line", i > 1 && "border-t border-hms-line md:border-t-0", i === 2 && "md:border-l", now === id ? "bg-[#fff6f6]" : "hover:bg-hms-hover")}>
+            <span aria-hidden className={clsx("size-2.5 rounded-full", dot)} /><span className="min-w-0 flex-1 truncate text-[14px] font-medium">{l}</span><b className="text-[18px] tabular-nums">{c}</b>
+          </button>
+        ))}
       </div>
-      <p className="mt-2 text-[12.5px] text-[#4d5664]">Package unit limit and per-unit charge come from Billing (not connected in this prototype). Setup drafts and categories without units don&apos;t count.</p>
+      <p className="mt-2 text-[12.5px] text-[#4d5664]">{used} rooms in use{drafts.length ? ` · ${drafts.length} draft (not bookable)` : ""}{archived ? ` · ${archived} archived` : ""} · package limit comes from Billing (not connected in this prototype).</p>
       {(st.excluded?.length ?? 0) > 0 && (
         <section role="status" className="mt-4 rounded-2xl border border-[#d8dcf0] bg-[#f5f6fd] p-4 text-[14px]">
           <p className="font-semibold">Not in this release</p>
@@ -106,7 +113,9 @@ export function UnitsPage() {
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
                         {x.status === "published" ? (() => { const k = tonight.get(x.id) ?? "available"; return <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold"><span aria-hidden className={clsx("size-2 rounded-full", STATE[k].dot)} />{STATE[k].label}</span>; })()
                           : <Chip tone={x.status === "draft" ? "amber" : "gray"} className="!px-2 !py-0.5 !text-[12.5px]">{x.status === "draft" ? "Draft · not bookable" : "Archived"}</Chip>}
+
                       </span>
+                      {x.status === "published" && <span className={clsx("mt-1 block text-[12.5px]", tonight.get(x.id) === "ooo" ? "text-[#4d5664]" : hk.isReady(x.code) ? "text-[#16693a]" : "font-semibold text-[#c2410c]")}>{tonight.get(x.id) === "ooo" ? "Maintenance" : hk.isReady(x.code) ? "Room clean" : hk.stateOf(x.code) === "Dirty" ? "Needs cleaning" : hk.stateOf(x.code) === "Cleaning" ? "Being cleaned" : "Waiting inspection"}</span>}
                     </button>
                   </li>
                 );
@@ -117,16 +126,6 @@ export function UnitsPage() {
       </div>
       {u && <UnitDrawer st={st} u={u} onClose={() => setOpen(null)} />}
     </RoomsFrame>
-  );
-}
-
-function Stat({ label, value, tone, sub }: { label: string; value: number; tone?: "amber"; sub?: string }) {
-  return (
-    <div className="rounded-2xl border border-[#e3e7ec] bg-white px-4 py-3">
-      <p className="text-[13.5px] text-[#4d5664]">{label}</p>
-      <p className={clsx("mt-0.5 text-[24px] font-bold", tone === "amber" && "text-[#9c5f0e]")}>{value}</p>
-      {sub && <p className="text-[12px] leading-snug text-[#4d5664]">{sub}</p>}
-    </div>
   );
 }
 

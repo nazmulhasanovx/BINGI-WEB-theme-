@@ -82,9 +82,9 @@ export function RoomTypesPage() {
             <option value="all">All types</option>{kinds.map((k) => <option key={k} value={k}>{presetOf(k).label}</option>)}
           </select>
         )}
-        <div role="radiogroup" aria-label="View" className="flex rounded-xl bg-[#e9edf2] p-1">
+        <div role="radiogroup" aria-label="View" className="flex rounded-xl border border-hms-line bg-white p-1">
           {([["grid", LayoutGrid, "Grid"], ["list", List, "List"]] as const).map(([v, I, l]) => (
-            <button key={v} role="radio" aria-checked={view === v} aria-label={`${l} view`} onClick={() => setView(v)} className={clsx("grid size-9 place-items-center rounded-lg", view === v ? "bg-white shadow-sm" : "text-[#4d5664]")}><I className="size-[18px]" /></button>
+            <button key={v} role="radio" aria-checked={view === v} aria-label={`${l} view`} onClick={() => setView(v)} className={clsx("grid size-9 place-items-center rounded-lg", view === v ? "bg-[#ffecec] text-[#c8232e]" : "text-[#4d5664] hover:text-hms-ink")}><I className="size-[18px]" /></button>
           ))}
         </div>
       </div>
