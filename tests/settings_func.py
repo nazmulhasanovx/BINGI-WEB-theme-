@@ -68,7 +68,8 @@ with sync_playwright() as p:
   pg.goto(B+"/hms/settings/housekeeping"); pg.wait_for_timeout(900)
   pg.get_by_role("switch",name="Inspection before Ready").click(); t("flow shows Inspected", "Inspected" in M()); save()
   pg.goto(B+"/hms/housekeeping"); pg.wait_for_timeout(1300)
-  t("HK easy shows Mark inspected", pg.get_by_role("button",name=re.compile("^Mark inspected room")).count()>0)
+  pg.get_by_role("tab",name="Checklist").click(); pg.wait_for_timeout(300)
+  t("HK follows inspection rule", pg.get_by_role("switch",name="Inspection required").get_attribute("aria-checked")=="true")
   pg.goto(B+"/hms/settings/housekeeping"); pg.wait_for_timeout(800); pg.get_by_role("switch",name="Inspection before Ready").click(); save()
   # payments
   pg.goto(B+"/hms/settings/payments"); pg.wait_for_timeout(900)

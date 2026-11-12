@@ -123,9 +123,9 @@ export function Flags({ b }: { b: Booking }) {
 }
 export const due = dueOf;
 export const card = "rounded-2xl border border-hms-line bg-white";
-// Buttons for Bookings: one solid brand action per screen, soft grey for the rest. Large tap targets, no borders.
+// Buttons (live HMS foundation): one red main action per screen; white with a 1 px border for the rest. 12 px corners.
 const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-[background-color,transform,box-shadow] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45";
 export const bMain = clsx(base, "btn-glow h-11 px-5 text-[14.5px] text-white");
-export const bSoft = clsx(base, "h-11 bg-[#eef0f3] px-4 text-[14.5px] text-hms-ink hover:bg-[#e3e6eb]");
+export const bSoft = clsx(base, "h-11 border border-hms-line bg-white px-4 text-[14.5px] text-hms-ink hover:bg-hms-hover");
 export const bSmall = clsx(base, "h-9 px-3.5 text-[13.5px]");
-export const bDark = clsx(base, "h-10 bg-hms-ink px-4 text-[14px] text-white hover:bg-[#1f2937]");
+export const bDark = clsx(base, "h-10 border border-hms-line bg-white px-4 text-[14px] text-hms-ink hover:bg-hms-hover");

@@ -1,11 +1,5 @@
-import { ViewTransition } from "react";
-
-// Re-mounts on every HMS navigation. Browsers with view transitions crossfade old → new page (sidebar and header
-// stay still); others get a short CSS fade. Both are off with reduced motion.
+// Re-mounts on every HMS navigation. The new page fades in quickly (opacity only — no zoom, no slide);
+// sidebar and header never move. Off with reduced motion and with My preferences → Reduce motion.
 export default function Template({ children }: { children: React.ReactNode }) {
-  return (
-    <ViewTransition default="hms-route">
-      <div className="hms-route hms-page-in h-full">{children}</div>
-    </ViewTransition>
-  );
+  return <div className="hms-route hms-page-in h-full">{children}</div>;
 }

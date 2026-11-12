@@ -17,26 +17,20 @@ with sync_playwright() as p:
   ST=lambda: pg.get_by_role("status").inner_text() if pg.get_by_role("status").count() else ""
   pg.goto(B+"/hms/housekeeping"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1800)
   t("housekeeping page live (not placeholder)", "Housekeeping" in M() and "Live in HMS" not in M() and "Start cleaning" in M())
-  dirty0=pg.get_by_role("button",name=re.compile("^Start cleaning room")).count()
   btn=pg.get_by_role("button",name=re.compile("^Start cleaning room")).first; room=btn.get_attribute("aria-label").split()[-1]
-  btn.click(); pg.wait_for_timeout(250); t("start cleaning", pg.get_by_role("button",name=f"Mark clean room {room}").count()==1)
-  pg.get_by_role("button",name=f"Mark clean room {room}").click(); pg.wait_for_timeout(250)
-  t("clean → ready", pg.get_by_role("button",name=re.compile("^Start cleaning room")).count()==dirty0-1)
-  axe(pg,"hk easy")
-  pg.get_by_role("radio",name="Details").click(); pg.wait_for_timeout(300)
-  t("details: tasks + out of order", "Tasks" in M() and "Out of order" in M() and "Done today" in M())
-  sel=pg.get_by_role("combobox",name=re.compile("^Assign ")).first
+  btn.click(); pg.wait_for_timeout(250); t("start cleaning", pg.get_by_role("button",name=f"Open checklist room {room}").count()==1)
+  axe(pg,"hk tasks")
+  sel=pg.get_by_role("combobox",name=re.compile("^Assign room ")).first
   opts=sel.locator("option").all_inner_texts(); t(f"staff from HRM {opts[:3]}", any("Hossain" in o or "Akter" in o or "Hasan" in o for o in opts))
-  sel.select_option(index=1); pg.wait_for_timeout(200)
-  pg.get_by_role("button",name=re.compile("^Start ")).first.click(); pg.wait_for_timeout(200)
-  pg.get_by_role("button",name=re.compile("^Finish ")).first.click(); pg.wait_for_timeout(200)
-  t("task done", "done" in ST())
-  # OOO with date range in the future
+  # OOO with date range in the future (Maintenance → block room)
+  pg.get_by_role("tab",name="Maintenance").click(); pg.wait_for_timeout(300)
+  pg.get_by_role("button",name="Add maintenance").click(); pg.wait_for_timeout(300)
   pg.get_by_label("Room out of order").select_option(index=2); ooo_room=pg.get_by_label("Room out of order").input_value()
-  pg.get_by_label("Out of order reason").fill("Paint"); pg.get_by_label("Out of order from").fill("2026-11-15"); pg.get_by_label("Back in service on").fill("2026-11-17")
-  pg.get_by_role("button",name="Mark out of order").click(); pg.wait_for_timeout(300)
-  t("ooo scheduled", "Paint" in M() and "15 Nov" in M())
-  axe(pg,"hk details")
+  pg.get_by_label("Out of order reason").fill("Paint"); pg.get_by_role("switch",name="Block the room").click()
+  pg.get_by_label("Out of order from").fill("2026-11-15"); pg.get_by_label("Back in service on").fill("2026-11-17")
+  pg.get_by_role("dialog").get_by_role("button",name="Add maintenance").click(); pg.wait_for_timeout(300)
+  t("ooo scheduled", "Paint" in M())
+  axe(pg,"hk maintenance")
   pg.goto(B+"/hms/bookings/calendar"); pg.wait_for_timeout(1500)
   r=pg.locator(f"[data-room='{ooo_room}']")
   t("calendar: ooo only on those days", r.get_by_role("button",name=re.compile(f"New booking, Room {ooo_room}, 16 Nov")).count()==0 and r.get_by_role("button",name=re.compile(f"New booking, Room {ooo_room}, 1[89] Nov")).count()>=1)
@@ -53,13 +47,14 @@ with sync_playwright() as p:
   hdr=M(); room_out=re.search(r"Room (\d+\S*)", hdr).group(1) if re.search(r"Room (\d+\S*)", hdr) else None
   t(f"checked out ({ST()})", "checked out" in ST().lower())
   pg.goto(B+"/hms/housekeeping"); pg.wait_for_timeout(1300)
-  t(f"room {room_out} dirty after checkout", room_out and pg.get_by_role("button",name=f"Start cleaning room {room_out}").count()==1)
+  t(f"room {room_out} dirty after checkout", room_out and pg.get_by_role("combobox",name=f"Assign room {room_out}").count()==1)
   # ---- arrival readiness warning
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
   # mark an arriving room dirty then open check-in
   arr=pg.get_by_role("region",name="Arriving",exact=True)
   lab=arr.get_by_role("button",name=re.compile(r", Room ")).first.get_attribute("aria-label"); aroom=lab.split("Room ")[-1]
   pg.goto(B+"/hms/housekeeping"); pg.wait_for_timeout(1200)
+  pg.get_by_role("radio",name=re.compile("Ready rooms")).click(); pg.wait_for_timeout(300)
   d=pg.get_by_role("button",name=f"Mark room {aroom} dirty")
   if d.count(): d.click(); pg.wait_for_timeout(200)
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)

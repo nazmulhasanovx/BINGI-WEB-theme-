@@ -162,15 +162,20 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 }
 /* Focus ring = Ocean Blue (6.2:1), never confused with the red brand */
 .hms-app :focus-visible, .bingi-ui :focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
-/* Coral Glow primary button (pricing page): red gradient + 1px edge */
+/* Button foundation = the live HMS (iOS-style): 12 px corners, 44 px main actions, red top-to-bottom gradient with a
+   soft red shadow for the one main action; white + 1 px border for everything else. */
 .btn-glow {
-  background: #b11c29;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(120 15 25 / 0.22), 0 4px 12px -6px rgb(177 28 41 / 0.45);
+  background-color: #c8232e;
+  background-image: linear-gradient(180deg, #d22c35, #c8232e 55%, #ba1f2b);
+  box-shadow: 0 6px 16px rgb(200 35 46 / 0.24);
   transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
 }
-.btn-glow:hover { background: #9e1925; }
-.btn-glow:active { background: #8a1520; transform: scale(0.985); }
+.btn-glow:hover { background-image: linear-gradient(180deg, #c8232e, #a81c27); }
+.btn-glow:active { transform: scale(0.985); }
 .btn-glow:disabled { filter: grayscale(0.35); box-shadow: none; }
+.hms-app :is(button, a, [role=button])[class*="rounded-lg"], .hms-app :is(button, a, [role=button])[class*="rounded-xl"] { border-radius: 12px; }
+.hms-app :is(input:not([type=checkbox]):not([type=radio]), select, textarea)[class*="rounded-lg"],
+.hms-app :is(input:not([type=checkbox]):not([type=radio]), select, textarea)[class*="rounded-xl"] { border-radius: 12px; }
 /* Cards: BinGi shadow (Bay-tinted) */
 .hms-app .shadow-card, .bingi-ui .shadow-card { box-shadow: 0 8px 24px -6px rgb(11 34 53 / 0.08); }
 /* "BinGi Bay" (dark) tokens — kept for later; HMS shows no dark toggle (decision D-D: dark only for KDS). */
@@ -200,7 +205,7 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @keyframes hms-drawer-l { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes hms-pop { from { opacity: 0; transform: scale(0.96) translateY(-4px); } to { opacity: 1; transform: none; } }
 @keyframes hms-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.hms-page-in { animation: hms-page 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hms-page-in { animation: hms-fade 150ms ease-out both; }
 .hms-fade { animation: hms-fade 0.2s ease-out both; }
 .hms-drawer-r { animation: hms-drawer-r 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .hms-drawer-l { animation: hms-drawer-l 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -319,15 +324,7 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 /* Out-of-order rooms in the bookings calendar */
 .hms-hatch { background-image: repeating-linear-gradient(135deg, rgb(233 185 73 / 0.16) 0 6px, transparent 6px 12px); }
 
-/* ---------- Route transitions: React <ViewTransition> crossfade (Chromium/Safari); CSS fade fallback elsewhere ---------- */
-::view-transition-group(root) { animation-duration: 180ms; }
-::view-transition-old(.hms-route) { animation: hms-vt-out 90ms ease-in both; }
-::view-transition-new(.hms-route) { animation: hms-vt-in 220ms cubic-bezier(0.22, 1, 0.36, 1) 50ms both; }
-@keyframes hms-vt-out { to { opacity: 0; } }
-@keyframes hms-vt-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-/* With view transitions the route crossfade does the work, so page-level fades don't run twice. */
-@supports (view-transition-name: none) { .hms-route .hms-page-in, .hms-route.hms-page-in { animation: none; } }
-@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+/* ---------- Route transitions: a plain 150 ms fade of the page content only (no view transitions, no zoom). ---------- */
 /* Nested page fades never stack. */
 .hms-page-in .hms-page-in { animation: none; }
 
