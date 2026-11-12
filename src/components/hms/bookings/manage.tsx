@@ -49,7 +49,7 @@ export function ManageBookingPage() {
           <ModeSwitch />
         </div>
         {!bk.ready ? <p role="status" className="py-10 text-[14px] text-hms-muted">Loading booking…</p>
-          : !b ? <div className={clsx(card, "mt-4 px-6 py-14 text-center")}><p className="text-[17px] font-bold">Booking not found</p><p className="mt-1 text-[14px] text-hms-muted">{code || "No booking code"} isn&apos;t in this property.</p><Link href="/hms/bookings/list" className={clsx(bMain, "mt-4")}>All bookings</Link></div>
+          : !b ? <div className={clsx(card, "mt-4 px-6 py-14 text-center")}><p className="text-[17px] font-bold">Booking not found</p><p className="mt-1 text-[14px] text-hms-muted">{code || "No booking code"} isn&apos;t in this property.</p><Link href="/hms/bookings" className={clsx(bMain, "mt-4")}>All bookings</Link></div>
           : <Manage key={b.code} b={b} start={sp.get("do")} />}
       </div></div>
       {toast && <Toast text={toast} />}
@@ -134,7 +134,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
 
       {/* ---------- tabs ---------- */}
       <nav role="tablist" aria-label="Booking" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
-        {TABS.map(([id, l]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}{id === "extras" && extrasCount > 0 && <span className="ml-1.5 rounded-full bg-hms-hover px-1.5 text-[12px]">{extrasCount}</span>}</button>)}
+        {TABS.map(([id, l]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === id ? "border-[#c8232e] text-[#c8232e]" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}{id === "extras" && extrasCount > 0 && <span className="ml-1.5 rounded-full bg-hms-hover px-1.5 text-[12px]">{extrasCount}</span>}</button>)}
       </nav>
       <div key={tab} className="hms-fade mt-4">
         {tab === "overview" && <Overview b={b} ex={ex} folio={folio} balance={balance} go={setTab} />}

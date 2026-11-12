@@ -25,7 +25,7 @@ with sync_playwright() as p:
   pg.get_by_role("button",name=re.compile("^Form-C")).click(); pg.wait_for_timeout(60)
   t("form-C printed", "Form-C" in frames())
   # ---- waitlist
-  pg.get_by_role("link",name="Waitlist").click(); pg.wait_for_timeout(1200)
+  pg.goto(B+"/hms/bookings/waitlist"); pg.wait_for_timeout(1200)
   t("waitlist page", "/hms/bookings/waitlist" in pg.url and "No one is waiting" in M())
   pg.get_by_role("button",name="Add to waitlist").click()
   pg.get_by_label("Name").fill("Wait Guest"); pg.get_by_label("Phone").fill("01766554433")
@@ -45,7 +45,8 @@ with sync_playwright() as p:
   t("scan ID coming soon (disabled)", pg.get_by_role("button",name="Scan ID").is_disabled() and "Coming soon" in M())
   # ---- pre-check-in link from documents
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
-  arr=pg.get_by_role("region",name="Arriving",exact=True)
+  pg.get_by_role("tab",name=re.compile("^Arrivals")).click(); pg.wait_for_timeout(200)
+  arr=pg.get_by_role("region",name="Arrivals",exact=True)
   arr.get_by_role("button",name=re.compile(r", Room ")).first.click(); pg.wait_for_timeout(1300)
   code=re.search(r"b=(BK-\d+)",pg.url).group(1)
   pg.get_by_role("tab",name="Documents & messages").click(); pg.wait_for_timeout(300)

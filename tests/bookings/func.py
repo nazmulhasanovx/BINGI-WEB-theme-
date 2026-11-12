@@ -19,7 +19,7 @@ with sync_playwright() as p:
     q=q or pg; q.get_by_role("tab",name=re.compile("^"+name)).click(); q.wait_for_timeout(150); return q.get_by_role("region",name=name,exact=True)
   def nxt(): pg.locator("#nb-summary").get_by_role("button",name=re.compile("^Next")).click(); pg.wait_for_timeout(350)
   pg.goto(B+"/hms/bookings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
-  arr=lane("Arriving"); t("4 arrivals", arr.get_by_role("button",name=re.compile("^Check in ")).count()==4)
+  arr=lane("Arrivals"); t("4 arrivals", arr.get_by_role("button",name=re.compile("^Check in ")).count()==4)
   t("channel badges on today rows", any(x in M() for x in ["Website","Marketplace","Booking.com","Agoda","Expedia","Walk-in"]))
   first=arr.get_by_role("button",name=re.compile("^Check in ")).first.get_attribute("aria-label")[9:]
   # ===== check-in on booking page (inline panel, no drawer)
@@ -38,13 +38,13 @@ with sync_playwright() as p:
   pg.goto(B+"/hms/cashbox/movements"); pg.wait_for_timeout(1200); t("cash in main cashbox", code in M())
   # ===== check-out leaving
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
-  lv=lane("Leaving"); nl=lv.get_by_role("button",name=re.compile("^Check out ")).count()
+  lv=lane("Departures"); nl=lv.get_by_role("button",name=re.compile("^Check out ")).count()
   lv.get_by_role("button",name=re.compile("^Check out ")).first.click(); pg.wait_for_timeout(1500)
   P=pg.get_by_role("region",name="Check out",exact=True); t("checkout panel inline", P.count()==1)
   P.get_by_role("button",name=re.compile("check out", re.I)).last.click(); pg.wait_for_timeout(500)
   t("checked out", "checked out of Room" in ST())
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
-  t("leaving -1", lane("Leaving").get_by_role("button",name=re.compile("^Check out ")).count()==nl-1)
+  t("leaving -1", lane("Departures").get_by_role("button",name=re.compile("^Check out ")).count()==nl-1)
   # ===== wizard: OTA + existing guest + meals + services
   pg.goto(B+"/hms/bookings/new"); pg.wait_for_timeout(1300)
   nxt(); t("step1 validation", "Pick at least one room" in pg.get_by_role("alert").first.inner_text())
@@ -87,7 +87,8 @@ with sync_playwright() as p:
   pg.get_by_label("Full name").fill("Test Newguest"); pg.get_by_label(re.compile("^NID number")).fill("12")
   nxt(); t("bad ID blocks next", "doesn't look right" in M())
   pg.get_by_label(re.compile("^NID number")).fill("1234567890")
-  pg.get_by_role("button",name=re.compile("^More guest details")).click(); pg.wait_for_timeout(150)
+  mg=pg.get_by_role("button",name=re.compile("^More guest details"))
+  if mg.count() and mg.get_attribute("aria-expanded")!="true": mg.click(); pg.wait_for_timeout(150)
   from PIL import Image; Image.new("RGB",(300,200),(90,120,200)).save("/tmp/bk/id.png")
   with pg.expect_file_chooser() as fc: pg.get_by_role("button",name="Upload ID front").click()
   fc.value.set_files("/tmp/bk/id.png"); pg.wait_for_timeout(500)
@@ -134,7 +135,7 @@ with sync_playwright() as p:
   rb=re.search(r"RB-\d+",st).group(0)
   pg.goto(B+"/hms/meals/orders"); pg.wait_for_timeout(1300); t("restaurant has room order", rb in M())
   # ===== details: needs attention → assign, activity, source filter
-  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1000); pg.get_by_role("radio",name="Details").click(); pg.wait_for_timeout(300)
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1000); pg.get_by_text("Needs attention").click(); pg.wait_for_timeout(300)
   t("needs attention", "Needs attention" in M() and "No room yet" in M())
   pg.get_by_text("No room yet").first.click(); pg.wait_for_timeout(1400)
   pg.get_by_role("button",name="More actions").click(); pg.get_by_role("menuitem",name="Assign room").click(); pg.wait_for_timeout(300)

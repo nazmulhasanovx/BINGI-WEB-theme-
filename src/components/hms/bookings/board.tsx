@@ -213,7 +213,7 @@ export function GroupPage() {
   if (!bk.ready) return <p role="status" className="p-8 text-[14px] text-hms-muted">Loading…</p>;
   return (
     <div className="h-full overflow-y-auto"><div className="hms-page max-w-[1100px]">
-      <Link href="/hms/bookings/list" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hms-muted hover:text-hms-ink"><ArrowLeft className="size-4" />All bookings</Link>
+      <Link href="/hms/bookings" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hms-muted hover:text-hms-ink"><ArrowLeft className="size-4" />All bookings</Link>
       {!rows.length ? <p className="mt-6 text-[15px] text-hms-muted">Group not found.</p> : <>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <span className="grid size-11 place-items-center rounded-xl bg-hms-coral-soft text-hms-red"><Users className="size-5" /></span>

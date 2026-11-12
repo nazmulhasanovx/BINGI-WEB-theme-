@@ -41,9 +41,10 @@ function Fold({ title, open, onToggle, children }: { title: string; open: boolea
   );
 }
 
-export function GuestFields({ g, set, tried, details, hidePhone }: { g: GuestDraft; set: (p: Partial<GuestDraft>) => void; tried: boolean; details: boolean; hidePhone?: boolean }) {
+export function GuestFields({ g, set, tried, hidePhone }: { g: GuestDraft; set: (p: Partial<GuestDraft>) => void; tried: boolean; details: boolean; hidePhone?: boolean }) {
   const e = tried ? guestErrors(g) : {};
-  const [more, setMore] = useState(details);
+  // Extra fields stay folded until needed — open when this guest already has some of them.
+  const [more, setMore] = useState(() => !!(g.address || g.idFront || g.dob || g.occupation));
   const [photoErr, setPhotoErr] = useState("");
   const foreign = g.country !== "Bangladesh";
   const idPhoto = (side: "idFront" | "idBack", label: string) => (
@@ -98,8 +99,8 @@ export function GuestFields({ g, set, tried, details, hidePhone }: { g: GuestDra
   );
 }
 
-export function StayFields({ s, set, details, adults }: { s: StayDraft; set: (p: Partial<StayDraft>) => void; details: boolean; adults: number }) {
-  const [open, setOpen] = useState(details);
+export function StayFields({ s, set, adults }: { s: StayDraft; set: (p: Partial<StayDraft>) => void; details: boolean; adults: number }) {
+  const [open, setOpen] = useState(() => !!(s.purpose || s.comingFrom || s.companions.length || s.booker));
   const comp = (i: number, p: Partial<Companion>) => set({ companions: s.companions.map((c, k) => (k === i ? { ...c, ...p } : c)) });
   return (
     <Fold title={`Stay register — purpose, companions${s.booker || s.payer.kind === "Company" ? ", booker, payer" : ""}`} open={open} onToggle={() => setOpen(!open)}>

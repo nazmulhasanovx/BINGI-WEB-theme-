@@ -6,10 +6,10 @@ import { useCallback, useSyncExternalStore } from "react";
 export type BkMode = "easy" | "details";
 const KEY = "bingi.bookings.mode";
 const subs = new Set<() => void>();
-const read = (): BkMode => { try { return localStorage.getItem(KEY) === "details" ? "details" : "easy"; } catch { return "easy"; } };
 
+/** Bookings now show one view (every field) — the separate Easy screen showed nearly the same thing. */
 export function useBkMode() {
-  const mode = useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, read, () => "easy" as BkMode);
+  const mode: BkMode = "details";
   const setMode = useCallback((m: BkMode) => { try { localStorage.setItem(KEY, m); } catch {} subs.forEach((f) => f()); }, []);
   return { mode, setMode };
 }

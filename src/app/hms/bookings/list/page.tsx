@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-import { ListPage } from "@/components/hms/bookings/list";
+import { redirect } from "next/navigation";
 
+/** One bookings table now (live HMS structure) — it lives at /hms/bookings. */
 export default function Page() {
-  return <Suspense><ListPage /></Suspense>;
+  redirect("/hms/bookings");
 }

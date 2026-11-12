@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ChartColumn, Hourglass, Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, LayoutGrid, List, Moon, UserPlus, Phone, Plus, Store, Sun, Plane } from "lucide-react";
+import { ChartColumn, ChevronDown, Hourglass, Briefcase, Building2, CalendarDays, CircleCheck, DoorOpen, Globe, LayoutGrid, List, Moon, Settings2, UserPlus, Phone, Plus, Store, Sun, Plane } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStatus, type Booking, type Bk, type Channel, type PayState } from "@/lib/bookings/store";
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
@@ -21,29 +21,40 @@ export function Toast({ text }: { text: string }) {
 export const useBk = () => useContext(C)!;
 
 export type BkTab = "today" | "calendar" | "board" | "list" | "waitlist" | "reports" | "close" | "settings";
-const TABS: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
-  { id: "today", label: "Today", href: "/hms/bookings", icon: Sun },
+/** Live HMS structure: one bookings table, plus Calendar and Room board views; the rest sits under More. */
+const VIEWS: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
+  { id: "list", label: "Table", href: "/hms/bookings", icon: List },
   { id: "calendar", label: "Calendar", href: "/hms/bookings/calendar", icon: CalendarDays },
   { id: "board", label: "Room board", href: "/hms/bookings/board", icon: LayoutGrid },
-  { id: "list", label: "All bookings", href: "/hms/bookings/list", icon: List },
-  { id: "reports", label: "Reports", href: "/hms/bookings/reports", icon: ChartColumn },
-  { id: "waitlist", label: "Waitlist", href: "/hms/bookings/waitlist", icon: Hourglass },
-  { id: "close", label: "Day close", href: "/hms/bookings/close", icon: Moon },
 ];
+const MORE: { id: BkTab; label: string; href: string; icon: typeof Sun }[] = [
+  { id: "waitlist", label: "Waitlist", href: "/hms/bookings/waitlist", icon: Hourglass },
+  { id: "close", label: "Day close (night audit)", href: "/hms/bookings/close", icon: Moon },
+  { id: "reports", label: "Booking reports", href: "/hms/bookings/reports", icon: ChartColumn },
+  { id: "settings", label: "Booking policies", href: "/hms/settings/policies", icon: Settings2 },
+];
+export const viewBtn = (on: boolean) => clsx("inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[14px] font-semibold transition-colors", on ? "bg-[#ffecec] text-[#c8232e]" : "text-[#4d5664] hover:bg-hms-hover hover:text-hms-ink");
 
-/** Easy / Details switch — same data, more or fewer fields. */
-export function ModeSwitch() {
-  const { mode, setMode } = useBkMode();
+/** Bookings use one view everywhere (the old Easy / Details switch showed nearly the same screen). */
+export function ModeSwitch() { return null; }
+
+function ViewBar({ tab }: { tab: BkTab }) {
+  const t = tab === "today" ? "list" : tab;
+  const more = MORE.find((m) => m.id === t);
   return (
-    <div role="radiogroup" aria-label="Bookings view" className="inline-flex h-10 rounded-xl border border-hms-line bg-white p-1">
-      {([["easy", "Easy"], ["details", "Details"]] as [BkMode, string][]).map(([m, l]) => (
-        <button key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={clsx("whitespace-nowrap rounded-lg px-3.5 text-[14px] font-semibold transition-colors", mode === m ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:text-hms-ink")}>{l}</button>
-      ))}
-    </div>
+    <nav aria-label="Bookings views" className="flex shrink-0 items-center gap-1">
+      {VIEWS.map((v) => <Link key={v.id} href={v.href} aria-current={t === v.id ? "page" : undefined} className={viewBtn(t === v.id)}><v.icon className="size-4" />{v.label}</Link>)}
+      <details className="relative">
+        <summary className={clsx(viewBtn(!!more), "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>{more ? more.label.replace(/ \(.*/, "") : "More"}<ChevronDown className="size-4" /></summary>
+        <div className="hms-pop absolute right-0 top-full z-30 mt-1 w-[230px] rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">
+          {MORE.map((m) => <Link key={m.id} href={m.href} aria-current={t === m.id ? "page" : undefined} className={clsx("flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover", t === m.id && "font-semibold text-[#c8232e]")}><m.icon className="size-4 text-hms-muted" />{m.label}</Link>)}
+        </div>
+      </details>
+    </nav>
   );
 }
 
-export function BookingsFrame({ tab, children, sub }: { tab: BkTab; children: ReactNode; sub?: ReactNode }) {
+export function BookingsFrame({ tab, children, sub, bar }: { tab: BkTab; children: ReactNode; sub?: ReactNode; bar?: ReactNode }) {
   const h = useProperty();
   const bk = useBookings(h);
   const g = useGuests(h);
@@ -66,25 +77,23 @@ export function BookingsFrame({ tab, children, sub }: { tab: BkTab; children: Re
   return (
     <C.Provider value={{ bk, guests, g, mode, open, toast: setToast }}>
       <div className="h-full overflow-y-auto"><div className="hms-page">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">Bookings</h1>
-            <p className="text-[14px] text-hms-muted">{dow(TODAY)}, {dmy(TODAY)} · {h.name}</p>
+            <p className="text-[14px] text-hms-muted">Manage your hotel reservations · Today {dow(TODAY)}, {dmy(TODAY)}</p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <ModeSwitch />
             <Link href="/hms/bookings/walkin" className={clsx(bSoft, "ml-auto sm:ml-0")}><UserPlus className="size-4" /><span className="hidden sm:inline">Walk-in</span><span className="sr-only sm:hidden">Walk-in</span></Link>
             <Link href="/hms/bookings/new" className={bMain}><Plus className="size-4" />New booking</Link>
             <Menu label="More actions" items={[{ label: "Reset demo bookings", onClick: () => { bk.reset(); setToast("Demo bookings reset"); }, danger: true }]} />
           </div>
         </div>
-        <nav aria-label="Bookings sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
-          {TABS.map((t) => (
-            <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}><t.icon className="size-4" />{t.label}</Link>
-          ))}
-        </nav>
         {sub}
-        <div key={tab} className="hms-page-in mt-5">{bk.ready ? children : <p role="status" className="py-10 text-[14px] text-hms-muted">Loading bookings…</p>}</div>
+        <div className={clsx(card, "mt-4 flex flex-wrap items-center gap-2 p-1.5")}>
+          <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">{bar ?? <span className="px-2.5 text-[14.5px] font-semibold">{[...VIEWS, ...MORE].find((v) => v.id === tab)?.label}</span>}</div>
+          <div className="no-scrollbar flex max-w-full overflow-x-auto"><ViewBar tab={tab} /></div>
+        </div>
+        <div className="mt-4">{bk.ready ? children : <p role="status" className="py-10 text-[14px] text-hms-muted">Loading bookings…</p>}</div>
       </div></div>
       {toastText && <Toast text={toastText} />}
     </C.Provider>

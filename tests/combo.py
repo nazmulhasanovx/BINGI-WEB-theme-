@@ -129,7 +129,7 @@ with sync_playwright() as p:
   li=pg.locator("section[aria-label='Website requests'] li", has_text="Combo Webguest")
   t("request waits in Bookings › Today", li.count()==1)
   li.get_by_role("checkbox").check(); li.get_by_role("button",name="Accept").click(); pg.wait_for_timeout(1500)
-  go(P,"/hms/bookings/list",1800); srch=pg.get_by_placeholder('Name, phone, room or BK-code')
+  go(P,"/hms/bookings/list",1800); srch=pg.get_by_placeholder('Search guest name, phone, booking ID or room…')
   if srch.count(): srch.fill("Combo Webguest"); pg.wait_for_timeout(400)
   t("accepted booking is in HMS Bookings", "Combo Webguest" in pg.inner_text("main"), pg.inner_text("main")[:200])
   go(P,"/hms/payments"); pg.get_by_placeholder("Booking, guest, reference").fill("Combo Webguest"); pg.wait_for_timeout(300)

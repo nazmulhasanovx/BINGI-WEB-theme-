@@ -17,7 +17,7 @@ with sync_playwright() as p:
   M=lambda: pg.locator("main").inner_text()
   ST=lambda: pg.get_by_role("status").inner_text() if pg.get_by_role("status").count() else ""
   pg.goto(B+"/hms/bookings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
-  t("Day close tab", pg.get_by_role("link",name="Day close").count()==1)
+  t("Day close link (under More)", pg.locator("a[href='/hms/bookings/close']").count()>=1)
   # ---- booking policies live in Settings (one home)
   pg.goto(B+"/hms/settings/policies"); pg.wait_for_timeout(1200)
   t("settings page", "Cancellation & no-show" in M())

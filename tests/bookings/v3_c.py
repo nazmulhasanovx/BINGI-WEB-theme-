@@ -36,8 +36,8 @@ with sync_playwright() as p:
   t("calendar: ooo only on those days", r.get_by_role("button",name=re.compile(f"New booking, Room {ooo_room}, 16 Nov")).count()==0 and r.get_by_role("button",name=re.compile(f"New booking, Room {ooo_room}, 1[89] Nov")).count()>=1)
   # ---- checkout makes room dirty + task
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
-  pg.get_by_role("tab",name=re.compile("^Leaving")).click(); pg.wait_for_timeout(200)
-  lv=pg.get_by_role("region",name="Leaving",exact=True); bt=lv.get_by_role("button",name=re.compile("^Check out ")).first
+  pg.get_by_role("tab",name=re.compile("^Departures")).click(); pg.wait_for_timeout(200)
+  lv=pg.get_by_role("region",name="Departures",exact=True); bt=lv.get_by_role("button",name=re.compile("^Check out ")).first
   bt.click(); pg.wait_for_timeout(1300)
   croom=re.search(r"Room (\S+)", pg.get_by_role("region",name="Check out",exact=True).inner_text())
   P=pg.get_by_role("region",name="Check out",exact=True)
@@ -51,7 +51,8 @@ with sync_playwright() as p:
   # ---- arrival readiness warning
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
   # mark an arriving room dirty then open check-in
-  arr=pg.get_by_role("region",name="Arriving",exact=True)
+  pg.get_by_role("tab",name=re.compile("^Arrivals")).click(); pg.wait_for_timeout(200)
+  arr=pg.get_by_role("region",name="Arrivals",exact=True)
   lab=arr.get_by_role("button",name=re.compile(r", Room ")).first.get_attribute("aria-label"); aroom=lab.split("Room ")[-1]
   pg.goto(B+"/hms/housekeeping"); pg.wait_for_timeout(1200)
   pg.get_by_role("radio",name=re.compile("Ready rooms")).click(); pg.wait_for_timeout(300)
@@ -59,7 +60,8 @@ with sync_playwright() as p:
   if d.count(): d.click(); pg.wait_for_timeout(200)
   pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
   t("today shows room dirty tag", "Room dirty" in M())
-  arr=pg.get_by_role("region",name="Arriving",exact=True)
+  pg.get_by_role("tab",name=re.compile("^Arrivals")).click(); pg.wait_for_timeout(200)
+  arr=pg.get_by_role("region",name="Arrivals",exact=True)
   arr.get_by_role("button",name=re.compile(rf", Room {re.escape(aroom)}$")).first.click(); pg.wait_for_timeout(1200)
   pg.goto(pg.url.split("&")[0]+"&do=checkin"); pg.wait_for_timeout(1300)
   t("check-in readiness note", "not cleaned yet" in M())
