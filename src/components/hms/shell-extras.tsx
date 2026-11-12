@@ -36,7 +36,8 @@ import { can } from "@/lib/plan";
 import { useChatData } from "./chat/page";
 import { useCommData } from "./communication/data";
 import { useRestaurant } from "./meals/shared";
-import { AlertTriangle, Globe, MessageSquare, QrCode, Receipt, RotateCcw, Wallet } from "lucide-react";
+import { useNewsNotes } from "./news";
+import { AlertTriangle, Globe, Megaphone, MessageSquare, QrCode, Receipt, RotateCcw, Wallet } from "lucide-react";
 
 // ---------------- Notifications (derived from real prototype data) ----------------
 type Note = { id: string; icon: LucideIcon; tone: string; title: string; sub: string; href: string };
@@ -92,7 +93,9 @@ const READ_KEY = "hms-notes-read";
 const readSubs = new Set<() => void>();
 const readRaw = () => { try { return localStorage.getItem(READ_KEY) ?? "[]"; } catch { return "[]"; } };
 export function Notifications() {
-  const notes = useNotes();
+  const own = useNotes();
+  const news = useNewsNotes();
+  const notes = useMemo(() => [...news, ...own], [news, own]);
   const { open, setOpen, ref } = usePop();
   const raw = useSyncExternalStore((f) => { readSubs.add(f); return () => { readSubs.delete(f); }; }, readRaw, () => "[]");
   const read: string[] = useMemo(() => { try { return JSON.parse(raw); } catch { return []; } }, [raw]);
@@ -116,7 +119,7 @@ export function Notifications() {
               </Link></li>
             ))}</ul>
           )}
-          <p className="border-t border-hms-line px-2.5 pb-1 pt-2 text-[11.5px] text-hms-muted">Built from this property’s data. Push / SMS alerts are not connected yet.</p>
+          <p className="border-t border-hms-line px-2.5 pb-1 pt-2 text-[11.5px] text-hms-muted">Built from this property’s data and BinGi news. Push / SMS alerts are not connected yet.</p>
         </div>
       )}
     </div>
@@ -155,6 +158,7 @@ export function AccountMenu() {
           <div className="px-3 py-2.5"><p className="text-[14.5px] font-bold">Md Yeapas</p><p className="text-[12.5px] text-hms-muted">Owner · {h.name}</p></div>
           <div className="my-1 border-t border-hms-line" />
           <Link role="menuitem" href="/hms/staff/people" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><User className="size-4 text-hms-muted" />My profile</Link>
+          <Link role="menuitem" href="/hms/news" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><Megaphone className="size-4 text-hms-muted" />BinGi news & updates</Link>
           <Link role="menuitem" href="/hms/settings" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><CircleHelp className="size-4 text-hms-muted" />Help & settings</Link>
           <Link role="menuitem" href="/onboarding" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><LogOut className="size-4 text-hms-muted" />Sign out <span className="ml-auto text-[11.5px] text-hms-muted">demo</span></Link>
         </div>

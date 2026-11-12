@@ -18,13 +18,13 @@ import { useSettings } from "@/lib/settings/store";
 import {
   Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
   Landmark, LayoutGrid, Lock, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
-  UserPlus, Users, Wallet,
-} from "lucide-react";
+  UserPlus, Users, Wallet, Megaphone } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
 import { SetupModeBanner } from "./setup-mode";
 import { useSubmittedHotels } from "@/lib/onboarding/store";
 import { WM_PAGES } from "./website/pages";
 import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
+import { NewsBanner, NewsPopup } from "./news";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
 const GROUPS: { label: string; items: Item[] }[] = [
@@ -77,6 +77,7 @@ const SEARCH_TARGETS: NavTarget[] = [
   { label: "Inventory reports", href: "/hms/inventory/reports", icon: Boxes }, { label: "Purchase orders", href: "/hms/inventory/purchase", icon: Boxes }, { label: "Stock count", href: "/hms/inventory/count", icon: Boxes }, { label: "Recipes & sales", href: "/hms/inventory/recipes", icon: Boxes }, { label: "Service orders", href: "/hms/other-services/orders", icon: Sparkles }, { label: "Service catalog", href: "/hms/other-services/catalog", icon: Sparkles }, { label: "Service reports", href: "/hms/other-services/reports", icon: Sparkles }, { label: "Rates calendar", href: "/hms/discounts", icon: Tag }, { label: "New booking", href: "/hms/bookings/new", icon: CalendarCheck }, { label: "Walk-in (quick check-in)", href: "/hms/bookings/walkin", icon: CalendarCheck }, { label: "Room board", href: "/hms/bookings/board", icon: CalendarCheck }, { label: "Booking reports (occupancy, ADR, RevPAR)", href: "/hms/bookings/reports", icon: CalendarCheck }, { label: "Waitlist", href: "/hms/bookings/waitlist", icon: CalendarCheck }, { label: "Housekeeping", href: "/hms/housekeeping", icon: CalendarCheck }, { label: "Booking calendar", href: "/hms/bookings/calendar", icon: CalendarCheck }, { label: "All bookings", href: "/hms/bookings/list", icon: CalendarCheck }, { label: "Day close (night audit)", href: "/hms/bookings/close", icon: CalendarCheck }, { label: "Booking settings", href: "/hms/bookings/settings", icon: CalendarCheck }, { label: "Daily sales report", href: "/hms/reports?r=daily", icon: FileText }, { label: "Revenue & profit report", href: "/hms/reports?r=profit", icon: FileText }, { label: "Occupancy, ADR, RevPAR", href: "/hms/reports?r=occupancy", icon: FileText }, { label: "Payments to collect", href: "/hms/payments?tab=collect", icon: CreditCard }, { label: "Expenses waiting approval", href: "/hms/operations?tab=list", icon: Activity }, { label: "Supplier bills to pay", href: "/hms/operations?tab=bills", icon: Activity }, { label: "Expense categories & approval rule", href: "/hms/operations?tab=categories", icon: Activity }, { label: "Refunds due", href: "/hms/payments?tab=refunds", icon: CreditCard }, { label: "Cash movements", href: "/hms/cashbox/movements", icon: Wallet }, { label: "Cashbox closed days", href: "/hms/cashbox/days", icon: Wallet }, { label: "Restaurant cashbox", href: "/hms/meals/cashbox", icon: Wallet }, { label: "Restaurant POS (new order)", href: "/hms/meals/pos", icon: ChefHat }, { label: "Kitchen orders", href: "/hms/meals/kitchen", icon: ChefHat }, { label: "Restaurant menu", href: "/hms/meals/menu", icon: ChefHat }, { label: "Restaurant orders", href: "/hms/meals/orders", icon: ChefHat }, { label: "Restaurant cash settings", href: "/hms/meals/cash-settings", icon: Wallet }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", icon: Tag },
   { label: "Room types", href: "/hms/rooms", icon: BedDouble }, { label: "Room numbers", href: "/hms/rooms/numbers", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
+  { label: "BinGi news · server updates & what’s new", href: "/hms/news", icon: Megaphone },
 ];
 
 const modeSub = (l: () => void) => (window.addEventListener("storage", l), () => window.removeEventListener("storage", l));
@@ -110,7 +111,8 @@ function ShellInner({ children }: { children: ReactNode }) {
       localStorage.setItem("hms-sidebar", next ? "collapsed" : "open");
     } catch {}
   };
-  const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? ALL_ITEMS[0];
+  // Pages outside the sidebar (BinGi news) highlight nothing.
+  const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? (path.startsWith("/hms/news") ? { id: "" } : ALL_ITEMS[0]);
 
   const [drawer, setDrawer] = useState(false);
   return (
@@ -118,11 +120,13 @@ function ShellInner({ children }: { children: ReactNode }) {
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenu={() => setDrawer(true)} />
+        <NewsBanner />
         <SetupModeBanner />
         <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className={clsx("min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0", prefs.reduceMotion && "hms-no-motion")}>{children}</main>
       </div>
       <TabBar activeId={active.id} onMore={() => setDrawer(true)} />
       {drawer && <MobileDrawer activeId={active.id} onClose={() => setDrawer(false)} />}
+      <NewsPopup />
     </div>
   );
 }
@@ -380,6 +384,7 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const seg = path.split("/")[3];
     return [{ label: "Cashbox", href: seg ? "/hms/cashbox" : undefined }, ...(seg ? [{ label: seg === "movements" ? "Movements" : seg === "days" ? "Closed days" : seg }] : [])];
   }
+  if (path.startsWith("/hms/news")) return [{ label: "BinGi news" }];
   if (path.startsWith("/hms/discounts")) {
     const seg = path.split("/")[3];
     return [{ label: "Discounts & Rates", href: seg ? "/hms/discounts" : undefined }, ...(seg ? [{ label: seg === "campaigns" ? "Discounts" : seg }] : [])];
