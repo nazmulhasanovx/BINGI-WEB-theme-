@@ -5,9 +5,9 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, CalendarRange, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
+import { ArrowLeft, CalendarRange, Check, Clock, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
-import { bill, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
+import { bill, holdClock, holdLeft, holdLive, stamp, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
 import { confirmationHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, regCardHtml } from "@/lib/bookings/docs";
 import { printHtml } from "../meals/print";
 import { useBkMode } from "@/lib/bookings/mode";
@@ -19,6 +19,7 @@ import { useProperty } from "../property";
 import { useRestaurant } from "../meals/shared";
 import { useCashboxData } from "../cashbox/pages";
 import { BkCtx, ChannelBadge, Flags, ModeSwitch, PayPill, StatusPill, Toast, bMain, bSoft, card, useBk, type BkCtxValue } from "./ui";
+import { HoldFields, HoldSheet, addMin, holdMax, type HoldValue } from "./hold";
 import { CancelView, CheckInView, CheckOutView, DatesView, DetailsEdit, MoveView, PayView, Row, useExtras } from "./actions";
 import { ExtrasList, ExtrasPicker, MealPlan, hasRestaurant } from "./extras";
 import { GuestFields, StayFields, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
@@ -68,6 +69,10 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
   const [panel, setPanel] = useState<Panel>(start === "checkin" && b.status === "Confirmed" && b.from <= TODAY ? "checkin" : start === "checkout" && b.status === "Checked in" ? "checkout" : start === "pay" ? "pay" : null);
   const [tab, setTab] = useState<Tab>("overview");
   const [more, setMore] = useState(false);
+  const [extend, setExtend] = useState<HoldValue | null>(null);
+  const [holdErr, setHoldErr] = useState("");
+  const [, tick] = useState(0);
+  useEffect(() => { if (b.status !== "On hold") return; const t = setInterval(() => tick((x) => x + 1), 30000); return () => clearInterval(t); }, [b.status]);
   const active = b.status === "Confirmed" || b.status === "Checked in";
   const paid = paidOf(b);
   const folio = totalOf(b) + (active ? ex.total : 0);
@@ -81,6 +86,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
 
   const primary = canIn ? <button onClick={() => open("checkin")} className={bMain}><LogIn className="size-4" />Check in</button>
     : b.status === "Checked in" ? <button onClick={() => open("checkout")} className={bMain}><LogOut className="size-4" />Check out</button>
+    : b.status === "On hold" ? null
     : balance !== 0 ? <button onClick={() => open("pay")} className={bMain}>{balance < 0 ? "Refund" : "Take payment"}</button> : null;
   const TABS: [Tab, string][] = [["overview", "Overview"], ["stay", "Stay & room"], ["guest", "Guest"], ["extras", "Meals & services"], ["bill", "Bill & payments"], ["docs", "Documents & messages"], ...(details ? [["activity", "Activity"] as [Tab, string]] : [])];
   const extrasCount = (b.preMeals?.length ?? 0) + ex.svcOrders.length;
@@ -95,7 +101,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[13.5px]">
               <span className="font-mono font-semibold text-[#4d5664]">{b.code}</span>
               <ChannelBadge b={b} />{b.channelRef && <span className="text-hms-muted">{b.channelRef}</span>}
-              <StatusPill s={b.status} /><PayPill b={b} /><Flags b={b} />
+              <StatusPill s={b.status} />{b.status !== "On hold" && <PayPill b={b} />}<Flags b={b} />
               {b.group && <Link href={`/hms/bookings/group?g=${b.group}`} className="rounded-md bg-hms-hover px-2 py-0.5 text-[12px] font-semibold text-[#4d5664] hover:text-hms-ink">Group {b.group} · {bk.list.filter((x) => x.group === b.group).length} rooms →</Link>}
             </div>
             <p className="mt-2 text-[15px]"><b>{b.unit ? `Room ${b.unit}` : <span className="text-[#a15c00]">No room yet</span>}</b> <span className="text-hms-muted">· {b.type}</span> · {dow(b.from)} {dm(b.from)} → {dow(b.to)} {dm(b.to)} · {b.nights.length} night{b.nights.length > 1 ? "s" : ""} · {b.adults + b.children} guest{b.adults + b.children > 1 ? "s" : ""}</p>
@@ -122,6 +128,28 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
           ))}
         </div>
       </section>
+
+      {b.status === "On hold" && b.hold && (
+        <section aria-label="Hold" className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-3.5 text-[#6b4309]">
+          <Clock className="size-5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[14.5px] font-semibold">{holdLive(b) ? `Room held until ${holdClock(b.hold.until)} · ${holdLeft(b)}` : "Hold ran out"}</p>
+            <p className="text-[13px]">{b.hold.reason ? `${b.hold.reason} · ` : ""}Not confirmed yet. If nobody confirms, the room frees itself — no charge.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { setHoldErr(""); setExtend({ until: [180, 60, 30].map((m) => addMin(b.hold!.until > stamp() ? b.hold!.until : stamp(), m)).find((u) => u <= holdMax(b.from, bk.settings.checkIn)) ?? holdMax(b.from, bk.settings.checkIn), reason: b.hold!.reason ?? "" }); }} className="h-10 rounded-xl border border-[#f1dfb8] bg-white px-3.5 text-[14px] font-semibold text-hms-ink hover:bg-[#fffaf0]">Extend</button>
+            <button onClick={() => { bk.releaseHold(b.code); toast(`Hold released · Room ${b.unit} is free`); }} className="h-10 rounded-xl border border-[#f1dfb8] bg-white px-3.5 text-[14px] font-semibold text-[#b42318] hover:bg-[#fffaf0]">Release</button>
+            <button onClick={() => { const er = bk.confirmHold(b.code); toast(er || `${b.code} confirmed`); }} className={bMain}><Check className="size-4" />Confirm booking</button>
+          </div>
+        </section>
+      )}
+      {extend && b.hold && (
+        <HoldSheet title="Extend hold" onClose={() => setExtend(null)} error={holdErr} saveLabel={`Hold until ${holdClock(extend.until)}`}
+          onSave={() => { const er = bk.extendHold(b.code, extend.until); if (er) return setHoldErr(er); setExtend(null); toast(`Held until ${holdClock(extend.until)}`); }}>
+          <p className="mb-4 text-[14px] text-hms-muted">Now held until <b className="text-hms-ink">{holdClock(b.hold.until)}</b>.</p>
+          <HoldFields value={extend} set={setExtend} max={holdMax(b.from, bk.settings.checkIn)} />
+        </HoldSheet>
+      )}
 
       {panel && <div id="bk-panel" className="mt-4">
         {panel === "checkin" && <CheckInView {...vp} extras={ex.total} takeCash={takeCash} />}

@@ -6,12 +6,13 @@
 //   • prices come from Discounts & Rates (room price per night + automatic deals); VAT/service from the room type
 //   • cash taken here is posted to the main Cashbox
 // Every other module (Dashboard, Guests, Rooms, Cashbox, Other Services, Restaurant) reads stays from here via useStays().
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
 import { TODAY, oooOn, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { DEMO_GUESTS, addDays, demoStays, hash, type Stay } from "./demo";
 
-export type BStatus = "Confirmed" | "Checked in" | "Checked out" | "Cancelled" | "No-show";
+/** "On hold" = room kept for a guest for a set time, not confirmed yet; it releases by itself when the time runs out. */
+export type BStatus = "On hold" | "Confirmed" | "Checked in" | "Checked out" | "Cancelled" | "No-show";
 /** Where a booking came from. OTA bookings carry the OTA name + its reference (recorded here; no live OTA sync in this prototype). */
 export type Channel = "Walk-in" | "Phone" | "Website" | "Marketplace" | "OTA" | "Agent" | "Corporate";
 export const CHANNELS: Channel[] = ["Walk-in", "Phone", "Website", "Marketplace", "OTA", "Agent", "Corporate"];
@@ -75,6 +76,8 @@ export type Booking = {
   discount: number;
   payments: Pay[]; note: string; created: string;
   checkedInAt?: string; checkedOutAt?: string; cancel?: { reason: string; at: string; keep: number };
+  /** Only while status is "On hold": kept until this local time ("YYYY-MM-DDTHH:MM"), and why. */
+  hold?: { until: string; reason?: string; at: string };
   log: { at: string; text: string; by: string }[];
   demo?: boolean;
 };
@@ -90,6 +93,8 @@ export const nightsBetween = (a: string, b: string) => Math.max(0, Math.round((D
 export const tk = (n: number) => `৳${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
 const nowHm = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 export const stamp = () => `${TODAY}T${nowHm()}`;
+/** "6:30 PM" today, "11 Nov 6:30 PM" on another day. */
+export const holdClock = (x: string) => { const [d, t] = x.split("T"); const [hh, mm] = t.split(":").map(Number); const c = `${(hh % 12) || 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`; return d === TODAY ? c : `${Number(d.slice(8))} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][Number(d.slice(5, 7)) - 1]} ${c}`; };
 export const timeOf = (at: string) => { const [H, M] = at.slice(11, 16).split(":").map(Number); return `${H % 12 || 12}:${String(M).padStart(2, "0")} ${H >= 12 ? "PM" : "AM"}`; };
 
 // ---------- money ----------
@@ -122,8 +127,18 @@ export const payState = (b: Booking): PayState => {
   if (p > t) return "Refund due";
   return p >= t ? "Paid" : p > 0 ? "Partly paid" : "Due";
 };
-/** Nights this booking holds a room (cancelled / no-show hold nothing). */
-export const holds = (b: Booking) => b.status === "Confirmed" || b.status === "Checked in";
+/** A hold that has not run out yet. */
+export const holdLive = (b: Booking, at = stamp()) => b.status === "On hold" && !!b.hold && b.hold.until > at;
+/** Nights this booking holds a room (cancelled / no-show / expired holds hold nothing). */
+export const holds = (b: Booking) => b.status === "Confirmed" || b.status === "Checked in" || holdLive(b);
+/** "45 min left", "3 h 10 min left", "until 10 Nov 6:00 PM". */
+export function holdLeft(b: Booking, at = stamp()) {
+  if (!b.hold) return "";
+  const toMin = (x: string) => Date.parse(`${x}:00`) / 60000;
+  const m = Math.round(toMin(b.hold.until) - toMin(at));
+  if (m <= 0) return "Hold ran out";
+  return m < 60 ? `${m} min left` : m < 24 * 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""} left` : `${Math.round(m / 60 / 24)} day${m >= 36 * 60 ? "s" : ""} left`;
+}
 export const overlaps = (b: { from: string; to: string }, from: string, to: string) => b.from < to && from < b.to;
 
 /** Situations front desk must notice — separate from status. */
@@ -243,9 +258,9 @@ function write(slug: string, st: State) {
 }
 
 /** Map a booking to the shared Stay shape the other modules read. Cancelled and no-show bookings are left out. */
-export const toStay = (b: Booking): Stay | null => (b.status === "Cancelled" || b.status === "No-show" ? null : {
+export const toStay = (b: Booking): Stay | null => (b.status === "Cancelled" || b.status === "No-show" || b.status === "On hold" ? null : {
   code: b.code, guestId: b.guestId, room: b.unit, type: b.type, from: b.from, to: b.to, nights: b.nights.length,
-  status: b.status, payment: payState(b) === "Refund due" ? "Paid" : (payState(b) as Stay["payment"]), total: totalOf(b), due: dueOf(b), channel: channelLabel(b),
+  status: b.status as Stay["status"], payment: payState(b) === "Refund due" ? "Paid" : (payState(b) as Stay["payment"]), total: totalOf(b), due: dueOf(b), channel: channelLabel(b),
 });
 
 function useRaw(h: Hotel) {
@@ -283,7 +298,8 @@ export function useBookings(h: Hotel) {
   /** Rooms free for the dates (published, not out of order, no active booking). */
   const freeUnits = useCallback((from: string, to: string, except?: string) => units.filter((u) => !oooOn(u, from, to) && !clash(u.code, from, to, except)), [units, clash]);
 
-  const create = useCallback((items: NewBooking[]): Result => {
+  const create = useCallback((items: NewBooking[], hold?: { until: string; reason?: string }): Result => {
+    if (hold && hold.until <= stamp()) return { ok: false, error: "Hold time must be later than now" };
     if (!items.length) return { ok: false, error: "Pick at least one room" };
     for (const it of items) {
       if (it.from >= it.to) return { ok: false, error: "Check-out must be after check-in" };
@@ -301,7 +317,8 @@ export function useBookings(h: Hotel) {
       for (const it of items) {
         const code = `BK-${s.next++}`; codes.push(code);
         const { advance, ...rest } = it;
-        const b: Booking = { ...rest, code, group, status: "Confirmed", payments: [], created: stamp(), log: [{ at: stamp(), text: `Booked · ${channelLabel(it)}${it.channelRef ? ` (${it.channelRef})` : ""}${it.unit ? ` · Room ${it.unit}` : ""}`, by: ME }] };
+        const b: Booking = { ...rest, code, group, status: hold ? "On hold" : "Confirmed", payments: [], created: stamp(), log: [{ at: stamp(), text: `${hold ? "Held" : "Booked"} · ${channelLabel(it)}${it.channelRef ? ` (${it.channelRef})` : ""}${it.unit ? ` · Room ${it.unit}` : ""}`, by: ME }] };
+        if (hold) { b.hold = { until: hold.until, reason: hold.reason || undefined, at: stamp() }; log(b, `On hold until ${holdClock(hold.until)}${hold.reason ? ` · ${hold.reason}` : ""}`); }
         if (advance && advance.amount > 0 && it === items[0]) { b.payments.push({ id: `p${Date.now().toString(36)}`, at: stamp(), amount: advance.amount, method: advance.method, by: ME, note: "Advance" }); log(b, `Advance ${tk(advance.amount)} · ${advance.method}`); }
         s.list.push(b);
       }
@@ -423,6 +440,36 @@ export function useBookings(h: Hotel) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [st]);
 
+  /** Hold → confirmed booking (room stays the same). Fails if the hold already ran out. */
+  const confirmHold = useCallback((code: string): string => {
+    const b0 = find(now(), code);
+    if (b0.status !== "On hold") return "This booking is not on hold";
+    if (!holdLive(b0)) {
+      const c = b0.unit ? clash(b0.unit, b0.from, b0.to, code) : undefined;
+      if (c) return `The hold ran out and Room ${b0.unit} is now taken by ${c.code}`;
+    }
+    save((s) => { const x = find(s, code); x.status = "Confirmed"; x.hold = undefined; log(x, "Hold confirmed · booking confirmed"); });
+    return "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st, clash]);
+  const extendHold = useCallback((code: string, until: string): string => {
+    if (until <= stamp()) return "Pick a time later than now";
+    save((s) => { const x = find(s, code); if (x.status === "On hold" && x.hold) { x.hold.until = until; log(x, `Hold extended until ${holdClock(until)}`); } });
+    return "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st]);
+  const releaseHold = useCallback((code: string, reason = "Hold released") => save((s) => {
+    const x = find(s, code); if (x.status !== "On hold") return;
+    x.status = "Cancelled"; x.cancel = { reason, at: stamp(), keep: 0 }; x.hold = undefined; log(x, `${reason} · room is free again`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [st]);
+  // Holds that ran out release their room by themselves (checked every 30 s while the HMS is open).
+  useEffect(() => {
+    const tick = () => { const at = stamp(); const gone = now().list.filter((b) => b.status === "On hold" && !holdLive(b, at)); if (gone.length) save((s) => { for (const b of gone) { const x = find(s, b.code); x.status = "Cancelled"; x.cancel = { reason: "Hold ran out", at, keep: 0 }; x.hold = undefined; log(x, "Hold ran out · room is free again"); } }); };
+    tick(); const t = setInterval(tick, 30000); return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st]);
+
   /** Cancel or no-show. `keep` = how much of what was paid stays as a fee; the rest shows as refund due. */
   const cancel = useCallback((code: string, kind: "Cancelled" | "No-show", reason: string, keep: number) => save((s) => {
     const x = find(s, code); x.status = kind; x.cancel = { reason, at: stamp(), keep: Math.max(0, keep) };
@@ -479,7 +526,7 @@ export function useBookings(h: Hotel) {
   [st]);
   const reset = useCallback(() => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); }, [h.slug]);
 
-  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, precheckIn, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
+  return { list: st.list, ready, units, cats, unitByCode, clash, freeUnits, create, confirmHold, extendHold, releaseHold, pay, assign, checkIn, checkOut, undoCheckIn, setDates, moveStay, precheckIn, update, cancel, addMeals, removeMeal, mealSent, setSource, addCharge, removeCharge, takeDeposit, settleDeposit, setMealPlan, settings, saveSettings, audits: st.audits ?? [], closeDay, waitlist: st.waitlist ?? [], addWait, closeWait, reset };
 }
 export type Bk = ReturnType<typeof useBookings>;
 export type { Unit };

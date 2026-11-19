@@ -102,10 +102,10 @@ export function BookingsFrame({ tab, children, sub, bar }: { tab: BkTab; childre
 
 // ---------- pills (booking status, payment and flags are always separate) ----------
 const ST: Record<BStatus, string> = {
-  Confirmed: "bg-[#e8f0fe] text-[#1d4ed8]", "Checked in": "bg-[#e5f5ec] text-[#16693a]", "Checked out": "bg-hms-hover text-[#4d5664]",
+  "On hold": "bg-[#fdf3d9] text-[#7a4a0b]", Confirmed: "bg-[#e8f0fe] text-[#1d4ed8]", "Checked in": "bg-[#e5f5ec] text-[#16693a]", "Checked out": "bg-hms-hover text-[#4d5664]",
   Cancelled: "bg-[#fdecec] text-[#b42318]", "No-show": "bg-[#fdecec] text-[#b42318]",
 };
-const STL: Record<BStatus, string> = { Confirmed: "Confirmed", "Checked in": "In house", "Checked out": "Checked out", Cancelled: "Cancelled", "No-show": "No-show" };
+const STL: Record<BStatus, string> = { "On hold": "On hold", Confirmed: "Confirmed", "Checked in": "In house", "Checked out": "Checked out", Cancelled: "Cancelled", "No-show": "No-show" };
 export const statusLabel = (s: BStatus) => STL[s];
 export function StatusPill({ s }: { s: BStatus }) {
   return <span className={clsx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[12.5px] font-semibold", ST[s])}><span className="size-1.5 rounded-full bg-current" />{STL[s]}</span>;

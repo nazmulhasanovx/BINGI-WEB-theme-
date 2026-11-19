@@ -1,14 +1,15 @@
 "use client";
 // New booking — the live HMS 4-step flow, cleaned up: Rooms & rates → Guest → Meals & services → Payment & review.
-// One summary on the right the whole way. Nothing is saved until "Confirm booking".
+// One summary on the right the whole way. Nothing is saved until "Confirm booking" — or "Hold room", which keeps the room
+// for any guest for a set time (name + phone only) and frees it by itself if nobody confirms.
 import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, Minus, Pencil, Plus, Search, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock, Minus, Pencil, Plus, Search, UserRound } from "lucide-react";
 import { TODAY, taxOf, type Category as RoomCat, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
-import { CHANNELS, METHODS, OTAS, bill, dm, dow, nightsBetween, preMealTotal, tk, useBookings, type Channel, type NewBooking, type Night, type PayMethod, type PreMeal } from "@/lib/bookings/store";
+import { CHANNELS, METHODS, OTAS, bill, holdClock, stamp, dm, dow, nightsBetween, preMealTotal, tk, useBookings, type Channel, type NewBooking, type Night, type PayMethod, type PreMeal } from "@/lib/bookings/store";
 import { useBkMode } from "@/lib/bookings/mode";
 import { useRates } from "@/lib/rates/store";
 import { phoneKey, useGuests } from "@/lib/guests/store";
@@ -20,6 +21,7 @@ import { useCashboxData } from "../cashbox/pages";
 import { input, lbl } from "../guests/ui";
 import { ChannelBadge, ModeSwitch, bMain, bSoft, channelIcon } from "./ui";
 import { ExtrasList, ExtrasPicker, MealPlan, type SvcDraft } from "./extras";
+import { HoldFields, HoldSheet, addMin, holdMax, type HoldValue } from "./hold";
 import { GuestFields, StayFields, emptyGuest, emptyStay, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
 
 const STEPS = [["Rooms & rates", "Dates and room"], ["Guest", "Who is staying"], ["Meals & services", "Optional"], ["Payment & review", "Confirm"]] as const;
@@ -77,6 +79,9 @@ export function NewBookingPage() {
   const [tried, setTried] = useState<Record<number, boolean>>({});
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [holdOpen, setHoldOpen] = useState(false);
+  const [hold, setHold] = useState<HoldValue>(() => ({ until: "", reason: "" }));
+  const [holdErr, setHoldErr] = useState("");
 
   const n = nightsBetween(from, to);
   const datesOk = from >= TODAY && to > from;
@@ -146,15 +151,35 @@ export function NewBookingPage() {
     document.getElementById("nb-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // ---- hold: rooms + a name and phone are enough
+  const hMax = holdMax(from, bk.settings.checkIn);
+  const holdGuest: GuestDraft = guest ? draft : { ...shown, name: found?.name ?? shown.name, phone: found?.phone ?? phone };
+  const holdGuestErr = guest || found ? {} : (({ name, phone: ph }) => ({ ...(name ? { name } : {}), ...(ph ? { phone: ph } : {}) }))(guestErrors(holdGuest));
+  const openHold = () => {
+    if (errors[0].length) { setTried({ ...tried, 0: true }); setStep(0); return; }
+    setHoldErr(""); setHold((v) => ({ ...v, until: v.until && v.until > stamp() && v.until <= hMax ? v.until : [180, 60, 30].map((m) => addMin(stamp(), m)).find((u) => u <= hMax) ?? hMax })); setHoldOpen(true);
+  };
+  const saveHold = () => {
+    if (Object.keys(holdGuestErr).length) return setHoldErr(Object.values(holdGuestErr)[0]);
+    if (!hold.until || hold.until <= stamp()) return setHoldErr("Pick a time later than now");
+    if (hold.until > hMax) return setHoldErr(`A hold can run until ${holdClock(hMax)} at the latest`);
+    if (found && !guest) setUseId(found.id);
+    save({ hold: { until: hold.until, reason: hold.reason.trim() } });
+  };
   const submit = () => {
     for (let i = 0; i < 3; i++) if (errors[i].length) { setTried({ ...tried, [i]: true }); setStep(i); return; }
+    save({});
+  };
+  const save = ({ hold: hd }: { hold?: { until: string; reason: string } }) => {
     if (busy) return;
-    if (adv > 0 && method === "Cash" && !drawerFor(h, cbx.refs, "front-desk").open) return setErr("Main cashbox is not open — open it, choose another method, or take the advance later.");
+    if (!hd && adv > 0 && method === "Cash" && !drawerFor(h, cbx.refs, "front-desk").open) return setErr("Main cashbox is not open — open it, choose another method, or take the advance later.");
     setBusy(true);
-    let guestId = guest?.id;
-    const d = shown;
+    const savedGuest = guest ?? (hd && found ? found : undefined);
+    let guestId = savedGuest?.id;
+    const d = savedGuest && hd && !guest ? guestToDraft(savedGuest) : hd ? holdGuest : shown;
     const base = { name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), country: d.country, address: d.address, idType: d.idType, idNo: d.idNo, idFront: d.idFront, idBack: d.idBack, gender: d.gender, dob: d.dob || undefined, occupation: d.occupation || undefined, visaNo: d.visaNo || undefined, visaExpiry: d.visaExpiry || undefined, prefs: d.prefs, vip: !!d.vip };
-    if (guest) g.saveGuest({ id: guest.id, name: base.name, phone: base.phone, email: base.email, country: base.country, address: base.address, idType: base.idType, idNo: base.idNo, idFront: base.idFront, idBack: base.idBack, gender: base.gender, dob: base.dob, occupation: base.occupation, visaNo: base.visaNo, visaExpiry: base.visaExpiry, prefs: base.prefs, vip: base.vip, verified: guest.verified || (!!d.idNo && !!d.idFront), blocked: guest.blocked, notes: guest.notes, marketing: guest.marketing, created: guest.created });
+    if (hd && savedGuest && !guest) { /* saved guest picked by phone in the hold sheet — keep their record as is */ }
+    else if (guest) g.saveGuest({ id: guest.id, name: base.name, phone: base.phone, email: base.email, country: base.country, address: base.address, idType: base.idType, idNo: base.idNo, idFront: base.idFront, idBack: base.idBack, gender: base.gender, dob: base.dob, occupation: base.occupation, visaNo: base.visaNo, visaExpiry: base.visaExpiry, prefs: base.prefs, vip: base.vip, verified: guest.verified || (!!d.idNo && !!d.idFront), blocked: guest.blocked, notes: guest.notes, marketing: guest.marketing, created: guest.created });
     else { guestId = g.nextId(); g.saveGuest({ id: guestId, ...base, verified: !!d.idNo && !!d.idFront, notes: "", marketing: !!base.email, created: TODAY }); }
     const comps = stay.companions.filter((c) => c.name.trim());
     const items: NewBooking[] = lines.map((l, i) => ({
@@ -166,10 +191,11 @@ export function NewBookingPage() {
       companions: i === 0 && comps.length ? comps : undefined,
       booker: stay.booker?.name.trim() ? stay.booker : undefined, payer: stay.payer.kind === "Company" ? stay.payer : undefined,
       preMeals: i === 0 && meals.length ? meals : undefined,
-      advance: i === 0 && adv > 0 ? { amount: adv, method } : undefined,
+      advance: !hd && i === 0 && adv > 0 ? { amount: adv, method } : undefined,
     }));
-    const r = bk.create(items);
-    if (!r.ok) { setBusy(false); setStep(0); return setErr(r.error); }
+    const r = bk.create(items, hd);
+    if (!r.ok) { setBusy(false); if (hd) return setHoldErr(r.error); setStep(0); return setErr(r.error); }
+    if (hd) { router.push(`/hms/bookings/view?b=${r.codes[0]}&made=${encodeURIComponent(`${r.codes.length > 1 ? `${r.codes.length} rooms` : `Room ${room0}`} held for ${base.name} until ${holdClock(hd.until)}`)}`); return; }
     if (adv > 0 && method === "Cash") postCash(h, cbx.refs, "front-desk", { amount: adv, source: "booking", ref: r.codes[0], party: base.name });
     let svcFail = 0;
     for (const s of services) {
@@ -203,10 +229,14 @@ export function NewBookingPage() {
         </div>
         {err && <p role="alert" className="mt-3 rounded-lg bg-[#fdecec] px-3 py-2 text-[13px] font-medium text-[#b42318]">{err}</p>}
         <div className="mt-4 hidden gap-2 lg:flex">
-          {step > 0 && <button onClick={() => go(step - 1)} className={bSoft}><ArrowLeft className="size-4" />Back</button>}
-          {step < 3 ? <button onClick={() => go(step + 1)} className={clsx(bMain, "flex-1")}>Next<ArrowRight className="size-4" /></button>
+          {step > 0 && <button onClick={() => go(step - 1)} aria-label="Back" className={clsx(bSoft, "px-3")}><ArrowLeft className="size-4" /></button>}
+          {step < 3 ? <button onClick={() => go(step + 1)} className={clsx(bMain, "flex-1")}>Next: {STEPS[step + 1][0]}<ArrowRight className="size-4" /></button>
             : <button onClick={submit} disabled={busy} className={clsx(bMain, "flex-1")}><Check className="size-4" />Confirm booking</button>}
         </div>
+        {lines.length > 0 && <div className="mt-2 hidden lg:block">
+          <button onClick={openHold} className={clsx(bSoft, "w-full")}><Clock className="size-4" />Hold room{lines.length > 1 ? "s" : ""} for later</button>
+          <p className="mt-1.5 text-center text-[12px] text-hms-muted">Keeps the room for a set time · only name &amp; phone needed</p>
+        </div>}
       </div>
     </div>
   );
@@ -333,6 +363,7 @@ export function NewBookingPage() {
                 <Review title="Register" onEdit={() => go(1)}>{[stay.purpose, stay.comingFrom && `from ${stay.comingFrom}`, stay.eta && `arrives ${stay.eta}`, stay.payer.kind === "Company" && `paid by ${stay.payer.name || "company"}`, stay.booker?.name && `booked by ${stay.booker.name}`].filter(Boolean).join(" · ") || "—"}</Review>
               </div>
             </Card>
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-3 text-[14px] text-[#6b4309]"><Clock className="size-4 shrink-0" /><p className="min-w-0 flex-1">Guest not ready to confirm? Hold the room for a few hours instead.</p><button onClick={openHold} className="h-9 rounded-xl border border-[#f1dfb8] bg-white px-3 text-[13.5px] font-semibold text-hms-ink hover:bg-[#fffaf0]">Hold instead</button></div>
             <Card title="Advance payment" action={<span className="text-[13px] text-hms-muted">Optional</span>}>
               <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
                 <div><label htmlFor="nb-adv" className={lbl}>Amount (৳)</label><input id="nb-adv" inputMode="numeric" value={advance} onChange={(e) => setAdvance(e.target.value.replace(/\D/g, ""))} placeholder="0" className={input} /></div>
@@ -348,8 +379,28 @@ export function NewBookingPage() {
       <div className="sticky bottom-0 z-10 -mx-4 mt-4 flex items-center gap-2 border-t border-hms-line bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
         {step > 0 && <button onClick={() => go(step - 1)} aria-label="Previous step" className={clsx(bSoft, "px-3")}><ArrowLeft className="size-4" /></button>}
         <div className="min-w-0 flex-1"><p className="text-[12px] text-hms-muted">Step {step + 1} of 4</p><p className="text-[17px] font-bold tabular-nums">{tk(total)}</p></div>
+        {lines.length > 0 && <button onClick={openHold} aria-label="Hold room for later" className={clsx(bSoft, "px-3")}><Clock className="size-4" /><span className="max-[380px]:hidden">Hold</span></button>}
         {step < 3 ? <button onClick={() => go(step + 1)} className={bMain}>Next<ArrowRight className="size-4" /></button> : <button onClick={submit} disabled={busy} className={bMain}>Confirm</button>}
       </div>
+      {holdOpen && (
+        <HoldSheet title={`Hold ${lines.length > 1 ? `${lines.length} rooms` : `Room ${room0}`}`} onClose={() => setHoldOpen(false)} onSave={saveHold} busy={busy} error={holdErr}
+          saveLabel={hold.until ? `Hold until ${holdClock(hold.until)}` : "Hold room"}>
+          <div className="mb-4 rounded-xl bg-[#f7f8fa] px-3.5 py-3 text-[14px]">
+            <p className="font-semibold">{lines.map((l) => `Room ${l.code} · ${l.cat.name}`).join(", ")}</p>
+            <p className="text-[13px] text-hms-muted">{dow(from)} {dm(from)} → {dow(to)} {dm(to)} · {n} night{n > 1 ? "s" : ""} · {tk(total)}</p>
+          </div>
+          {guest || found ? (
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-hms-line p-3"><span className="grid size-9 place-items-center rounded-full bg-[#ffecec] text-[#c8232e]"><UserRound className="size-4" /></span><div className="min-w-0 flex-1"><p className="font-semibold">{(guest ?? found)!.name}</p><p className="text-[13px] text-hms-muted">Saved guest · {(guest ?? found)!.phone}</p></div></div>
+          ) : (
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div><label htmlFor="hold-name" className={lbl}>Guest name</label><input id="hold-name" value={shown.name} onChange={(e) => setDraft({ name: e.target.value })} className={input} placeholder="Any guest" /></div>
+              <div><label htmlFor="hold-phone" className={lbl}>Phone</label><input id="hold-phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={input} placeholder="01XXX-XXXXXX" /></div>
+            </div>
+          )}
+          <HoldFields value={hold} set={setHold} max={hMax} />
+          <p className="mt-4 rounded-xl bg-[#fdf8ec] px-3.5 py-2.5 text-[13px] text-[#6b4309]">The room is blocked for other bookings until then. If nobody confirms, the hold ends by itself and the room is free again — no charge.{services.length ? " Services are added after you confirm." : ""}</p>
+        </HoldSheet>
+      )}
     </div></div>
   );
 }

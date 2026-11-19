@@ -14,6 +14,7 @@ import { BookingsFrame, card, channelIcon, statusLabel, useBk } from "./ui";
 export function CalendarPage() { return <BookingsFrame tab="calendar"><Calendar /></BookingsFrame>; }
 
 const BAR: Record<string, string> = {
+  "On hold": "border-dashed border-[#e0b65c] bg-[#fdf3d9] text-[#7a4a0b]",
   Confirmed: "border-[#9db8f2] bg-[#e8f0fe] text-[#1e3a8a]",
   "Checked in": "border-[#86cfa3] bg-[#dcf3e5] text-[#14532d]",
   "Checked out": "border-[#d3d8df] bg-[#eef0f3] text-[#4d5664]",
