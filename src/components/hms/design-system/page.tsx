@@ -17,7 +17,16 @@ async function copyText(t: string) {
     let ok = false; try { ok = document.execCommand("copy"); } catch { /* ignore */ } a.remove(); return ok;
   }
 }
-function save(name: string, data: BlobPart, type: string) {
+// Inside a Claude artifact the page can't download directly — it asks the viewer through the `downloads` capability
+// (allowed types only, so .css/.tsx/.dart go out as .txt there). Everywhere else: a normal browser download.
+type Dl = { save: (r: { filename: string; data: string | Blob | ArrayBufferView }) => Promise<unknown> };
+const OK_EXT = ["txt", "json", "md", "svg", "zip", "html", "csv"];
+async function save(name: string, data: BlobPart, type: string) {
+  const c = (window as unknown as { claude?: { use?: (n: string) => Promise<Dl | null> } }).claude;
+  if (c?.use) {
+    const dl = await c.use("downloads").catch(() => null);
+    if (dl) { const ext = name.split(".").pop()!; try { await dl.save({ filename: OK_EXT.includes(ext) ? name : `${name}.txt`, data: data as string | Blob | ArrayBufferView }); } catch { /* viewer declined */ } return; }
+  }
   const url = URL.createObjectURL(new Blob([data], { type }));
   const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
