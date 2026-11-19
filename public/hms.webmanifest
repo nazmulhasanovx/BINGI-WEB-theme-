@@ -1,0 +1,25 @@
+{
+  "id": "/hms",
+  "name": "BinGi HMS",
+  "short_name": "BinGi HMS",
+  "description": "BinGi Hotel Management Technology — bookings, rooms, housekeeping, restaurant, staff and money in one app.",
+  "start_url": "/hms?source=app",
+  "scope": "/hms",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#F4F6F8",
+  "theme_color": "#FFFFFF",
+  "lang": "en",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/hms-app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/hms-app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/hms-app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "New booking", "url": "/hms/bookings/new", "icons": [{ "src": "/hms-app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Bookings", "url": "/hms/bookings", "icons": [{ "src": "/hms-app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Housekeeping", "url": "/hms/housekeeping", "icons": [{ "src": "/hms-app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

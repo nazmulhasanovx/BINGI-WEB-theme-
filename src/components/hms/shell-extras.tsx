@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Boxes, CalendarCheck, Check, ChevronDown, CircleHelp, CornerDownLeft, Languages, LogOut, MessageSquareReply, Search, Sparkles, User, UserRoundCheck, type LucideIcon, Palette as PaletteIcon } from "lucide-react";
+import { AppBadge, InstallSheet } from "./app-install";
+import { useInstall } from "@/lib/app-mode";
 import { useProperty } from "./property";
 import { useGuests } from "@/lib/guests/store";
 import { hasInventory, statusOf, useInventory } from "@/lib/inventory/store";
@@ -146,8 +148,11 @@ export function LanguageMenu() {
 export function AccountMenu() {
   const h = useProperty();
   const { open, setOpen, ref } = usePop();
+  const [app, setApp] = useState(false);
+  const inst = useInstall();
   return (
     <div ref={ref} className="relative ml-1">
+      {app && <InstallSheet onClose={() => setApp(false)} />}
       <button onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-hms-hover">
         <span className="grid size-8 place-items-center rounded-full bg-hms-coral-soft text-[12px] font-bold text-hms-red">MY</span>
         <span className="hidden text-[14px] font-semibold sm:inline">Md Yeapas</span>
@@ -160,6 +165,7 @@ export function AccountMenu() {
           <Link role="menuitem" href="/hms/staff/people" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><User className="size-4 text-hms-muted" />My profile</Link>
           <Link role="menuitem" href="/hms/news" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><Megaphone className="size-4 text-hms-muted" />BinGi news & updates</Link>
           <Link role="menuitem" href="/hms/design-system" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><PaletteIcon className="size-4 text-hms-muted" />Design system (developers)</Link>
+          <button role="menuitem" onClick={() => { setOpen(false); setApp(true); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] hover:bg-hms-hover"><AppBadge size={18} />{inst.state === "installed" ? "BinGi HMS app · installed" : "Get the app (install)"}</button>
           <Link role="menuitem" href="/hms/settings" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><CircleHelp className="size-4 text-hms-muted" />Help & settings</Link>
           <Link role="menuitem" href="/onboarding" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><LogOut className="size-4 text-hms-muted" />Sign out <span className="ml-auto text-[11.5px] text-hms-muted">demo</span></Link>
         </div>

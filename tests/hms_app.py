@@ -1,0 +1,71 @@
+# HMS as an app: manifest + icons, Chromium installability (no errors), service worker, offline page,
+# install sheet (menu + preferences), full screen on/off, PWA window (standalone) shows "installed".
+from playwright.sync_api import sync_playwright
+import json
+B="http://localhost:3100"; F=[]
+def t(m,c): print(("PASS " if c else "FAIL ")+m); c or F.append(m)
+with sync_playwright() as p:
+  b=p.chromium.launch(); ctx=b.new_context(viewport={"width":1440,"height":900}); pg=ctx.new_page(); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
+  pg.goto(B+"/hms"); pg.evaluate("localStorage.setItem('hms-property','azure-bay')"); pg.goto(B+"/hms"); pg.wait_for_timeout(1500)
+  for x in pg.locator("[data-news-popup]").get_by_role("button",name="Later").all(): x.click()
+  man=pg.evaluate("fetch('/hms.webmanifest').then(r=>r.json())")
+  t("manifest: name, standalone, start /hms, scope /hms", man["name"]=="BinGi HMS" and man["display"]=="standalone" and man["start_url"].startswith("/hms") and man["scope"]=="/hms")
+  sizes={(i["sizes"],i["purpose"]) for i in man["icons"]}
+  t("icons 192 + 512 + maskable", ("192x192","any") in sizes and ("512x512","any") in sizes and ("512x512","maskable") in sizes)
+  ok=all(pg.evaluate(f"fetch('{i['src']}').then(r=>r.ok && r.headers.get('content-type').includes('png'))") for i in man["icons"])
+  t("icon files load", ok)
+  dims=pg.evaluate("Promise.all(['/hms-app/icon-192.png','/hms-app/icon-512.png'].map(u=>new Promise(r=>{const i=new Image(); i.onload=()=>r(i.naturalWidth+'x'+i.naturalHeight); i.src=u})))")
+  t("icon sizes are real 192/512", dims==["192x192","512x512"])
+  t("3 shortcuts (New booking, Bookings, Housekeeping)", [s["name"] for s in man["shortcuts"]]==["New booking","Bookings","Housekeeping"])
+  cdp=ctx.new_cdp_session(pg)
+  pg.wait_for_timeout(1500)
+  sw=pg.evaluate("navigator.serviceWorker.getRegistration('/hms').then(r=>r? r.scope : null)")
+  t("service worker registered for /hms", bool(sw) and sw.endswith("/hms"))
+  errs_i=cdp.send("Page.getInstallabilityErrors")["installabilityErrors"]
+  t(f"Chromium: installable (errors: {[e['errorId'] for e in errs_i]})", not errs_i)
+  am=cdp.send("Page.getAppManifest"); t("Chromium reads manifest without errors", not am.get("errors"))
+  # install sheet from account menu
+  pg.locator("button[aria-haspopup=menu]:not([aria-label])").first.click(); pg.wait_for_timeout(200)
+  pg.get_by_role("menuitem", name="Get the app (install)").click(); pg.wait_for_timeout(300)
+  d=pg.get_by_role("dialog", name="Get the BinGi HMS app")
+  t("install sheet with official icon", d.count()==1 and d.locator("img[alt='BinGi HMS app icon']").evaluate("i=>i.naturalWidth")>0)
+  t("install sheet shows Chrome/Edge steps (no prompt in headless)", "Chrome or Edge" in d.inner_text() or "Install BinGi HMS" in d.inner_text())
+  pg.screenshot(path="/tmp/pwa/1_sheet.png")
+  d.get_by_role("button", name="Close").click()
+  # full screen
+  fsb=pg.get_by_role("button", name="Full screen")
+  t("full screen button in header", fsb.count()==1)
+  fsb.click(); pg.wait_for_timeout(400)
+  t("full screen on", pg.evaluate("!!document.fullscreenElement") and pg.get_by_role("button", name="Exit full screen").count()==1)
+  pg.screenshot(path="/tmp/pwa/2_fullscreen.png")
+  pg.get_by_role("button", name="Exit full screen").click(); pg.wait_for_timeout(400)
+  t("full screen off", not pg.evaluate("!!document.fullscreenElement"))
+  # preferences card
+  pg.goto(B+"/hms/settings/preferences"); pg.wait_for_timeout(1000)
+  card=pg.get_by_role("region").filter(has_text="App & full screen") if False else pg.locator("section").filter(has_text="App & full screen")
+  t("preferences: App & full screen card", card.count()==1 and card.get_by_role("button", name="Get the app").count()==1 and card.get_by_role("button", name="Full screen").count()==1)
+  card.get_by_role("button", name="Get the app").click(); pg.wait_for_timeout(300)
+  t("card opens install sheet", pg.get_by_role("dialog", name="Get the BinGi HMS app").count()==1)
+  pg.screenshot(path="/tmp/pwa/3_prefs.png"); pg.keyboard.press("Escape")
+  # offline: SW serves offline page
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1200)
+  ctx.set_offline(True)
+  try: pg.goto(B+"/hms/reports", wait_until="domcontentloaded"); pg.wait_for_timeout(600)
+  except Exception as e: print("nav err", e)
+  t("offline → BinGi offline page with logo", "You're offline" in pg.inner_text("body") and pg.locator("img[alt='BinGi HMS']").count()==1)
+  pg.screenshot(path="/tmp/pwa/4_offline.png")
+  ctx.set_offline(False)
+  # installed window (emulate display-mode standalone)
+  pg2=ctx.new_page()
+  pg2.add_init_script("const mm=window.matchMedia.bind(window); window.matchMedia=(q)=>q.includes('display-mode: standalone')?{matches:true,media:q,addEventListener(){},removeEventListener(){}}:mm(q);")
+  pg2.goto(B+"/hms"); pg2.wait_for_timeout(1500)
+  pg2.locator("button[aria-haspopup=menu]:not([aria-label])").first.click(); pg2.wait_for_timeout(200)
+  t("in the app window the menu says installed", pg2.get_by_role("menuitem", name="BinGi HMS app · installed").count()==1)
+  # phone
+  m=b.new_page(viewport={"width":390,"height":844}); m.goto(B+"/hms/settings/preferences"); m.wait_for_timeout(1200)
+  t("phone: no sideways scroll", m.evaluate("document.documentElement.scrollWidth<=innerWidth+1"))
+  m.locator("section").filter(has_text="App & full screen").get_by_role("button", name="Get the app").click(); m.wait_for_timeout(300)
+  m.screenshot(path="/tmp/pwa/5_phone.png")
+  t("no page errors", not errs)
+  b.close()
+print("FAILED:",F) if F else print("ALL PASS")

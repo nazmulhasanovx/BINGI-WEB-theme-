@@ -8,6 +8,7 @@ import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
 import { useSettings, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
 import { FONTS, usePrefs } from "@/lib/settings/prefs";
+import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
 import { invoiceHtml, regCardHtml } from "@/lib/bookings/docs";
 import { useGuestNames } from "@/lib/guests/store";
@@ -590,6 +591,16 @@ export function ActivityPage() {
   );
 }
 
+function AppPrefCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card title="App & full screen" desc="Use BinGi HMS like an app: install it from the browser, or work in full screen." className="mt-4">
+      <AppCard onOpen={() => setOpen(true)} />
+      {open && <InstallSheet onClose={() => setOpen(false)} />}
+    </Card>
+  );
+}
+
 export function PreferencesPage() {
   const [prefs, setPrefs] = usePrefs();
   const [nav, setNav] = useNavMode();
@@ -601,6 +612,7 @@ export function PreferencesPage() {
         <div className="flex flex-wrap items-center gap-4 border-b border-hms-line py-3.5"><p className="flex-1 text-[14.5px] font-medium">Text size</p><Segmented value={String(prefs.zoom)} onChange={(v) => setPrefs({ zoom: Number(v) as 90 })} options={[{ v: "90", label: "Small" }, { v: "100", label: "Normal" }, { v: "110", label: "Large" }, { v: "120", label: "Larger" }]} /></div>
         <ToggleRow title="Reduce motion" desc="Turns off page and panel animations." on={prefs.reduceMotion} onChange={(v) => setPrefs({ reduceMotion: v })} />
       </Card>
+      <AppPrefCard />
       <Card title="Font" desc="Changes the HMS text for you on this device. Bangla always shows in Hind Siliguri. Guest website fonts are set in Website Management." className="mt-4" pad={false}>
         <div role="radiogroup" aria-label="Font" className="grid gap-2 px-5 pb-5 pt-3 sm:grid-cols-2 xl:grid-cols-3">
           {FONTS.map((f) => {

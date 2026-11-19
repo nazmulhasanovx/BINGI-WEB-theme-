@@ -25,6 +25,8 @@ import { useSubmittedHotels } from "@/lib/onboarding/store";
 import { WM_PAGES } from "./website/pages";
 import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
 import { NewsBanner, NewsPopup } from "./news";
+import { FullscreenButton } from "./app-install";
+import { useAppServiceWorker } from "@/lib/app-mode";
 import { setViewAs, useViewAs, visibleIds } from "@/lib/hrm/views";
 import { useBilling, monthName, dShort } from "@/lib/billing/store";
 import { useRooms } from "@/lib/rooms/store";
@@ -104,6 +106,7 @@ export function HmsShell({ children }: { children: ReactNode }) {
 function ShellInner({ children }: { children: ReactNode }) {
   const [prefs] = usePrefs();
   useSettings(useProperty()); // keeps the hotel VAT / service charge in step with Settings for every module
+  useAppServiceWorker(); // makes the HMS installable as an app (network first + offline page)
   const path = usePathname();
   const collapsedStored = useSyncExternalStore(modeSub, readMode, () => false);
   const [collapsed, setCollapsed] = useState<boolean | null>(null);
@@ -389,6 +392,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
         <SearchBox items={SEARCH_TARGETS} />
         <span className="hidden sm:block"><LanguageMenu /></span>
+        <FullscreenButton className="hidden sm:grid" />
         <Notifications />
         <AccountMenu />
       </div>
