@@ -18,7 +18,7 @@ import { useSettings } from "@/lib/settings/store";
 import {
   Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
   Landmark, LayoutGrid, Lock, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
-  UserPlus, Users, Wallet, Megaphone } from "lucide-react";
+  UserPlus, Users, Wallet, Megaphone, Palette } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
 import { SetupModeBanner } from "./setup-mode";
 import { useSubmittedHotels } from "@/lib/onboarding/store";
@@ -78,6 +78,7 @@ const SEARCH_TARGETS: NavTarget[] = [
   { label: "Room types", href: "/hms/rooms", icon: BedDouble }, { label: "Room numbers", href: "/hms/rooms/numbers", icon: BedDouble }, { label: "Attendance", href: "/hms/staff/attendance", icon: Users },
   { label: "Payroll", href: "/hms/staff/payroll", icon: Users }, { label: "Add a new property", href: "/onboarding", icon: Plus },
   { label: "BinGi news · server updates & what’s new", href: "/hms/news", icon: Megaphone },
+  { label: "Design system · tokens, components & code (developers)", href: "/hms/design-system", icon: Palette },
 ];
 
 const modeSub = (l: () => void) => (window.addEventListener("storage", l), () => window.removeEventListener("storage", l));
@@ -112,7 +113,7 @@ function ShellInner({ children }: { children: ReactNode }) {
     } catch {}
   };
   // Pages outside the sidebar (BinGi news) highlight nothing.
-  const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? (path.startsWith("/hms/news") ? { id: "" } : ALL_ITEMS[0]);
+  const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? (path.startsWith("/hms/news") || path.startsWith("/hms/design-system") ? { id: "" } : ALL_ITEMS[0]);
 
   const [drawer, setDrawer] = useState(false);
   return (
@@ -385,6 +386,7 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     return [{ label: "Cashbox", href: seg ? "/hms/cashbox" : undefined }, ...(seg ? [{ label: seg === "movements" ? "Movements" : seg === "days" ? "Closed days" : seg }] : [])];
   }
   if (path.startsWith("/hms/news")) return [{ label: "BinGi news" }];
+  if (path.startsWith("/hms/design-system")) return [{ label: "Design system" }];
   if (path.startsWith("/hms/discounts")) {
     const seg = path.split("/")[3];
     return [{ label: "Discounts & Rates", href: seg ? "/hms/discounts" : undefined }, ...(seg ? [{ label: seg === "campaigns" ? "Discounts" : seg }] : [])];

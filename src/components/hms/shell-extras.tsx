@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Boxes, CalendarCheck, Check, ChevronDown, CircleHelp, CornerDownLeft, Languages, LogOut, MessageSquareReply, Search, Sparkles, User, UserRoundCheck, type LucideIcon } from "lucide-react";
+import { Bell, Boxes, CalendarCheck, Check, ChevronDown, CircleHelp, CornerDownLeft, Languages, LogOut, MessageSquareReply, Search, Sparkles, User, UserRoundCheck, type LucideIcon, Palette as PaletteIcon } from "lucide-react";
 import { useProperty } from "./property";
 import { useGuests } from "@/lib/guests/store";
 import { hasInventory, statusOf, useInventory } from "@/lib/inventory/store";
@@ -159,6 +159,7 @@ export function AccountMenu() {
           <div className="my-1 border-t border-hms-line" />
           <Link role="menuitem" href="/hms/staff/people" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><User className="size-4 text-hms-muted" />My profile</Link>
           <Link role="menuitem" href="/hms/news" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><Megaphone className="size-4 text-hms-muted" />BinGi news & updates</Link>
+          <Link role="menuitem" href="/hms/design-system" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><PaletteIcon className="size-4 text-hms-muted" />Design system (developers)</Link>
           <Link role="menuitem" href="/hms/settings" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><CircleHelp className="size-4 text-hms-muted" />Help & settings</Link>
           <Link role="menuitem" href="/onboarding" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><LogOut className="size-4 text-hms-muted" />Sign out <span className="ml-auto text-[11.5px] text-hms-muted">demo</span></Link>
         </div>

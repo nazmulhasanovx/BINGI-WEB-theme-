@@ -1,0 +1,72 @@
+# Design system module (developers): reachable from account menu + ⌘K, tabs, copy hex, code langs, downloads (file + ZIP), mobile.
+from playwright.sync_api import sync_playwright
+import zipfile, io
+B="http://localhost:3100"; F=[]
+def t(m,c): print(("PASS " if c else "FAIL ")+m); c or F.append(m)
+with sync_playwright() as p:
+  b=p.chromium.launch()
+  ctx=b.new_context(viewport={"width":1440,"height":900}, accept_downloads=True, permissions=["clipboard-read","clipboard-write"])
+  pg=ctx.new_page(); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
+  pg.goto(B+"/hms"); pg.evaluate("localStorage.setItem('hms-property','azure-bay')"); pg.goto(B+"/hms"); pg.wait_for_timeout(1500)
+  for x in pg.locator("[data-news-popup]").get_by_role("button",name="Later").all(): x.click()
+  # account menu link
+  pg.locator("button[aria-haspopup=menu]:not([aria-label])").first.click(); pg.wait_for_timeout(250)
+  link=pg.get_by_role("menuitem", name="Design system (developers)")
+  t("account menu has Design system", link.count()==1)
+  link.click(); pg.wait_for_url("**/hms/design-system"); pg.wait_for_timeout(800)
+  t("page opens with title", pg.get_by_role("heading", name="Design system", exact=True).count()==1)
+  t("crumb says Design system", "Design system" in pg.locator("header").first.inner_text())
+  t("truth label: prototype reference", "Prototype reference" in pg.inner_text("main") and "live HMS is not changed" in pg.inner_text("main"))
+  tabs=pg.get_by_role("tablist", name="Design system sections").get_by_role("tab")
+  t("8 tabs", tabs.count()==8)
+  pg.screenshot(path="/tmp/dsy/1_overview.png")
+  # colors + copy
+  pg.get_by_role("tab", name="Colors").click(); pg.wait_for_timeout(250)
+  pg.get_by_role("button", name="Copy Action #C8232E").click(); pg.wait_for_timeout(300)
+  t("copy hex → clipboard", pg.evaluate("navigator.clipboard.readText()")=="#C8232E")
+  t("toast confirms", "Copied #C8232E" in pg.get_by_role("status").first.inner_text())
+  pg.screenshot(path="/tmp/dsy/2_colors.png", full_page=False)
+  for name,shot in [("Type","3_type"),("Spacing & radius","4_layout"),("Motion","5_motion")]:
+    pg.get_by_role("tab", name=name).click(); pg.wait_for_timeout(350); pg.screenshot(path=f"/tmp/dsy/{shot}.png")
+  # components: language switch
+  pg.get_by_role("tab", name="Components").click(); pg.wait_for_timeout(300)
+  sec=pg.get_by_role("region", name="Button")
+  t("React code by default", "MainButton" in sec.locator("pre").inner_text())
+  pg.get_by_role("radio", name="Flutter").click(); pg.wait_for_timeout(150)
+  t("Flutter code after switch", "BinGiPrimaryButton" in sec.locator("pre").inner_text())
+  pg.get_by_role("radio", name="CSS").click(); pg.wait_for_timeout(150)
+  t("CSS code after switch", "bh-btn--main" in sec.locator("pre").inner_text())
+  sec.get_by_role("button", name="Copy Button CSS code").click(); pg.wait_for_timeout(200)
+  t("copy code", "bh-btn--main" in pg.evaluate("navigator.clipboard.readText()"))
+  t("8 component sections", pg.locator("section[aria-label]").count()==8)
+  pg.get_by_role("radio", name="React").click(); pg.screenshot(path="/tmp/dsy/6_components.png")
+  # logos
+  pg.get_by_role("tab", name="Logos").click(); pg.wait_for_timeout(300)
+  imgs=pg.locator("img[alt^='BinGi HMS logo']")
+  t("4 official logos render", imgs.count()==4 and all(pg.evaluate("e=>e.naturalWidth>0", i.element_handle()) for i in imgs.all()))
+  with pg.expect_download() as d: pg.get_by_role("button", name="Download bingi-hms.svg").click()
+  t("logo download", d.value.suggested_filename=="bingi-hms.svg")
+  pg.screenshot(path="/tmp/dsy/7_logos.png")
+  # files
+  pg.get_by_role("tab", name="Code files").click(); pg.wait_for_timeout(300)
+  with pg.expect_download() as d: pg.get_by_role("button", name="Download bingi-ui.tsx").click()
+  body=open(d.value.path()).read()
+  t("react file download", "export function MainButton" in body)
+  with pg.expect_download() as d: pg.get_by_role("button", name="Download all (ZIP)").click()
+  z=zipfile.ZipFile(io.BytesIO(open(d.value.path(),"rb").read())); names=z.namelist()
+  t("ZIP has 6 files + 4 logos", len(names)==10 and any(n.endswith("bingi_theme.dart") for n in names) and any(n.endswith("brand/bingi-hms-mark.svg") for n in names))
+  t("ZIP tokens json valid", '"$value"' in z.read([n for n in names if n.endswith(".tokens.json")][0]).decode() or "value" in z.read([n for n in names if n.endswith(".tokens.json")][0]).decode())
+  pg.screenshot(path="/tmp/dsy/8_files.png")
+  # ⌘K
+  pg.goto(B+"/hms/bookings"); pg.wait_for_timeout(1000); pg.keyboard.press("Control+k"); pg.wait_for_timeout(300); pg.keyboard.type("design system"); pg.wait_for_timeout(300)
+  t("⌘K finds Design system", "Design system" in pg.get_by_role("dialog").first.inner_text())
+  pg.keyboard.press("Enter"); pg.wait_for_timeout(800)
+  t("⌘K opens page", pg.url.endswith("/hms/design-system"))
+  t("no page errors", not errs)
+  # mobile
+  m=b.new_page(viewport={"width":390,"height":844}); m.goto(B+"/hms/design-system"); m.wait_for_timeout(1200)
+  ov=m.evaluate("document.documentElement.scrollWidth>window.innerWidth+1")
+  t("mobile: no sideways scroll", not ov)
+  m.get_by_role("tab", name="Components").click(); m.wait_for_timeout(300); m.screenshot(path="/tmp/dsy/9_mobile.png")
+  b.close()
+print("FAILED:",F) if F else print("ALL PASS")

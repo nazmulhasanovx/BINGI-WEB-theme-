@@ -205,6 +205,8 @@ html[data-bingi-editing] a, html[data-bingi-editing] button { cursor: default; }
 @keyframes hms-drawer-l { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes hms-pop { from { opacity: 0; transform: scale(0.96) translateY(-4px); } to { opacity: 1; transform: none; } }
 @keyframes hms-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes bh-pop { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes bh-sheet { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
 .hms-page-in { animation: hms-fade 150ms ease-out both; }
 .hms-fade { animation: hms-fade 0.2s ease-out both; }
 .hms-drawer-r { animation: hms-drawer-r 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
