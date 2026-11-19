@@ -95,8 +95,8 @@ export function BillingPage() {
       </div>
 
       {/* how the month-end bill arrives */}
-      <Card title="How your bill comes" desc="Every month, the same steps. Pay after use: the bill on the 1st is for the month that just ended." className="mt-4">
-        <ol aria-label="Billing steps" className="grid gap-2 px-5 pb-5 sm:grid-cols-3 xl:grid-cols-6">
+      <Card title="How your bill comes" desc="Every month, the same steps. Pay after use: the bill on the 1st is for the month that just ended." className="mt-4" pad={false}>
+        <ol aria-label="Billing steps" className="grid gap-2 px-5 pb-5 pt-3 sm:grid-cols-3 xl:grid-cols-6">
           {tl.map((s, i) => {
             const past = s.date < bl.today, now = !past && (i === 0 || tl[i - 1].date < bl.today) && s.date >= bl.today;
             return (

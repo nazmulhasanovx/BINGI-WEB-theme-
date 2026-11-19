@@ -7,7 +7,7 @@ import { ArrowUpRight, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Prin
 import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
 import { useSettings, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
-import { usePrefs } from "@/lib/settings/prefs";
+import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
 import { invoiceHtml, regCardHtml } from "@/lib/bookings/docs";
 import { useGuestNames } from "@/lib/guests/store";
@@ -600,6 +600,23 @@ export function PreferencesPage() {
         <div className="flex flex-wrap items-center gap-4 border-b border-hms-line pb-3.5"><p className="flex-1 text-[14.5px] font-medium">Sidebar</p><Segmented value={nav as "flat" | "expandable"} onChange={setNav} options={[{ v: "flat", label: "Show all" }, { v: "expandable", label: "Fold groups" }]} /></div>
         <div className="flex flex-wrap items-center gap-4 border-b border-hms-line py-3.5"><p className="flex-1 text-[14.5px] font-medium">Text size</p><Segmented value={String(prefs.zoom)} onChange={(v) => setPrefs({ zoom: Number(v) as 90 })} options={[{ v: "90", label: "Small" }, { v: "100", label: "Normal" }, { v: "110", label: "Large" }, { v: "120", label: "Larger" }]} /></div>
         <ToggleRow title="Reduce motion" desc="Turns off page and panel animations." on={prefs.reduceMotion} onChange={(v) => setPrefs({ reduceMotion: v })} />
+      </Card>
+      <Card title="Font" desc="Changes the HMS text for you on this device. Bangla always shows in Hind Siliguri. Guest website fonts are set in Website Management." className="mt-4" pad={false}>
+        <div role="radiogroup" aria-label="Font" className="grid gap-2 px-5 pb-5 pt-3 sm:grid-cols-2 xl:grid-cols-3">
+          {FONTS.map((f) => {
+            const on = prefs.font === f.id;
+            return (
+              <button key={f.id} type="button" role="radio" aria-checked={on} aria-label={f.name} onClick={() => setPrefs({ font: f.id })}
+                className={clsx("flex flex-col items-stretch rounded-2xl border p-4 text-left transition-colors", on ? "border-[#f3c4c0] bg-[#fff6f6]" : "border-hms-line hover:border-[#c9ced6]")}>
+                <span className="flex items-center justify-between gap-2"><b className="text-[14.5px]">{f.name}</b>{on && <span className="grid size-5 place-items-center rounded-full bg-[#c8232e] text-white"><CircleCheck className="size-3.5" /></span>}</span>
+                <span className="text-[12.5px] text-hms-muted">{f.by}</span>
+                <span data-sample={f.id} style={{ fontFamily: f.sample }} className="mt-3 block text-[22px] font-semibold leading-tight tracking-[-0.01em]">Room 204 · ৳12,500</span>
+                <span style={{ fontFamily: f.sample }} className="block text-[14px]">Check in at 2 PM <span lang="bn">· অতিথি দুপুর ২টায় আসবেন</span></span>
+                <span className="mt-2 text-[12px] text-hms-muted">{f.note}</span>
+              </button>
+            );
+          })}
+        </div>
       </Card>
     </>
   );

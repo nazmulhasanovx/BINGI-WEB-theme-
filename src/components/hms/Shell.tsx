@@ -120,7 +120,7 @@ function ShellInner({ children }: { children: ReactNode }) {
 
   const [drawer, setDrawer] = useState(false);
   return (
-    <div className="hms-app flex h-dvh overflow-hidden bg-hms-canvas text-[14px]">
+    <div data-font={prefs.font} className={clsx("hms-app flex h-dvh overflow-hidden bg-hms-canvas text-[14px]", prefs.reduceMotion && "hms-no-motion")}>
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenu={() => setDrawer(true)} />
@@ -128,7 +128,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         <ViewAsBanner />
         <BillBanner />
         <SetupModeBanner />
-        <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className={clsx("min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0", prefs.reduceMotion && "hms-no-motion")}>{children}</main>
+        <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className="min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
       </div>
       <TabBar activeId={active.id} onMore={() => setDrawer(true)} />
       {drawer && <MobileDrawer activeId={active.id} onClose={() => setDrawer(false)} />}
