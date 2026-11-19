@@ -18,13 +18,14 @@ import { useSettings } from "@/lib/settings/store";
 import {
   Activity, BedDouble, Boxes, Brush, CalendarCheck, Check, ChefHat, ChevronDown, ChevronsLeft, ChevronsUpDown, CreditCard, FileText, Globe,
   Landmark, LayoutGrid, Lock, Menu as MenuIcon, MessageSquare, MoreHorizontal, X, Plus, ReceiptText, Send, Settings, Sparkles, Star, Tag,
-  UserPlus, Users, Wallet, Megaphone, Palette } from "lucide-react";
+  UserPlus, Users, Wallet, Megaphone, Palette, Eye } from "lucide-react";
 import { PROPERTIES, PropertyProvider, setProperty, useProperty } from "./property";
 import { SetupModeBanner } from "./setup-mode";
 import { useSubmittedHotels } from "@/lib/onboarding/store";
 import { WM_PAGES } from "./website/pages";
 import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
 import { NewsBanner, NewsPopup } from "./news";
+import { setViewAs, useViewAs, visibleIds } from "@/lib/hrm/views";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
 const GROUPS: { label: string; items: Item[] }[] = [
@@ -122,6 +123,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenu={() => setDrawer(true)} />
         <NewsBanner />
+        <ViewAsBanner />
         <SetupModeBanner />
         <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className={clsx("min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0", prefs.reduceMotion && "hms-no-motion")}>{children}</main>
       </div>
@@ -175,13 +177,32 @@ function ModeSwitch() {
   );
 }
 
+/** "See HMS as…" (HRM → Department views): only that department's modules, until Exit. */
+function useKeep() {
+  const as = useViewAs();
+  const { st } = useSettings(useProperty());
+  return as ? visibleIds(as, st.roles) : null;
+}
+function ViewAsBanner() {
+  const as = useViewAs();
+  if (!as) return null;
+  return (
+    <div role="region" aria-label="Viewing as" className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#cfdcf7] bg-[#eef3fd] px-4 py-2 text-[13.5px] text-[#1e3a8a] sm:px-6">
+      <Eye className="size-4 shrink-0" aria-hidden /><p className="min-w-0 flex-1"><b className="font-semibold">Viewing the HMS as {as.name}</b> · the sidebar shows only what they see. Their role still decides what they can change.</p>
+      <Link href="/hms/staff/views" className="font-semibold underline underline-offset-4">Edit view</Link>
+      <button onClick={() => setViewAs(null)} className="h-8 rounded-lg border border-[#cfdcf7] bg-white px-3 font-semibold text-hms-ink hover:bg-[#f7f9ff]">Exit</button>
+    </div>
+  );
+}
+
 function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: boolean; big?: boolean }) {
   const [mode] = useNavMode();
+  const keep = useKeep();
   const [openG, setOpenG] = useState<string[]>([]);
   const fold = mode === "expandable" && !collapsed;
   return (
     <nav className={clsx("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-3", big ? "px-3" : "px-2")} aria-label="HMS">
-      {GROUPS.map((g) => {
+      {GROUPS.map((g0) => ({ ...g0, items: keep ? g0.items.filter((i) => keep.has(i.id)) : g0.items })).filter((g) => g.items.length).map((g) => {
         const hasActive = g.items.some((i) => i.id === activeId);
         const isOpen = !fold || hasActive || openG.includes(g.label);
         return (
@@ -196,9 +217,9 @@ function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: bo
           </div>
         );
       })}
-      <div className="mt-2.5 border-t border-hms-line pt-2.5">
+      {(!keep || keep.has("settings")) && <div className="mt-2.5 border-t border-hms-line pt-2.5">
         <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} big={big} />
-      </div>
+      </div>}
     </nav>
   );
 }
@@ -206,7 +227,8 @@ function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: bo
 /** Phones: bottom tab bar (iOS style). "More" opens the full menu. */
 const TABS = ["dashboard", "bookings", "rooms", "guests"];
 function TabBar({ activeId, onMore }: { activeId: string; onMore: () => void }) {
-  const items = TABS.map((id) => ALL_ITEMS.find((i) => i.id === id)!);
+  const keep = useKeep();
+  const items = (keep ? [...TABS.filter((id) => keep.has(id)), ...ALL_ITEMS.map((i) => i.id).filter((id) => keep.has(id) && !TABS.includes(id))].slice(0, 4) : TABS).map((id) => ALL_ITEMS.find((i) => i.id === id)!);
   const inMore = !TABS.includes(activeId);
   return (
     <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-hms-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -407,7 +429,7 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   }
   if (path.startsWith("/hms/staff/")) {
     const seg = path.split("/")[3];
-    const names: Record<string, string> = { people: "People", attendance: "Attendance", schedule: "Schedule", leave: "Leave", payroll: "Payroll & Benefits", hiring: "Hiring", operations: "Team Operations", settings: "Reports & Settings" };
+    const names: Record<string, string> = { people: "People", attendance: "Attendance", schedule: "Schedule", views: "Department views", leave: "Leave", payroll: "Payroll & Benefits", hiring: "Hiring", operations: "Team Operations", settings: "Reports & Settings" };
     const sub = path.split("/")[4];
     return [{ label: "Staff", href: "/hms/staff" }, { label: names[seg] ?? "Overview", href: sub ? `/hms/staff/${seg}` : undefined }, ...(sub ? [{ label: decodeURIComponent(sub) }] : [])];
   }

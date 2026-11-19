@@ -9,12 +9,13 @@ import { Menu, Toast } from "./ui";
 import { useHrmMode } from "@/lib/hrm/mode";
 import { ModeSwitch } from "./easy";
 
-export type StaffTab = "overview" | "people" | "attendance" | "schedule" | "leave" | "payroll" | "hiring" | "operations" | "settings";
+export type StaffTab = "overview" | "people" | "attendance" | "schedule" | "views" | "leave" | "payroll" | "hiring" | "operations" | "settings";
 const MAIN: { id: StaffTab; label: string; href: string }[] = [
   { id: "overview", label: "Overview", href: "/hms/staff" },
   { id: "people", label: "People", href: "/hms/staff/people" },
   { id: "attendance", label: "Attendance", href: "/hms/staff/attendance" },
   { id: "schedule", label: "Schedule", href: "/hms/staff/schedule" },
+  { id: "views", label: "Department views", href: "/hms/staff/views" },
 ];
 export const MORE: { id: StaffTab; label: string; href: string }[] = [
   { id: "leave", label: "Leave", href: "/hms/staff/leave" },
