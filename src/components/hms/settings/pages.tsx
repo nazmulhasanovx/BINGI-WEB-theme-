@@ -3,7 +3,7 @@ import { can } from "@/lib/plan";
 import Link from "next/link";
 import clsx from "clsx";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowUpRight, Check, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
+import { ArrowUpRight, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
 import { useSettings, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
@@ -17,7 +17,6 @@ import { useHrm, type Employee } from "@/lib/hrm/store";
 import { useSite } from "@/lib/site";
 import { PLAN_LABEL } from "@/themes/manifest";
 import { hasRestaurant } from "../bookings/extras";
-import { hasServices } from "@/lib/services/store";
 import { printHtml } from "../meals/print";
 import { PhotoButton } from "../photo";
 import { useNavMode } from "../Shell";
@@ -444,28 +443,6 @@ export function DocumentsPage() {
         </div>
       </Card>}
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={doSave} />
-    </>
-  );
-}
-
-export function BillingPage() {
-  const { h } = useS();
-  const { st: rooms } = useRooms(h);
-  const mods: [string, boolean][] = [["Bookings, Rooms, Guests, Housekeeping", true], ["Cashbox & Reports", true], ["Other Services", hasServices(h)], ["Restaurant & Bar, Inventory", hasRestaurant(h)], ["Website & Marketplace", true]];
-  return (
-    <>
-      <PageHead title="Billing & plan" />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Your plan" action={<Badge tone="blue">{PLAN_LABEL[h.plan]}</Badge>}>
-          <p className="text-[14px]">{rooms.units.length} rooms set up</p>
-          <ul className="mt-3 space-y-1.5">{mods.map(([m, on]) => <li key={m} className={clsx("flex items-center gap-2 text-[14px]", !on && "text-hms-muted")}>{on ? <Check className="size-4 text-hms-green" /> : <Lock className="size-4" />}{m}</li>)}</ul>
-          <p className="mt-4 text-[13px] text-hms-muted">To change plan or add rooms, contact BinGi.</p>
-        </Card>
-        <Card title="Bills">
-          <p className="text-[14px] text-hms-muted">Bills and payment history come from BinGi billing — not connected in this prototype.</p>
-          <p className="mt-3 text-[13px]">Billing contact: <Link href="/hms/settings/profile" className="text-hms-blue underline underline-offset-2">Property profile</Link></p>
-        </Card>
-      </div>
     </>
   );
 }

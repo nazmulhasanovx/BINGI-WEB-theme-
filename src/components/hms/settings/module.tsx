@@ -5,11 +5,12 @@ import { useSettings } from "@/lib/settings/store";
 import { Toast } from "../bookings/ui";
 import { SettingsNav, SettingsPhoneNav } from "./frame";
 import * as P from "./pages";
+import { BillingPage } from "./billing";
 
 const PAGES: Record<string, ComponentType> = {
   overview: P.OverviewPage, profile: P.ProfilePage, branding: P.BrandingPage, regional: P.RegionalPage,
   policies: P.PoliciesPage, taxes: P.TaxesPage, housekeeping: P.HousekeepingRulesPage, restaurant: P.RestaurantPage,
-  channels: P.ChannelsPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: P.BillingPage,
+  channels: P.ChannelsPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: BillingPage,
   messages: P.MessagesPage, users: P.UsersPage, security: P.SecurityPage, properties: P.PropertiesPage,
   activity: P.ActivityPage, preferences: P.PreferencesPage,
 };

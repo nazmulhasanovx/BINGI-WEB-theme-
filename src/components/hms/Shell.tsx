@@ -26,6 +26,8 @@ import { WM_PAGES } from "./website/pages";
 import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
 import { NewsBanner, NewsPopup } from "./news";
 import { setViewAs, useViewAs, visibleIds } from "@/lib/hrm/views";
+import { useBilling, monthName, dShort } from "@/lib/billing/store";
+import { useRooms } from "@/lib/rooms/store";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
 const GROUPS: { label: string; items: Item[] }[] = [
@@ -124,6 +126,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         <Header onMenu={() => setDrawer(true)} />
         <NewsBanner />
         <ViewAsBanner />
+        <BillBanner />
         <SetupModeBanner />
         <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className={clsx("min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0", prefs.reduceMotion && "hms-no-motion")}>{children}</main>
       </div>
@@ -183,6 +186,22 @@ function useKeep() {
   const { st } = useSettings(useProperty());
   return as ? visibleIds(as, st.roles) : null;
 }
+/** Month-end bill: shows on every page while a BinGi bill is open (not on the billing page itself). */
+function BillBanner() {
+  const h = useProperty();
+  const path = usePathname();
+  const { st } = useRooms(h);
+  const { open } = useBilling(h, st.units);
+  if (!open || path.startsWith("/hms/settings/billing")) return null;
+  const late = open.status === "overdue";
+  return (
+    <div role="region" aria-label="BinGi bill" className={clsx("flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 text-[13.5px] sm:px-6", late ? "border-[#f3c4c0] bg-[#fdecec] text-[#8e1621]" : "border-[#f1dfb8] bg-[#fdf8ec] text-[#6b4309]")}>
+      <p className="min-w-0 flex-1"><b className="font-semibold">{monthName(open.month)} BinGi bill {late ? "is overdue" : "is ready"} · ৳{new Intl.NumberFormat("en-IN").format(open.total)}</b>{late ? " · pay to keep online booking on" : ` · due ${dShort(open.due)}`}</p>
+      <Link href="/hms/settings/billing" className="font-semibold underline underline-offset-4">{late ? "Pay now" : "See bill"}</Link>
+    </div>
+  );
+}
+
 function ViewAsBanner() {
   const as = useViewAs();
   if (!as) return null;
