@@ -352,3 +352,29 @@ html:has(.hms-app), html:has(.hms-app) body { overflow-x: clip; }
 /* Screen-reader-only text keeps its static position by default; inside a wide scrolling table that position can be
    far to the right and stretch the page. Pin it to the containing block's corner instead (still read by screen readers). */
 .hms-app .sr-only:not(:focus):not(:focus-within) { left: 0; top: 0; }
+
+/* ===== Panorama hero (whole property from above) ===== */
+.pano-spot { opacity: 0; animation: pano-in .5s cubic-bezier(.2,.9,.3,1.1) both; }
+@keyframes pano-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.pano-label { position: absolute; left: 14px; top: -15px; white-space: nowrap; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; line-height: 1.2;
+  color: #12161c; background: rgb(255 255 255 / .92); box-shadow: 0 6px 18px -8px rgb(0 0 0 / .45); backdrop-filter: blur(8px); transition: transform .15s ease, background .15s ease; }
+.pano-label--left { left: auto; right: 14px; }
+.pano-label.is-on, a.pano-label:hover { transform: translateY(-2px); background: #fff; }
+a.pano-label:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .pano-spot { animation: none; opacity: 1; } }
+
+/* ===== Site header styles (per theme) =====
+   overlay: transparent over a full-bleed home hero (desktop), solid once scrolled.
+   centered: logo in the middle, menu split on both sides.  minimal: logo + Book + menu button. */
+@media (min-width: 1024px) {
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) { background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; margin-bottom: calc(var(--header-h) * -1); }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-ink,
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-logo .text-ink { color: #fff; }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-muted { color: rgb(255 255 255 / .82); }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-muted:hover { color: #fff; }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-bar { background: #fff; }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-ghost { border-color: rgb(255 255 255 / .55); color: #fff; background: rgb(255 255 255 / .08); }
+  .site-header[data-overlay="1"]:not([data-scrolled="1"]) .sh-ghost:hover { background: rgb(255 255 255 / .18); }
+  .site-header[data-overlay="1"]::before { content: ""; position: absolute; inset: 0 0 -40px; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / .35), transparent); opacity: 1; transition: opacity .2s; }
+  .site-header[data-overlay="1"][data-scrolled="1"]::before { opacity: 0; }
+}

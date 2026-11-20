@@ -15,6 +15,7 @@ export const bonolotaEstate: Hotel = {
   intro: "A walled estate of sal forest and lawns an hour from Dhaka. Book a single villa, or the whole estate with its own chef, butler and three pools — for families, weddings and quiet weekends.",
   logoText: "Bonolota",
   heroPhoto: `${SH}/villa-modern.jpg`,
+  panorama: { src: "/demo/bonolota-estate/aerial.jpg", alt: "Bonolota Estate from above: white villas around the lagoon pool, sal forest behind", focus: [50, 60], spots: [{ label: "Sal forest", x: 35, y: 33 }, { label: "Villa wing", x: 30, y: 52, to: "/rooms" }, { label: "Lagoon pool", x: 60, y: 75, to: "/explore" }, { label: "Garden villas", x: 88, y: 50, to: "/rooms" }] },
   area: "Rajendrapur",
   city: "Gazipur",
   address: "Sal Bagan Road, Rajendrapur, Gazipur",

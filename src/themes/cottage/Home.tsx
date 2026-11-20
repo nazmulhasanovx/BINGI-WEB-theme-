@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Car, Coffee, Flame, Footprints, Languages, MessageCircle, Moon, Mountain, Navigation, Phone, Star, Sun, Sunrise, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Hotel } from "@/lib/types";
+import { ResortPanorama } from "@/components/sections/ResortPanorama";
 import { formatMoney, showRating } from "@/lib/data";
 import { presetFor } from "@/lib/presets";
 import { SearchBar } from "@/components/booking/SearchBar";
@@ -23,7 +24,7 @@ export function CottageHome({ hotel }: { hotel: Hotel }) {
       slug={hotel.slug}
       master="cottage"
       items={[
-        { id: "hero", node: <Hero hotel={hotel} /> },
+        { id: "hero", node: hotel.panorama ? <ResortPanorama hotel={hotel} look={{ title: "font-heading font-normal", align: "center" }} /> : <Hero hotel={hotel} /> },
         { id: "cottages", node: <Cottages hotel={hotel} /> },
         { id: "day", node: <ADayHere hotel={hotel} /> },
         { id: "host", node: hotel.host ? <Host hotel={hotel} /> : null },

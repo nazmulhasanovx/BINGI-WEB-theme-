@@ -13,6 +13,7 @@ export const coralCove: Hotel = {
   intro: "Wooden rooms by the beach, a pool under the coconut trees and fresh fish every night. The boat brings you, the sea does the rest.",
   logoText: "Coral Cove",
   heroPhoto: `${P}/hero.jpg`,
+  panorama: { src: "/demo/coral-cove/aerial.jpg", alt: "Coral Cove from above: the island, its beach and the villas among the palms", focus: [50, 50], spots: [{ label: "Reef & lagoon", x: 12, y: 40 }, { label: "Sunset beach", x: 27, y: 28, to: "/explore" }, { label: "Garden rooms", x: 49, y: 25, to: "/rooms" }, { label: "Pool villas", x: 72, y: 55, to: "/rooms" }, { label: "Sandbank", x: 78, y: 88 }] },
   area: "West Beach",
   city: "Saint Martin's Island",
   country: "Bangladesh",

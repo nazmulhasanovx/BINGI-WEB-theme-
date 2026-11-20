@@ -16,3 +16,12 @@ Shonali Rajbari (ZAMINDAR): Pexels 31990282 (hero), 31990279, 31990286, 31990285
 Maison Gulshan (MAISON): Pexels 8798233 (hero), 3697742, 13413966, 13413971, 13413990, 13425925.
 Other Luxury demos reuse the existing demo photos above.
 Matir (MATIR): Pexels 1838552, 235731, 247616, 1509607, 12348729, 6129072.
+
+## Whole-resort (aerial) photos — panorama hero
+| File | Source | Licence |
+|---|---|---|
+| azure-bay/aerial.jpg | Pexels photo 14024060 | Pexels licence |
+| coral-cove/aerial.jpg | Pexels photo 3379736 | Pexels licence |
+| bonolota-estate/aerial.jpg | Pexels photo 37569476 | Pexels licence |
+| mistwood/aerial.jpg | WordPress Photo Directory 92665bb130 (Ohid, Bangladesh) | CC0 |
+Demo images only — a real hotel uploads its own drone photo.

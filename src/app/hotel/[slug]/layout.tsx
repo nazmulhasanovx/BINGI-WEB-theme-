@@ -16,6 +16,7 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { LangSync } from "@/lib/i18n";
 import { SeoTitle } from "@/components/site/SeoTitle";
 import { BookingPausedBar } from "@/components/site/BookingPaused";
+import { headerStyle, showTopBar } from "@/themes/style";
 
 export function generateStaticParams() {
   return listHotelSlugs().map((slug) => ({ slug }));
@@ -61,8 +62,8 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
         <Suspense fallback={null}>
           <ThemePreview slug={hotel.slug} defaultTheme={hotel.theme.id} defaultHeading={hotel.theme.heading} master={hotel.theme.master} />
         </Suspense>
-        <TopBar hotel={hotel} />
-        <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} />
+        {showTopBar(hotel.theme.master) && <TopBar hotel={hotel} />}
+        <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} variant={headerStyle(hotel.theme.master)} />
         <main id="main">{props.children}</main>
         <SiteFooter hotel={hotel} nav={nav} />
         <MobileTabBar base={base} />

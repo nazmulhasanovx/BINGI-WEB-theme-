@@ -109,6 +109,8 @@ export interface Hotel {
   intro: string;
   logoText: string;
   heroPhoto: string;
+  /** Whole-property photo (aerial / wide) for panorama heroes, with labelled places on it (x, y = % of the photo). Uploaded in HMS › Website › Photos. */
+  panorama?: { src: string; alt: string; focus?: [number, number]; spots: { label: string; x: number; y: number; to?: string }[] };
   area: string;
   city: string;
   country: string;

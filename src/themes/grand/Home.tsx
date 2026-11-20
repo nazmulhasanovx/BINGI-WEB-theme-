@@ -1,4 +1,5 @@
 import type { Hotel } from "@/lib/types";
+import { ResortPanorama } from "@/components/sections/ResortPanorama";
 import { Hero } from "./Hero";
 import { DineAndDo, FactsStrip, FeaturedStays, LocationBlock, OffersTeaser, QuickLinks, Reviews } from "@/components/sections/HomeSections";
 import { DraftSections } from "@/components/site-draft/Draft";
@@ -10,7 +11,7 @@ export function GrandHome({ hotel }: { hotel: Hotel }) {
       slug={hotel.slug}
       master="grand"
       items={[
-        { id: "hero", node: <Hero hotel={hotel} /> },
+        { id: "hero", node: hotel.panorama ? <ResortPanorama hotel={hotel} look={{ title: "font-bold tracking-[-0.025em]" }} /> : <Hero hotel={hotel} /> },
         { id: "quick-links", node: <QuickLinks hotel={hotel} /> },
         { id: "facts", node: <FactsStrip hotel={hotel} /> },
         { id: "featured-stays", node: <FeaturedStays hotel={hotel} /> },

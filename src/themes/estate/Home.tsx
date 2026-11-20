@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { MessageCircle } from "lucide-react";
 import type { Hotel } from "@/lib/types";
+import { ResortPanorama } from "@/components/sections/ResortPanorama";
 import { Reveal } from "@/components/motion/Reveal";
 import { Container } from "@/components/ui/Section";
 import { DraftText } from "@/components/site-draft/Draft";
@@ -18,7 +19,7 @@ export function EstateHome({ hotel }: { hotel: Hotel }) {
       hotel={hotel}
       master="estate"
       parts={{
-        hero: <LuxHero hotel={hotel} variant="left" eyebrow={`${hotel.area} · ${hotel.city}`} />,
+        hero: hotel.panorama ? <ResortPanorama hotel={hotel} look={{ title: "lux-display font-normal", kicker: "text-[#e9dcc0]" }} /> : <LuxHero hotel={hotel} variant="left" eyebrow={`${hotel.area} · ${hotel.city}`} />,
         signature: <WholeEstate hotel={hotel} />,
         rooms: (
           <Sec>

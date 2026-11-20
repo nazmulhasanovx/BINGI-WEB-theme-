@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Car, Footprints, Navigation, Sailboat, Sparkles, Star, Sun, UtensilsCrossed, Waves, Flower2, Wifi } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Hotel } from "@/lib/types";
+import { ResortPanorama } from "@/components/sections/ResortPanorama";
 import { formatMoney, showRating, visibleOffers } from "@/lib/data";
 import { SearchBar } from "@/components/booking/SearchBar";
 import { HeroIn, PhotoIn, Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
@@ -24,7 +25,7 @@ export function EscapeHome({ hotel }: { hotel: Hotel }) {
       slug={hotel.slug}
       master="escape"
       items={[
-        { id: "hero", node: <Hero hotel={hotel} /> },
+        { id: "hero", node: hotel.panorama ? <ResortPanorama hotel={hotel} look={{ title: "font-bold tracking-[-0.035em]", align: "center" }} /> : <Hero hotel={hotel} /> },
         { id: "stays", node: <Stays hotel={hotel} /> },
         { id: "days", node: <Days hotel={hotel} /> },
         { id: "unwind", node: <Unwind hotel={hotel} /> },

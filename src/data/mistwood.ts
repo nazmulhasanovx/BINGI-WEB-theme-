@@ -13,6 +13,7 @@ export const mistwood: Hotel = {
   intro: "Five cottages on a quiet hillside, home-cooked meals and a bonfire every winter night.",
   logoText: "Mistwood",
   heroPhoto: `${P}/hero.jpg`,
+  panorama: { src: "/demo/mistwood/aerial.jpg", alt: "Mistwood from above: cottages on the hill above the meadow and forest", focus: [50, 50], spots: [{ label: "Forest", x: 22, y: 25 }, { label: "Meadow", x: 42, y: 45, to: "/explore" }, { label: "Cottages", x: 66, y: 40, to: "/rooms" }, { label: "Family cottages", x: 88, y: 42, to: "/rooms" }] },
   area: "Chimbuk Road",
   city: "Bandarban",
   country: "Bangladesh",

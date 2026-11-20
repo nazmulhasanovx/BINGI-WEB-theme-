@@ -14,6 +14,7 @@ export const azureBay: Hotel = {
     "A quiet beachfront resort on Marine Drive with garden rooms, ocean suites and two private pool villas — a few steps from Inani beach.",
   logoText: "Azure Bay",
   heroPhoto: `${P}/hero.jpg`,
+  panorama: { src: "/demo/azure-bay/aerial.jpg", alt: "Azure Bay from above: red-roof garden wing, lagoon pool and the ocean villas", focus: [50, 55], spots: [{ label: "Garden wing", x: 16, y: 30, to: "/rooms" }, { label: "Lagoon pool", x: 54, y: 34, to: "/explore" }, { label: "Ocean villas", x: 77, y: 9, to: "/rooms" }, { label: "Beach path", x: 87, y: 84, to: "/explore" }] },
   area: "Inani, Marine Drive",
   city: "Cox's Bazar",
   country: "Bangladesh",
