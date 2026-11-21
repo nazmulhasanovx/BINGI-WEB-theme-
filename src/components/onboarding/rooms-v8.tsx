@@ -10,7 +10,7 @@
 import clsx from "clsx";
 import { useContext, useState } from "react";
 import { createPortal } from "react-dom";
-import { BedDouble, Building2, Check, ChevronRight, ImagePlus, Pencil, Plus, Trash2, Trees, UsersRound, X } from "lucide-react";
+import { BedDouble, Building2, Check, ChevronRight, Hash, ImagePlus, Pencil, Plus, ShieldCheck, Trash2, Trees, UsersRound, X } from "lucide-react";
 import { AMENITIES, type CoreType } from "@/lib/rooms/catalog";
 import { nowStamp, uid, type Category, type Config, type LocNode, type MealMode, type Pick, type useRooms } from "@/lib/rooms/store";
 import { PLANS, num, quote, recommend, useL, useOnboarding, type Draft, type StepId } from "@/lib/onboarding/store";
@@ -18,7 +18,7 @@ import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/r
 import { BN_NAME, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, configFrom8, isZoneCore, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
 import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
-import { Chip, Errors, Ghost, Pills, Primary, Q, Stepper, Tile, field } from "./shell";
+import { Chip, Errors, Ghost, Pills, Primary, Stepper, Tile, field } from "./shell";
 
 type Rooms = ReturnType<typeof useRooms>;
 const DOT = ["#b11c29", "#1d4ed8", "#0f766e", "#7c3aed", "#b45309", "#be185d", "#334155", "#15803d"];
@@ -54,76 +54,113 @@ export function Place({ d, st }: { d: Draft; st: Rooms["st"] }) {
   const setFloors = (n: number, g: boolean) => edit((x) => { x.floors = [...(g ? [0] : []), ...Array.from({ length: n }, (_, i) => i + 1)]; });
   const bs = d.buildings.length ? d.buildings : ["main"];
   const shown = STAY.filter((s) => fits.includes(s.id) || more);
+  const levels = [...[...d.floors].filter((l) => l > 0).sort((x, y) => y - x), ...(ground ? [0] : []), ...Array.from({ length: d.place.basements }, (_, i) => -(i + 1))];
+  const sample = (L: number) => (L > 0 ? `${L}01` : L === 0 ? (d.ground === "G" ? "G01" : "001") : `B${-L}01`);
   return (
-    <Q title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Already set from your property type. Check it and change what's different.")}
-      why={t("এখান থেকেই রুম নম্বর আপনা-আপনি তৈরি হয় — নিজে কিছু লিখতে হয় না।", "Room numbers are made from this — nothing to type.")}>
-      <p className="text-[15.5px] font-semibold">{t("কী ভাড়া দেন", "What you rent")}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {shown.map((s) => {
-          const on = d.stay.includes(s.id);
-          const I = STAY_ICON[s.id];
-          const lock = on && usedCore.has(s.id);
-          return <Chip key={s.id} on={on} disabled={lock} title={lock ? t("এখানে রুম আছে", "Has rooms") : undefined} onClick={() => edit((x) => { x.stay = on ? x.stay.filter((y) => y !== s.id) : [...x.stay, s.id]; if (!isZoneCore(s.id) && !x.floors.length) x.floors = [1]; })}><I className="size-4" aria-hidden />{t(s.bn, s.en)}</Chip>;
-        })}
-        {!more && <button onClick={() => setMore(true)} className="h-10 px-2 text-[14.5px] font-semibold text-[#b11c29]">+ {t("আরও", "More")}</button>}
-      </div>
-
-      {floorKinds && (
-        <section className="mt-8 space-y-4">
-          <h2 className="text-[17px] font-semibold">{t("বিল্ডিং", "Building")}</h2>
-          <div className="flex flex-wrap gap-2">
-            {BUILDINGS.map((b) => {
-              const on = bs.includes(b.id);
-              const lock = on && st.config.nodes.some((n) => n.parent === `b-${b.id}` && usedNode.has(n.id));
-              return <Chip key={b.id} on={on} disabled={lock} onClick={() => edit((x) => { const cur = x.buildings.length ? x.buildings : ["main"]; const nx = cur.includes(b.id) ? cur.filter((y) => y !== b.id) : [...cur, b.id]; x.buildings = nx.length ? nx : ["main"]; })}><Building2 className="size-4" aria-hidden />{t(b.bn, b.en)}</Chip>;
+    <section>
+      <Head title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Set up from your property type. Check it and change what's different.")} />
+      <div className="mt-6 space-y-4">
+        <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")} hint={t("যা যা আছে সব বাছাই করুন", "Pick everything you have")}>
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            {shown.map((s) => {
+              const on = d.stay.includes(s.id);
+              const I = STAY_ICON[s.id];
+              const lock = on && usedCore.has(s.id);
+              return <Tile key={s.id} on={on} disabled={lock} onClick={() => edit((x) => { x.stay = on ? x.stay.filter((y) => y !== s.id) : [...x.stay, s.id]; if (!isZoneCore(s.id) && !x.floors.length) x.floors = [1]; })} icon={<I className="size-5" />} title={t(s.bn, s.en)} sub={lock ? t("রুম আছে — বাদ দেওয়া যাবে না", "Has rooms — can't remove") : isZoneCore(s.id) ? t("জোন বা ব্লকে", "In zones or blocks") : t("বিল্ডিংয়ের তলায়", "On building floors")} />;
             })}
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-[14.5px] text-[#4d5664]">{t("নাম যেভাবে:", "Called:")}</span>
-            <Pills size="sm" label={t("তলার নাম", "Floor names")} value={d.place.floorStyle} onChange={(v) => edit((x) => { x.place.floorStyle = v; })} items={[{ v: "floor", label: t("ফ্লোর ১, ২…", "Floor 1, 2…") }, { v: "level", label: t("লেভেল ১, ২…", "Level 1, 2…") }]} />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Box title={d.place.floorStyle === "level" ? t("কয়টা লেভেল?", "How many levels?") : t("কয়টা ফ্লোর?", "How many floors?")} sub={top ? `${levelName(d.place.floorStyle, 1, bn)} – ${levelName(d.place.floorStyle, top, bn)}` : ""}>
-              <Stepper label={t("তলা", "Floors")} value={top} set={(n) => setFloors(Math.max(n, minTop), ground)} min={minTop} max={MAX_FLOOR} />
-            </Box>
-            <Box title={t("গ্রাউন্ড", "Ground")} sub={ground ? (d.ground === "G" ? "G01, G02…" : "001, 002…") : t("রুম নেই", "No rooms")}>
-              <label className="flex items-center gap-2 text-[14.5px] font-semibold"><input type="checkbox" checked={ground} disabled={usedLevels.includes(0)} onChange={(e) => setFloors(Math.max(top, 1), e.target.checked)} className="size-5 accent-[#b11c29]" />{t("আছে", "Has rooms")}</label>
-            </Box>
-            <Box title={t("বেসমেন্ট", "Basement")} sub={d.place.basements ? `B101… · ${num(d.place.basements, lang)}` : t("নেই", "None")}>
-              <Stepper label={t("বেসমেন্ট", "Basements")} value={d.place.basements} set={(n) => edit((x) => { x.place.basements = Math.max(n, minBase); })} min={minBase} max={3} />
-            </Box>
-          </div>
-          {top > 0 && <p className="text-[14px] text-[#4d5664]">{t("নম্বর:", "Numbers:")} <b className="font-mono text-[#0f1720]">101, 102…{top > 1 ? ` · ${top}01…` : ""}</b></p>}
-        </section>
-      )}
+          {!more && <button onClick={() => setMore(true)} className="mt-3 text-[14.5px] font-semibold text-[#b11c29]">+ {t("আরও ধরন", "More kinds")}</button>}
+        </Card>
 
-      {zoneKinds && (
-        <section className="mt-8 space-y-4">
-          <h2 className="text-[17px] font-semibold">{t("কটেজ / ভিলা কোথায়", "Where the cottages / villas are")}</h2>
-          <div className="flex flex-wrap items-center gap-3">
-            <Pills size="sm" label={t("জোন না ব্লক", "Zone or block")} value={d.place.zoneStyle} onChange={(v) => edit((x) => { x.place.zoneStyle = v; })} items={[{ v: "zone", label: t("জোন", "Zones") }, { v: "block", label: t("ব্লক", "Blocks") }]} />
-            <span className="text-[14.5px] text-[#4d5664]">{t("কয়টা?", "How many?")}</span>
-            <Stepper label={t("জোন", "Zones")} value={d.place.zoneCount} set={(n) => edit((x) => { x.place.zoneCount = Math.max(n, minZones); })} min={minZones} max={MAX_ZONES} />
-          </div>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {Array.from({ length: d.place.zoneCount }, (_, i) => i + 1).map((i) => (
-              <li key={i} className="flex items-center gap-2 rounded-xl border border-[#c6ccd4] bg-white px-3 py-2">
-                <Trees className="size-4 shrink-0 text-[#4d5664]" aria-hidden />
-                <input aria-label={t(`${zoneDefault(d, i, true)}-এর নাম`, `${zoneDefault(d, i, false)} name`)} value={d.place.zoneNames[i - 1] ?? ""} placeholder={zoneDefault(d, i, bn)}
-                  onChange={(e) => edit((x) => { const a = [...x.place.zoneNames]; a[i - 1] = e.target.value.slice(0, 30); x.place.zoneNames = a; })}
-                  className="h-9 min-w-0 flex-1 rounded-md bg-transparent px-1 text-[15px] font-semibold outline-none placeholder:font-medium placeholder:text-[#5b6270] focus:bg-[#f4f6f8]" />
-                <span className="font-mono text-[12px] text-[#5b6270]">{d.place.zoneStyle === "block" ? "BL" : "Z"}{i}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-[14px] text-[#4d5664]">{t("নাম না দিলে \"জোন ১\" থাকবে। প্রতিটা জোনে নম্বর:", "Leave empty to keep \"Zone 1\". Numbers in each zone:")} <b className="font-mono text-[#0f1720]">{d.stay.filter(isZoneCore).map((s) => `${STAY.find((x) => x.id === s)!.prefix}1–${STAY.find((x) => x.id === s)!.prefix}100`).join(" · ")}</b></p>
-        </section>
-      )}
-    </Q>
+        {floorKinds && (
+          <Card id="where-building" n={2} title={t("বিল্ডিং ও তলা", "Building & floors")} hint={t("রুম নম্বর তলা থেকে তৈরি হয়", "Room numbers come from the floor")}>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_200px]">
+              <div className="space-y-5">
+                <div><p className="mb-1.5 text-[13.5px] font-semibold text-[#2b3340]">{t("কোন বিল্ডিং", "Which building")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {BUILDINGS.map((b) => {
+                      const on = bs.includes(b.id);
+                      const lock = on && st.config.nodes.some((n) => n.parent === `b-${b.id}` && usedNode.has(n.id));
+                      return <Chip key={b.id} on={on} disabled={lock} onClick={() => edit((x) => { const cur = x.buildings.length ? x.buildings : ["main"]; const nx = cur.includes(b.id) ? cur.filter((y) => y !== b.id) : [...cur, b.id]; x.buildings = nx.length ? nx : ["main"]; })}><Building2 className="size-4" aria-hidden />{t(b.bn, b.en)}</Chip>;
+                    })}
+                  </div>
+                </div>
+                <div><p className="mb-1.5 text-[13.5px] font-semibold text-[#2b3340]">{t("তলার নাম", "Floors are called")}</p>
+                  <Pills size="sm" label={t("তলার নাম", "Floor names")} value={d.place.floorStyle} onChange={(v) => edit((x) => { x.place.floorStyle = v; })} items={[{ v: "floor", label: t("ফ্লোর", "Floor") }, { v: "level", label: t("লেভেল", "Level") }]} />
+                </div>
+                <div className="divide-y divide-[#e9edf2] rounded-xl border border-[#e3e7ec]">
+                  <Line title={d.place.floorStyle === "level" ? t("লেভেল", "Levels") : t("ফ্লোর", "Floors")} sub={top ? `${levelName(d.place.floorStyle, 1, bn)} – ${levelName(d.place.floorStyle, top, bn)}` : ""}>
+                    <Stepper label={t("তলা", "Floors")} value={top} set={(n) => setFloors(Math.max(n, minTop), ground)} min={minTop} max={MAX_FLOOR} />
+                  </Line>
+                  <Line title={t("গ্রাউন্ডে রুম", "Rooms on ground")} sub={ground ? (d.ground === "G" ? "G01, G02…" : "001, 002…") : t("নেই", "None")}>
+                    <Switch on={ground} disabled={usedLevels.includes(0)} label={t("গ্রাউন্ডে রুম", "Rooms on ground")} set={(v) => setFloors(Math.max(top, 1), v)} />
+                  </Line>
+                  <Line title={t("বেসমেন্ট", "Basements")} sub={d.place.basements ? `B101…` : t("নেই", "None")}>
+                    <Stepper label={t("বেসমেন্ট", "Basements")} value={d.place.basements} set={(n) => edit((x) => { x.place.basements = Math.max(n, minBase); })} min={minBase} max={3} />
+                  </Line>
+                </div>
+              </div>
+              <div aria-hidden className="hidden lg:block">
+                <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#5b6270]">{t("দেখতে যেমন", "Preview")}</p>
+                <div className="rounded-xl bg-[#f4f6f8] p-2">
+                  <div className="mx-auto mb-1.5 h-2 w-3/4 rounded-t-md bg-[#c6ccd4]" />
+                  <div className="space-y-1">
+                    {levels.slice(0, 9).map((L) => <div key={L} className={clsx("flex items-center justify-between rounded-md px-2.5 py-1.5 text-[12px]", L < 0 ? "bg-[#e3e7ec] text-[#4d5664]" : "bg-white")}><span className="font-medium">{levelName(d.place.floorStyle, L, bn)}</span><span className="font-mono text-[#5b6270]">{sample(L)}…</span></div>)}
+                    {levels.length > 9 && <p className="text-center text-[12px] text-[#5b6270]">+{num(levels.length - 9, lang)}</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {zoneKinds && (
+          <Card id="where-zones" n={floorKinds ? 3 : 2} title={t("কটেজ / ভিলা কোথায়", "Where the cottages / villas are")} hint={t("জোনের নিজের নাম দিন — নম্বর প্রতিটা জোনে আলাদা", "Name each zone — numbers are per zone")}>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Pills size="sm" label={t("জোন না ব্লক", "Zone or block")} value={d.place.zoneStyle} onChange={(v) => edit((x) => { x.place.zoneStyle = v; })} items={[{ v: "zone", label: t("জোন", "Zones") }, { v: "block", label: t("ব্লক", "Blocks") }]} />
+              <span className="flex items-center gap-3"><span className="text-[14.5px] text-[#4d5664]">{t("কয়টা?", "How many?")}</span><Stepper label={t("জোন", "Zones")} value={d.place.zoneCount} set={(n) => edit((x) => { x.place.zoneCount = Math.max(n, minZones); })} min={minZones} max={MAX_ZONES} /></span>
+            </div>
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: d.place.zoneCount }, (_, i) => i + 1).map((i) => (
+                <li key={i} className="flex items-center gap-2 rounded-xl border border-[#d3d8df] bg-white py-1.5 pl-2 pr-3 focus-within:border-[#0f1720]">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#eef7f1] text-[#1c7d45]"><Trees className="size-4" aria-hidden /></span>
+                  <input aria-label={t(`${zoneDefault(d, i, true)}-এর নাম`, `${zoneDefault(d, i, false)} name`)} value={d.place.zoneNames[i - 1] ?? ""} placeholder={zoneDefault(d, i, bn)}
+                    onChange={(e) => edit((x) => { const a = [...x.place.zoneNames]; a[i - 1] = e.target.value.slice(0, 30); x.place.zoneNames = a; })}
+                    className="h-9 min-w-0 flex-1 bg-transparent px-1 text-[15px] font-semibold outline-none placeholder:font-medium placeholder:text-[#5b6270]" />
+                  <span className="rounded-md bg-[#f4f6f8] px-1.5 py-0.5 font-mono text-[11.5px] text-[#4d5664]">{d.place.zoneStyle === "block" ? "BL" : "Z"}{i}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[13.5px] text-[#4d5664]">{t("প্রতিটা জোনে নম্বর:", "Numbers in each zone:")} <b className="font-mono text-[#0f1720]">{d.stay.filter(isZoneCore).map((s) => `${STAY.find((x) => x.id === s)!.prefix}1–${STAY.find((x) => x.id === s)!.prefix}100`).join(" · ")}</b></p>
+          </Card>
+        )}
+      </div>
+    </section>
   );
 }
-function Box({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
-  return <div className="rounded-xl border border-[#c6ccd4] bg-white p-4"><p className="text-[15px] font-semibold">{title}</p><p className="mt-0.5 min-h-[20px] text-[13px] text-[#4d5664]">{sub}</p><div className="mt-3">{children}</div></div>;
+/** 101,102,103,105 → "101–103, 105" */
+function ranges(list: string[]) {
+  const key = (x: string) => { const m = x.match(/^(.*?)(\d+)$/); return m ? [m[1], Number(m[2])] as const : [x, NaN] as const; };
+  const sorted = [...list].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const out: string[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    const [p] = key(sorted[i]);
+    while (j + 1 < sorted.length && key(sorted[j + 1])[0] === p && key(sorted[j + 1])[1] === key(sorted[j])[1] + 1) j++;
+    out.push(j - i >= 2 ? `${sorted[i]}–${sorted[j]}` : sorted.slice(i, j + 1).join(", "));
+    i = j + 1;
+  }
+  return out.join(", ");
+}
+function Head({ title, sub }: { title: string; sub: string }) {
+  return <div><h1 className="text-[26px] font-semibold leading-tight tracking-[-0.01em] sm:text-[30px]">{title}</h1><p className="mt-1.5 text-[15.5px] text-[#4d5664]">{sub}</p></div>;
+}
+function Line({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+  return <div className="flex items-center gap-3 px-4 py-3"><div className="min-w-0 flex-1"><p className="text-[15px] font-semibold">{title}</p>{sub && <p className="text-[13px] text-[#4d5664]">{sub}</p>}</div>{children}</div>;
+}
+function Switch({ on, set, label, disabled }: { on: boolean; set: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => set(!on)} className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-40", on ? "bg-[#1c7d45]" : "bg-[#c6ccd4]")}><span className={clsx("absolute top-0.5 size-6 rounded-full bg-white shadow transition-[left] duration-200", on ? "left-[22px]" : "left-0.5")} /></button>;
 }
 
 // ---------- 3.2 Add rooms (live "Add New Room" pattern) ----------
@@ -153,46 +190,68 @@ export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm:
     rooms.update((s) => { s.categories = s.categories.filter((x) => x.id !== c.id); s.units = s.units.filter((u) => u.category !== c.id); }, `Room type ${c.name} removed in onboarding`);
   };
   if (form) return <AccForm d={d} rooms={rooms} f={form} set={setFormState} close={() => setForm(null)} />;
+  const config = st.config;
+  const kindTiles = (
+    <div className="grid gap-2.5 sm:grid-cols-3">
+      {kinds.map((k) => { const I = STAY_ICON[k.id]; const n = live.filter((u) => u.core === k.id).length; return (
+        <button key={k.id} onClick={() => start(k.id)} className="group relative flex flex-col items-start gap-2.5 rounded-2xl border border-[#d3d8df] bg-white p-4 text-left shadow-[0_1px_2px_rgb(15_23_32/0.04)] transition-[border-color,box-shadow] hover:border-[#b11c29] hover:shadow-[0_10px_24px_-18px_rgb(177_28_41/0.5)]">
+          <span className="grid size-11 place-items-center rounded-xl bg-[#fdecea] text-[#b11c29]"><I className="size-5" /></span>
+          <span><span className="block text-[15.5px] font-semibold">{t(`${k.bn} যোগ করুন`, `Add ${k.en.toLowerCase()}`)}</span><span className="text-[13px] text-[#4d5664]">{n ? t(`${num(n, lang)}টা আছে`, `${n} added`) : t(k.subBn, k.subEn)}</span></span>
+          <span className="absolute right-3.5 top-3.5 grid size-8 place-items-center rounded-full bg-[#f4f6f8] text-[#b11c29] transition-transform group-hover:rotate-90"><Plus className="size-4" /></span>
+        </button>); })}
+    </div>
+  );
   return (
-    <Q title={t("রুম যোগ করুন", "Add your rooms")} sub={t("একটা একটা করে ধরন যোগ করুন। এক পেজেই দাম, নম্বর, সুবিধা — সব।", "Add one type at a time. One page holds price, numbers and amenities.")}
-      why={t("এখনকার HMS-এর \"Add New Room\"-এর মতোই। নম্বর তালিকা থেকে বাছাই — নিজে লিখতে হয় না।", "Same as \"Add New Room\" in the HMS today. Numbers come from a ready list.")}>
-      {cats.length > 0 && (
-        <ul className="mb-4 grid gap-3">
-          {cats.map((c) => {
-            const us = live.filter((u) => u.category === c.id);
-            const I = STAY_ICON[c.core];
-            return (
-              <li key={c.id} className="onb-in flex gap-3 rounded-xl border border-[#c6ccd4] bg-white p-3.5">
-                <span className="grid size-14 shrink-0 place-items-center rounded-xl text-white" style={{ background: colorOf(st, c.id) }}><I className="size-7" /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[16.5px] font-semibold">{nm(c.name, t)}</p>
-                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-[13.5px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(c.maxAdults, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span><span className="font-semibold text-[#8e1621]">৳{num(money(c.baseRate), lang)} / {t("রাত", "night")}</span></p>
-                  <p className="mt-1.5 flex flex-wrap gap-1">{us.slice(0, 14).map((u) => <span key={u.id} className="rounded-md bg-[#e9edf2] px-1.5 py-0.5 font-mono text-[12.5px] font-semibold">{u.local}</span>)}{us.length > 14 && <span className="text-[12.5px] text-[#4d5664]">+{num(us.length - 14, lang)}</span>}</p>
-                </div>
-                <div className="flex shrink-0 flex-col gap-1 self-start">
-                  <button onClick={() => editCat(c)} aria-label={t(`${c.name} বদলান`, `Edit ${c.name}`)} className="grid size-9 place-items-center rounded-full text-[#4d5664] hover:bg-[#e9edf2]"><Pencil className="size-4" /></button>
-                  <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-9 place-items-center rounded-full text-[#4d5664] hover:bg-[#fff1f0] hover:text-[#8e1621]"><Trash2 className="size-4" /></button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {!pick ? (
-        <button onClick={() => (kinds.length > 1 ? setPick(true) : start((kinds[0]?.id ?? "ROOM") as CoreType))} className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] p-4 text-left transition-colors hover:bg-[#fff4f3]">
-          <span className="grid size-12 place-items-center rounded-xl bg-[#b11c29] text-white"><Plus className="size-6" /></span>
-          <span><span className="block text-[17px] font-semibold">{cats.length ? t("আরেকটা ধরন যোগ করুন", "Add another type") : t("প্রথম ধরন যোগ করুন", "Add your first type")}</span><span className="text-[14px] text-[#4d5664]">{kinds.map((k) => t(k.bn, k.en)).join(" · ")}</span></span>
-          <ChevronRight className="ml-auto size-5 text-[#b11c29]" />
-        </button>
-      ) : (
-        <div className="onb-in rounded-xl border border-[#e3e7ec] bg-white p-4">
-          <p className="text-[15.5px] font-semibold">{t("কী যোগ করবেন?", "What are you adding?")}</p>
-          <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{kinds.map((k) => { const I = STAY_ICON[k.id]; return <Tile key={k.id} on={false} onClick={() => start(k.id)} icon={<I className="size-6" />} title={t(k.bn, k.en)} sub={t(k.subBn, k.subEn)} />; })}</div>
-          <button onClick={() => setPick(false)} className="mt-3 text-[14px] font-semibold text-[#4d5664] underline underline-offset-4">{t("বাতিল", "Cancel")}</button>
+    <section>
+      <Head title={t("রুম যোগ করুন", "Add your rooms")} sub={t("একটা একটা করে ধরন যোগ করুন — এক পেজেই দাম, নম্বর, সুবিধা।", "Add one type at a time — price, numbers and amenities on one page.")} />
+      {cats.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-[#efb7b1] bg-gradient-to-b from-[#fffaf9] to-white p-6 text-center sm:p-8">
+          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-[#b11c29] shadow-sm"><BedDouble className="size-7" /></span>
+          <p className="mt-3 text-[18px] font-semibold">{t("এখনো কোনো রুম নেই", "No rooms yet")}</p>
+          <p className="mx-auto mt-1 max-w-[420px] text-[14.5px] text-[#4d5664]">{t("কী যোগ করবেন বাছাই করুন। ক্যাটাগরি বাছলে দাম আর বাকি তথ্য বসে যায়, শুধু নম্বর বাছাই করবেন।", "Pick what to add. A category fills price and details — you only pick the numbers.")}</p>
+          <div className="mt-5 text-left">{kindTiles}</div>
         </div>
+      ) : (
+        <>
+          <ul className="mt-6 grid gap-3">
+            {cats.map((c) => {
+              const us = live.filter((u) => u.category === c.id);
+              const I = STAY_ICON[c.core];
+              const color = colorOf(st, c.id);
+              const groups = config.nodes.filter((n) => us.some((u) => u.node === n.id));
+              return (
+                <li key={c.id} className="onb-in overflow-hidden rounded-2xl border border-[#e3e7ec] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.04)]">
+                  <div className="flex items-start gap-3.5 p-4">
+                    <span className="grid size-12 shrink-0 place-items-center rounded-xl text-white" style={{ background: color }}><I className="size-6" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[17px] font-semibold leading-snug">{nm(c.name, t)}</p>
+                      <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[13.5px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{t(`${num(c.maxAdults, lang)} জন`, `${c.maxAdults} guests`)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span>{c.amenities.length > 0 && <span>{t(`${num(c.amenities.length, lang)}টা সুবিধা`, `${c.amenities.length} amenities`)}</span>}</p>
+                    </div>
+                    <div className="shrink-0 text-right"><p className="text-[18px] font-semibold tabular-nums">৳{num(money(c.baseRate), lang)}</p><p className="text-[12.5px] text-[#4d5664]">/{t("রাত", "night")}</p></div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#f0f2f5] bg-[#fafbfc] px-4 py-2.5">
+                    <span className="rounded-full px-2 py-0.5 text-[12.5px] font-semibold text-white" style={{ background: color }}>{t(`${num(us.length, lang)}টা`, `${us.length}`)}</span>
+                    {groups.map((n) => <span key={n.id} className="text-[13px] text-[#4d5664]"><b className="font-semibold text-[#2b3340]">{placeLabel(d, config, n, lang === "bn")}</b> · <span className="font-mono">{ranges(us.filter((u) => u.node === n.id).map((u) => u.local))}</span></span>)}
+                    <span className="ml-auto flex gap-1">
+                      <button onClick={() => editCat(c)} className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-[13.5px] font-semibold text-[#0f1720] hover:bg-[#e9edf2]"><Pencil className="size-3.5" />{t("বদলান", "Edit")}</button>
+                      <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-8 place-items-center rounded-full text-[#4d5664] hover:bg-[#fff1f0] hover:text-[#8e1621]"><Trash2 className="size-4" /></button>
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {!pick ? (
+            <button onClick={() => (kinds.length > 1 ? setPick(true) : start((kinds[0]?.id ?? "ROOM") as CoreType))} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-dashed border-[#efb7b1] bg-[#fffaf9] px-4 py-3.5 text-left transition-colors hover:bg-[#fff4f3]">
+              <span className="grid size-10 place-items-center rounded-xl bg-[#b11c29] text-white"><Plus className="size-5" /></span>
+              <span><span className="block text-[16px] font-semibold">{t("আরেকটা ধরন যোগ করুন", "Add another type")}</span><span className="text-[13.5px] text-[#4d5664]">{kinds.map((k) => t(k.bn, k.en)).join(" · ")}</span></span>
+              <ChevronRight className="ml-auto size-5 text-[#b11c29]" />
+            </button>
+          ) : <div className="onb-in mt-3">{kindTiles}<button onClick={() => setPick(false)} className="mt-2 text-[14px] font-semibold text-[#4d5664] underline underline-offset-4">{t("বাতিল", "Cancel")}</button></div>}
+        </>
       )}
-      <Totals d={d} total={live.length} />
-    </Q>
+      <Totals d={d} total={live.length} cats={cats.length} />
+    </section>
   );
 }
 
@@ -453,15 +512,17 @@ function PlacesSheet({ d, rooms, f, config, onClose }: { d: Draft; rooms: Rooms;
   );
 }
 
-export function Totals({ d, total }: { d: Draft; total: number }) {
+export function Totals({ d, total, cats }: { d: Draft; total: number; cats?: number }) {
   const { t, lang } = useL();
   const plan = d.planPicked ? d.plan : recommend(d);
   const q = quote(plan, total, d.cycle);
+  if (!total) return null;
   return (
-    <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-[#e9edf2] px-4 py-3 text-[14.5px]">
-      <b>{t(`মোট ${num(total, lang)}টা রুম`, `${total} rooms in total`)}</b>
-      <span className="text-[#4d5664]">{PLANS[plan].label} · ৳{num(money(q.monthly), lang)}/{t("মাস", "month")}{total < q.billed ? t(` (কমপক্ষে ${num(q.billed, lang)}টার বিল)`, ` (minimum ${q.billed} billed)`) : ""}</span>
-    </p>
+    <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl bg-[#0f1720] px-5 py-4 text-white">
+      <span><span className="block text-[12.5px] text-white/65">{t("মোট রুম", "Total rooms")}</span><b className="text-[20px] tabular-nums">{num(total, lang)}</b>{cats ? <span className="text-[13px] text-white/65"> · {t(`${num(cats, lang)}টা ধরন`, `${cats} types`)}</span> : null}</span>
+      <span className="ml-auto text-right"><span className="block text-[12.5px] text-white/65">{PLANS[plan].label} · {d.cycle === 1 ? t("মাসিক", "monthly") : t(`${num(d.cycle, lang)} মাস`, `${d.cycle} months`)}</span><b className="text-[20px] tabular-nums">৳{num(money(q.monthly), lang)}</b><span className="text-[13px] text-white/65">/{t("মাস", "month")}</span></span>
+      {total < q.billed && <span className="w-full text-[12.5px] text-white/65">{t(`কমপক্ষে ${num(q.billed, lang)}টা রুমের বিল হয়।`, `Minimum ${q.billed} rooms are billed.`)}</span>}
+    </div>
   );
 }
 
@@ -474,39 +535,54 @@ export function ReviewRooms({ d, rooms, go }: { d: Draft; rooms: Rooms; go: (s: 
   const cats = liveCats(st);
   const places = config.nodes.filter((n) => live.some((u) => u.node === n.id));
   const remove = (id: string) => rooms.update((s) => { s.units = s.units.filter((u) => u.id !== id); }, "Room removed in onboarding review");
-  const tiles: [string, number, StepId][] = [[t("রুমের ধরন", "Room types"), cats.length, "3.2"], [t("তলা / জোন", "Floors / zones"), places.length, "3.1"], [t("রুম", "Rooms"), live.length, "3.2"]];
+  const tiles: [string, number, StepId, typeof BedDouble][] = [[t("রুমের ধরন", "Room types"), cats.length, "3.2", BedDouble], [t("তলা / জোন", "Floors / zones"), places.length, "3.1", Building2], [t("মোট রুম", "Rooms"), live.length, "3.2", Hash]];
   return (
-    <Q title={t("রুম মিলিয়ে নিন", "Check your rooms")} sub={t("সব রুম ড্রাফট হিসেবে সেভ। BinGi ধরন অনুমোদন করলে বিক্রি শুরু হবে।", "All rooms are saved as drafts. Selling starts after BinGi approves the types.")}>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {tiles.map(([k, v, s], i) => (
-          <button key={i} onClick={() => go(s)} className="group rounded-xl border border-[#e3e7ec] bg-white p-4 text-left hover:border-[#0f1720]">
-            <span className="flex items-center justify-between text-[13px] text-[#4d5664]">{k}<Pencil className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" /></span>
-            <span className="mt-1 block text-[24px] font-semibold tabular-nums">{num(v, lang)}</span>
+    <section>
+      <Head title={t("রুম মিলিয়ে নিন", "Check your rooms")} sub={t("ঠিক থাকলে পরের ধাপে যান। যেকোনো কিছু বদলাতে চাপ দিন।", "If it all looks right, go on. Tap anything to change it.")} />
+      <div className="mt-6 grid grid-cols-3 gap-3">
+        {tiles.map(([k, v, s, I], i) => (
+          <button key={i} onClick={() => go(s)} className="group rounded-2xl border border-[#e3e7ec] bg-white p-4 text-left shadow-[0_1px_2px_rgb(15_23_32/0.04)] transition-[border-color] hover:border-[#0f1720]">
+            <span className="flex items-center justify-between"><span className="grid size-9 place-items-center rounded-xl bg-[#f4f6f8] text-[#0f1720]"><I className="size-[18px]" /></span><Pencil className="size-3.5 text-[#5b6270] opacity-0 transition-opacity group-hover:opacity-100" /></span>
+            <span className="mt-3 block text-[26px] font-semibold leading-none tabular-nums">{num(v, lang)}</span>
+            <span className="mt-1 block text-[13px] text-[#4d5664]">{k}</span>
           </button>
         ))}
       </div>
-      <ul className="mt-5 grid gap-3">
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-[#e3e7ec] bg-white">
+        <p className="border-b border-[#f0f2f5] px-4 py-3 text-[15px] font-semibold">{t("ধরন ও দাম", "Types & prices")}</p>
+        <ul className="divide-y divide-[#f0f2f5]">
+          {cats.map((c) => { const I = STAY_ICON[c.core]; const n = live.filter((u) => u.category === c.id).length; return (
+            <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg text-white" style={{ background: colorOf(st, c.id) }}><I className="size-[18px]" /></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold">{nm(c.name, t)}</span><span className="text-[13px] text-[#4d5664]">{t(`${num(c.maxAdults, lang)} জন · ${num(n, lang)}টা`, `${c.maxAdults} guests · ${n} units`)}</span></span>
+              <span className="text-right text-[15px] font-semibold tabular-nums">৳{num(money(c.baseRate), lang)}<span className="text-[12.5px] font-normal text-[#4d5664]">/{t("রাত", "night")}</span></span>
+              <span className="hidden rounded-full bg-[#fdf6e7] px-2 py-0.5 text-[12px] font-semibold text-[#7a4a0b] sm:inline">{t("অনুমোদন বাকি", "Awaiting approval")}</span>
+            </li>); })}
+        </ul>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {places.map((p) => {
           const us = live.filter((u) => u.node === p.id).sort((a, b) => a.local.localeCompare(b.local, undefined, { numeric: true }));
           return (
-            <li key={p.id} className="rounded-xl border border-[#e3e7ec] bg-white p-4">
-              <p className="flex items-center gap-2 text-[15.5px] font-semibold">{p.kind === "ZONE" ? <Trees className="size-4 text-[#4d5664]" /> : <Building2 className="size-4 text-[#4d5664]" />}{placeLabel(d, config, p, lang === "bn")}<span className="text-[13px] font-normal text-[#4d5664]">· {num(us.length, lang)}</span></p>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <div key={p.id} className="rounded-2xl border border-[#e3e7ec] bg-white p-4">
+              <p className="flex items-center gap-2 text-[15px] font-semibold"><span className={clsx("grid size-7 place-items-center rounded-lg", p.kind === "ZONE" ? "bg-[#eef7f1] text-[#1c7d45]" : "bg-[#f4f6f8] text-[#0f1720]")}>{p.kind === "ZONE" ? <Trees className="size-4" /> : <Building2 className="size-4" />}</span>{placeLabel(d, config, p, lang === "bn")}<span className="ml-auto text-[13px] font-normal text-[#4d5664]">{t(`${num(us.length, lang)}টা`, `${us.length}`)}</span></p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {us.map((u) => (
-                  <span key={u.id} className="inline-flex items-center gap-1.5 rounded-lg bg-[#f4f6f8] py-1 pl-2 pr-1 font-mono text-[13px] font-semibold">
+                  <span key={u.id} className="group/u relative inline-flex items-center gap-1.5 rounded-lg border border-[#e3e7ec] py-1 pl-2 pr-1 font-mono text-[13px] font-semibold">
                     <span className="size-2 rounded-full" style={{ background: colorOf(st, u.category) }} />{u.local}
-                    <button onClick={() => remove(u.id)} aria-label={t(`${u.local} বাদ দিন`, `Remove ${u.local}`)} className="grid size-5 place-items-center rounded text-[#5b6270] hover:bg-white hover:text-[#8e1621]"><Trash2 className="size-3" /></button>
+                    <button onClick={() => remove(u.id)} aria-label={t(`${u.local} বাদ দিন`, `Remove ${u.local}`)} className="grid size-5 place-items-center rounded text-[#5b6270] opacity-40 transition-opacity hover:bg-[#fff1f0] hover:text-[#8e1621] focus-visible:opacity-100 group-hover/u:opacity-100"><X className="size-3" /></button>
                   </span>
                 ))}
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
-      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[13.5px] text-[#4d5664]">
-        {cats.map((c) => <li key={c.id} className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full" style={{ background: colorOf(st, c.id) }} />{nm(c.name, t)} · ৳{num(money(c.baseRate), lang)} · {num(live.filter((u) => u.category === c.id).length, lang)}</li>)}
-      </ul>
-      <Totals d={d} total={live.length} />
-    </Q>
+      </div>
+
+      <p className="mt-4 flex items-start gap-2 rounded-xl bg-[#f4f6f8] px-4 py-3 text-[13.5px] text-[#4d5664]"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#1c7d45]" />{t("সব রুম ড্রাফট হিসেবে সেভ। BinGi প্রতিটা ধরন অনুমোদন করলে বুকিং শুরু হবে।", "Every room is saved as a draft. Bookings open once BinGi approves each type.")}</p>
+      <Totals d={d} total={live.length} cats={cats.length} />
+    </section>
   );
 }

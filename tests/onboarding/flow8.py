@@ -64,8 +64,12 @@ def walk(b, W, en=True, kind="resort"):
   nx()
   # 3.2 add rooms: live "Add New Room" pattern
   def add_type(kind_label, cat, n=5):
-    pg.get_by_role("button",name=re.compile("Add your first type|Add another type|প্রথম ধরন|আরেকটা ধরন")).first.click(); pg.wait_for_timeout(250)
-    if kind=="resort": pg.locator("main:visible button").filter(has_text=re.compile(kind_label)).first.click(); pg.wait_for_timeout(250)
+    more=pg.get_by_role("button",name=re.compile("Add another type|আরেকটা ধরন"))
+    if more.count(): more.first.click(); pg.wait_for_timeout(250)
+    tiles=pg.locator("main:visible").get_by_role("button",name=re.compile(r"^(Add (rooms|cottages|villas|flats)|(রুম|কটেজ|ভিলা|ফ্ল্যাট).* যোগ করুন)"))
+    if tiles.count()>1: tiles.filter(has_text=re.compile(kind_label)).first.click()
+    elif tiles.count()==1: tiles.first.click()
+    pg.wait_for_timeout(250)
     pg.locator("main:visible button[aria-pressed]").filter(has_text=re.compile(cat)).first.click()
     t(tag+f"form: price prefilled ({cat})", pg.locator("#acc-price-in").input_value()!="")
     pg.get_by_role("button",name=re.compile("Select numbers|নম্বর বাছাই করুন")).first.click(); pg.wait_for_timeout(250)
@@ -73,10 +77,10 @@ def walk(b, W, en=True, kind="resort"):
     pg.get_by_role("button",name=re.compile(r"\+(5|৫)")).click(); pg.get_by_role("button",name=re.compile("^(Done|ঠিক আছে)$")).click(); pg.wait_for_timeout(200)
     snap("places-"+cat[:6]); pg.get_by_role("button",name=re.compile("Save numbers|নম্বর সেভ")).click(); pg.wait_for_timeout(200)
     snap("form-"+cat[:6]); pg.get_by_role("button",name=re.compile(r"^(Add (room|cottage|villa|flat).*|.+ যোগ করুন)$")).last.click(); pg.wait_for_timeout(350)
-  add_type("^\\s*(Rooms|রুম)", "Deluxe|ডিলাক্স")
-  t(tag+"rooms: 5 rooms after one type", "5 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৫টা রুম" in pg.locator("main:visible").first.inner_text())
+  add_type("rooms|রুম", "Deluxe|ডিলাক্স")
+  t(tag+"rooms: 5 rooms after one type", re.search(r"(Total rooms|মোট রুম)\s*(5|৫)\b", pg.locator("main:visible").first.inner_text()) is not None)
   if kind=="resort":
-    add_type("Cottage|কটেজ", "Garden Cottage|গার্ডেন কটেজ")
+    add_type("cottages|কটেজ", "Garden Cottage|গার্ডেন কটেজ")
     t(tag+"cottage numbers C1… in zone", re.search(r"\bC1\b", pg.locator("main:visible").first.inner_text()) is not None)
   nx()
   body=pg.locator("main:visible").first.inner_text()
