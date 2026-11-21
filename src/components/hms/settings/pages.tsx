@@ -17,6 +17,7 @@ import { useHousekeeping } from "@/lib/housekeeping/store";
 import { useHrm, type Employee } from "@/lib/hrm/store";
 import { useSite } from "@/lib/site";
 import { PLAN_LABEL } from "@/themes/manifest";
+import { PROP_ALL, propTop } from "@/lib/onboarding/rooms-v8";
 import { hasRestaurant } from "../bookings/extras";
 import { printHtml } from "../meals/print";
 import { PhotoButton } from "../photo";
@@ -80,6 +81,7 @@ export function OverviewPage() {
   const staffIn = hrm.st.employees.filter((e) => e.access === "linked" || e.access === "invited").length;
   const items: [boolean, string, string][] = [
     [!!(s.profile.phone && s.profile.email), "Contact phone and email", "profile"],
+    [!!s.profile.amenities?.length, "Property amenities", "profile"],
     [!!s.branding.logo, "Hotel logo", "branding"],
     [!!(s.profile.bin || s.profile.tin), "VAT / tax registration number", "profile"],
     [s.policy.reviewed, "Booking policies checked", "policies"],
@@ -114,8 +116,37 @@ export function OverviewPage() {
 }
 
 // ============ Property ============
+const NEW_CODE: Record<string, string> = { home: "homestay", cottage: "lodge", villa: "vacation-rental" };
+const propertyCodeOf = (h: Hotel) => h.propertyCode || NEW_CODE[h.propertyType] || h.propertyType;
+/** Property amenities — onboarding v8 order: top list for the property type first, the rest grouped behind "All amenities". */
+function PropAmenities({ type, value, onChange }: { type: string; value: string[]; onChange: (v: string[]) => void }) {
+  const [all, setAll] = useState(() => value.some((v) => !propTop(type).includes(v)));
+  const [q, setQ] = useState("");
+  const top = propTop(type);
+  const tog = (a: string) => onChange(value.includes(a) ? value.filter((x) => x !== a) : [...value, a]);
+  const chip = (a: string) => { const on = value.includes(a); return (
+    <button key={a} type="button" aria-pressed={on} onClick={() => tog(a)} className={clsx("inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13.5px] transition-colors", on ? "border-hms-ink bg-hms-ink font-medium text-white" : "border-hms-line bg-white hover:border-[#9aa0ac]")}>{on && <CircleCheck className="size-3.5" />}{a}</button>
+  ); };
+  return (
+    <div>
+      <div className="flex items-center justify-between"><p className="text-[13px] font-semibold text-hms-muted">Most guests look for</p><span className="text-[13px] text-hms-muted" aria-live="polite">{value.length} selected</span></div>
+      <div className="mt-2 flex flex-wrap gap-2">{top.map(chip)}</div>
+      {!all ? <button type="button" onClick={() => setAll(true)} className="mt-3 text-[14px] font-semibold text-hms-coral">+ All amenities</button> : (
+        <div className="mt-4 border-t border-hms-line pt-3">
+          <Input aria-label="Search amenities" placeholder="Search amenities" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="mt-3 space-y-3">
+            {PROP_ALL.map((g) => { const items = g.items.filter((a) => !top.includes(a) && a.toLowerCase().includes(q.toLowerCase())); return items.length ? (
+              <div key={g.group[1]}><p className="mb-1.5 text-[12.5px] font-semibold text-hms-muted">{g.group[1]}</p><div className="flex flex-wrap gap-1.5">{items.map(chip)}</div></div>
+            ) : null; })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProfilePage() {
-  const { s, save, toast } = useS();
+  const { h, s, save, toast } = useS();
   const f = useDraft(s.profile); const p = f.d; const set = (k: keyof typeof p) => (e: React.ChangeEvent<HTMLInputElement>) => f.setD({ ...p, [k]: e.target.value });
   const { st: rooms } = useRooms(useProperty());
   return (
@@ -130,6 +161,9 @@ export function ProfilePage() {
             <Field label="Address"><Input value={p.address} onChange={set("address")} /></Field>
             <div className="grid grid-cols-2 gap-4"><Field label="City"><Input value={p.city} onChange={set("city")} /></Field><Field label="Postcode"><Input inputMode="numeric" value={p.postcode} onChange={set("postcode")} /></Field></div>
           </Grid>
+        </Card>
+        <Card title="Property amenities" desc="Shown on your website and marketplace listing. The important ones first — the same list as onboarding.">
+          <PropAmenities type={propertyCodeOf(h)} value={p.amenities ?? h.facilities.map((f) => f.name).filter((n) => PROP_ALL.some((g) => g.items.includes(n)))} onChange={(v) => f.setD({ ...p, amenities: v })} />
         </Card>
         <Card title="Business registration" desc="Printed on invoices when filled.">
           <Grid cols={3}><Field label="Trade licence no."><Input value={p.tradeLicense} onChange={set("tradeLicense")} /></Field><Field label="TIN"><Input value={p.tin} onChange={set("tin")} /></Field><Field label="VAT BIN"><Input value={p.bin} onChange={set("bin")} /></Field></Grid>

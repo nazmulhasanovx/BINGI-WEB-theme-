@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { AddPage } from "@/components/hms/rooms/wizard";
+import { AddV8Page } from "@/components/hms/rooms/setup-v8";
 
 export default function Page() {
-  return <Suspense fallback={null}><AddPage /></Suspense>;
+  return <Suspense fallback={null}><AddV8Page /></Suspense>;
 }

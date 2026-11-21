@@ -13,7 +13,7 @@ import { createPortal } from "react-dom";
 import { BedDouble, Building2, Check, ChevronRight, Hash, ImagePlus, Pencil, Plus, ShieldCheck, Trash2, Trees, UsersRound, X } from "lucide-react";
 import { AMENITIES, type CoreType } from "@/lib/rooms/catalog";
 import { nowStamp, uid, type Category, type Config, type LocNode, type MealMode, type Pick, type useRooms } from "@/lib/rooms/store";
-import { PLANS, num, quote, recommend, useL, useOnboarding, type Draft, type StepId } from "@/lib/onboarding/store";
+import { PLANS, SetupCtx, num, quote, recommend, useL, useSetupEdit, type Draft, type StepId } from "@/lib/onboarding/store";
 import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/rooms-easy";
 import { BN_NAME, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, configFrom8, isZoneCore, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
@@ -36,8 +36,8 @@ export function placeLabel(d: Draft, c: Config, n: LocNode, bn: boolean) {
 }
 
 // ---------- 3.1 Where they are ----------
-export function Place({ d, st, goStep }: { d: Draft; st: Rooms["st"]; goStep: (s: StepId) => void }) {
-  const { edit } = useOnboarding();
+export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"]; goStep?: (s: StepId) => void; head?: boolean }) {
+  const edit = useSetupEdit();
   const PT = TYPE_META.find((x) => x.slug === d.propertyType);
   const { t, lang } = useL();
   const bn = lang === "bn";
@@ -60,14 +60,14 @@ export function Place({ d, st, goStep }: { d: Draft; st: Rooms["st"]; goStep: (s
   const sample = (L: number) => (L > 0 ? `${L}01` : L === 0 ? (d.ground === "G" ? "G01" : "001") : `B${-L}01`);
   return (
     <section>
-      <Head title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Set up from your property type. Check it and change what's different.")} />
+      {head && <Head title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Set up from your property type. Check it and change what's different.")} />}
       <div className="mt-6 space-y-4">
         <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")} hint={t("আপনার property-র ধরন দেখে আগেই বাছাই করা", "Already picked from your property type")}>
           {PT && (
             <div className="mb-4 flex items-center gap-3 rounded-xl bg-[#0f1720] px-4 py-3 text-white">
               <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/10"><PT.icon className="size-5" aria-hidden /></span>
               <span className="min-w-0 flex-1"><span className="block text-[12.5px] text-white/65">{t("আপনার property", "Your property")}</span><span className="block text-[16px] font-semibold">{t(PT.bn, PT.en)}</span></span>
-              <button onClick={() => goStep("1.1")} className="h-9 rounded-full bg-white/10 px-3.5 text-[13.5px] font-semibold hover:bg-white/20">{t("বদলান", "Change")}</button>
+              {goStep && <button onClick={() => goStep("1.1")} className="h-9 rounded-full bg-white/10 px-3.5 text-[13.5px] font-semibold hover:bg-white/20">{t("বদলান", "Change")}</button>}
             </div>
           )}
           <div className="grid gap-2.5 sm:grid-cols-3">
@@ -177,23 +177,30 @@ type Form = {
   id?: string; core: CoreType; title: string; category: string; kind: string; bed: string; guests: number; price: string; size?: number;
   picks: Pick[]; photos: string[]; description: string; amen: string[]; meals: { breakfast: MealMode; lunch: MealMode; dinner: MealMode }; mealPrices: { breakfast?: number; lunch?: number; dinner?: number };
 };
+function formOf(c: Category, st: Rooms["st"]): Form {
+  return {
+    id: c.id, core: c.core, title: c.name, category: c.name, kind: c.roomKind ?? "double", bed: c.bed, guests: c.maxAdults, price: String(c.baseRate || ""), size: c.sizeSqft,
+    picks: st.units.filter((u) => u.status !== "archived" && u.category === c.id).map((u) => ({ node: u.node, local: u.local, code: u.code })), photos: c.photos ?? [], description: c.description ?? "", amen: c.amenities,
+    meals: { breakfast: c.meals?.breakfast ?? "none", lunch: c.meals?.lunch ?? "none", dinner: c.meals?.dinner ?? "none" }, mealPrices: c.mealPrices ?? {},
+  };
+}
 const blank = (core: CoreType): Form => ({ core, title: "", category: "", kind: "double", bed: "1 Double bed", guests: 2, price: "", picks: [], photos: [], description: "", amen: ["Air conditioning", "Free Wi-Fi", "Hot water", "Attached bathroom"], meals: { breakfast: "none", lunch: "none", dinner: "none" }, mealPrices: {} });
 
-export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm: (open: boolean) => void }) {
+export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true }: { d: Draft; rooms: Rooms; onForm: (open: boolean) => void; start?: { core?: CoreType; cat?: string }; onClose?: () => void; head?: boolean }) {
   const { t, lang } = useL();
-  const [form, setFormState] = useState<Form | null>(null);
+  const host = useContext(SetupCtx);
+  const [form, setFormState] = useState<Form | null>(() => {
+    if (first?.cat) { const c = rooms.st.categories.find((x) => x.id === first.cat); if (c) return formOf(c, rooms.st); }
+    return first?.core ? blank(first.core) : null;
+  });
   const [pick, setPick] = useState(false);
-  const setForm = (f: Form | null) => { setFormState(f); onForm(!!f); };
+  const setForm = (f: Form | null) => { if (!f && onClose) return onClose(); setFormState(f); onForm(!!f); };
   const st = rooms.st;
   const cats = liveCats(st);
   const live = st.units.filter((u) => u.status !== "archived");
   const kinds = STAY.filter((s) => d.stay.includes(s.id));
   const start = (core: CoreType) => { setPick(false); setForm(blank(core)); };
-  const editCat = (c: Category) => setForm({
-    id: c.id, core: c.core, title: c.name, category: c.name, kind: c.roomKind ?? "double", bed: c.bed, guests: c.maxAdults, price: String(c.baseRate || ""), size: c.sizeSqft,
-    picks: live.filter((u) => u.category === c.id).map((u) => ({ node: u.node, local: u.local, code: u.code })), photos: c.photos ?? [], description: c.description ?? "", amen: c.amenities,
-    meals: { breakfast: c.meals?.breakfast ?? "none", lunch: c.meals?.lunch ?? "none", dinner: c.meals?.dinner ?? "none" }, mealPrices: c.mealPrices ?? {},
-  });
+  const editCat = (c: Category) => setForm(formOf(c, st));
   const remove = (c: Category) => {
     if (!window.confirm(t(`"${c.name}" আর এর সব রুম মুছে ফেলবেন?`, `Remove "${c.name}" and its rooms?`))) return;
     rooms.update((s) => { s.categories = s.categories.filter((x) => x.id !== c.id); s.units = s.units.filter((u) => u.category !== c.id); }, `Room type ${c.name} removed in onboarding`);
@@ -212,7 +219,7 @@ export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm:
   );
   return (
     <section>
-      <Head title={t("রুম যোগ করুন", "Add your rooms")} sub={t("একটা একটা করে ধরন যোগ করুন — এক পেজেই দাম, নম্বর, সুবিধা।", "Add one type at a time — price, numbers and amenities on one page.")} />
+      {head && <Head title={t("রুম যোগ করুন", "Add your rooms")} sub={t("একটা একটা করে ধরন যোগ করুন — এক পেজেই দাম, নম্বর, সুবিধা।", "Add one type at a time — price, numbers and amenities on one page.")} />}
       {cats.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-[#efb7b1] bg-gradient-to-b from-[#fffaf9] to-white p-6 text-center sm:p-8">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-[#b11c29] shadow-sm"><BedDouble className="size-7" /></span>
@@ -243,7 +250,7 @@ export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm:
                     {groups.map((n) => <span key={n.id} className="text-[13px] text-[#4d5664]"><b className="font-semibold text-[#2b3340]">{placeLabel(d, config, n, lang === "bn")}</b> · <span className="font-mono">{ranges(us.filter((u) => u.node === n.id).map((u) => u.local))}</span></span>)}
                     <span className="ml-auto flex gap-1">
                       <button onClick={() => editCat(c)} className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-[13.5px] font-semibold text-[#0f1720] hover:bg-[#e9edf2]"><Pencil className="size-3.5" />{t("বদলান", "Edit")}</button>
-                      <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-8 place-items-center rounded-full text-[#4d5664] hover:bg-[#fff1f0] hover:text-[#8e1621]"><Trash2 className="size-4" /></button>
+                      {!host && <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="grid size-8 place-items-center rounded-full text-[#4d5664] hover:bg-[#fff1f0] hover:text-[#8e1621]"><Trash2 className="size-4" /></button>}
                     </span>
                   </div>
                 </li>
@@ -259,7 +266,7 @@ export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm:
           ) : <div className="onb-in mt-3">{kindTiles}<button onClick={() => setPick(false)} className="mt-2 text-[14px] font-semibold text-[#4d5664] underline underline-offset-4">{t("বাতিল", "Cancel")}</button></div>}
         </>
       )}
-      <Totals d={d} total={live.length} cats={cats.length} />
+      {!host && <Totals d={d} total={live.length} cats={cats.length} />}
     </section>
   );
 }
@@ -267,6 +274,7 @@ export function AddRooms({ d, rooms, onForm }: { d: Draft; rooms: Rooms; onForm:
 const MEALS: ["breakfast" | "lunch" | "dinner", string, string][] = [["breakfast", "নাস্তা", "Breakfast"], ["lunch", "দুপুরের খাবার", "Lunch"], ["dinner", "রাতের খাবার", "Dinner"]];
 function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form; set: (f: Form) => void; close: () => void }) {
   const { t, lang } = useL();
+  const host = useContext(SetupCtx);
   const [tried, setTried] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [all, setAll] = useState(false);
@@ -303,8 +311,8 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
       if (i >= 0) s.categories[i] = cat; else s.categories.push(cat);
       s.units = s.units.filter((u) => u.category !== id || mine.has(u.code.toUpperCase()));
       for (const x of f.picks) if (!s.units.some((u) => u.category === id && u.code.toUpperCase() === x.code.toUpperCase()))
-        s.units.push({ id: uid("u"), code: x.code.toUpperCase(), local: x.local.toUpperCase(), node: x.node, category: id, core: f.core, preset: stay.preset, status: "draft", video: "inherit", created: nowStamp() });
-    }, `${f.picks.length} ${f.core.toLowerCase()} units saved as draft · ${name}`);
+        s.units.push({ id: uid("u"), code: x.code.toUpperCase(), local: x.local.toUpperCase(), node: x.node, category: id, core: f.core, preset: stay.preset, status: host ? host.unitStatus(cat.approval === "approved") : "draft", video: "inherit", created: nowStamp() });
+    }, `${f.picks.length} ${f.core.toLowerCase()} units saved${host ? (cat.approval === "approved" ? " and published" : " as draft (type waits for approval)") : " as draft"} · ${name}`);
     close();
   };
   const tog = (a: string) => p({ amen: f.amen.includes(a) ? f.amen.filter((x) => x !== a) : [...f.amen, a] });

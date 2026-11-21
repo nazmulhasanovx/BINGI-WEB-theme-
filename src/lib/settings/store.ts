@@ -34,7 +34,7 @@ export type MsgRule = { id: string; label: string; to: "Guest" | "Staff"; email:
 export type Printer = { id: string; name: string; kind: "Receipt (80 mm)" | "Kitchen (KOT)" | "A4"; where: string };
 
 export type Settings = {
-  profile: { name: string; type: string; phone: string; email: string; address: string; city: string; postcode: string; tradeLicense: string; tin: string; bin: string; billingName: string; billingPhone: string; billingEmail: string };
+  profile: { name: string; type: string; phone: string; email: string; address: string; city: string; postcode: string; tradeLicense: string; tin: string; bin: string; billingName: string; billingPhone: string; billingEmail: string; amenities?: string[] };
   branding: { logo?: string; icon?: string; restaurantLogo?: string };
   regional: { tz: string; currency: string; dateFmt: "DD MMM YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"; timeFmt: "12" | "24"; lang: string; lang2: string };
   policy: { early: "request" | "none" | "charge" | "free"; late: "request" | "none" | "charge" | "free"; childFreeAge: number; childNote: string; extraBed: boolean; extraBedPrice: number; websitePay: "full" | "advance" | "hotel"; advancePct: number; reviewed: boolean };

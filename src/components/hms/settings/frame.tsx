@@ -12,7 +12,7 @@ import { Activity, BedDouble, Brush, Building2, CalendarClock, CreditCard, FileT
 export type SPage = { id: string; label: string; group: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; kw: string };
 export const S_PAGES: SPage[] = [
   { id: "overview", label: "Overview", group: "", icon: Home, kw: "setup checklist recent changes" },
-  { id: "profile", label: "Property profile", group: "Property", icon: Building2, kw: "name address phone email trade licence tin bin billing contact" },
+  { id: "profile", label: "Property profile", group: "Property", icon: Building2, kw: "name address phone email amenities facilities trade licence tin bin billing contact" },
   { id: "branding", label: "Branding", group: "Property", icon: Palette, kw: "logo favicon icon restaurant logo" },
   { id: "regional", label: "Language & region", group: "Property", icon: Languages, kw: "time zone currency date time format language country" },
   { id: "policies", label: "Booking policies", group: "Stay & operations", icon: CalendarClock, kw: "check-in check-out early late cancellation no-show deposit child extra bed advance" },

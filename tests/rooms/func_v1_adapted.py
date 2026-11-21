@@ -1,3 +1,4 @@
+# LEGACY (22 Nov 2026): tests the old 5-step HMS add wizard and 4-step setup, replaced by the v8 one-page screens (see v8_hms.py). Kept for reference.
 import json, re, sys
 from playwright.sync_api import sync_playwright, expect
 B = "http://localhost:3100"

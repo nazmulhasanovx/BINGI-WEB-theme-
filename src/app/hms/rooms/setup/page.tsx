@@ -1,5 +1,5 @@
-import { SetupPage } from "@/components/hms/rooms/setup";
+import { SetupV8Page } from "@/components/hms/rooms/setup-v8";
 
 export default function Page() {
-  return <SetupPage />;
+  return <SetupV8Page />;
 }

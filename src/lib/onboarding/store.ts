@@ -2,7 +2,7 @@
 // Owner onboarding — one flow for every property type (rules 05 §18–19, Onboarding v5.1 adapted to code, 10 Nov 2026).
 // PROTOTYPE: everything lives in this browser (localStorage). Production: onboarding draft API + accommodation APIs
 // (see claude/design/Rooms_Backend_Handoff_v1.md). Nothing here is sent to BinGi.
-import { useCallback, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
 import type { Hotel, PropertyType } from "@/lib/types";
 import { teaValley } from "@/data/tea-valley";
 import { PROPERTY_TYPES } from "@/lib/rooms/catalog";
@@ -240,9 +240,10 @@ const OLD_TYPE: Record<string, PropertyType> = {
 };
 const hotels = new Map<string, { key: string; h: Hotel }>();
 const CHILD_TXT = { all: "Children of all ages are welcome.", "6+": "Children aged 6 and over are welcome.", "12+": "Guests must be 12 or older.", none: "This property is for adults only." } as const;
+const FAC_ICON: Record<string, string> = { "Free Wi-Fi": "wifi", Parking: "car", Restaurant: "utensils", Breakfast: "coffee", "Swimming pool": "waves", Garden: "flower", "Beach access": "waves", "Airport transfer": "car" };
 const PET_TXT = { no: "Pets are not allowed.", small: "Small pets are allowed on request.", yes: "Pets are welcome." } as const;
 export function hotelOf(d: Draft): Hotel {
-  const key = [d.name, d.propertyType, d.city, d.area, d.address, d.phone, d.plan, d.site.theme, d.tagline, d.cover?.length, JSON.stringify(d.policy), JSON.stringify(d.social), JSON.stringify(d.nearby), d.contact?.email, d.contact?.about].join("|");
+  const key = [d.extras.join(","), d.name, d.propertyType, d.city, d.area, d.address, d.phone, d.plan, d.site.theme, d.tagline, d.cover?.length, JSON.stringify(d.policy), JSON.stringify(d.social), JSON.stringify(d.nearby), d.contact?.email, d.contact?.about].join("|");
   const hit = hotels.get(d.slug);
   if (hit && hit.key === key) return hit.h;
   const label = PROPERTY_TYPES.find((p) => p.slug === d.propertyType)?.label ?? "Property";
@@ -254,6 +255,7 @@ export function hotelOf(d: Draft): Hotel {
     heroPhoto: d.cover || teaValley.heroPhoto, gallery: d.cover ? [d.cover] : teaValley.gallery,
     checkIn: d.policy.checkIn, checkOut: d.policy.checkOut, social: { facebook: d.social?.facebook, instagram: d.social?.instagram },
     nearby: d.nearby?.filter((x) => x.name.trim()).map((x) => ({ ...x, name: x.name.trim() })),
+    facilities: d.extras.length ? d.extras.slice(0, 8).map((e) => ({ name: e, short: "", icon: FAC_ICON[e] ?? "sparkles" })) : teaValley.facilities,
     policies: { ...teaValley.policies, children: CHILD_TXT[d.policy.children ?? "all"], pets: PET_TXT[d.policy.pets ?? "no"] },
     phone: d.phone, whatsapp: d.phone.replace(/[^\d+]/g, ""), email: d.contact?.email ?? "", rooms: [], offers: [], promoCodes: [], reviews: [], reviewCount: 0, reviewScore: undefined,
     plan: d.plan, status: "paused", host: undefined, faq: undefined, dayPlan: undefined, houseRules: undefined,
@@ -298,9 +300,19 @@ export const trialLeft = (d: Draft) => {
 };
 
 // ---------- Language (onboarding is Bangla-first) ----------
+/** Lets the same setup screens run inside the HMS: its own draft, its own save, English UI. */
+export type SetupHost = { edit: (fn: (d: Draft) => void) => void; lang: "bn" | "en"; where: "hms"; unitStatus: (approved: boolean) => "draft" | "published" };
+export const SetupCtx = createContext<SetupHost | null>(null);
+/** Edit the setup draft: the HMS copy when inside the HMS, else the onboarding draft. */
+export function useSetupEdit() {
+  const host = useContext(SetupCtx);
+  const { edit } = useOnboarding();
+  return host ? host.edit : edit;
+}
 export function useL() {
   const st = useSyncExternalStore(sub, read, () => empty);
-  const lang = st.lang ?? "bn";
+  const host = useContext(SetupCtx);
+  const lang = host?.lang ?? st.lang ?? "bn";
   return { lang, t: (bn: string, en: string) => (lang === "bn" ? bn : en) };
 }
 export function setOnbLang(l: "bn" | "en") { const n = structuredClone(read()); n.lang = l; write(n); }

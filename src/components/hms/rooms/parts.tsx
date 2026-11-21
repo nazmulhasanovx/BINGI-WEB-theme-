@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   BedDouble, Box, Building2, Castle, Check, House, Mountain, Plus, Search, Sailboat, Sparkles, Tent, TreePine, Trees, Warehouse, Home,
+  Snowflake, Tv, Wifi, Flame, Bath, Shirt, Refrigerator, Fence, Waves, Coffee,
 } from "lucide-react";
 import { useProperty } from "../property";
 import { useRooms } from "@/lib/rooms/store";
@@ -87,9 +88,9 @@ function SetupIntro() {
     <div className="mx-auto mt-6 max-w-[640px] rounded-2xl border border-[#e3e7ec] bg-white p-6 text-center sm:p-8">
       <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#ffe7e4] text-[#b11c29]"><Building2 className="size-6" /></span>
       <h2 className="mt-4 text-[22px] font-semibold">Set up your accommodation once</h2>
-      <p className="mx-auto mt-2 max-w-[460px] text-[15px] text-[#4d5664]">Tell BinGi what you sell (rooms, cottages, villas…), where they are, and how you number them. After this, adding units takes a few clicks.</p>
+      <p className="mx-auto mt-2 max-w-[460px] text-[15px] text-[#4d5664]">Most of it is filled in from your property type. Room numbers are made for you from floors and zones.</p>
       <ol className="mx-auto mt-5 grid max-w-[420px] gap-2 text-left text-[14.5px]">
-        {["Choose accommodation types", "Add buildings, floors or zones", "Pick a numbering style", "Review and save"].map((s, i) => (
+        {["Check what you rent (set from your property type)", "Floors / levels or zones / blocks — on one page", "Then add each room type on one page"].map((s, i) => (
           <li key={s} className="flex items-center gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#e9edf2] text-[13px] font-semibold">{i + 1}</span>{s}</li>
         ))}
       </ol>
@@ -165,47 +166,56 @@ export function ChoiceCard({ on, onClick, icon: Icon, title, sub, badge, disable
   );
 }
 
-/** Full amenities library: search, grouped, multi-select, selected count. */
+/** Same as onboarding v8: the amenities most rooms have come first; the full library (search, groups, your own) opens on demand. */
+const ROOM_TOP = ["Air conditioning", "Smart TV", "Free Wi-Fi", "Hot water", "Attached bathroom", "Toiletries", "Wardrobe", "Fridge", "Balcony", "Sea view", "Tea & coffee"];
+const TOP_ICON: Record<string, typeof BedDouble> = {
+  "Air conditioning": Snowflake, "Smart TV": Tv, "Free Wi-Fi": Wifi, "Hot water": Flame, "Attached bathroom": Bath, Toiletries: Sparkles, Wardrobe: Shirt, Fridge: Refrigerator, Balcony: Fence, "Sea view": Waves, "Tea & coffee": Coffee,
+};
 export function AmenityPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const [q, setQ] = useState("");
   const [custom, setCustom] = useState("");
+  const [all, setAll] = useState(() => value.some((v) => !ROOM_TOP.includes(v)));
   const groups = useMemo(() => {
     const extra = value.filter((v) => !AMENITIES.some((g) => g.items.includes(v)));
-    const all = [...AMENITIES, ...(extra.length ? [{ group: "Your own", items: extra }] : [])];
-    return all.map((g) => ({ ...g, items: g.items.filter((i) => i.toLowerCase().includes(q.toLowerCase())) })).filter((g) => g.items.length);
+    const list = [...AMENITIES, ...(extra.length ? [{ group: "Your own", items: extra }] : [])];
+    return list.map((g) => ({ ...g, items: g.items.filter((i) => !ROOM_TOP.includes(i) && i.toLowerCase().includes(q.toLowerCase())) })).filter((g) => g.items.length);
   }, [q, value]);
   const toggle = (a: string) => onChange(value.includes(a) ? value.filter((x) => x !== a) : [...value, a]);
+  const chip = (a: string, icon?: typeof BedDouble) => {
+    const on = value.includes(a); const I = icon;
+    return (
+      <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13.5px] transition-colors", on ? "border-[#0f1720] bg-[#0f1720] font-medium text-white" : "border-[#d3d8df] bg-white hover:border-[#9aa0ac]")}>
+        {on ? <Check className="size-3.5" /> : I ? <I className="size-3.5 text-[#4d5664]" aria-hidden /> : null}{a}
+      </button>
+    );
+  };
   return (
-    <div className="rounded-xl border border-[#e3e7ec]">
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#e3e7ec] p-2.5">
-        <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-lg bg-[#e9edf2] px-2.5">
-          <Search className="size-4 text-[#4d5664]" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search amenities" aria-label="Search amenities" className="min-w-0 flex-1 bg-transparent text-[14px] outline-none" />
-        </label>
-        <span className="text-[13.5px] font-medium text-[#4d5664]" aria-live="polite">{value.length} selected</span>
-      </div>
-      <div className="max-h-[300px] space-y-3 overflow-y-auto p-3">
-        {groups.map((g) => (
-          <div key={g.group} role="group" aria-label={g.group}>
-            <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#4d5664]">{g.group}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {g.items.map((a) => {
-                const on = value.includes(a);
-                return (
-                  <button key={a} type="button" aria-pressed={on} onClick={() => toggle(a)} className={clsx("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[13.5px]", on ? "border-[#b11c29] bg-[#ffe7e4] font-medium text-[#8e1621]" : "border-[#e3e7ec] bg-white hover:bg-[#f4f6f8]")}>
-                    {on && <Check className="size-3.5" />}{a}
-                  </button>
-                );
-              })}
-            </div>
+    <div className="rounded-xl border border-[#e3e7ec] bg-white p-3.5">
+      <div className="flex items-center justify-between gap-2"><p className="text-[13px] font-semibold text-[#4d5664]">Most rooms have</p><span className="text-[13px] font-medium text-[#4d5664]" aria-live="polite">{value.length} selected</span></div>
+      <div className="mt-2 flex flex-wrap gap-2">{ROOM_TOP.map((a) => chip(a, TOP_ICON[a]))}</div>
+      {!all ? (
+        <button type="button" onClick={() => setAll(true)} className="mt-3 text-[14px] font-semibold text-[#b11c29]">+ All amenities</button>
+      ) : (
+        <div className="mt-4 border-t border-[#e3e7ec] pt-3">
+          <label className="flex h-9 items-center gap-2 rounded-lg bg-[#e9edf2] px-2.5">
+            <Search className="size-4 text-[#4d5664]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search amenities" aria-label="Search amenities" className="min-w-0 flex-1 bg-transparent text-[14px] outline-none" />
+          </label>
+          <div className="mt-3 max-h-[300px] space-y-3 overflow-y-auto">
+            {groups.map((g) => (
+              <div key={g.group} role="group" aria-label={g.group}>
+                <p className="mb-1.5 text-[12.5px] font-semibold text-[#4d5664]">{g.group}</p>
+                <div className="flex flex-wrap gap-1.5">{g.items.map((a) => chip(a))}</div>
+              </div>
+            ))}
+            {!groups.length && <p className="text-[14px] text-[#4d5664]">No amenity matches “{q}”.</p>}
           </div>
-        ))}
-        {!groups.length && <p className="text-[14px] text-[#4d5664]">No amenity matches “{q}”.</p>}
-      </div>
-      <div className="flex gap-2 border-t border-[#e3e7ec] p-2.5">
-        <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#d3d8df] px-2.5 text-[14px] outline-none focus:border-[#b11c29]" />
-        <Btn type="button" className="h-9" disabled={!custom.trim()} onClick={() => { const c = custom.trim(); if (!value.includes(c)) onChange([...value, c]); setCustom(""); }}>Add</Btn>
-      </div>
+          <div className="mt-3 flex gap-2">
+            <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Add your own amenity" aria-label="Add your own amenity" className="h-9 min-w-0 flex-1 rounded-lg border border-[#d3d8df] px-2.5 text-[14px] outline-none focus:border-[#b11c29]" />
+            <Btn type="button" className="h-9" disabled={!custom.trim()} onClick={() => { const c = custom.trim(); if (!value.includes(c)) onChange([...value, c]); setCustom(""); }}>Add</Btn>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
