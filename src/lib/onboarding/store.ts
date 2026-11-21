@@ -47,6 +47,9 @@ export type Draft = {
   start: "trial" | "setup" | "subscribe"; help: "self" | "remote" | "onsite";
   /** v8 room types (presets the owner ticks and edits); saved as accommodation categories when leaving 3.2. */
   types: TypeRow[];
+  /** v8.1 locations (21 Nov feedback #3): floors named Floor N or Level N, plus ground and basements 1–3;
+   *  spread-out units sit in Zone 1–50 or Block 1–50, each renameable. */
+  place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[] };
 };
 export type TypeRow = {
   key: string; core: "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT" | "OTHER"; on: boolean; name: string; kind: string; bed: string; guests: number; price: number;
@@ -56,7 +59,7 @@ export type TypeRow = {
 export const SECTIONS = [
   { id: "s1", label: "Your property", bn: "আপনার property", steps: ["1.1", "1.2", "1.3", "1.4", "1.5"] },
   { id: "s2", label: "Plan & papers", bn: "প্ল্যান ও কাগজপত্র", steps: ["2.1", "2.2", "2.3", "2.4", "2.5"] },
-  { id: "s3", label: "Rooms", bn: "রুম", steps: ["3.1", "3.2", "3.3", "3.4"] },
+  { id: "s3", label: "Rooms", bn: "রুম", steps: ["3.1", "3.2", "3.3"] },
   { id: "s4", label: "Booking & team", bn: "বুকিং ও টিম", steps: ["4.1", "4.2", "4.3"] },
   { id: "s5", label: "Money & website", bn: "টাকা ও ওয়েবসাইট", steps: ["5.1", "5.2"] },
   { id: "s6", label: "Finish", bn: "শেষ ধাপ", steps: ["6.1"] },
@@ -66,14 +69,19 @@ export const ORDER: StepId[] = SECTIONS.flatMap((s) => [...s.steps]) as StepId[]
 export const STEP_TITLE: Record<StepId, [string, string]> = {
   "1.1": ["কী ধরনের property", "Property type"], "1.2": ["নাম", "Name"], "1.3": ["ঠিকানা", "Address"], "1.4": ["সুবিধা", "Extras"], "1.5": ["যোগাযোগ", "Contact"],
   "2.1": ["কাগজপত্র", "Documents"], "2.2": ["প্ল্যান", "Plan"], "2.3": ["সেটআপে সাহায্য", "Setup help"], "2.4": ["কবে শুরু", "Start"], "2.5": ["সারসংক্ষেপ", "Summary"],
-  "3.1": ["বিল্ডিং ও তলা", "Building & floors"], "3.2": ["রুমের ধরন", "Room types"], "3.3": ["রুম বাছাই", "Pick rooms"], "3.4": ["রিভিউ", "Review rooms"],
+  "3.1": ["কোথায় আছে", "Where they are"], "3.2": ["রুম যোগ করুন", "Add rooms"], "3.3": ["রিভিউ", "Review rooms"],
   "4.1": ["বুকিংয়ের নিয়ম", "Booking rules"], "4.2": ["কাজের টুলস", "Tools"], "4.3": ["টিম", "Team"],
   "5.1": ["টাকা নেওয়া", "Payments"], "5.2": ["ওয়েবসাইট", "Website"],
   "6.1": ["রিভিউ ও জমা", "Review & submit"],
 };
 /** v8 (21 Nov 2026) follows the live HMS order. Drafts saved by v7 used other step numbers. */
 const V7: Record<string, StepId> = { "2.1": "3.1", "2.2": "3.1", "2.3": "3.2", "3.1": "4.1", "3.2": "4.1", "4.1": "4.2", "4.2": "4.3", "6.1": "2.2", "6.2": "2.1", "6.3": "6.1" };
+export const emptyPlace = (): Draft["place"] => ({ floorStyle: "floor", basements: 0, zoneStyle: "zone", zoneCount: 2, zoneNames: [] });
 export function migrate(d: Draft) {
+  d.place ??= emptyPlace();
+  // v8.1: Rooms part is 3 steps (types + numbers are one page, like the live HMS "Add New Room")
+  if ((d.step as string) === "3.4") d.step = "3.3";
+  d.seen = [...new Set((d.seen ?? []).map((x) => ((x as string) === "3.4" ? "3.3" : x) as StepId))];
   if (d.v === 8) return;
   d.step = (V7[d.step] ?? d.step) as StepId;
   d.seen = [...new Set(d.seen.map((x) => (V7[x] ?? x) as StepId))];
@@ -204,7 +212,7 @@ export function newDraft(n: number): Draft {
   const t = nowIso();
   return {
     id, slug: id, created: t, updated: t, step: "1.1", seen: ["1.1"], v: 8,
-    contact: { ...emptyContact(), owner: read().name ?? "" }, docs: emptyDocs(), start: "setup", help: "self", types: [],
+    contact: { ...emptyContact(), owner: read().name ?? "" }, docs: emptyDocs(), start: "setup", help: "self", types: [], place: emptyPlace(),
     country: "BD", propertyType: "", name: "", area: "", city: "", address: "", phone: "", units: 10, extras: [], staff: "",
     road: "", division: "", postcode: "", pin: null,
     stay: [], buildings: [], floors: [], ground: "G", zones: [],
@@ -253,7 +261,7 @@ export function checks(d: Draft, units: { total: number; published: number; cate
     c("type", "Property-র ধরন", "Property type", "required", !!d.propertyType, "1.1"),
     c("name", "নাম", "Name", "required", !!d.name.trim(), "1.2"),
     c("address", "ঠিকানা", "Address", "required", !!(d.city.trim() && d.road.trim()), "1.3"),
-    c("units", "কমপক্ষে ১টা রুম", "At least one room", "required", units.total > 0, "3.3"),
+    c("units", "কমপক্ষে ১টা রুম", "At least one room", "required", units.total > 0, "3.2"),
     c("plan", "প্ল্যান বাছাই", "Plan chosen", "required", d.planPicked, "2.2"),
     c("contact", "যোগাযোগের নম্বর", "Contact number", "required", validPhone(d.phone), "1.5"),
     c("cash", "নগদ টাকা নেওয়া চালু", "Pay at property on", "required", d.pay.cash, "5.1"),

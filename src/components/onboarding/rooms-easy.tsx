@@ -312,12 +312,12 @@ export function placeName(p: LocNode, c: { nodes: LocNode[] }, lang: "bn" | "en"
 }
 
 /** Tap numbers on one floor / zone (live HMS: "3rd Floor Rooms — select multiple rooms at once"). */
-function NumberSheet({ place, name, list, taken, picks, onClose }: { place: LocNode; name: string; list: { local: string; code: string }[]; taken: Set<string>; picks: Pick[]; onClose: (p: Pick[]) => void }) {
+export function NumberSheet({ place, name, list, taken, picks, onClose, label: show = (x) => x.code }: { place: LocNode; name: string; list: { local: string; code: string }[]; taken: Set<string>; picks: Pick[]; onClose: (p: Pick[]) => void; label?: (x: { local: string; code: string }) => string }) {
   const { t, lang } = useL();
   const [sel, setSel] = useState<Pick[]>(picks);
   const [q, setQ] = useState("");
   const here = sel.filter((x) => x.node === place.id).length;
-  const shown = list.filter((x) => x.code.toLowerCase().includes(q.toLowerCase()));
+  const shown = list.filter((x) => show(x).toLowerCase().includes(q.toLowerCase()));
   const nextFree = (n: number) => { const add: Pick[] = []; for (const x of list) { if (add.length >= n) break; if (!taken.has(x.code.toUpperCase()) && !sel.some((s) => s.code === x.code)) add.push({ node: place.id, local: x.local, code: x.code }); } setSel([...sel, ...add]); };
   return createPortal(
     <div className="bingi-ui fixed inset-0 z-50 flex items-end justify-center bg-[#0f1720]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => onClose(sel)}>
@@ -336,7 +336,7 @@ function NumberSheet({ place, name, list, taken, picks, onClose }: { place: LocN
             const on = sel.some((s) => s.code === x.code);
             return (
               <button key={x.code} disabled={used} aria-pressed={on} onClick={() => setSel(on ? sel.filter((s) => s.code !== x.code) : [...sel, { node: place.id, local: x.local, code: x.code }])}
-                className={clsx("h-12 rounded-xl font-mono text-[15px] font-semibold transition-colors", used ? "cursor-not-allowed bg-[#e3e7ec] text-[#a3a8b4] line-through" : on ? "bg-[#b11c29] text-white " : "bg-[#e9edf2] hover:bg-[#ffe7e4]")}>{x.code}</button>
+                className={clsx("h-12 rounded-xl font-mono text-[15px] font-semibold transition-colors", used ? "cursor-not-allowed bg-[#e3e7ec] text-[#a3a8b4] line-through" : on ? "bg-[#b11c29] text-white " : "bg-[#e9edf2] hover:bg-[#ffe7e4]")}>{show(x)}</button>
             );
           })}
         </div>

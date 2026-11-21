@@ -55,27 +55,33 @@ def walk(b, W, en=True, kind="resort"):
   nx(); nx()  # plan, setup help
   t(tag+"start: 'set up first' is default", pg.get_by_role("radio",name=re.compile("Set up first|আগে সেটআপ")).get_attribute("aria-checked")=="true")
   nx(); nx()  # start, summary
-  # 3.1 building & floors: presets, type not asked again
+  # 3.1 where: only fitting kinds, presets, zone rename
   body=pg.locator("main:visible").first.inner_text()
   t(tag+"rooms: property type not asked again", "What kind of property" not in body and "কী ধরনের property" not in body)
-  t(tag+"rooms: presets filled", draft()["floors"] and (kind!="resort" or draft()["zones"]))
-  nx()
-  # 3.2 types: presets ticked with prices
-  on=[r for r in draft()["types"] if r["on"]]
-  t(tag+"types: presets ticked with price", len(on)>=1 and all(r["price"]>0 for r in on))
-  nx()
-  # 3.3 pick rooms: quick fill + tap
-  pg.get_by_role("button",name=re.compile("Add the next|পরের")).filter(has_text=re.compile("Add the next|নম্বর দিন")).first.click(); pg.wait_for_timeout(300)
-  t(tag+"pick: quick fill made 5", "5 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৫টা রুম" in pg.locator("main:visible").first.inner_text())
-  pg.locator("main:visible button[aria-pressed=false]").filter(has_text=re.compile(r"^\s*\w?\d+\s*$")).first.click(); pg.wait_for_timeout(200)
-  t(tag+"pick: tap adds one (6)", "6 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৬টা রুম" in pg.locator("main:visible").first.inner_text())
+  t(tag+"where: only fitting kinds shown", (kind=="resort") == ("Apartment" not in body and "অ্যাপার্টমেন্ট" not in body) if kind=="resort" else ("Cottage" not in body and "কটেজ" not in body))
   if kind=="resort":
-    pg.get_by_role("radio",name=re.compile("Cottage|কটেজ")).first.click(); pg.wait_for_timeout(250)
-    pg.locator("main:visible button[aria-pressed=false]").filter(has_text=re.compile(r"^\s*C\d+\s*$")).first.click(); pg.wait_for_timeout(200)
-    t(tag+"pick: cottage numbers C01…", "C01" in pg.locator("main:visible").first.inner_text())
-  t(tag+"pick: no sideways scroll", not ov())
+    pg.locator("main:visible input[placeholder^='Zone 1'], main:visible input[placeholder^='জোন ১']").first.fill("Garden")
   nx()
-  t(tag+"review: lists codes", re.search(r"\b10[1-6]\b", pg.locator("main:visible").first.inner_text()) is not None)
+  # 3.2 add rooms: live "Add New Room" pattern
+  def add_type(kind_label, cat, n=5):
+    pg.get_by_role("button",name=re.compile("Add your first type|Add another type|প্রথম ধরন|আরেকটা ধরন")).first.click(); pg.wait_for_timeout(250)
+    if kind=="resort": pg.locator("main:visible button").filter(has_text=re.compile(kind_label)).first.click(); pg.wait_for_timeout(250)
+    pg.locator("main:visible button[aria-pressed]").filter(has_text=re.compile(cat)).first.click()
+    t(tag+f"form: price prefilled ({cat})", pg.locator("#acc-price").input_value()!="")
+    pg.get_by_role("button",name=re.compile("Select numbers|নম্বর বাছাই করুন")).first.click(); pg.wait_for_timeout(250)
+    pg.get_by_role("button",name=re.compile("view numbers|নম্বর দেখুন")).first.click(); pg.wait_for_timeout(250)
+    pg.get_by_role("button",name=re.compile(r"\+(5|৫)")).click(); pg.get_by_role("button",name=re.compile("^(Done|ঠিক আছে)$")).click(); pg.wait_for_timeout(200)
+    snap("places-"+cat[:6]); pg.get_by_role("button",name=re.compile("Save numbers|নম্বর সেভ")).click(); pg.wait_for_timeout(200)
+    snap("form-"+cat[:6]); pg.get_by_role("button",name=re.compile(r"^(Add (room|cottage|villa|flat).*|.+ যোগ করুন)$")).last.click(); pg.wait_for_timeout(350)
+  add_type("^\\s*(Rooms|রুম)", "Deluxe|ডিলাক্স")
+  t(tag+"rooms: 5 rooms after one type", "5 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৫টা রুম" in pg.locator("main:visible").first.inner_text())
+  if kind=="resort":
+    add_type("Cottage|কটেজ", "Garden Cottage|গার্ডেন কটেজ")
+    t(tag+"cottage numbers C1… in zone", re.search(r"\bC1\b", pg.locator("main:visible").first.inner_text()) is not None)
+  nx()
+  body=pg.locator("main:visible").first.inner_text()
+  t(tag+"review: lists codes", re.search(r"\b10[1-5]\b", body) is not None)
+  if kind=="resort": t(tag+"review: zone shows owner's name", "Garden" in body)
   nx()
   t(tag+"booking rules", bool(re.search("Booking rules|বুকিংয়ের নিয়ম", h1())))
   nx(); nx(); nx()  # rules, tools, team

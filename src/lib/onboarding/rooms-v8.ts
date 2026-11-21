@@ -4,7 +4,8 @@
 import type { CoreType } from "@/lib/rooms/catalog";
 import type { Category } from "@/lib/rooms/store";
 import type { Draft, TypeRow } from "./store";
-import { STAY } from "./rooms-easy";
+import { BUILDINGS, STAY } from "./rooms-easy";
+import { emptyConfig, type Config, type LocNode } from "@/lib/rooms/store";
 
 type Preset = Omit<TypeRow, "on" | "amen"> & { for: string[] };
 const BASIC = ["Air conditioning", "Smart TV", "Free Wi-Fi", "Hot water", "Attached bathroom", "Toiletries", "Wardrobe"];
@@ -96,3 +97,64 @@ export const PROP_BN: Record<string, string> = {
   "Solar energy": "সোলার", Recycling: "রিসাইক্লিং",
 };
 export const propTop = (type: string) => [...PROP_TOP, ...(PROP_TYPE_EXTRA[type] ?? [])];
+
+// ---------- v8.1 locations + numbers (feedback #3, #4) ----------
+export const MAX_ZONES = 50;
+export const ZONE_NUMBERS = 100;
+export const FLOOR_NUMBERS = 50;
+const BN = "০১২৩৪৫৬৭৮৯";
+const bnNum = (n: number | string) => String(n).replace(/\d/g, (x) => BN[+x]);
+export const isZoneCore = (c: string) => STAY.find((s) => s.id === c)?.where === "zone";
+export const zoneDefault = (d: Pick<Draft, "place">, i: number, bn: boolean) =>
+  d.place.zoneStyle === "block" ? (bn ? `ব্লক ${bnNum(i)}` : `Block ${i}`) : (bn ? `জোন ${bnNum(i)}` : `Zone ${i}`);
+export const zoneName = (d: Pick<Draft, "place">, i: number, bn: boolean) => d.place.zoneNames[i - 1]?.trim() || zoneDefault(d, i, bn);
+/** Floor / level label: L>0 numbered, 0 ground, −k basement k. */
+export function levelName(style: "floor" | "level", L: number, bn: boolean) {
+  if (L === 0) return bn ? "গ্রাউন্ড" : "Ground";
+  if (L < 0) return bn ? `বেসমেন্ট ${bnNum(-L)}` : `Basement ${-L}`;
+  return style === "level" ? (bn ? `লেভেল ${bnNum(L)}` : `Level ${L}`) : (bn ? `ফ্লোর ${bnNum(L)}` : `Floor ${L}`);
+}
+/** Draft presets → accommodation locations (same records the live backend creates). Ids are stable so units stay attached. */
+export function configFrom8(d: Draft, prev: Config): Config {
+  const nodes: LocNode[] = [];
+  const floorKinds = d.stay.some((s) => !isZoneCore(s));
+  const zoneKinds = d.stay.some((s) => isZoneCore(s));
+  if (floorKinds) {
+    const bs = d.buildings.length ? d.buildings : ["main"];
+    const levels = [...Array.from({ length: d.place.basements }, (_, i) => -(d.place.basements - i)), ...[...d.floors].sort((a, z) => a - z)];
+    for (const b of bs) {
+      const B = BUILDINGS.find((x) => x.id === b) ?? BUILDINGS[0];
+      const bid = `b-${b}`;
+      nodes.push({ id: bid, kind: b.startsWith("T") ? "TOWER" : "BUILDING", name: B.en, code: bs.length > 1 ? B.code || "M" : B.code, active: true });
+      for (const L of levels) nodes.push({ id: `${bid}-f${L}`, kind: d.place.floorStyle === "level" ? "LEVEL" : "FLOOR", name: levelName(d.place.floorStyle, L, false), code: L < 0 ? `B${-L}` : L === 0 ? "G" : `F${L}`, parent: bid, level: L, active: true });
+    }
+  }
+  if (zoneKinds) for (let i = 1; i <= d.place.zoneCount; i++) {
+    nodes.push({ id: `z${i}`, kind: "ZONE", name: zoneName(d, i, false), code: d.place.zoneStyle === "block" ? `BL${i}` : `Z${i}`, level: i, active: true });
+  }
+  const base = prev.configured ? prev : emptyConfig();
+  return { ...base, configured: true, version: prev.version + 1, savedAt: new Date().toISOString(), enabled: d.stay as CoreType[], nodes };
+}
+/** Ready numbers for one place: floors 101…150 (G01…, B101…), zones C1…C100 with the zone in the full code (Z1-C1). */
+export function numbersFor(c: Config, leaf: LocNode, core: CoreType, ground: "G" | "0"): { local: string; code: string }[] {
+  const st = STAY.find((s) => s.id === core)!;
+  const out: { local: string; code: string }[] = [];
+  if (leaf.kind === "FLOOR" || leaf.kind === "LEVEL") {
+    const b = c.nodes.find((n) => n.id === leaf.parent);
+    const L = leaf.level ?? 0;
+    for (let i = 1; i <= FLOOR_NUMBERS; i++) {
+      const two = String(i).padStart(2, "0");
+      const no = L > 0 ? `${L}${two}` : L === 0 ? (ground === "G" ? `G${two}` : String(i).padStart(3, "0")) : `B${-L}${two}`;
+      const local = (core === "APARTMENT" ? st.prefix : "") + no;
+      out.push({ local, code: b?.code ? `${b.code}-${local}` : local });
+    }
+  } else {
+    for (let i = 1; i <= ZONE_NUMBERS; i++) { const local = `${st.prefix}${i}`; out.push({ local, code: `${leaf.code}-${local}` }); }
+  }
+  return out;
+}
+/** Kinds that fit a property type (others behind "More"). */
+export const FITS: Record<string, CoreType[]> = {
+  hotel: ["ROOM"], resort: ["ROOM", "COTTAGE", "VILLA"], "guest-house": ["ROOM"], homestay: ["APARTMENT", "ROOM"], "serviced-apartment": ["APARTMENT"],
+  motel: ["ROOM"], hostel: ["ROOM"], "vacation-rental": ["VILLA", "APARTMENT"], lodge: ["COTTAGE", "ROOM"], other: ["ROOM", "OTHER"],
+};

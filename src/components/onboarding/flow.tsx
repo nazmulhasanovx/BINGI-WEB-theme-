@@ -25,8 +25,8 @@ import { MobileSteps, Sidebar } from "./sidebar";
 import { GuestPreview } from "./preview";
 import { AddressSheet } from "./address";
 import { FormSlot } from "./rooms-easy";
-import { PickRooms, Place, ReviewRooms, Types, saveTypes } from "./rooms-v8";
-import { PROP_ALL, PROP_BN, PROP_SUGGEST, propTop } from "@/lib/onboarding/rooms-v8";
+import { AddRooms, Place, ReviewRooms } from "./rooms-v8";
+import { PROP_ALL, PROP_BN, PROP_SUGGEST, configFrom8, propTop } from "@/lib/onboarding/rooms-v8";
 import { Contact, Documents, SetupHelp, Start, Summary } from "./steps-v8";
 import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Pills, Primary, Q, Stepper, Tile, field, label } from "./shell";
 
@@ -70,8 +70,7 @@ function Flow({ d }: { d: Draft }) {
   const pct = score(cs);
   const cont = () => {
     if (errs.length) { setTried(true); return; }
-    if (d.step === "3.1") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
-    if (d.step === "3.2") { const blocked = saveTypes(d, rooms); if (blocked.length) { setBlocked(blocked); setTried(true); return; } }
+    if (d.step === "3.1") rooms.update((s) => { s.config = configFrom8(d, s.config); }, "Accommodation locations set up from onboarding presets");
     // the "Best fit" plan counts as chosen unless the owner picks another (one tap less)
     if (d.step === "2.2" && !d.planPicked) edit((x) => { x.plan = recommend(x); x.planPicked = true; });
     // the owner saw the price rules on this page — count them as checked (defaults are fine)
@@ -92,7 +91,7 @@ function Flow({ d }: { d: Draft }) {
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />, "1.5": <Contact d={d} />,
     "2.1": <Documents d={d} />, "2.2": <Plan d={d} units={counts.total} />, "2.3": <SetupHelp d={d} />, "2.4": <Start d={d} />, "2.5": <Summary d={d} units={counts.total} go={go} />,
-    "3.1": <Place d={d} st={rooms.st} />, "3.2": <Types d={d} />, "3.3": <PickRooms d={d} rooms={rooms} />, "3.4": <ReviewRooms d={d} rooms={rooms} go={go} />,
+    "3.1": <Place d={d} st={rooms.st} />, "3.2": <AddRooms d={d} rooms={rooms} onForm={setFormOpen} />, "3.3": <ReviewRooms d={d} rooms={rooms} go={go} />,
     "4.1": <BookingRules d={d} />, "4.2": <Modules d={d} />, "4.3": <Team d={d} />,
     "5.1": <Payments d={d} />, "5.2": <Website d={d} />,
     "6.1": <Ready d={d} counts={counts} go={go} />,
@@ -108,7 +107,7 @@ function Flow({ d }: { d: Draft }) {
       <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e7ec]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
       <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={pct}
         wide={d.step === "2.2"}
-        aside={d.step === "2.2" || d.step === "6.1" || d.step === "3.3" || d.step === "3.4" ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
+        aside={d.step === "2.2" || d.step === "6.1" || d.step === "3.3" || (d.step === "3.2" && formOpen) ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
           {!formOpen && <Foot back={back}>
@@ -136,16 +135,9 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
   if (d.step === "3.1") {
     if (!d.stay.length) e.push(t("কী ভাড়া দেন — কমপক্ষে একটা বাছাই করুন।", "What you rent — choose at least one."));
     const floor = d.stay.some((s) => s === "ROOM" || s === "APARTMENT");
-    const zone = d.stay.some((s) => s === "COTTAGE" || s === "VILLA" || s === "OTHER");
     if (floor && !d.floors.length) e.push(t("কয় তলা আছে বাছাই করুন।", "Choose the floors."));
-    if (zone && !d.zones.length) e.push(t("কটেজ/ভিলা কোন জায়গায় আছে বাছাই করুন।", "Choose where the cottages/villas are."));
   }
-  if (d.step === "3.2") {
-    if (!d.types.some((r) => r.on)) e.push(t("কমপক্ষে একটা রুমের ধরন টিক দিন।", "Tick at least one room type."));
-    if (d.types.some((r) => r.on && !(r.price > 0))) e.push(t("টিক দেওয়া প্রতিটা ধরনের দাম দিন।", "Each ticked type needs a price."));
-    if (d.types.some((r) => r.on && !r.name.trim())) e.push(t("প্রতিটা ধরনের নাম দিন।", "Each type needs a name."));
-  }
-  if (d.step === "3.3" && !units) e.push(t("কমপক্ষে একটা রুম নম্বর বাছাই করুন।", "Pick at least one room number."));
+  if ((d.step === "3.2" || d.step === "3.3") && !units) e.push(t("কমপক্ষে একটা ধরন আর নম্বর যোগ করুন।", "Add at least one type with numbers."));
   if (d.step === "4.1" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
   if (d.step === "4.3" && d.team.some((x) => !validPhone(x.phone))) e.push(t("প্রত্যেকের সঠিক মোবাইল নম্বর দিন।", "Each invite needs a valid mobile number."));
   if (d.step === "5.1") {
