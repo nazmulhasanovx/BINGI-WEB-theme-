@@ -10,7 +10,7 @@ import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
   CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck, Globe, CalendarCheck, ImageIcon,
-  Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby,
+  Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby, Store,
 } from "lucide-react";
 import {
   CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
@@ -29,7 +29,7 @@ import { AddRooms, Place, ReviewRooms } from "./rooms-v8";
 import { PROP_ALL, PROP_BN, PROP_SUGGEST, configFrom8, propTop } from "@/lib/onboarding/rooms-v8";
 import { Contact, Documents, SetupHelp, Start, Summary } from "./steps-v8";
 import { PlanV8 } from "./plan-v8";
-import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Pills, Primary, Q, Stepper, Tile, field, label } from "./shell";
+import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Pills, Primary, Q, Section, Stepper, SwitchRow, Tile, field, label } from "./shell";
 
 const noop = () => () => {};
 import { TYPE_META as TYPES } from "./types";
@@ -209,17 +209,25 @@ function Address({ d }: { d: Draft }) {
     <div><label htmlFor={`ad-${k}`} className={label}>{lab}</label><input id={`ad-${k}`} value={d[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} {...extra} className={field + " mt-1.5"} /></div>
   );
   return (
-    <Q title={t("আপনার property কোথায়?", "Where is your property?")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests find you by this address; it goes on every booking confirmation.")}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">{inp("road", t("রাস্তা / বাড়ি", "Road / house"), t("যেমন: জিন্দাবাজার রোড", "e.g. Zindabazar Road"), { autoComplete: "address-line1" })}</div>
-        {inp("area", t("এলাকা (ঐচ্ছিক)", "Area (optional)"), t("যেমন: জিন্দাবাজার", "e.g. Zindabazar"))}
-        {inp("city", t("শহর / জেলা", "City / district"), t("যেমন: সিলেট", "e.g. Sylhet"), { autoComplete: "address-level2" })}
-        <div><label htmlFor="ad-div" className={label}>{t("বিভাগ (ঐচ্ছিক)", "Division (optional)")}</label><select id="ad-div" value={d.division} onChange={(e) => set("division", e.target.value)} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{DIVS.map(([en, bn]) => <option key={en} value={en}>{t(bn, en)}</option>)}</select></div>
-        {inp("postcode", t("পোস্টকোড (ঐচ্ছিক)", "Postcode (optional)"), "3100", { inputMode: "numeric", maxLength: 4 })}
+    <Q title={t("আপনার property কোথায়?", "Where is your property?")} sub={t("গেস্টরা এই ঠিকানা দেখে আসবে। বুকিং কনফার্মেশনেও যায়।", "Guests find you by this address. It goes on every booking confirmation.")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests find you by this address; it goes on every booking confirmation.")}>
+      <div className="space-y-4">
+        <Section n={1} title={t("ঠিকানা", "Address")} hint={t("রাস্তা আর শহর লাগবে, বাকিগুলো ঐচ্ছিক", "Road and city are needed, the rest is optional")}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">{inp("road", t("রাস্তা / বাড়ি *", "Road / house *"), t("যেমন: কলাতলী রোড, হোটেল মোটেল জোন", "e.g. Kolatoli Road, Hotel-Motel Zone"), { autoComplete: "address-line1" })}</div>
+            {inp("city", t("শহর / জেলা *", "City / district *"), t("যেমন: কক্সবাজার", "e.g. Cox's Bazar"), { autoComplete: "address-level2" })}
+            {inp("area", t("এলাকা · ঐচ্ছিক", "Area · optional"), t("যেমন: কলাতলী", "e.g. Kolatoli"))}
+            <div><label htmlFor="ad-div" className={label}>{t("বিভাগ · ঐচ্ছিক", "Division · optional")}</label><select id="ad-div" value={d.division} onChange={(e) => set("division", e.target.value)} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{DIVS.map(([en, bn]) => <option key={en} value={en}>{t(bn, en)}</option>)}</select></div>
+            {inp("postcode", t("পোস্টকোড · ঐচ্ছিক", "Postcode · optional"), "4700", { inputMode: "numeric", maxLength: 4 })}
+          </div>
+        </Section>
+        <Section n={2} title={t("ম্যাপে পিন", "Map pin")} hint={t("ঐচ্ছিক — দিলে গেস্ট সহজে খুঁজে পায়", "Optional — helps guests find you")}>
+          <button onClick={() => setOpen(true)} className="flex w-full items-center gap-3 rounded-xl border border-dashed border-[#c6ccd4] bg-[#f9fafb] px-4 py-3.5 text-left hover:border-[#9aa0ac]">
+            <span className="grid size-10 place-items-center rounded-xl bg-[#fdecea] text-[#b11c29]"><MapPin className="size-5" aria-hidden /></span>
+            <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{d.pin ? t("পিন দেওয়া আছে", "Pin added") : t("ম্যাপে পিন দিন", "Add a map pin")}</span><span className="block truncate text-[13px] text-[#4d5664]">{d.address || t("ঠিকানা লিখলে ম্যাপ ওখানে খুলবে", "The map opens at your address")}</span></span>
+            <span className="text-[14px] font-semibold text-[#b11c29]">{d.pin ? t("বদলান", "Change") : t("খুলুন", "Open")}</span>
+          </button>
+        </Section>
       </div>
-      <button onClick={() => setOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#c6ccd4] bg-white px-3.5 py-2.5 text-[14.5px] font-semibold hover:bg-[#f4f6f8]">
-        <MapPin className="size-4 text-[#b11c29]" aria-hidden />{d.pin ? t("ম্যাপের পিন বদলান", "Change map pin") : t("ম্যাপে পিন দিন (ঐচ্ছিক)", "Add a map pin (optional)")}
-      </button>
       {open && <AddressSheet d={d} onClose={() => setOpen(false)} />}
     </Q>
   );
@@ -276,11 +284,13 @@ function Extras({ d }: { d: Draft }) {
 function BookingRules({ d }: { d: Draft }) {
   const { t } = useL();
   return (
-    <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} why={t("দাম, বাতিল আর চেক-ইনের সময় — গেস্ট বুক করার আগে এগুলো দেখে।", "Prices, cancellation and times — guests see these before they book.")}>
-      <h2 className="mb-3 text-[17px] font-semibold">{t("দামের নিয়ম", "Price rules")}</h2>
-      <Rates d={d} />
-      <h2 className="mb-3 mt-9 border-t border-[#e3e7ec] pt-7 text-[17px] font-semibold">{t("বাতিল ও সময়", "Cancellation & times")}</h2>
-      <Policy d={d} />
+    <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} sub={t("সাধারণ নিয়ম আগেই বসানো। মিলিয়ে নিন — পরে ড্যাশবোর্ড থেকেও বদলানো যায়।", "Common rules are set already. Check them — you can change them later in the dashboard.")} why={t("দাম, বাতিল আর চেক-ইনের সময় — গেস্ট বুক করার আগে এগুলো দেখে।", "Prices, cancellation and times — guests see these before they book.")}>
+      <div className="space-y-4">
+        <Section n={1} title={t("চেক-ইন ও চেক-আউট", "Check-in & check-out")} hint={t("গেস্ট কখন আসবে আর কখন যাবে", "When guests arrive and leave")}><Times d={d} /></Section>
+        <Section n={2} title={t("বাতিলের নিয়ম", "Cancellation")} hint={t("গেস্ট বাতিল করলে কী হবে", "What happens if a guest cancels")}><Policy d={d} /></Section>
+        <Section n={3} title={t("দামের নিয়ম", "Price rules")} hint={t("ঐচ্ছিক — না দিলে সব দিন এক দাম", "Optional — without these every day has the same price")}><Rates d={d} /></Section>
+        <Section n={4} title={t("কর, মুদ্রা ও ভাষা", "Tax, currency & language")} hint={t("বাংলাদেশের জন্য আগেই বসানো", "Already set for Bangladesh")}><Region d={d} /></Section>
+      </div>
     </Q>
   );
 }
@@ -299,17 +309,16 @@ function Rates({ d }: { d: Draft }) {
           {r.minStay > 1 && <div className="mt-3"><Stepper label={t("রাত", "Nights")} value={r.minStay} set={(n) => set((x) => { x.minStay = n; })} min={1} max={14} /></div>}
         </Toggle>
       </div>
-      <button onClick={() => set(() => {})} className="mt-4 text-[14.5px] font-medium text-[#4d5664] underline underline-offset-4">{t("কোনো নিয়ম নেই — সব দিন এক দাম", "No rules — same price every day")}</button>
     </div>
   );
 }
 function Toggle({ on, onClick, icon, title, children }: { on: boolean; onClick: () => void; icon: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#0f1720] bg-white shadow-[inset_0_0_0_1px_#0f1720]" : "border-[#c6ccd4] bg-white")}>
+    <div className={clsx("rounded-xl border p-4 transition-colors", on ? "border-[#b11c29] bg-[#fffafa] shadow-[inset_0_0_0_1px_#b11c29]" : "border-[#d3d8df] bg-white")}>
       <button type="button" role="switch" aria-checked={on} onClick={onClick} className="flex w-full items-center gap-3 text-left">
         <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#ffe7e4] text-[#b11c29]">{icon}</span>
         <span className="flex-1 text-[16px] font-semibold">{title}</span>
-        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#b11c29]" : "bg-[#ddd6e6]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
+        <span className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-[#1c7d45]" : "bg-[#c6ccd4]")}><span className={clsx("absolute top-1 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} /></span>
       </button>
       {children}
     </div>
@@ -324,27 +333,53 @@ const POLICIES = [
 const TIMES_IN = ["12:00", "13:00", "14:00", "15:00"];
 const TIMES_OUT = ["10:00", "11:00", "12:00"];
 const hhmm = (v: string, lang: "bn" | "en") => { const [H] = v.split(":").map(Number); return num(`${H % 12 || 12}${H >= 12 ? " PM" : " AM"}`, lang); };
+const ALL_TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
+const hhmm2 = (v: string, lang: "bn" | "en") => { const [H, M] = v.split(":").map(Number); return num(`${H % 12 || 12}${M ? ":30" : ""} ${H >= 12 ? "PM" : "AM"}`, lang); };
 function Policy({ d }: { d: Draft }) {
+  const { edit } = useOnboarding();
+  const { t } = useL();
+  const p = d.policy;
+  return (
+    <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-2.5">
+      {POLICIES.map((x) => <Tile key={x.id} role="radio" on={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })} icon={<x.icon className="size-5" />} title={t(x.bn, x.en)} sub={t(x.subBn, x.subEn)} />)}
+    </div>
+  );
+}
+/** Live: quick chips + "Other" with every half hour. */
+function Times({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
   const p = d.policy;
-  const [tax, setTax] = useState(false);
-  return (
+  const col = (k: "checkIn" | "checkOut", lab: string, quick: string[]) => (
     <div>
-      <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-2.5">
-        {POLICIES.map((x) => <Tile key={x.id} role="radio" on={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })} icon={<x.icon className="size-6" />} title={t(x.bn, x.en)} sub={t(x.subBn, x.subEn)} />)}
+      <p className="mb-1.5 text-[13.5px] font-semibold text-[#2b3340]">{lab}</p>
+      <div className="flex flex-wrap gap-2">{quick.map((v) => <Chip key={v} on={p[k] === v} onClick={() => edit((y) => { y.policy[k] = v; })}>{hhmm(v, lang)}</Chip>)}</div>
+      <label className="mt-2.5 block"><span className="sr-only">{t(`${lab} — অন্য সময়`, `${lab} — other time`)}</span>
+        <select value={quick.includes(p[k]) ? "" : p[k]} onChange={(e) => e.target.value && edit((y) => { y.policy[k] = e.target.value; })} className={field + " h-10 text-[14.5px]"}>
+          <option value="">{t("অন্য সময়…", "Other time…")}</option>{ALL_TIMES.map((v) => <option key={v} value={v}>{hhmm2(v, lang)}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+  return <div className="grid gap-5 sm:grid-cols-2">{col("checkIn", t("চেক-ইন", "Check-in"), TIMES_IN)}{col("checkOut", t("চেক-আউট", "Check-out"), TIMES_OUT)}</div>;
+}
+function Region({ d }: { d: Draft }) {
+  const { edit } = useOnboarding();
+  const { t, lang } = useL();
+  const p = d.policy;
+  const sel = (id: string, lab: string, v: string, opts: [string, string][], set: (v: string) => void) => (
+    <div><label htmlFor={id} className={label}>{lab}</label><select id={id} value={v} onChange={(e) => set(e.target.value)} className={field + " mt-1.5"}>{opts.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
+  );
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><p className={label}>{t("ভ্যাট", "VAT")}</p><div className="mt-1.5 flex flex-wrap gap-2">{[0, 5, 7.5, 15].map((v) => <Chip key={v} on={p.vat === v} onClick={() => edit((y) => { y.policy.vat = v; })}>{num(v, lang)}%</Chip>)}</div></div>
+        <div><p className={label}>{t("সার্ভিস চার্জ", "Service charge")}</p><div className="mt-1.5 flex flex-wrap gap-2">{[0, 5, 10].map((v) => <Chip key={v} on={p.sc === v} onClick={() => edit((y) => { y.policy.sc = v; })}>{num(v, lang)}%</Chip>)}</div></div>
       </div>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div><p className="text-[15px] font-semibold">{t("চেক-ইন", "Check-in")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_IN.map((v) => <Chip key={v} on={p.checkIn === v} onClick={() => edit((y) => { y.policy.checkIn = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
-        <div><p className="text-[15px] font-semibold">{t("চেক-আউট", "Check-out")}</p><div className="mt-2 flex flex-wrap gap-2">{TIMES_OUT.map((v) => <Chip key={v} on={p.checkOut === v} onClick={() => edit((y) => { y.policy.checkOut = v; })}>{hhmm(v, lang)}</Chip>)}</div></div>
-      </div>
-      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-lg border border-[#e3e7ec] bg-white px-4 py-3 text-[14.5px]">
-        <span>{t("ভ্যাট", "VAT")} {num(p.vat, lang)}% · {t("সার্ভিস চার্জ", "Service")} {num(p.sc, lang)}%</span>
-        <button onClick={() => setTax((x) => !x)} aria-expanded={tax} className="ml-auto font-semibold text-[#b11c29]">{t("বদলান", "Change")}</button>
-        {tax && <div className="flex w-full flex-wrap gap-4 pt-2">
-          <div><p className="text-[13px] text-[#4d5664]">{t("ভ্যাট", "VAT")}</p><div className="mt-1 flex gap-2">{[0, 5, 7.5, 15].map((v) => <Chip key={v} on={p.vat === v} onClick={() => edit((y) => { y.policy.vat = v; })}>{num(v, lang)}%</Chip>)}</div></div>
-          <div><p className="text-[13px] text-[#4d5664]">{t("সার্ভিস চার্জ", "Service")}</p><div className="mt-1 flex gap-2">{[0, 5, 10].map((v) => <Chip key={v} on={p.sc === v} onClick={() => edit((y) => { y.policy.sc = v; })}>{num(v, lang)}%</Chip>)}</div></div>
-        </div>}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {sel("rg-cur", t("মুদ্রা", "Currency"), p.currency ?? "BDT", [["BDT", "BDT ৳"], ["USD", "USD $"], ["INR", "INR ₹"]], (v) => edit((y) => { y.policy.currency = v; }))}
+        {sel("rg-tz", t("টাইম জোন", "Time zone"), p.tz ?? "Asia/Dhaka", [["Asia/Dhaka", "Asia/Dhaka"], ["Asia/Kolkata", "Asia/Kolkata"], ["UTC", "UTC"]], (v) => edit((y) => { y.policy.tz = v; }))}
+        {sel("rg-lang", t("প্রধান ভাষা", "Primary language"), p.lang ?? "bn", [["bn", "বাংলা"], ["en", "English"]], (v) => edit((y) => { y.policy.lang = v; }))}
       </div>
     </div>
   );
@@ -383,19 +418,28 @@ function Team({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
   return (
-    <Q title={t("আপনার টিম", "Your team")} why={t("তারা SMS পাবে আর নিজের BinGi ID দিয়ে যোগ দেবে।", "They get an SMS and join with their own BinGi ID.")}>
-      <p className="text-[15px] font-semibold">{t("কত জন কাজ করেন?", "How many people work here?")}</p>
-      <div className="mt-2 flex flex-wrap gap-2">{STAFF.map((s, i) => <Chip key={s} on={d.staff === s} onClick={() => edit((x) => { x.staff = s; })}>{t(["শুধু আমি", "২–৫", "৬–১৫", "১৬–৫০", "৫০+"][i], s)}</Chip>)}</div>
-      <p className="mt-6 text-[15px] font-semibold">{t("কাউকে এখনই যোগ করবেন? (৩ জন পর্যন্ত)", "Invite someone now? (up to 3)")}</p>
-      <div className="mt-2 space-y-2">
-        {d.team.map((m, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#c6ccd4] bg-white p-2.5">
-            <input aria-label={`${t("মোবাইল", "Mobile")} ${i + 1}`} inputMode="tel" placeholder="01712 345678" value={m.phone} onChange={(e) => edit((x) => { x.team[i].phone = e.target.value; })} className={field + " h-11 min-w-0 flex-1 basis-[160px]"} />
-            <div className="flex flex-wrap gap-1.5">{ROLES.map(([en, bn]) => <Chip key={en} on={m.role === en} onClick={() => edit((x) => { x.team[i].role = en; })}>{t(bn, en)}</Chip>)}</div>
-            <button aria-label={`${t("বাদ দিন", "Remove")} ${i + 1}`} onClick={() => edit((x) => { x.team.splice(i, 1); })} className="ml-auto grid size-10 place-items-center rounded-full text-[#4d5664] hover:bg-[#e9edf2]">✕</button>
+    <Q title={t("আপনার টিম", "Your team")} sub={t("এখন না দিলেও চলবে — কাগজ যাচাইয়ের পরে স্টাফ অংশ থেকে দাওয়াত দেওয়া যায়।", "You can skip this — invite your team from Staff after verification.")} why={t("তারা SMS পাবে আর নিজের BinGi ID দিয়ে যোগ দেবে।", "They get an SMS and join with their own BinGi ID.")}>
+      <div className="space-y-4">
+        <Section n={1} title={t("টিমের আকার", "Team size")} hint={t("কত জন এখানে কাজ করেন", "How many people work here")}>
+          <div className="mb-4 flex items-center gap-3 rounded-xl bg-[#f4f6f8] px-4 py-3">
+            <span className="grid size-10 place-items-center rounded-full bg-[#0f1720] text-[14px] font-semibold text-white">{(d.contact?.owner || "Owner").slice(0, 2).toUpperCase()}</span>
+            <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{d.contact?.owner || t("আপনি", "You")}</span><span className="text-[13px] text-[#4d5664]">{d.phone}</span></span>
+            <span className="rounded-full bg-white px-2.5 py-0.5 text-[12.5px] font-semibold">{t("মালিক", "Owner")}</span>
           </div>
-        ))}
-        {d.team.length < 3 && <Ghost onClick={() => edit((x) => { x.team.push({ phone: "", role: "Front desk" }); x.teamLater = false; })}><Plus className="size-[18px]" /> {t("একজন যোগ করুন", "Add a person")}</Ghost>}
+          <div className="flex flex-wrap gap-2">{STAFF.map((s, i) => <Chip key={s} on={d.staff === s} onClick={() => edit((x) => { x.staff = s; })}>{t(["শুধু আমি", "২–৫", "৬–১৫", "১৬–৫০", "৫০+"][i], s)}</Chip>)}</div>
+        </Section>
+        <Section n={2} title={t("কাউকে দাওয়াত দিন", "Invite people")} hint={t("ঐচ্ছিক · ৩ জন পর্যন্ত · প্রতিজনের কাজ বাছুন", "Optional · up to 3 · pick each person's role")}>
+          <div className="space-y-2">
+            {d.team.map((m, i) => (
+              <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d3d8df] bg-white p-2.5">
+                <input aria-label={`${t("মোবাইল", "Mobile")} ${i + 1}`} inputMode="tel" placeholder="01712 345678" value={m.phone} onChange={(e) => edit((x) => { x.team[i].phone = e.target.value; })} className={field + " h-11 min-w-0 flex-1 basis-[160px]"} />
+                <div className="flex flex-wrap gap-1.5">{ROLES.map(([en, bn]) => <Chip key={en} on={m.role === en} onClick={() => edit((x) => { x.team[i].role = en; })}>{t(bn, en)}</Chip>)}</div>
+                <button aria-label={`${t("বাদ দিন", "Remove")} ${i + 1}`} onClick={() => edit((x) => { x.team.splice(i, 1); })} className="ml-auto grid size-10 place-items-center rounded-full text-[#4d5664] hover:bg-[#e9edf2]">✕</button>
+              </div>
+            ))}
+            {d.team.length < 3 && <Ghost onClick={() => edit((x) => { x.team.push({ phone: "", role: "Front desk" }); x.teamLater = false; })}><Plus className="size-[18px]" /> {t("একজন যোগ করুন", "Add a person")}</Ghost>}
+          </div>
+        </Section>
       </div>
     </Q>
   );
@@ -416,18 +460,22 @@ function Payments({ d }: { d: Draft }) {
   const setS = (k: keyof typeof st, v: string) => setP((x) => { x.settle = { ...st, [k]: v } as typeof st; });
   const types: [NonNullable<Draft["pay"]["bkashType"]>, string, string][] = [["personal", "পার্সোনাল", "Personal"], ["merchant", "মার্চেন্ট", "Merchant"], ["agent", "এজেন্ট", "Agent"]];
   return (
-    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} why={t("শুরুতে গেস্ট সরাসরি আপনাকে টাকা দেয়। অনলাইন পেমেন্ট (BinGi Payments) যাচাইয়ের পরে চালু হয়।", "Guests pay you directly first. BinGi Payments opens after verification.")}>
+    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} sub={t("নগদ সবসময় চালু। যেগুলো নেন সেগুলো চালু করুন।", "Cash is always on. Turn on what else you accept.")} why={t("শুরুতে গেস্ট সরাসরি আপনাকে টাকা দেয়। অনলাইন পেমেন্ট (BinGi Payments) যাচাইয়ের পরে চালু হয়।", "Guests pay you directly first. BinGi Payments opens after verification.")}>
+      <div className="space-y-4">
+      <Section n={1} title={t("সরাসরি আপনাকে", "Paid to you directly")} hint={t("কাউন্টারে, মোবাইল ওয়ালেটে বা ব্যাংকে", "At the desk, by mobile wallet or bank")}>
       <div className="grid gap-2.5">
         <Tile on={p.cash} onClick={() => tog("cash")} icon={<Banknote className="size-6" />} title={t("নগদ / কাউন্টারে", "Cash at the desk")} sub={t("সবসময় চালু থাকবে", "Always on")} />
         <Tile on={p.bkash} onClick={() => tog("bkash")} icon={<Smartphone className="size-6" />} title="bKash" sub={p.bkash && p.bkashNo ? `${p.bkashNo} · ${t(types.find((x) => x[0] === (p.bkashType ?? "personal"))![1], types.find((x) => x[0] === (p.bkashType ?? "personal"))![2])}` : t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")}>
           <div className="grid gap-3 sm:grid-cols-2">
             <In id="bk-no" lab={t("bKash নম্বর", "bKash number")} value={p.bkashNo} set={(v) => setP((x) => { x.bkashNo = v; })} ph="01712 345678" mode="tel" />
+            <In id="bk-name" lab={t("অ্যাকাউন্টের নাম", "Account name")} value={p.bkashName ?? d.name} set={(v) => setP((x) => { x.bkashName = v; })} />
             <div><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{types.map(([v, bn, en]) => <Chip key={v} on={(p.bkashType ?? "personal") === v} onClick={() => setP((x) => { x.bkashType = v; })}>{t(bn, en)}</Chip>)}</div></div>
           </div>
         </Tile>
         <Tile on={p.nagad} onClick={() => tog("nagad")} icon={<Smartphone className="size-6" />} title="Nagad" sub={p.nagad && p.nagadNo ? p.nagadNo : t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")}>
           <div className="grid gap-3 sm:grid-cols-2">
             <In id="ng-no" lab={t("Nagad নম্বর", "Nagad number")} value={p.nagadNo} set={(v) => setP((x) => { x.nagadNo = v; })} ph="01812 345678" mode="tel" />
+            <In id="ng-name" lab={t("অ্যাকাউন্টের নাম", "Account name")} value={p.nagadName ?? d.name} set={(v) => setP((x) => { x.nagadName = v; })} />
             <div><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{types.map(([v, bn, en]) => <Chip key={v} on={(p.nagadType ?? "personal") === v} onClick={() => setP((x) => { x.nagadType = v; })}>{t(bn, en)}</Chip>)}</div></div>
           </div>
         </Tile>
@@ -437,13 +485,18 @@ function Payments({ d }: { d: Draft }) {
             <In id="bk-holder" lab={t("অ্যাকাউন্টের নাম", "Account name")} value={p.bankHolder} set={(v) => setP((x) => { x.bankHolder = v; })} />
             <In id="bk-acc" lab={t("অ্যাকাউন্ট নম্বর", "Account number")} value={p.bankAcc} set={(v) => setP((x) => { x.bankAcc = v.replace(/[^\d]/g, ""); })} mode="numeric" />
             <In id="bk-branch" lab={t("শাখা", "Branch")} value={p.bankBranch} set={(v) => setP((x) => { x.bankBranch = v; })} />
+            <div className="sm:col-span-2"><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{([["savings", "সেভিংস", "Savings"], ["current", "কারেন্ট", "Current"], ["business", "বিজনেস", "Business"]] as const).map(([v, bn, en]) => <Chip key={v} on={(p.bankType ?? "current") === v} onClick={() => setP((x) => { x.bankType = v; })}>{t(bn, en)}</Chip>)}</div></div>
           </div>
         </Tile>
       </div>
+      {(p.bkash || p.nagad || p.bank) && (
+        <div className="mt-4"><label htmlFor="pay-note" className={label}>{t("গেস্টের জন্য নির্দেশনা · ঐচ্ছিক", "Instructions for guests · optional")}</label>
+          <textarea id="pay-note" rows={2} value={p.note ?? t("টাকা পাঠিয়ে ট্রানজেকশন আইডি চেক-ইনে দেখান।", "Please send payment and keep the transaction ID for check-in.")} onChange={(e) => setP((x) => { x.note = e.target.value.slice(0, 200); })} className={field + " mt-1.5 h-auto py-2.5"} /></div>
+      )}
+      </Section>
 
-      <h2 className="mt-9 text-[18px] font-semibold">{t("BinGi Payments — অনলাইনে কার্ড ও ওয়ালেট", "BinGi Payments — online cards & wallets")}</h2>
-      <p className="mt-1 text-[14.5px] text-[#4d5664]">{t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে, টাকা আপনার সেটেলমেন্ট অ্যাকাউন্টে যাবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website; money settles to your account. Goes live after verification and approval.")}</p>
-      <div role="radiogroup" aria-label="BinGi Payments" className="mt-4 grid gap-2.5">
+      <Section n={2} title={t("BinGi Payments — অনলাইনে কার্ড ও ওয়ালেট", "BinGi Payments — online cards & wallets")} hint={t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website. Goes live after verification and approval.")}>
+      <div role="radiogroup" aria-label="BinGi Payments" className="grid gap-2.5">
         <Tile role="radio" on={p.bingi === "apply"} onClick={() => setP((x) => { x.bingi = "apply"; })} icon={<Wallet className="size-6" />} title={t("এখনই আবেদন করুন", "Apply now")} sub={t("সেটেলমেন্ট অ্যাকাউন্ট দিন", "Add your settlement account")}>
           <div role="radiogroup" aria-label={t("সেটেলমেন্ট কোথায়", "Settle to")} className="flex flex-wrap gap-2">
             <Chip on={st.method === "bank"} onClick={() => setS("method", "bank")}>{t("ব্যাংক অ্যাকাউন্ট", "Bank account")}</Chip>
@@ -467,6 +520,8 @@ function Payments({ d }: { d: Draft }) {
         </Tile>
         <Tile role="radio" on={p.bingi === "later"} onClick={() => setP((x) => { x.bingi = "later"; })} icon={<Clock className="size-6" />} title={t("পরে সেটআপ করবো", "Set up later")} sub={t("HMS → সেটিংস → কানেক্টিভিটি থেকে পরে আবেদন", "Apply later in HMS → Settings → Connectivity")} />
       </div>
+      </Section>
+      </div>
     </Q>
   );
 }
@@ -486,7 +541,9 @@ function Website({ d }: { d: Draft }) {
   const fits = (x: (typeof MASTER_LIST)[number]) => x.bestFor.includes(old);
   const themes = themesFor(d);
   return (
-    <Q title={t("আপনার ওয়েবসাইট দেখতে কেমন হবে?", "How should your website look?")} why={t("আপনার রুম, দাম আর ছবি দিয়ে আমরা সাজিয়ে দেব। অনুমোদনের আগে ড্রাফট থাকবে।", "We fill it with your rooms and prices. It stays a draft until approval.")}>
+    <Q title={t("ওয়েবসাইট ও অনলাইন বুকিং", "Website & online booking")} sub={t("এখান থেকে কিছু পাবলিক হয় না — পরে HMS থেকে পাবলিশ করবেন।", "Nothing goes public here — you publish later from HMS.")} why={t("আপনার রুম, দাম আর ছবি দিয়ে আমরা সাজিয়ে দেব। অনুমোদনের আগে ড্রাফট থাকবে।", "We fill it with your rooms and prices. It stays a draft until approval.")}>
+      <div className="space-y-4">
+      <Section n={1} title={t("ওয়েবসাইটের লুক", "Website look")} hint={t("আপনার property-র জন্য মানানসইগুলো আগে", "Best fits for your property first")}>
       <div role="radiogroup" aria-label={t("ওয়েবসাইটের লুক", "Website look")} className="grid gap-3 sm:grid-cols-2">
         {themes.map((x) => {
           const on = d.site.theme === x.id;
@@ -500,7 +557,17 @@ function Website({ d }: { d: Draft }) {
           );
         })}
       </div>
-      <p className="mt-3 text-[13.5px] text-[#4d5664]">{t("কিছু লুক নির্দিষ্ট প্ল্যানে পাওয়া যায় — প্ল্যান শেষ ধাপে।", "Some looks need a higher plan — plan is in the last part.")}</p>
+      <p className="mt-3 text-[13.5px] text-[#4d5664]">{t("কিছু লুক নির্দিষ্ট প্ল্যানে পাওয়া যায়।", "Some looks need a higher plan.")}</p>
+      </Section>
+      <Section n={2} title={t("গেস্টরা কোথায় পাবে", "Where guests can find you")} hint={t("সব বন্ধ রাখা নিরাপদ — যাচাই আর ছবি দেওয়ার পরে চালু করুন", "Safe to keep off — turn on after verification and photos")}>
+        <div className="divide-y divide-[#e9edf2] rounded-xl border border-[#e3e7ec]">
+          <SwitchRow icon={<Globe className="size-5" />} title={t("ওয়েবসাইট পাবলিক করুন", "Make my website public")} sub={t("রিভিউ করার পরে পাবলিশ হবে", "Published after you review it")} on={!!d.site.public} set={(v) => edit((y) => { y.site.public = v; })} />
+          <SwitchRow icon={<CalendarCheck className="size-5" />} title={t("অনলাইন বুকিং নিন", "Accept online booking")} sub={t("প্রস্তুত হলে বুকিং রিকোয়েস্ট আসবে", "Booking requests when ready")} on={!!d.site.online} set={(v) => edit((y) => { y.site.online = v; })} />
+          <SwitchRow icon={<Store className="size-5" />} title={t("BinGi মার্কেটপ্লেসে দেখান", "List me on the BinGi marketplace")} sub={t("BinGi রিভিউ করবে", "Reviewed by BinGi")} on={!!d.site.market} set={(v) => edit((y) => { y.site.market = v; })} />
+        </div>
+        <label className="mt-3 flex items-start gap-3 rounded-xl bg-[#f4f6f8] px-4 py-3 text-[14.5px]"><input type="checkbox" checked={!!d.site.reviewed} onChange={(e) => edit((y) => { y.site.reviewed = e.target.checked; })} className="mt-0.5 size-5 accent-[#b11c29]" /><span><b className="font-semibold">{t("আগের বুকিংগুলো দেখেছি", "I have reviewed existing stays")}</b><span className="block text-[13px] text-[#4d5664]">{t("চলমান রিজার্ভেশন আর বন্ধ রুম মিলিয়ে নিয়েছি", "Current reservations and blocked rooms are checked")}</span></span></label>
+      </Section>
+      </div>
     </Q>
   );
 }

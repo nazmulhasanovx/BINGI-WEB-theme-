@@ -190,3 +190,30 @@ export function Pills<T extends string | number>({ items, value, onChange, label
     </div>
   );
 }
+
+/** Numbered section card used across the onboarding pages (21 Nov polish). */
+export function Section({ id, n, title, hint, action, children }: { id?: string; n: number; title: string; hint?: ReactNode; action?: ReactNode; children: ReactNode }) {
+  const { lang } = useL();
+  return (
+    <section id={id} className="scroll-mt-24 rounded-2xl border border-[#e3e7ec] bg-white p-5 shadow-[0_1px_2px_rgb(16_24_40/0.04)] sm:p-6">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-[#0f1720] text-[13px] font-semibold text-white">{num(n, lang)}</span>
+        <div className="min-w-0 flex-1"><h2 className="text-[17.5px] font-semibold leading-snug">{title}</h2>{hint && <p className="text-[13.5px] text-[#4d5664]">{hint}</p>}</div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+export function Switch({ on, set, label: lab, disabled }: { on: boolean; set: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={lab} disabled={disabled} onClick={() => set(!on)} className={clsx("relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-40", on ? "bg-[#1c7d45]" : "bg-[#c6ccd4]")}><span className={clsx("absolute top-0.5 size-6 rounded-full bg-white shadow transition-[left] duration-200", on ? "left-[22px]" : "left-0.5")} /></button>;
+}
+export function SwitchRow({ title, sub, on, set, icon }: { title: string; sub?: string; on: boolean; set: (v: boolean) => void; icon?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5">
+      {icon && <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f4f6f8] text-[#0f1720]">{icon}</span>}
+      <div className="min-w-0 flex-1"><p className="text-[15px] font-semibold">{title}</p>{sub && <p className="text-[13px] text-[#4d5664]">{sub}</p>}</div>
+      <Switch on={on} set={set} label={title} />
+    </div>
+  );
+}

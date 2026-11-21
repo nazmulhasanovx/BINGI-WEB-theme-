@@ -6,7 +6,7 @@ import { useState } from "react";
 import { BadgeCheck, Camera, CircleCheck, ClipboardCheck, CreditCard, FileText, FileUp, Headphones, IdCard, MapPinned, Receipt, Rocket, Wrench } from "lucide-react";
 import { PLANS, TRIAL_DAYS, num, quote, recommend, useL, useOnboarding, type Draft, type StepId } from "@/lib/onboarding/store";
 import { money } from "../hms/rooms/parts";
-import { Chip, Q, Tile, field, label } from "./shell";
+import { Chip, Q, Section, Tile, field, label } from "./shell";
 
 // ---------- 1.5 Contact ----------
 const NATIONS: [string, string][] = [["Bangladeshi", "বাংলাদেশি"], ["Indian", "ভারতীয়"], ["Other", "অন্য"]];
@@ -18,6 +18,8 @@ export function Contact({ d }: { d: Draft }) {
   const set = (p: Partial<Draft["contact"]>) => edit((x) => { x.contact = { ...x.contact, ...p }; });
   return (
     <Q title={t("যোগাযোগ", "Contact")} sub={t("গেস্ট আর BinGi এই নম্বর ও ইমেইলে যোগাযোগ করবে।", "Guests and BinGi reach you on this number and email.")}>
+      <div className="space-y-4">
+      <Section n={1} title={t("যোগাযোগের তথ্য", "Contact details")} hint={t("মোবাইল আগেই যাচাই করা", "Your mobile is already verified")}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div><label htmlFor="c-owner" className={label}>{t("যোগাযোগের নাম", "Contact name")} <span className="font-normal text-[#4d5664]">({t("ঐচ্ছিক", "optional")})</span></label><input id="c-owner" value={c.owner} onChange={(e) => set({ owner: e.target.value })} autoComplete="name" className={field + " mt-1.5"} /></div>
         <div>
@@ -28,17 +30,18 @@ export function Contact({ d }: { d: Draft }) {
         <div><label htmlFor="c-email" className={label}>{t("Property-র ইমেইল", "Property email")} <span className="font-normal text-[#4d5664]">({t("ঐচ্ছিক", "optional")})</span></label><input id="c-email" type="email" value={c.email} onChange={(e) => set({ email: e.target.value })} autoComplete="email" placeholder="hello@yourhotel.com" className={field + " mt-1.5"} /></div>
         <div><span className={label}>{t("জাতীয়তা", "Nationality")}</span><div className="mt-1.5 flex flex-wrap gap-2">{NATIONS.map(([en, bn]) => <Chip key={en} on={c.nationality === en} onClick={() => set({ nationality: en })}>{t(bn, en)}</Chip>)}</div></div>
       </div>
-      <div className="mt-6 rounded-xl border border-[#e3e7ec] bg-white">
-        <button onClick={() => setMore((m) => !m)} aria-expanded={more} className="flex w-full items-center justify-between px-4 py-3.5 text-left"><span><span className="block text-[15.5px] font-semibold">{t("আরও তথ্য", "More details")}</span><span className="text-[13.5px] text-[#4d5664]">{t("সব ঐচ্ছিক — ব্যবসার নাম, স্টার, ওয়েবসাইট", "All optional — business name, stars, website")}</span></span><span className="text-[14px] font-semibold text-[#b11c29]">{more ? t("লুকান", "Hide") : t("দেখুন", "Show")}</span></button>
-        {more && (
-          <div className="onb-in grid gap-4 border-t border-[#e3e7ec] p-4 sm:grid-cols-2">
+      </Section>
+      <Section n={2} title={t("ব্যবসার তথ্য", "Business details")} hint={t("সব ঐচ্ছিক — ব্যবসার নাম, স্টার, ওয়েবসাইট", "All optional — business name, stars, website")} action={<button onClick={() => setMore((m) => !m)} aria-expanded={more} className="h-9 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]">{more ? t("লুকান", "Hide") : t("যোগ করুন", "Add")}</button>}>
+        {more ? (
+          <div className="onb-in grid gap-4 sm:grid-cols-2">
             <div><label htmlFor="c-biz" className={label}>{t("ব্যবসার নাম", "Business name")}</label><input id="c-biz" value={c.business} onChange={(e) => set({ business: e.target.value })} placeholder={t("ট্রেড লাইসেন্সের নাম", "As on the trade licence")} className={field + " mt-1.5"} /></div>
             <div><label htmlFor="c-year" className={label}>{t("চালু হয়েছে কোন সালে", "Year established")}</label><input id="c-year" inputMode="numeric" maxLength={4} value={c.year} onChange={(e) => set({ year: e.target.value.replace(/\D/g, "") })} placeholder="2015" className={field + " mt-1.5"} /></div>
             <div><span className={label}>{t("স্টার রেটিং", "Star rating")}</span><div className="mt-1.5 flex flex-wrap gap-2"><Chip on={!c.stars} onClick={() => set({ stars: 0 })}>{t("নেই", "None")}</Chip>{[1, 2, 3, 4, 5].map((n) => <Chip key={n} on={c.stars === n} onClick={() => set({ stars: n })}>{num(n, lang)}★</Chip>)}</div></div>
             <div><label htmlFor="c-web" className={label}>{t("ওয়েবসাইট", "Website")}</label><input id="c-web" value={c.website} onChange={(e) => set({ website: e.target.value })} placeholder="https://" className={field + " mt-1.5"} /></div>
             <div className="sm:col-span-2"><label htmlFor="c-about" className={label}>{t("Property সম্পর্কে", "About the property")}</label><textarea id="c-about" rows={3} maxLength={500} value={c.about} onChange={(e) => set({ about: e.target.value })} className={field + " mt-1.5 h-auto py-2.5"} /></div>
           </div>
-        )}
+        ) : <p className="text-[14px] text-[#4d5664]">{c.business || c.website ? [c.business, c.website].filter(Boolean).join(" · ") : t("পরে HMS-এর সেটিংসেও দেওয়া যায়।", "You can also add these later in HMS settings.")}</p>}
+      </Section>
       </div>
     </Q>
   );
@@ -77,14 +80,16 @@ export function Documents({ d }: { d: Draft }) {
   return (
     <Q title={t("কাগজপত্র", "Documents")} sub={t("NID দুই দিক লাগবে। বাকিগুলো থাকলে দিন। এখন না দিলেও HMS চালাতে পারবেন।", "NID front and back are needed. Add the rest if you have them. You can use HMS meanwhile.")}
       why={t("ওয়েবসাইট পাবলিক, অনলাইন বুকিং আর পেমেন্টের আগে BinGi যাচাই করে।", "BinGi verifies these before your website, online booking and payments go live.")}>
-      <p className="text-[14px] font-semibold">{t("লাগবে", "Required")}</p>
-      <div className="mt-2 grid gap-2.5 sm:grid-cols-2">{DOCS.filter((x) => x.req).map(row)}</div>
-      <p className="mt-5 text-[14px] font-semibold">{t("থাকলে দিন", "If you have them")}</p>
-      <div className="mt-2 grid gap-2.5 sm:grid-cols-2">{DOCS.filter((x) => !x.req).map(row)}</div>
-      <div className="mt-6 space-y-2 rounded-xl border border-[#e3e7ec] bg-white p-4">
-        {ACCEPT.map(([bn, en], i) => (
-          <label key={en} className="flex items-start gap-3 text-[14.5px]"><input type="checkbox" checked={doc.accept[i]} onChange={(e) => edit((y) => { y.docs.accept[i] = e.target.checked; })} className="mt-0.5 size-5 shrink-0 accent-[#b11c29]" />{t(bn, en)}</label>
-        ))}
+      <div className="space-y-4">
+        <Section n={1} title={t("জাতীয় পরিচয়পত্র", "National ID")} hint={t("দুই দিকের ছবি লাগবে", "Both sides are needed")}><div className="grid gap-2.5 sm:grid-cols-2">{DOCS.filter((x) => x.req).map(row)}</div></Section>
+        <Section n={2} title={t("ব্যবসার কাগজ", "Business papers")} hint={t("ঐচ্ছিক — থাকলে দিন, যাচাই দ্রুত হয়", "Optional — speeds up verification")}><div className="grid gap-2.5 sm:grid-cols-2">{DOCS.filter((x) => !x.req).map(row)}</div></Section>
+        <Section n={3} title={t("নিশ্চিত করুন", "Confirm")} hint={t("জমা দেওয়ার আগে তিনটাই লাগবে", "All three are needed before you submit")}>
+          <div className="space-y-2.5">
+            {ACCEPT.map(([bn, en], i) => (
+              <label key={en} className="flex items-start gap-3 text-[14.5px]"><input type="checkbox" checked={doc.accept[i]} onChange={(e) => edit((y) => { y.docs.accept[i] = e.target.checked; })} className="mt-0.5 size-5 shrink-0 accent-[#b11c29]" />{t(bn, en)}</label>
+            ))}
+          </div>
+        </Section>
       </div>
       <p className="mt-3 text-[12.5px] text-[#4d5664]">{t("প্রোটোটাইপ: শুধু ফাইলের নাম রাখা হয়, কিছু আপলোড হয় না।", "Prototype: only the file name is kept; nothing is uploaded.")}</p>
     </Q>

@@ -24,17 +24,19 @@ export type Draft = {
   // S3
   rates: { weekendPct: number; breakfast: boolean; breakfastPrice: number; minStay: number; done: boolean };
   existing: { has: boolean | null; rows: { guest: string; checkIn: string; checkOut: string; unit: string }[] };
-  policy: { preset: "flexible" | "moderate" | "strict" | ""; checkIn: string; checkOut: string; vat: number; sc: number };
+  policy: { preset: "flexible" | "moderate" | "strict" | ""; checkIn: string; checkOut: string; vat: number; sc: number; currency?: string; tz?: string; lang?: string };
   // S4
   modules: string[]; team: { phone: string; role: string }[]; teamLater: boolean;
   // S5
   pay: {
     cash: boolean; bkash: boolean; nagad: boolean; bank: boolean; bingi: "later" | "apply" | "";
     bkashNo?: string; bkashType?: "personal" | "merchant" | "agent"; nagadNo?: string; nagadType?: "personal" | "merchant" | "agent";
-    bankName?: string; bankHolder?: string; bankAcc?: string; bankBranch?: string;
+    bankName?: string; bankHolder?: string; bankAcc?: string; bankBranch?: string; bankType?: "savings" | "current" | "business";
+    /** Live fields: account name on each wallet + one instruction line shown to guests. */
+    bkashName?: string; nagadName?: string; note?: string;
     settle?: { method: "bank" | "bkash"; holder: string; bank: string; acc: string; branch: string; routing: string; wallet: string };
   };
-  site: { theme: string; later: boolean };
+  site: { theme: string; later: boolean; public?: boolean; online?: boolean; market?: boolean; reviewed?: boolean };
   // S6
   verify: { nid: string; trade: string; tin: string; later: boolean };
   status: Status; submitted?: string; note?: string;
