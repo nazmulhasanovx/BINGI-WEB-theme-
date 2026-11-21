@@ -67,7 +67,7 @@ def walk(b, W, en=True, kind="resort"):
     pg.get_by_role("button",name=re.compile("Add your first type|Add another type|প্রথম ধরন|আরেকটা ধরন")).first.click(); pg.wait_for_timeout(250)
     if kind=="resort": pg.locator("main:visible button").filter(has_text=re.compile(kind_label)).first.click(); pg.wait_for_timeout(250)
     pg.locator("main:visible button[aria-pressed]").filter(has_text=re.compile(cat)).first.click()
-    t(tag+f"form: price prefilled ({cat})", pg.locator("#acc-price").input_value()!="")
+    t(tag+f"form: price prefilled ({cat})", pg.locator("#acc-price-in").input_value()!="")
     pg.get_by_role("button",name=re.compile("Select numbers|নম্বর বাছাই করুন")).first.click(); pg.wait_for_timeout(250)
     pg.get_by_role("button",name=re.compile("view numbers|নম্বর দেখুন")).first.click(); pg.wait_for_timeout(250)
     pg.get_by_role("button",name=re.compile(r"\+(5|৫)")).click(); pg.get_by_role("button",name=re.compile("^(Done|ঠিক আছে)$")).click(); pg.wait_for_timeout(200)

@@ -10,7 +10,7 @@
 import clsx from "clsx";
 import { useContext, useState } from "react";
 import { createPortal } from "react-dom";
-import { BedDouble, Building2, ChevronRight, ImagePlus, Pencil, Plus, Trash2, Trees, UsersRound, X } from "lucide-react";
+import { BedDouble, Building2, Check, ChevronRight, ImagePlus, Pencil, Plus, Trash2, Trees, UsersRound, X } from "lucide-react";
 import { AMENITIES, type CoreType } from "@/lib/rooms/catalog";
 import { nowStamp, uid, type Category, type Config, type LocNode, type MealMode, type Pick, type useRooms } from "@/lib/rooms/store";
 import { PLANS, num, quote, recommend, useL, useOnboarding, type Draft, type StepId } from "@/lib/onboarding/store";
@@ -18,7 +18,7 @@ import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/r
 import { BN_NAME, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, configFrom8, isZoneCore, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
 import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
-import { Chip, Errors, Ghost, Pills, Primary, Q, Stepper, Tile, field, label } from "./shell";
+import { Chip, Errors, Ghost, Pills, Primary, Q, Stepper, Tile, field } from "./shell";
 
 type Rooms = ReturnType<typeof useRooms>;
 const DOT = ["#b11c29", "#1d4ed8", "#0f766e", "#7c3aed", "#b45309", "#be185d", "#334155", "#15803d"];
@@ -253,90 +253,156 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
       <Primary onClick={save}>{f.id ? t("সেভ করুন", "Save") : t(`${stay.bn} যোগ করুন`, `Add ${stay.en.replace(/s$/, "").toLowerCase()}`)}</Primary>
     </div>
   );
+  const sections: [string, string, boolean][] = [
+    ["acc-basic", t("মূল তথ্য", "Basic information"), !!name],
+    ["acc-price", t("দাম", "Price"), price > 0],
+    ["acc-numbers", t("রুম নম্বর", "Room numbers"), f.picks.length > 0],
+    ["acc-media", t("ছবি ও বর্ণনা", "Photos & description"), f.photos.length > 0 || !!f.description],
+    ["acc-amen", t("সুবিধা", "Amenities"), f.amen.length > 0],
+    ["acc-meals", t("খাবার", "Meals"), true],
+  ];
+  const final = Math.round(price * (1 + vat / 100 + sc / 100));
+  const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <section>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-[24px] font-semibold leading-tight sm:text-[28px]"><I className="size-7 text-[#b11c29]" aria-hidden />{f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${stay.en.replace(/s$/, "").toLowerCase()}`)}</h1>
-        <button onClick={close} className="inline-flex h-10 items-center gap-1 rounded-full px-3 text-[14.5px] font-medium text-[#4d5664] hover:bg-[#e9edf2]"><X className="size-4" />{t("বাতিল", "Cancel")}</button>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff1f0] text-[#b11c29]"><I className="size-6" aria-hidden /></span>
+          <div>
+            <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${stay.en.replace(/s$/, "").toLowerCase()}`)}</h1>
+            <p className="mt-0.5 text-[14.5px] text-[#4d5664]">{t("এক পেজেই পুরো ধরন — ক্যাটাগরি বাছলে বাকিটা বসে যায়।", "The whole type on one page — pick a category and the rest fills in.")}</p>
+          </div>
+        </div>
+        <button onClick={close} className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-3 text-[14.5px] font-medium text-[#4d5664] hover:bg-[#e9edf2]"><X className="size-4" />{t("বাতিল", "Cancel")}</button>
       </div>
       {tried && <div className="mt-4"><Errors list={errs} /></div>}
       {conf.length > 0 && <div className="mt-4"><Errors list={[t("কিছুই সেভ হয়নি:", "Nothing was saved:"), ...conf]} /></div>}
 
-      <Part title={t("মূল তথ্য", "Basic information")} first>
-        <div><p className={label}>{t("ক্যাটাগরি", "Category")} *</p><div className="mt-1.5 flex flex-wrap gap-2">{presets.map((x) => <Chip key={x.key} on={f.category === x.name} onClick={() => applyPreset(x)}>{nm(x.name, t)}</Chip>)}</div></div>
-        <div><label htmlFor="acc-title" className={label}>{t("ধরনের নাম", "Room type title")} <span className="font-normal text-[#4d5664]">({t("ঐচ্ছিক", "optional")})</span></label><input id="acc-title" value={f.title} onChange={(e) => p({ title: e.target.value.slice(0, 60) })} placeholder={t("যেমন: ওশান ভিউ ডিলাক্স", "e.g. Ocean View Deluxe")} className={field + " mt-1.5"} /></div>
-        <div><p className={label}>{t("রুমের ধরন", "Room type")}</p><div className="mt-1.5 flex flex-wrap gap-2">{ROOM_KINDS.map((k) => <Chip key={k.id} on={f.kind === k.id} onClick={() => p({ kind: k.id, guests: k.guests, bed: k.id === "single" ? "1 Single bed" : k.id === "twin" ? "2 Single beds" : f.bed })}>{t(k.bn, k.en)}</Chip>)}</div></div>
-        <div><p className={label}>{t("বেড", "Bed type")}</p><div className="mt-1.5 flex flex-wrap gap-2">{BEDS.map((b) => <Chip key={b.id} on={f.bed === b.id} onClick={() => p({ bed: b.id })}>{t(b.bn, b.en)}</Chip>)}</div></div>
-        <div className="flex flex-wrap gap-x-8 gap-y-4">
-          <div><p className={label}>{t("সর্বোচ্চ অতিথি", "Max guests")} *</p><div className="mt-1.5"><Stepper label={t("অতিথি", "Guests")} value={f.guests} set={(n) => p({ guests: n })} min={1} max={12} /></div></div>
-          <div><label htmlFor="acc-size" className={label}>{t("মাপ (বর্গফুট)", "Room size (sq ft)")}</label><input id="acc-size" inputMode="numeric" value={f.size ?? ""} onChange={(e) => p({ size: Number(e.target.value.replace(/\D/g, "").slice(0, 5)) || undefined })} placeholder="320" className={field + " mt-1.5 w-[140px]"} /></div>
-        </div>
-      </Part>
-
-      <Part title={t("দাম", "Price")}>
-        <div className="flex flex-wrap items-center gap-2"><span className="text-[22px] font-semibold text-[#8e1621]">৳</span><input id="acc-price" aria-label={t("প্রতি রাতের দাম", "Base price per night")} inputMode="numeric" value={f.price} onChange={(e) => p({ price: e.target.value.replace(/\D/g, "").slice(0, 7) })} placeholder="5000" className={field + " h-12 max-w-[200px] text-[20px] font-semibold"} /><span className="text-[14px] text-[#4d5664]">/{t("রাত", "night")}</span></div>
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#fff6f5] p-3 sm:grid-cols-4">
-          {[[t("মূল দাম", "Base price"), price], [t(`ভ্যাট (${num(vat, lang)}%)`, `VAT (${vat}%)`), Math.round(price * vat / 100)], [t(`সার্ভিস (${num(sc, lang)}%)`, `Service (${sc}%)`), Math.round(price * sc / 100)], [t("বুকিং দাম", "Final booking price"), Math.round(price * (1 + vat / 100 + sc / 100))]].map(([k, v], i) => (
-            <div key={i} className={clsx("rounded-lg border bg-white px-3 py-2", i === 3 ? "border-[#f3b6b0]" : "border-[#f1e1df]")}><p className="text-[11.5px] font-semibold uppercase tracking-wide text-[#5b6270]">{k}</p><p className={clsx("mt-0.5 text-[15px] font-semibold tabular-nums", i === 3 && "text-[#b11c29]")}>৳{num(money(v as number), lang)}</p></div>
-          ))}
-        </div>
-        <p className="text-[12.5px] text-[#4d5664]">{t("ভ্যাট আর সার্ভিস চার্জ বুকিংয়ের নিয়ম থেকে আসে, আবার যোগ হয় না।", "VAT and service come from your booking rules and are not added again.")}</p>
-      </Part>
-
-      <Part title={t("রুম নম্বর", "Room numbers")} action={<Ghost onClick={() => setSheet(true)} className="h-10 border-dashed border-[#efb7b1] text-[#b11c29] hover:border-[#b11c29]"><Plus className="size-4" />{t("নম্বর বাছাই করুন", "Select numbers")}</Ghost>}>
-        {f.picks.length === 0 ? <p className="text-[14.5px] text-[#4d5664]">{t("এখনো কোনো নম্বর বাছাই হয়নি।", "No numbers selected yet.")}</p> : (
-          <div className="space-y-2">
-            {config.nodes.filter((n) => byNode(n.id).length).map((n) => (
-              <div key={n.id}><p className="text-[13px] font-semibold text-[#4d5664]">{placeLabel(d, config, n, lang === "bn")}</p>
-                <div className="mt-1 flex flex-wrap gap-1.5">{byNode(n.id).map((x) => <span key={x.code} className="inline-flex items-center gap-1 rounded-full bg-[#fff1f0] py-1 pl-2.5 pr-1 font-mono text-[13px] font-semibold text-[#8e1621]">{x.local}<button onClick={() => p({ picks: f.picks.filter((y) => y.code !== x.code) })} aria-label={t(`${x.local} বাদ দিন`, `Remove ${x.local}`)} className="grid size-5 place-items-center rounded-full hover:bg-white"><X className="size-3" /></button></span>)}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Part>
-
-      <Part title={t("ছবি", "Room images")}>
-        <label className="flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] px-4 py-6 text-center focus-within:ring-4 focus-within:ring-[#0f1720]/10">
-          <ImagePlus className="size-7 text-[#b11c29]" aria-hidden /><span className="text-[15px] font-semibold">{t("ছবি দিন (ঐচ্ছিক)", "Add photos (optional)")}</span><span className="text-[12.5px] text-[#4d5664]">PNG · JPG · WEBP · {num(f.photos.length, lang)}/{num(100, lang)}</span>
-          <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => p({ photos: [...f.photos, ...Array.from(e.target.files ?? []).map((x) => x.name)].slice(0, 100) })} />
-        </label>
-        {f.photos.length > 0 && <p className="truncate text-[12.5px] text-[#4d5664]">{f.photos.join(", ")}</p>}
-      </Part>
-
-      <Part title={t("বর্ণনা", "Description")}>
-        <label htmlFor="acc-desc" className="sr-only">{t("বর্ণনা", "Description")}</label>
-        <textarea id="acc-desc" rows={3} maxLength={1000} value={f.description} onChange={(e) => p({ description: e.target.value })} placeholder={t("রুমের বিশেষত্ব, ভিউ…", "Features, views, what makes it special…")} className={field + " h-auto py-2.5"} />
-      </Part>
-
-      <Part title={t("সুবিধা", "Amenities")}>
-        <div className="flex flex-wrap gap-2">{ROOM_TOP.map(chip)}</div>
-        {!all ? <button onClick={() => setAll(true)} className="text-[14px] font-semibold text-[#b11c29]">{t("সব সুবিধা দেখুন", "Amenities library")}</button> : (
-          <div className="space-y-3 rounded-xl border border-[#e3e7ec] p-3">
-            <input aria-label={t("সুবিধা খুঁজুন", "Search amenities")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("সুবিধা খুঁজুন", "Search amenities")} className={field} />
-            {AMENITIES.map((g) => { const rest = g.items.filter((a) => !ROOM_TOP.includes(a) && hit(a)); return rest.length ? <div key={g.group}><p className="text-[12.5px] font-semibold text-[#4d5664]">{g.group}</p><div className="mt-1 flex flex-wrap gap-2">{rest.map(chip)}</div></div> : null; })}
-          </div>
-        )}
-      </Part>
-
-      <Part title={t("খাবার", "Meal configuration")}>
-        <div className="divide-y divide-[#e3e7ec] rounded-xl border border-[#e3e7ec] bg-white">
-          {MEALS.map(([k, bn, en]) => (
-            <div key={k} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <span className="min-w-[110px] flex-1 text-[15px] font-semibold">{t(bn, en)}</span>
-              <Pills size="sm" label={t(bn, en)} value={f.meals[k]} onChange={(v) => p({ meals: { ...f.meals, [k]: v } })} items={[{ v: "none" as MealMode, label: t("নেই", "None") }, { v: "included" as MealMode, label: t("সাথে আছে", "Included") }, { v: "extra" as MealMode, label: t("আলাদা দাম", "Extra (paid)") }]} />
-              {f.meals[k] === "extra" && <span className="flex items-center gap-1"><span className="text-[14px]">৳</span><input aria-label={t(`${bn}-এর দাম`, `${en} price`)} inputMode="numeric" value={f.mealPrices[k] ?? ""} onChange={(e) => p({ mealPrices: { ...f.mealPrices, [k]: Number(e.target.value.replace(/\D/g, "").slice(0, 5)) || undefined } })} placeholder="500" className={field + " h-9 w-[90px]"} /><span className="text-[12.5px] text-[#4d5664]">/{t("জন", "person")}</span></span>}
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-6">
+        <div className="space-y-4">
+          <Card id="acc-basic" n={1} title={t("মূল তথ্য", "Basic information")} hint={t("ক্যাটাগরি বাছলে রুমের ধরন, বেড, অতিথি আর দাম বসে যায়", "A category fills room type, bed, guests and price")}>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label={t("ক্যাটাগরি", "Category")} req className="sm:col-span-2"><div className="flex flex-wrap gap-2">{presets.map((x) => <Chip key={x.key} on={f.category === x.name} onClick={() => applyPreset(x)}>{nm(x.name, t)}</Chip>)}</div></Field>
+              <Field label={t("ধরনের নাম", "Room type title")} opt htmlFor="acc-title"><input id="acc-title" value={f.title} onChange={(e) => p({ title: e.target.value.slice(0, 60) })} placeholder={f.category ? nm(f.category, t) : t("যেমন: ওশান ভিউ ডিলাক্স", "e.g. Ocean View Deluxe")} className={field} /></Field>
+              <Field label={t("মাপ", "Room size")} opt htmlFor="acc-size"><div className="relative"><input id="acc-size" inputMode="numeric" value={f.size ?? ""} onChange={(e) => p({ size: Number(e.target.value.replace(/\D/g, "").slice(0, 5)) || undefined })} placeholder="320" className={field + " pr-16"} /><span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[13.5px] text-[#5b6270]">{t("বর্গফুট", "sq ft")}</span></div></Field>
+              <Field label={t("রুমের ধরন", "Room type")} className="sm:col-span-2"><Pills size="sm" label={t("রুমের ধরন", "Room type")} value={f.kind} onChange={(v) => { const k = ROOM_KINDS.find((x) => x.id === v)!; p({ kind: v, guests: k.guests, bed: v === "single" ? "1 Single bed" : v === "twin" ? "2 Single beds" : f.bed }); }} items={ROOM_KINDS.map((k) => ({ v: k.id, label: t(k.bn, k.en) }))} /></Field>
+              <Field label={t("বেড", "Bed type")} className="sm:col-span-2"><div className="flex flex-wrap gap-2">{BEDS.map((b) => <Chip key={b.id} on={f.bed === b.id} onClick={() => p({ bed: b.id })}><BedDouble className="size-4" aria-hidden />{t(b.bn, b.en)}</Chip>)}</div></Field>
+              <Field label={t("সর্বোচ্চ অতিথি", "Max guests")} req><div className="flex h-11 items-center"><Stepper label={t("অতিথি", "Guests")} value={f.guests} set={(n) => p({ guests: n })} min={1} max={12} /></div></Field>
             </div>
-          ))}
+          </Card>
+
+          <Card id="acc-price" n={2} title={t("দাম", "Price")} hint={t("ভ্যাট আর সার্ভিস বুকিংয়ের নিয়ম থেকে আসে, আবার যোগ হয় না", "VAT and service come from your booking rules")}>
+            <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
+              <Field label={t("প্রতি রাতের দাম", "Base price per night")} req htmlFor="acc-price-in">
+                <div className="relative"><span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] font-semibold text-[#8e1621]">৳</span><input id="acc-price-in" aria-label={t("প্রতি রাতের দাম", "Base price per night")} inputMode="numeric" value={f.price} onChange={(e) => p({ price: e.target.value.replace(/\D/g, "").slice(0, 7) })} placeholder="5000" className={field + " h-12 pl-9 text-[19px] font-semibold tabular-nums"} /></div>
+              </Field>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[[t("মূল দাম", "Base"), price], [t(`ভ্যাট ${num(vat, lang)}%`, `VAT ${vat}%`), Math.round(price * vat / 100)], [t(`সার্ভিস ${num(sc, lang)}%`, `Service ${sc}%`), Math.round(price * sc / 100)], [t("গেস্ট দেবে", "Guest pays"), final]].map(([k, v], i) => (
+                  <div key={i} className={clsx("rounded-xl px-3 py-2.5", i === 3 ? "bg-[#fff1f0] ring-1 ring-[#f3b6b0]" : "bg-[#f4f6f8]")}><p className="text-[12px] font-medium text-[#5b6270]">{k}</p><p className={clsx("mt-0.5 text-[15.5px] font-semibold tabular-nums", i === 3 && "text-[#b11c29]")}>৳{num(money(v as number), lang)}</p></div>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card id="acc-numbers" n={3} title={t("রুম নম্বর", "Room numbers")} hint={isZoneCore(f.core) ? t("জোন বাছুন, তারপর নম্বর", "Pick a zone, then the numbers") : t("তলা বাছুন, তারপর নম্বর", "Pick a floor, then the numbers")}
+            action={f.picks.length > 0 && <button onClick={() => setSheet(true)} className="inline-flex h-9 items-center gap-1 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]"><Pencil className="size-3.5" />{t("বদলান", "Change")}</button>}>
+            {f.picks.length === 0 ? (
+              <button onClick={() => setSheet(true)} className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] px-4 py-6 text-center transition-colors hover:bg-[#fff4f3]">
+                <span className="grid size-11 place-items-center rounded-full bg-white text-[#b11c29] shadow-sm"><Plus className="size-5" /></span>
+                <span className="text-[15.5px] font-semibold text-[#b11c29]">{t("নম্বর বাছাই করুন", "Select numbers")}</span>
+                <span className="text-[13px] text-[#4d5664]">{isZoneCore(f.core) ? t("যেমন: বাগান → C1, C2, C3", "e.g. Garden → C1, C2, C3") : t("যেমন: ফ্লোর ১ → 101, 102, 104", "e.g. Floor 1 → 101, 102, 104")}</span>
+              </button>
+            ) : (
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {config.nodes.filter((n) => byNode(n.id).length).map((n) => (
+                  <div key={n.id} className="rounded-xl bg-[#f4f6f8] p-3">
+                    <p className="flex items-center gap-1.5 text-[13.5px] font-semibold">{n.kind === "ZONE" ? <Trees className="size-3.5 text-[#4d5664]" /> : <Building2 className="size-3.5 text-[#4d5664]" />}{placeLabel(d, config, n, lang === "bn")}<span className="font-normal text-[#4d5664]">· {num(byNode(n.id).length, lang)}</span></p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{byNode(n.id).map((x) => <span key={x.code} className="inline-flex items-center gap-1 rounded-full bg-white py-1 pl-2.5 pr-1 font-mono text-[13px] font-semibold text-[#8e1621] ring-1 ring-[#f3d3cf]">{x.local}<button onClick={() => p({ picks: f.picks.filter((y) => y.code !== x.code) })} aria-label={t(`${x.local} বাদ দিন`, `Remove ${x.local}`)} className="grid size-5 place-items-center rounded-full hover:bg-[#fff1f0]"><X className="size-3" /></button></span>)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card id="acc-media" n={4} title={t("ছবি ও বর্ণনা", "Photos & description")} hint={t("ঐচ্ছিক — পরে HMS থেকেও দেওয়া যায়", "Optional — you can add these later in HMS")}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#c6ccd4] bg-[#f9fafb] px-4 py-5 text-center hover:border-[#9aa0ac] focus-within:ring-4 focus-within:ring-[#0f1720]/10">
+                <ImagePlus className="size-7 text-[#b11c29]" aria-hidden /><span className="text-[15px] font-semibold">{t("ছবি দিন", "Add photos")}</span><span className="text-[12.5px] text-[#4d5664]">PNG · JPG · WEBP · {num(f.photos.length, lang)}/{num(100, lang)}</span>
+                <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => p({ photos: [...f.photos, ...Array.from(e.target.files ?? []).map((x) => x.name)].slice(0, 100) })} />
+                {f.photos.length > 0 && <span className="max-w-full truncate text-[12px] text-[#4d5664]">{f.photos.join(", ")}</span>}
+              </label>
+              <div><label htmlFor="acc-desc" className="sr-only">{t("বর্ণনা", "Description")}</label>
+                <textarea id="acc-desc" rows={5} maxLength={1000} value={f.description} onChange={(e) => p({ description: e.target.value })} placeholder={t("রুমের বিশেষত্ব, ভিউ, কী কী আছে…", "Features, views, what makes it special…")} className={field + " h-full min-h-[132px] resize-none py-2.5"} /></div>
+            </div>
+          </Card>
+
+          <Card id="acc-amen" n={5} title={t("সুবিধা", "Amenities")} hint={t(`${num(f.amen.length, lang)}টা বাছাই করা`, `${f.amen.length} selected`)}>
+            <div className="flex flex-wrap gap-2">{ROOM_TOP.map(chip)}</div>
+            {!all ? <button onClick={() => setAll(true)} className="mt-3 text-[14px] font-semibold text-[#b11c29]">+ {t("সব সুবিধা দেখুন", "Amenities library")}</button> : (
+              <div className="mt-4 space-y-3 rounded-xl bg-[#f4f6f8] p-3">
+                <input aria-label={t("সুবিধা খুঁজুন", "Search amenities")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("সুবিধা খুঁজুন", "Search amenities")} className={field} />
+                {AMENITIES.map((g) => { const rest = g.items.filter((a) => !ROOM_TOP.includes(a) && hit(a)); return rest.length ? <div key={g.group}><p className="text-[12.5px] font-semibold text-[#4d5664]">{g.group}</p><div className="mt-1.5 flex flex-wrap gap-2">{rest.map(chip)}</div></div> : null; })}
+              </div>
+            )}
+          </Card>
+
+          <Card id="acc-meals" n={6} title={t("খাবার", "Meals")} hint={t("রুমের সাথে কোন খাবার থাকে", "Which meals come with this room")}>
+            <div className="divide-y divide-[#e9edf2]">
+              {MEALS.map(([k, bn, en]) => (
+                <div key={k} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="min-w-[110px] flex-1 text-[15px] font-semibold">{t(bn, en)}</span>
+                  {f.meals[k] === "extra" && <span className="flex items-center gap-1"><span className="text-[14px] text-[#8e1621]">৳</span><input aria-label={t(`${bn}-এর দাম`, `${en} price`)} inputMode="numeric" value={f.mealPrices[k] ?? ""} onChange={(e) => p({ mealPrices: { ...f.mealPrices, [k]: Number(e.target.value.replace(/\D/g, "").slice(0, 5)) || undefined } })} placeholder="500" className={field + " h-9 w-[84px]"} /><span className="text-[12.5px] text-[#4d5664]">/{t("জন", "person")}</span></span>}
+                  <Pills size="sm" label={t(bn, en)} value={f.meals[k]} onChange={(v) => p({ meals: { ...f.meals, [k]: v } })} items={[{ v: "none" as MealMode, label: t("নেই", "None") }, { v: "included" as MealMode, label: t("সাথে আছে", "Included") }, { v: "extra" as MealMode, label: t("আলাদা দাম", "Extra (paid)") }]} />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
-      </Part>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-[88px] space-y-3">
+            <div className="overflow-hidden rounded-2xl border border-[#e3e7ec] bg-white">
+              <div className="grid aspect-[16/9] place-items-center bg-gradient-to-br from-[#fff1f0] to-[#e9edf2] text-[#b11c29]"><I className="size-10" strokeWidth={1.5} /></div>
+              <div className="space-y-1.5 p-4">
+                <p className={clsx("text-[16.5px] font-semibold", !name && "text-[#5b6270]")}>{name ? nm(name, t) : t("ধরনের নাম", "Type name")}</p>
+                <p className="flex flex-wrap gap-x-3 text-[13px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(f.guests, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === f.bed)?.bn ?? f.bed, BEDS.find((b) => b.id === f.bed)?.en ?? f.bed)}</span></p>
+                <p className="border-t border-[#e9edf2] pt-2 text-[13px] text-[#4d5664]">{price ? <><b className="text-[18px] text-[#0f1720]">৳{num(money(final), lang)}</b> /{t("রাত", "night")}</> : t("দাম দিন", "Add a price")}</p>
+                <p className="text-[13px] text-[#4d5664]">{t(`${num(f.picks.length, lang)}টা ${stay.bn}`, `${f.picks.length} ${stay.en.toLowerCase()}`)}</p>
+              </div>
+            </div>
+            <nav aria-label={t("অংশগুলো", "Sections")} className="rounded-2xl border border-[#e3e7ec] bg-white p-2">
+              {sections.map(([id, lab, ok], i) => (
+                <button key={id} onClick={() => jump(id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[14px] hover:bg-[#f4f6f8]">
+                  <span className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", ok ? "bg-[#1c7d45] text-white" : "bg-[#e9edf2] text-[#4d5664]")}>{ok ? <Check className="size-3" strokeWidth={3} /> : num(i + 1, lang)}</span>{lab}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      </div>
 
       {slot ? createPortal(bar, slot) : <div className="mt-8">{bar}</div>}
       {sheet && <PlacesSheet d={d} rooms={rooms} f={f} config={config} onClose={(picks) => { p({ picks }); setSheet(false); }} />}
     </section>
   );
 }
-function Part({ title, action, first, children }: { title: string; action?: React.ReactNode; first?: boolean; children: React.ReactNode }) {
-  return <section className={clsx("mt-7", !first && "border-t border-[#e3e7ec] pt-6")}><div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[18px] font-semibold">{title}</h2>{action}</div><div className="space-y-4">{children}</div></section>;
+function Card({ id, n, title, hint, action, children }: { id: string; n: number; title: string; hint?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  const { lang } = useL();
+  return (
+    <section id={id} className="scroll-mt-24 rounded-2xl border border-[#e3e7ec] bg-white p-5 shadow-[0_1px_2px_rgb(16_24_40/0.04)] sm:p-6">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-[#0f1720] text-[13px] font-semibold text-white">{num(n, lang)}</span>
+        <div className="min-w-0 flex-1"><h2 className="text-[17.5px] font-semibold leading-snug">{title}</h2>{hint && <p className="text-[13.5px] text-[#4d5664]">{hint}</p>}</div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+function Field({ label: lab, req, opt, htmlFor, className, children }: { label: string; req?: boolean; opt?: boolean; htmlFor?: string; className?: string; children: React.ReactNode }) {
+  const { t } = useL();
+  const L = htmlFor ? "label" : "p";
+  return <div className={className}><L {...(htmlFor ? { htmlFor } : {})} className="mb-1.5 block text-[13.5px] font-semibold text-[#2b3340]">{lab}{req && <span className="text-[#b11c29]"> *</span>}{opt && <span className="font-normal text-[#5b6270]"> · {t("ঐচ্ছিক", "optional")}</span>}</L>{children}</div>;
 }
 
 /** Number picking, like the live "Select Room Numbers": place cards (N available · View) → number grid → chips with ×. */
