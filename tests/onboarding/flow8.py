@@ -88,6 +88,9 @@ def walk(b, W, en=True, kind="resort"):
   if kind=="resort": t(tag+"review: zone shows owner's name", "Garden" in body)
   nx()
   t(tag+"booking rules", bool(re.search("Booking rules|বুকিংয়ের নিয়ম", h1())))
+  rb=pg.locator("main:visible").first.inner_text()
+  t(tag+"part banner on first page of part", re.search("Part 4 of 6|ধাপ ৪ / ৬", rb, re.I) is not None)
+  t(tag+"rules: children + pets", re.search("Children|বাচ্চা", rb) is not None and re.search("Pets|পোষা প্রাণী", rb) is not None)
   nx(); nx(); nx()  # rules, tools, team
   nx(); nx()  # payments, website
   body=pg.locator("main:visible").first.inner_text()
@@ -95,6 +98,9 @@ def walk(b, W, en=True, kind="resort"):
   axe(); snap("finish"); t(tag+"axe clean on every step", not bad); bad and print(bad[:3])
   pg.get_by_role("button",name=re.compile("Submit|জমা দিন")).last.click(); pg.wait_for_timeout(600)
   t(tag+"submitted (prototype)", re.search("Setup submitted|সেটআপ জমা", pg.locator("body").inner_text()) is not None)
+  done=pg.locator("body").inner_text()
+  t(tag+"done: website checklist + locked publish", re.search("Finish your website|ওয়েবসাইট সাজান", done) is not None and re.search("locked for now|এখনো বন্ধ", done) is not None)
+  snap("done")
   t(tag+"no page errors", not errs); errs and print(errs[:2])
   pg.close()
 with sync_playwright() as p:

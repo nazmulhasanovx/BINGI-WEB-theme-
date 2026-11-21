@@ -24,7 +24,7 @@ export type Draft = {
   // S3
   rates: { weekendPct: number; breakfast: boolean; breakfastPrice: number; minStay: number; done: boolean };
   existing: { has: boolean | null; rows: { guest: string; checkIn: string; checkOut: string; unit: string }[] };
-  policy: { preset: "flexible" | "moderate" | "strict" | ""; checkIn: string; checkOut: string; vat: number; sc: number; currency?: string; tz?: string; lang?: string };
+  policy: { preset: "flexible" | "moderate" | "strict" | ""; checkIn: string; checkOut: string; vat: number; sc: number; currency?: string; tz?: string; lang?: string; children?: "all" | "6+" | "12+" | "none"; pets?: "no" | "small" | "yes" };
   // S4
   modules: string[]; team: { phone: string; role: string }[]; teamLater: boolean;
   // S5
@@ -49,6 +49,8 @@ export type Draft = {
   start: "trial" | "setup" | "subscribe"; help: "self" | "remote" | "onsite";
   /** v8 room types (presets the owner ticks and edits); saved as accommodation categories when leaving 3.2. */
   types: TypeRow[];
+  /** Website basics (21 Nov): asked inside existing steps so the website is not empty after onboarding. */
+  tagline?: string; cover?: string; social?: { facebook?: string; instagram?: string }; nearby?: { name: string; time: string; mode: "walk" | "drive" }[];
   /** v8.1 locations (21 Nov feedback #3): floors named Floor N or Level N, plus ground and basements 1–3;
    *  spread-out units sit in Zone 1–50 or Block 1–50, each renameable. */
   place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[] };
@@ -237,8 +239,10 @@ const OLD_TYPE: Record<string, PropertyType> = {
   "serviced-apartment": "serviced-apartment", "vacation-rental": "villa", lodge: "cottage", other: "other",
 };
 const hotels = new Map<string, { key: string; h: Hotel }>();
+const CHILD_TXT = { all: "Children of all ages are welcome.", "6+": "Children aged 6 and over are welcome.", "12+": "Guests must be 12 or older.", none: "This property is for adults only." } as const;
+const PET_TXT = { no: "Pets are not allowed.", small: "Small pets are allowed on request.", yes: "Pets are welcome." } as const;
 export function hotelOf(d: Draft): Hotel {
-  const key = [d.name, d.propertyType, d.city, d.area, d.address, d.phone, d.plan, d.site.theme].join("|");
+  const key = [d.name, d.propertyType, d.city, d.area, d.address, d.phone, d.plan, d.site.theme, d.tagline, d.cover?.length, JSON.stringify(d.policy), JSON.stringify(d.social), JSON.stringify(d.nearby), d.contact?.email, d.contact?.about].join("|");
   const hit = hotels.get(d.slug);
   if (hit && hit.key === key) return hit.h;
   const label = PROPERTY_TYPES.find((p) => p.slug === d.propertyType)?.label ?? "Property";
@@ -246,8 +250,12 @@ export function hotelOf(d: Draft): Hotel {
     ...teaValley,
     slug: d.slug, name: d.name || "New property", type: label, stars: 0, propertyType: OLD_TYPE[d.propertyType] ?? "other",
     propertyCode: d.propertyType || undefined,
-    tagline: "", intro: "", logoText: d.name || "New property", area: d.area, city: d.city, country: "Bangladesh", address: d.address,
-    phone: d.phone, whatsapp: d.phone.replace(/[^\d+]/g, ""), email: "", rooms: [], offers: [], promoCodes: [], reviews: [], reviewCount: 0, reviewScore: undefined,
+    tagline: d.tagline ?? "", intro: d.contact?.about ?? "", logoText: d.name || "New property", area: d.area, city: d.city, country: "Bangladesh", address: d.address,
+    heroPhoto: d.cover || teaValley.heroPhoto, gallery: d.cover ? [d.cover] : teaValley.gallery,
+    checkIn: d.policy.checkIn, checkOut: d.policy.checkOut, social: { facebook: d.social?.facebook, instagram: d.social?.instagram },
+    nearby: d.nearby?.filter((x) => x.name.trim()).map((x) => ({ ...x, name: x.name.trim() })),
+    policies: { ...teaValley.policies, children: CHILD_TXT[d.policy.children ?? "all"], pets: PET_TXT[d.policy.pets ?? "no"] },
+    phone: d.phone, whatsapp: d.phone.replace(/[^\d+]/g, ""), email: d.contact?.email ?? "", rooms: [], offers: [], promoCodes: [], reviews: [], reviewCount: 0, reviewScore: undefined,
     plan: d.plan, status: "paused", host: undefined, faq: undefined, dayPlan: undefined, houseRules: undefined,
     theme: { ...teaValley.theme, master: (d.site.theme || "nest") as Hotel["theme"]["master"] },
   };
@@ -272,6 +280,8 @@ export function checks(d: Draft, units: { total: number; published: number; cate
     c("verify", "কাগজপত্র (NID)", "Documents (NID)", "recommended", !!(d.docs?.nidFront && d.docs?.nidBack), "2.1"),
     c("team", "টিম", "Team invited", "optional", d.team.length > 0, "4.3"),
     c("site", "ওয়েবসাইটের লুক", "Website look", "optional", !!d.site.theme, "5.2"),
+    c("cover", "ওয়েবসাইটের কভার ছবি", "Website cover photo", "recommended", !!d.cover, "1.2"),
+    c("tagline", "এক লাইনে পরিচিতি", "One-line introduction", "recommended", !!d.tagline?.trim(), "1.2"),
   ];
 }
 export function score(cs: Check[]) {

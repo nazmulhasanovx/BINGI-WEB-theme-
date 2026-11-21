@@ -10,10 +10,10 @@ import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
   CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck, Globe, CalendarCheck, ImageIcon,
-  Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby, Store,
+  ClipboardList, Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby, Store,
 } from "lucide-react";
 import {
-  CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
+  CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, SECTIONS, STAFF, sectionOf, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
   type Cycle, type Draft, type PlanId, type StepId,
 } from "@/lib/onboarding/store";
 import { SUGGEST, configFrom } from "@/lib/onboarding/rooms-easy";
@@ -118,11 +118,35 @@ function Flow({ d }: { d: Draft }) {
         </>}>
         <div>
           {tried && <Errors list={d.step === "6.1" ? required : errs} />}
-          <div key={d.step + lang} className="onb-in">{body[stepOf(d.step)]}</div>
+          <div key={d.step + lang} className="onb-in"><PartIntro step={stepOf(d.step)} />{body[stepOf(d.step)]}</div>
         </div>
       </Card>
     </Canvas>
     </FormSlot.Provider>
+  );
+}
+
+const PART_ICON = [Building2, ClipboardList, BedDouble, CalendarCheck, Wallet, CircleCheck];
+const PART_LINE: [string, string][] = [
+  ["নাম, ঠিকানা আর যোগাযোগ — ৫ মিনিট", "Name, address and contact — about 5 minutes"],
+  ["কাগজপত্র আর প্ল্যান — কাগজ পরে দিলেও চলবে", "Papers and plan — papers can come later"],
+  ["কোথায় কোথায় রুম, তারপর রুম যোগ", "Where your rooms are, then add them"],
+  ["নিয়ম, কাজ আর টিম — সাধারণ মান আগেই বসানো", "Rules, tools and team — common settings are filled in"],
+  ["গেস্ট কীভাবে টাকা দেবে আর ওয়েবসাইটের লুক", "How guests pay and how your website looks"],
+  ["সব মিলিয়ে দেখে জমা দিন", "Check everything and submit"],
+];
+/** Airbnb-style "Part N of 6" banner on the first page of each part. No extra click. */
+function PartIntro({ step }: { step: StepId }) {
+  const { t, lang } = useL();
+  const k = sectionOf(step);
+  if (SECTIONS[k].steps[0] !== step) return null;
+  const Icon = PART_ICON[k];
+  return (
+    <div className="mb-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#fff1f1] to-[#fdf7f2] px-4 py-3 ring-1 ring-[#f6dada]">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#b11c29] shadow-sm"><Icon className="size-5" aria-hidden /></span>
+      <span className="min-w-0"><span className="block text-[12.5px] font-semibold uppercase tracking-[0.06em] text-[#9b1c26]">{t(`ধাপ ${num(k + 1, lang)} / ${num(SECTIONS.length, lang)}`, `Part ${k + 1} of ${SECTIONS.length}`)} · {t(SECTIONS[k].bn, SECTIONS[k].label)}</span>
+        <span className="block text-[14px] text-[#4d5664]">{t(...PART_LINE[k])}</span></span>
+    </div>
   );
 }
 
@@ -186,6 +210,31 @@ function PropertyType({ d }: { d: Draft }) {
   );
 }
 
+/** Cover photo, resized in the browser (prototype keeps it in this browser only). */
+function Cover({ d }: { d: Draft }) {
+  const { edit } = useOnboarding();
+  const { t } = useL();
+  const pick = (f?: File) => {
+    if (!f) return;
+    const img = new window.Image();
+    img.onload = () => {
+      const w = Math.min(960, img.width), h = Math.round((img.height / img.width) * w);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      const url = c.toDataURL("image/jpeg", 0.72);
+      URL.revokeObjectURL(img.src);
+      edit((x) => { x.cover = url; });
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  return (
+    <label className="group relative flex aspect-[16/7] cursor-pointer sm:aspect-[4/3] flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border border-dashed border-[#c6ccd4] bg-[#f9fafb] text-center hover:border-[#9aa0ac] focus-within:ring-4 focus-within:ring-[#0f1720]/10">
+      {d.cover ? <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={d.cover} alt="" className="absolute inset-0 size-full object-cover" /><span className="absolute bottom-2 rounded-full bg-white/95 px-2.5 py-1 text-[12.5px] font-semibold shadow">{t("ছবি বদলান", "Change photo")}</span></>
+        : <><ImageIcon className="size-6 text-[#b11c29]" aria-hidden /><span className="text-[13.5px] font-semibold">{t("কভার ছবি", "Cover photo")}</span><span className="text-[11.5px] text-[#5b6270]">{t("বাইরে থেকে তোলা", "From outside")}</span></>}
+      <input type="file" accept="image/*" className="sr-only" aria-label={t("কভার ছবি", "Cover photo")} onChange={(e) => pick(e.target.files?.[0])} />
+    </label>
+  );
+}
 function Name({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
@@ -193,7 +242,16 @@ function Name({ d }: { d: Draft }) {
     <Q title={t("আপনার property-র নাম কী?", "What is your property called?")} why={t("গেস্টরা এই নাম ওয়েবসাইট আর বুকিং কনফার্মেশনে দেখবে।", "Guests see this on your website and confirmations.")}>
       <label htmlFor="pname" className="sr-only">{t("Property-র নাম", "Property name")}</label>
       <input id="pname" value={d.name} onChange={(e) => edit((x) => { x.name = e.target.value; })} placeholder={t("যেমন: সী ব্রিজ হোটেল", "e.g. Sea Breeze Hotel")} className={field + " h-14 text-[19px] font-semibold"} maxLength={60} />
-      <p className="mt-3 text-[14px] text-[#4d5664]">{t("ছবির সাইনবোর্ডে নামটা দেখুন", "See it on the sign in the picture")}</p>
+      <div className="mt-6 rounded-2xl border border-[#e3e7ec] bg-white p-5">
+        <p className="text-[15.5px] font-semibold">{t("ওয়েবসাইটের জন্য", "For your website")} <span className="font-normal text-[#5b6270]">· {t("ঐচ্ছিক", "optional")}</span></p>
+        <p className="text-[13.5px] text-[#4d5664]">{t("দিলে ওয়েবসাইট প্রথম দিন থেকেই সাজানো দেখাবে।", "Your website looks finished from day one.")}</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
+          <Cover d={d} />
+          <div><label htmlFor="ptag" className={label}>{t("এক লাইনে পরিচিতি", "One-line introduction")}</label>
+            <input id="ptag" value={d.tagline ?? ""} onChange={(e) => edit((x) => { x.tagline = e.target.value.slice(0, 80); })} placeholder={t("যেমন: বিচ থেকে ২ মিনিট, পরিবার নিয়ে থাকার জন্য", "e.g. Two minutes from the beach, made for families")} className={field + " mt-1.5"} />
+            <p className="mt-1 text-[12.5px] text-[#5b6270]">{t("ওয়েবসাইটের প্রথম পাতায় নামের নিচে দেখাবে।", "Shows under your name on the home page.")}</p></div>
+        </div>
+      </div>
     </Q>
   );
 }
@@ -209,7 +267,7 @@ function Address({ d }: { d: Draft }) {
     <div><label htmlFor={`ad-${k}`} className={label}>{lab}</label><input id={`ad-${k}`} value={d[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} {...extra} className={field + " mt-1.5"} /></div>
   );
   return (
-    <Q title={t("আপনার property কোথায়?", "Where is your property?")} sub={t("গেস্টরা এই ঠিকানা দেখে আসবে। বুকিং কনফার্মেশনেও যায়।", "Guests find you by this address. It goes on every booking confirmation.")} why={t("গেস্টরা ম্যাপ দেখে আসবে। ঠিকানা বুকিং কনফার্মেশনে যায়।", "Guests find you by this address; it goes on every booking confirmation.")}>
+    <Q title={t("আপনার property কোথায়?", "Where is your property?")} sub={t("গেস্টরা এই ঠিকানা দেখে আসবে।", "Guests find you by this address.")}>
       <div className="space-y-4">
         <Section n={1} title={t("ঠিকানা", "Address")} hint={t("রাস্তা আর শহর লাগবে, বাকিগুলো ঐচ্ছিক", "Road and city are needed, the rest is optional")}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -226,6 +284,19 @@ function Address({ d }: { d: Draft }) {
             <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{d.pin ? t("পিন দেওয়া আছে", "Pin added") : t("ম্যাপে পিন দিন", "Add a map pin")}</span><span className="block truncate text-[13px] text-[#4d5664]">{d.address || t("ঠিকানা লিখলে ম্যাপ ওখানে খুলবে", "The map opens at your address")}</span></span>
             <span className="text-[14px] font-semibold text-[#b11c29]">{d.pin ? t("বদলান", "Change") : t("খুলুন", "Open")}</span>
           </button>
+        </Section>
+        <Section n={3} title={t("আশপাশে কী আছে", "What's nearby")} hint={t("ঐচ্ছিক — ওয়েবসাইটে দেখাবে, যেমন বিচ ৫ মিনিট হেঁটে", "Optional — shown on your website, e.g. Beach · 5 min walk")}>
+          <div className="space-y-2">
+            {(d.nearby ?? []).map((x, i) => (
+              <div key={i} className="flex flex-wrap items-center gap-2">
+                <input aria-label={t(`জায়গা ${i + 1}`, `Place ${i + 1}`)} value={x.name} onChange={(e) => edit((y) => { y.nearby![i].name = e.target.value.slice(0, 40); })} placeholder={t("যেমন: লাবণী বিচ", "e.g. Laboni Beach")} className={field + " h-11 min-w-0 flex-1 basis-[180px]"} />
+                <input aria-label={t("কত মিনিট", "Minutes")} inputMode="numeric" value={x.time} onChange={(e) => edit((y) => { y.nearby![i].time = e.target.value.replace(/\D/g, "").slice(0, 3); })} placeholder="5" className={field + " h-11 w-[76px] text-center"} />
+                <Pills size="sm" label={t("কীভাবে", "How")} value={x.mode} onChange={(v) => edit((y) => { y.nearby![i].mode = v; })} items={[{ v: "walk" as const, label: t("হেঁটে", "walk") }, { v: "drive" as const, label: t("গাড়িতে", "drive") }]} />
+                <button aria-label={t("বাদ দিন", "Remove")} onClick={() => edit((y) => { y.nearby!.splice(i, 1); })} className="grid size-10 place-items-center rounded-full text-[#4d5664] hover:bg-[#e9edf2]">✕</button>
+              </div>
+            ))}
+            {(d.nearby?.length ?? 0) < 4 && <Ghost onClick={() => edit((y) => { y.nearby = [...(y.nearby ?? []), { name: "", time: "", mode: "walk" }]; })}><Plus className="size-[18px]" />{t("একটা জায়গা যোগ করুন", "Add a place")}</Ghost>}
+          </div>
         </Section>
       </div>
       {open && <AddressSheet d={d} onClose={() => setOpen(false)} />}
@@ -257,7 +328,7 @@ function Extras({ d }: { d: Draft }) {
   const nm = (e: string) => t(PROP_BN[e] ?? e, e);
   const hit = (e: string) => !q || nm(e).toLowerCase().includes(q.toLowerCase()) || e.toLowerCase().includes(q.toLowerCase());
   return (
-    <Q title={t("কী কী সুবিধা আছে?", "What does your property offer?")} sub={t("জরুরিগুলো আগে দেখানো হলো। বাকিগুলো \"সব সুবিধা\"-তে।", "The important ones are first. The rest are under \"All amenities\".")} why={t("গেস্ট এগুলো দেখে বুক করে। রেস্টুরেন্ট/বার বাছলে রেস্টুরেন্ট টুল চালু হবে।", "Guests decide on these. Restaurant/Bar turns on the restaurant tool.")}>
+    <Q title={t("কী কী সুবিধা আছে?", "What does your property offer?")} sub={t("জরুরিগুলো আগে। বাকিগুলো \"সব সুবিধা\"-তে।", "The important ones first. The rest are under \"All amenities\".")}>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         {top.map((e) => { const I = PROP_ICON[e] ?? Sparkles; return <Tile key={e} on={d.extras.includes(e)} onClick={() => tog(e)} icon={<I className="size-5" />} title={nm(e)} />; })}
       </div>
@@ -284,10 +355,10 @@ function Extras({ d }: { d: Draft }) {
 function BookingRules({ d }: { d: Draft }) {
   const { t } = useL();
   return (
-    <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} sub={t("সাধারণ নিয়ম আগেই বসানো। মিলিয়ে নিন — পরে ড্যাশবোর্ড থেকেও বদলানো যায়।", "Common rules are set already. Check them — you can change them later in the dashboard.")} why={t("দাম, বাতিল আর চেক-ইনের সময় — গেস্ট বুক করার আগে এগুলো দেখে।", "Prices, cancellation and times — guests see these before they book.")}>
+    <Q title={t("বুকিংয়ের নিয়ম", "Booking rules")} sub={t("সাধারণ নিয়ম আগেই বসানো — মিলিয়ে নিন।", "Common rules are filled in — just check them.")}>
       <div className="space-y-4">
         <Section n={1} title={t("চেক-ইন ও চেক-আউট", "Check-in & check-out")} hint={t("গেস্ট কখন আসবে আর কখন যাবে", "When guests arrive and leave")}><Times d={d} /></Section>
-        <Section n={2} title={t("বাতিলের নিয়ম", "Cancellation")} hint={t("গেস্ট বাতিল করলে কী হবে", "What happens if a guest cancels")}><Policy d={d} /></Section>
+        <Section n={2} title={t("বাতিল ও থাকার নিয়ম", "Cancellation & house rules")} hint={t("বাতিল, বাচ্চা আর পোষা প্রাণী", "Cancellation, children and pets")}><Policy d={d} /></Section>
         <Section n={3} title={t("দামের নিয়ম", "Price rules")} hint={t("ঐচ্ছিক — না দিলে সব দিন এক দাম", "Optional — without these every day has the same price")}><Rates d={d} /></Section>
         <Section n={4} title={t("কর, মুদ্রা ও ভাষা", "Tax, currency & language")} hint={t("বাংলাদেশের জন্য আগেই বসানো", "Already set for Bangladesh")}><Region d={d} /></Section>
       </div>
@@ -340,9 +411,15 @@ function Policy({ d }: { d: Draft }) {
   const { t } = useL();
   const p = d.policy;
   return (
+    <>
     <div role="radiogroup" aria-label={t("বাতিলের নিয়ম", "Cancellation rule")} className="grid gap-2.5">
       {POLICIES.map((x) => <Tile key={x.id} role="radio" on={p.preset === x.id} onClick={() => edit((y) => { y.policy.preset = x.id; })} icon={<x.icon className="size-5" />} title={t(x.bn, x.en)} sub={t(x.subBn, x.subEn)} />)}
     </div>
+    <div className="mt-5 grid gap-4 border-t border-[#e9edf2] pt-5 sm:grid-cols-2">
+      <div><p className={label}>{t("বাচ্চা", "Children")}</p><div className="mt-1.5 flex flex-wrap gap-2">{([["all", "সব বয়স", "All ages"], ["6+", "৬+", "6+"], ["12+", "১২+", "12+"], ["none", "শুধু বড়রা", "Adults only"]] as const).map(([v, bn, en]) => <Chip key={v} on={(p.children ?? "all") === v} onClick={() => edit((y) => { y.policy.children = v; })}>{t(bn, en)}</Chip>)}</div></div>
+      <div><p className={label}>{t("পোষা প্রাণী", "Pets")}</p><div className="mt-1.5 flex flex-wrap gap-2">{([["no", "না", "No"], ["small", "ছোট, জানিয়ে", "Small, on request"], ["yes", "হ্যাঁ", "Yes"]] as const).map(([v, bn, en]) => <Chip key={v} on={(p.pets ?? "no") === v} onClick={() => edit((y) => { y.policy.pets = v; })}>{t(bn, en)}</Chip>)}</div></div>
+    </div>
+    </>
   );
 }
 /** Live: quick chips + "Other" with every half hour. */
@@ -418,7 +495,7 @@ function Team({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
   return (
-    <Q title={t("আপনার টিম", "Your team")} sub={t("এখন না দিলেও চলবে — কাগজ যাচাইয়ের পরে স্টাফ অংশ থেকে দাওয়াত দেওয়া যায়।", "You can skip this — invite your team from Staff after verification.")} why={t("তারা SMS পাবে আর নিজের BinGi ID দিয়ে যোগ দেবে।", "They get an SMS and join with their own BinGi ID.")}>
+    <Q title={t("আপনার টিম", "Your team")} sub={t("এখন না দিলেও চলবে। তারা SMS পেয়ে নিজের BinGi ID দিয়ে যোগ দেবে।", "Optional now. They get an SMS and join with their own BinGi ID.")}>
       <div className="space-y-4">
         <Section n={1} title={t("টিমের আকার", "Team size")} hint={t("কত জন এখানে কাজ করেন", "How many people work here")}>
           <div className="mb-4 flex items-center gap-3 rounded-xl bg-[#f4f6f8] px-4 py-3">
@@ -460,7 +537,7 @@ function Payments({ d }: { d: Draft }) {
   const setS = (k: keyof typeof st, v: string) => setP((x) => { x.settle = { ...st, [k]: v } as typeof st; });
   const types: [NonNullable<Draft["pay"]["bkashType"]>, string, string][] = [["personal", "পার্সোনাল", "Personal"], ["merchant", "মার্চেন্ট", "Merchant"], ["agent", "এজেন্ট", "Agent"]];
   return (
-    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} sub={t("নগদ সবসময় চালু। যেগুলো নেন সেগুলো চালু করুন।", "Cash is always on. Turn on what else you accept.")} why={t("শুরুতে গেস্ট সরাসরি আপনাকে টাকা দেয়। অনলাইন পেমেন্ট (BinGi Payments) যাচাইয়ের পরে চালু হয়।", "Guests pay you directly first. BinGi Payments opens after verification.")}>
+    <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} sub={t("নগদ সবসময় চালু। যেগুলো নেন সেগুলো চালু করুন।", "Cash is always on. Turn on what else you accept.")}>
       <div className="space-y-4">
       <Section n={1} title={t("সরাসরি আপনাকে", "Paid to you directly")} hint={t("কাউন্টারে, মোবাইল ওয়ালেটে বা ব্যাংকে", "At the desk, by mobile wallet or bank")}>
       <div className="grid gap-2.5">
@@ -541,7 +618,7 @@ function Website({ d }: { d: Draft }) {
   const fits = (x: (typeof MASTER_LIST)[number]) => x.bestFor.includes(old);
   const themes = themesFor(d);
   return (
-    <Q title={t("ওয়েবসাইট ও অনলাইন বুকিং", "Website & online booking")} sub={t("এখান থেকে কিছু পাবলিক হয় না — পরে HMS থেকে পাবলিশ করবেন।", "Nothing goes public here — you publish later from HMS.")} why={t("আপনার রুম, দাম আর ছবি দিয়ে আমরা সাজিয়ে দেব। অনুমোদনের আগে ড্রাফট থাকবে।", "We fill it with your rooms and prices. It stays a draft until approval.")}>
+    <Q title={t("ওয়েবসাইট ও অনলাইন বুকিং", "Website & online booking")} sub={t("আপনার রুম আর দাম দিয়ে সাজানো হবে। অনুমোদনের আগে কিছু পাবলিক হয় না।", "Filled with your rooms and prices. Nothing goes public before approval.")}>
       <div className="space-y-4">
       <Section n={1} title={t("ওয়েবসাইটের লুক", "Website look")} hint={t("আপনার property-র জন্য মানানসইগুলো আগে", "Best fits for your property first")}>
       <div role="radiogroup" aria-label={t("ওয়েবসাইটের লুক", "Website look")} className="grid gap-3 sm:grid-cols-2">
@@ -638,6 +715,36 @@ function Ring({ v, lang }: { v: number; lang: "bn" | "en" }) {
   );
 }
 
+/** What a professional website still needs. "Go public" stays locked until the required ones are done and BinGi approves. */
+function WebsiteReady({ d }: { d: Draft }) {
+  const { t, lang } = useL();
+  const items = [
+    { ok: !!d.name.trim(), bn: "নাম ও ঠিকানা", en: "Name and address", need: true },
+    { ok: !!d.cover, bn: "কভার ছবি", en: "Cover photo", need: true },
+    { ok: !!d.tagline?.trim(), bn: "এক লাইনে পরিচিতি", en: "One-line introduction", need: true },
+    { ok: false, bn: "প্রতিটা রুম টাইপে অন্তত ৫টা ছবি (HMS → রুম)", en: "At least 5 photos per room type (HMS → Rooms)", need: true },
+    { ok: !!(d.docs?.nidFront && d.docs?.nidBack), bn: "কাগজপত্র (NID) জমা", en: "Documents (NID) sent", need: true },
+    { ok: (d.nearby ?? []).some((x) => x.name.trim()), bn: "আশপাশের জায়গা", en: "Nearby places", need: false },
+    { ok: !!(d.social?.facebook || d.social?.instagram), bn: "Facebook / Instagram লিংক", en: "Facebook / Instagram link", need: false },
+  ];
+  const done = items.filter((x) => x.ok).length;
+  return (
+    <section className="mt-4 rounded-xl border border-[#e3e7ec] bg-white p-5">
+      <div className="flex items-center justify-between gap-3"><h2 className="text-[16px] font-semibold">{t("ওয়েবসাইট সাজান", "Finish your website")}</h2><span className="text-[13px] font-semibold tabular-nums text-[#4d5664]">{num(done, lang)}/{num(items.length, lang)}</span></div>
+      <p className="mt-1 text-[13.5px] text-[#4d5664]">{t("দরকারি সবগুলো হলে আর BinGi অনুমোদন দিলে ওয়েবসাইট পাবলিক করা যাবে।", "You can make the website public once the required items are done and BinGi approves.")}</p>
+      <ul className="mt-3 space-y-2">
+        {items.map((x) => (
+          <li key={x.en} className="flex items-center gap-2.5 text-[14.5px]">
+            {x.ok ? <CircleCheck className="size-[18px] shrink-0 text-[#1c7d45]" /> : <span className="size-[18px] shrink-0 rounded-full border-2 border-[#c6ccd4]" aria-hidden />}
+            <span className={x.ok ? "text-[#4d5664] line-through decoration-[#c6ccd4]" : ""}>{t(x.bn, x.en)}</span>
+            <span className="ml-auto text-[12px] text-[#5b6270]">{x.need ? t("দরকারি", "Required") : t("ঐচ্ছিক", "Optional")}</span>
+          </li>
+        ))}
+      </ul>
+      <button disabled className="mt-4 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-[#e9edf2] text-[14px] font-semibold text-[#5b6270]"><Lock className="size-4" />{t("ওয়েবসাইট পাবলিক করুন — এখনো বন্ধ", "Make website public — locked for now")}</button>
+    </section>
+  );
+}
 function Done({ d }: { d: Draft }) {
   const { t, lang } = useL();
   const router = useRouter();
@@ -666,6 +773,7 @@ function Done({ d }: { d: Draft }) {
             ))}
           </ol>
         </section>
+        <WebsiteReady d={d} />
         <section className="mt-4 rounded-xl border border-[#e3e7ec] bg-white p-5">
           <h2 className="text-[16px] font-semibold">{t("ততক্ষণে যা করতে পারেন", "Meanwhile you can")}</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
