@@ -34,10 +34,10 @@ export function CanopyHome({ hotel }: { hotel: Hotel }) {
         experiences: <Experiences hotel={hotel} eyebrow="Into the forest" title="Guided, quiet, unforgettable" />,
         amenities: <Amenities hotel={hotel} src={photo(hotel, /bridge|tree-4/)} eyebrow="The retreat" title="Built by hand, around the trees" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The forest" title="Green in every direction" />,
-        reviews: <Quote hotel={hotel} />,
+        reviews: <Quote hotel={hotel} look="split" />,
         faq: <Faq hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /fog|forest/)} eyebrow="Getting here" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /leaves|window/)} title="The canopy is waiting" />,
+        arrival: <Arrival hotel={hotel} look="map" src={photo(hotel, /fog|forest/)} eyebrow="Getting here" />,
+        reserve: <Reserve hotel={hotel} look="plain" src={photo(hotel, /leaves|window/)} title="The canopy is waiting" />,
       }}
     />
   );
@@ -70,7 +70,7 @@ function Heights({ hotel }: { hotel: Hotel }) {
                       <p className="lux-display text-[48px] text-[#D9BE85] md:text-[64px]">{h}<span className="text-[22px] md:text-[26px]"> m</span></p>
                       <div>
                         <h3 className="lux-display text-[26px] text-[#EEF1E6] md:text-[34px]">{r.name}</h3>
-                        <p className="mt-1.5 max-w-[520px] text-[15px] leading-relaxed text-[#EEF1E6]/75">{r.short}</p>
+                        <p className="site-more mt-1.5 max-w-[520px] text-[15px] leading-relaxed text-[#EEF1E6]/75">{r.short}</p>
                         <div aria-hidden className="mt-4 h-px w-full max-w-[520px] bg-white/15"><div className="h-px bg-[#D9BE85]" style={{ width: `${Math.round((h / max) * 100)}%` }} /></div>
                       </div>
                       <div className="relative hidden aspect-[4/3] overflow-hidden rounded-[var(--lux-r)] md:block"><Image src={r.photos[0]} alt="" fill sizes="200px" className="object-cover" /></div>

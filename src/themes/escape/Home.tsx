@@ -117,7 +117,7 @@ function Days({ hotel }: { hotel: Hotel }) {
               {s.photo && <div className="relative aspect-[16/11]"><Image src={s.photo} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" /></div>}
               <div className="p-5">
                 <h3 className="text-[19px] font-bold">{s.name}</h3>
-                <p className="mt-1 text-[15px] text-muted">{s.short}</p>
+                <p className="site-more mt-1 text-[15px] text-muted">{s.short}</p>
                 <p className="mt-3 text-[15px]"><b>{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span>{s.addToStay && <span className="ml-2 rounded-full bg-brand-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-action"><T>Add to stay</T></span>}</p>
               </div>
             </RevealItem></SiteVisible>
@@ -142,7 +142,7 @@ function Unwind({ hotel }: { hotel: Hotel }) {
             <ul className="mt-5 grid max-w-[520px] gap-3 sm:grid-cols-2">
               {hotel.facilities.slice(0, 6).map((f) => {
                 const Icon = ICONS[f.icon] ?? Sparkles;
-                return <li key={f.name} className="flex gap-2.5"><Icon className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} /><span><b className="block text-[15px]">{f.name}</b><span className="text-[13.5px] opacity-85">{f.short}</span></span></li>;
+                return <li key={f.name} className="flex gap-2.5"><Icon className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} /><span><b className="block text-[15px]">{f.name}</b><span className="site-more text-[13.5px] opacity-85">{f.short}</span></span></li>;
               })}
             </ul>
           </div>

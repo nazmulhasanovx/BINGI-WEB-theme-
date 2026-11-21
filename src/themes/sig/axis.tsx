@@ -76,7 +76,7 @@ export function AxisHome({ hotel }: { hotel: Hotel }) {
               <div className="flex flex-col justify-center px-6 py-12 md:px-14">
                 <Line>{`Meet at ${hotel.logoText}`}</Line>
                 <H hotel={hotel} k="experiences.title" fallback="Meet, plan and move forward." className="mt-4 text-[38px] md:text-[48px]" />
-                <p className="mt-4 text-[16px] text-muted">Versatile meeting spaces for business sessions, team gatherings and client events.</p>
+                <p className="site-more mt-4 text-[16px] text-muted">Versatile meeting spaces for business sessions, team gatherings and client events.</p>
                 <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-[15px] font-semibold">
                   {[[Users, "Boardroom"], [Presentation, "Meeting Room"], [MonitorPlay, "Event Space"]].map(([I, l]) => { const Icon = I as typeof Users; return <li key={l as string} className="flex items-center gap-2"><Icon className="size-5 text-[color:var(--lux-accent-ink)]" aria-hidden />{l as string}</li>; })}
                 </ul>
@@ -87,7 +87,7 @@ export function AxisHome({ hotel }: { hotel: Hotel }) {
           dining: (
             <section className="grid md:grid-cols-4">
               {outlet && <Photo src={outlet.photo ?? photo(hotel, /dining/)} className="min-h-[240px]" sizes="(max-width: 768px) 100vw, 25vw" />}
-              {outlet && <div className="flex flex-col justify-center bg-surface px-6 py-10"><Line>Dining</Line><h2 className="lux-display mt-3 text-[30px]">Modern dining for work and wind down.</h2><p className="mt-3 text-[14.5px] text-muted">{outlet.short}</p><Link href={href(hotel, "/dining")} aria-label="Dining" className="mt-4 grid size-10 place-items-center rounded-[4px] border border-line"><ArrowRight className="size-4" aria-hidden /></Link></div>}
+              {outlet && <div className="flex flex-col justify-center bg-surface px-6 py-10"><Line>Dining</Line><h2 className="lux-display mt-3 text-[30px]">Modern dining for work and wind down.</h2><p className="site-more mt-3 text-[14.5px] text-muted">{outlet.short}</p><Link href={href(hotel, "/dining")} aria-label="Dining" className="mt-4 grid size-10 place-items-center rounded-[4px] border border-line"><ArrowRight className="size-4" aria-hidden /></Link></div>}
               <Photo src={photo(hotel, /night|lobby/)} className="min-h-[240px]" sizes="(max-width: 768px) 100vw, 25vw" />
               <div className="flex flex-col justify-center px-6 py-10"><Line>City access</Line><h2 className="lux-display mt-3 text-[30px]">The city at your doorstep.</h2><ul className="mt-3 space-y-1.5 text-[14.5px] text-muted">{(hotel.nearby ?? []).map((n) => <li key={n.name} className="flex justify-between gap-3"><span>{n.name}</span><b className="text-ink tabular-nums">{n.time}</b></li>)}</ul></div>
             </section>
@@ -120,9 +120,9 @@ export function AxisMeet({ hotel }: { hotel: Hotel }) {
       </section>
       <W className="mt-12 grid gap-10 lg:grid-cols-[1fr_420px]">
         <div>
-          <ul className="grid gap-4 sm:grid-cols-3">{spaces.map((s) => <li key={s.name} className="rounded-[6px] border border-line p-5"><Briefcase className="size-6 text-[color:var(--lux-accent-ink)]" aria-hidden /><b className="mt-3 block text-[18px]">{s.name}</b><span className="text-[14px] text-muted">{s.short}</span></li>)}</ul>
+          <ul className="grid gap-4 sm:grid-cols-3">{spaces.map((s) => <li key={s.name} className="rounded-[6px] border border-line p-5"><Briefcase className="size-6 text-[color:var(--lux-accent-ink)]" aria-hidden /><b className="mt-3 block text-[18px]">{s.name}</b><span className="site-more text-[14px] text-muted">{s.short}</span></li>)}</ul>
           <h2 className="lux-display mt-12 text-[30px]">Packages</h2>
-          <ul className="mt-4 divide-y divide-line border-y border-line">{paid.map((p) => <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-3 py-4"><span><b>{p.name}</b><span className="block text-[14px] text-muted">{p.short}</span></span><b className="tabular-nums">{p.price ? `৳${p.price.toLocaleString("en-IN")}` : "On request"} <span className="text-[13px] font-normal text-muted">{p.unit}</span></b></li>)}</ul>
+          <ul className="mt-4 divide-y divide-line border-y border-line">{paid.map((p) => <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-3 py-4"><span><b>{p.name}</b><span className="site-more block text-[14px] text-muted">{p.short}</span></span><b className="tabular-nums">{p.price ? `৳${p.price.toLocaleString("en-IN")}` : "On request"} <span className="text-[13px] font-normal text-muted">{p.unit}</span></b></li>)}</ul>
         </div>
         <MeetForm hotel={hotel} />
       </W>

@@ -30,10 +30,10 @@ export function DriftHome({ hotel }: { hotel: Hotel }) {
         amenities: <Amenities hotel={hotel} src={photo(hotel, /deck|boat-side/)} eyebrow="On board" title="A small ship, fully crewed" />,
         experiences: <Experiences hotel={hotel} eyebrow="Off the boat" title="Canoes, towers, villages" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The haor" title="Water to the horizon" />,
-        reviews: <Quote hotel={hotel} eyebrow="Passengers" />,
-        faq: <Faq hotel={hotel} title="Before you board" />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /shore|boat-2/)} eyebrow="Boarding" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /sunset/)} title="Your cabin is waiting on the water" eyebrow="Reserve a cabin" />,
+        reviews: <Quote hotel={hotel} look="center" eyebrow="Passengers" />,
+        faq: <Faq hotel={hotel} look="split" title="Before you board" />,
+        arrival: <Arrival hotel={hotel} look="band" src={photo(hotel, /shore|boat-2/)} eyebrow="Boarding" />,
+        reserve: <Reserve hotel={hotel} look="photo" src={photo(hotel, /sunset/)} title="Your cabin is waiting on the water" eyebrow="Reserve a cabin" />,
       }}
     />
   );
@@ -63,13 +63,13 @@ function Voyage({ hotel }: { hotel: Hotel }) {
                   <span aria-hidden className="absolute left-0 top-1 grid size-[23px] place-items-center rounded-full border border-[color:var(--lux-accent)] bg-canvas lg:relative lg:left-auto lg:top-auto lg:mx-auto lg:mt-[62px] lg:size-[18px]"><span className="size-[7px] rounded-full bg-[color:var(--lux-accent)]" /></span>
                   <p className="lux-display text-[22px] tabular-nums text-[color:var(--lux-accent-ink)] lg:mt-6 lg:text-[28px]">{d.time}</p>
                   <h3 className="mt-1 text-[17px] font-semibold">{d.title}</h3>
-                  <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">{d.text}</p>
+                  <p className="site-more mt-1.5 text-[14.5px] leading-relaxed text-muted">{d.text}</p>
                 </li>
               ))}
             </ol>
           </Reveal>
         </div>
-        <p className="mt-10 text-center text-[13.5px] text-muted"><T>Times move with the water and the weather — your captain confirms each morning.</T></p>
+        <p className="site-more mt-10 text-center text-[13.5px] text-muted"><T>Times move with the water and the weather — your captain confirms each morning.</T></p>
       </Container>
     </Sec>
   );

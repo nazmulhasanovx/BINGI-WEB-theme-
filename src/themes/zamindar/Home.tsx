@@ -26,10 +26,10 @@ export function ZamindarHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="The kitchen" title="Recipes kept by the family" />,
         experiences: <Experiences hotel={hotel} eyebrow="Days at the Rajbari" title="Slow afternoons, long evenings" />,
         gallery: <Mosaic hotel={hotel} eyebrow="Details" title="Carved, painted, restored by hand" />,
-        reviews: <Quote hotel={hotel} eyebrow="Guests of the house" />,
-        faq: <Faq hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /domes/)} eyebrow="Finding the house" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /arch|atrium/)} title="The doors are open" eyebrow="Stay at the house" />,
+        reviews: <Quote hotel={hotel} look="center" eyebrow="Guests of the house" />,
+        faq: <Faq hotel={hotel} look="split" />,
+        arrival: <Arrival hotel={hotel} look="split" src={photo(hotel, /domes/)} eyebrow="Finding the house" />,
+        reserve: <Reserve hotel={hotel} look="photo" src={photo(hotel, /arch|atrium/)} title="The doors are open" eyebrow="Stay at the house" />,
       }}
     />
   );
@@ -56,7 +56,7 @@ function Story({ hotel }: { hotel: Hotel }) {
                   <div>
                     <p className="lux-eyebrow !text-muted"><T>Chapter</T> {["I", "II", "III", "IV", "V", "VI", "VII"][i]}</p>
                     <h3 className="lux-display mt-2 text-[24px] md:text-[32px]">{c.title}</h3>
-                    <p className="mt-2 text-[15.5px] leading-relaxed text-muted md:text-[17px]">{c.text}</p>
+                    <p className="site-more mt-2 text-[15.5px] leading-relaxed text-muted md:text-[17px]">{c.text}</p>
                   </div>
                 </li>
               ))}
@@ -83,7 +83,7 @@ function Suites({ hotel }: { hotel: Hotel }) {
                     <div className="lux-arch relative h-full w-full overflow-hidden"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 640px) 90vw, 300px" className="object-cover transition-transform duration-[1200ms] group-hover:scale-[1.04]" /></div>
                   </div>
                   <h3 className="lux-display mt-6 text-[28px]">{r.name}</h3>
-                  <p className="mx-auto mt-2 max-w-[280px] text-[15px] leading-relaxed text-muted">{r.short}</p>
+                  <p className="site-more mx-auto mt-2 max-w-[280px] text-[15px] leading-relaxed text-muted">{r.short}</p>
                   <p className="mt-3 text-[14.5px]"><span className="text-muted"><T>From</T> </span><b className="tabular-nums">{formatMoney(r.fromPrice)}</b><span className="text-muted"> <T>/ night</T></span></p>
                   <span className="lux-link mt-4"><T>View suite</T></span>
                 </Link>

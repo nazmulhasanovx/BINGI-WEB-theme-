@@ -158,7 +158,7 @@ function Amenities({ hotel }: { hotel: Hotel }) {
                 return (
                   <RevealItem key={f.name} className="flex gap-3">
                     <Icon className="mt-0.5 size-5 shrink-0 text-action" strokeWidth={1.75} />
-                    <div><p className="text-[15px] font-semibold leading-snug">{f.name}</p><p className="mt-0.5 text-[13.5px] text-muted">{f.short}</p></div>
+                    <div><p className="text-[15px] font-semibold leading-snug">{f.name}</p><p className="site-more mt-0.5 text-[13.5px] text-muted">{f.short}</p></div>
                   </RevealItem>
                 );
               })}

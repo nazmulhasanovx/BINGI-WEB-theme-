@@ -57,7 +57,7 @@ export function ResideHome({ hotel }: { hotel: Hotel }) {
                 <Reveal>
                   <Cap light>Explore the space</Cap>
                   <H hotel={hotel} k="signature.title" fallback="A home that flows with you." className="mt-4 text-[42px] text-white md:text-[56px]" />
-                  <p className="mt-4 max-w-[340px] text-[16px] text-white/90">Thoughtful spaces for living, cooking, resting and working — all in one place.</p>
+                  <p className="site-more mt-4 max-w-[340px] text-[16px] text-white/90">Thoughtful spaces for living, cooking, resting and working — all in one place.</p>
                 </Reveal>
                 <Diorama scene="reside" fallback={photo(hotel, /living|kitchen/)} labels={[{ key: "live", title: "Live" }, { key: "cook", title: "Cook" }, { key: "rest", title: "Rest" }, { key: "work", title: "Work" }]} className="h-[380px] md:h-[540px]" />
               </W>
@@ -66,7 +66,7 @@ export function ResideHome({ hotel }: { hotel: Hotel }) {
           rooms: (
             <section className="py-14 md:py-20">
               <W className="grid gap-8 lg:grid-cols-[260px_1fr]">
-                <Reveal><Cap>Accommodations</Cap><H hotel={hotel} k="rooms.title" fallback="Find your ideal stay." className="mt-3 text-[40px] md:text-[48px]" /><p className="mt-3 text-[15.5px] text-muted">Fully furnished apartments for solo stays, couples or longer time together.</p></Reveal>
+                <Reveal><Cap>Accommodations</Cap><H hotel={hotel} k="rooms.title" fallback="Find your ideal stay." className="mt-3 text-[40px] md:text-[48px]" /><p className="site-more mt-3 text-[15.5px] text-muted">Fully furnished apartments for solo stays, couples or longer time together.</p></Reveal>
                 <Rooms hotel={hotel} look="card" />
               </W>
             </section>
@@ -82,7 +82,7 @@ export function ResideHome({ hotel }: { hotel: Hotel }) {
           arrival: (
             <section className="py-14 md:py-20">
               <W className="grid items-center gap-8 md:grid-cols-[0.8fr_1.4fr]">
-                <Reveal><Cap>The neighborhood</Cap><H hotel={hotel} k="arrival.title" fallback="Right where it all connects." className="mt-3 text-[40px] md:text-[48px]" /><p className="mt-3 text-[15.5px] text-muted">Stay close to cafés, green spaces, shopping and the city&apos;s best spots.</p><Link href={href(hotel, "/explore")} className="lux-btn mt-6 !h-11"><T>Explore the neighborhood</T> <ArrowRight className="size-4" aria-hidden /></Link><Contact hotel={hotel} className="mt-5" /></Reveal>
+                <Reveal><Cap>The neighborhood</Cap><H hotel={hotel} k="arrival.title" fallback="Right where it all connects." className="mt-3 text-[40px] md:text-[48px]" /><p className="site-more mt-3 text-[15.5px] text-muted">Stay close to cafés, green spaces, shopping and the city&apos;s best spots.</p><Link href={href(hotel, "/explore")} className="lux-btn mt-6 !h-11"><T>Explore the neighborhood</T> <ArrowRight className="size-4" aria-hidden /></Link><Contact hotel={hotel} className="mt-5" /></Reveal>
                 <Reveal className="relative aspect-[16/10] overflow-hidden rounded-[6px] bg-[#e8e1d6]">
                   <svg aria-hidden viewBox="0 0 160 100" className="absolute inset-0 h-full w-full">
                     {Array.from({ length: 8 }).map((_, x) => Array.from({ length: 5 }).map((__, y) => <rect key={`${x}-${y}`} x={4 + x * 20} y={4 + y * 20} width="15" height="15" rx="1.5" fill={(x + y) % 5 === 0 ? "#b9c9a4" : "#d6cdbf"} />))}

@@ -100,7 +100,7 @@ function Cottages({ hotel }: { hotel: Hotel }) {
                 <div>
                   <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-muted">{r.view ? `${r.view} view` : "Cottage"}</p>
                   <h3 className="mt-1.5 font-heading text-[26px] leading-tight md:text-[38px]">{r.name}</h3>
-                  <p className="mt-3 max-w-[460px] text-[15px] leading-relaxed text-muted md:text-[17px]">{r.description}</p>
+                  <p className="site-more mt-3 max-w-[460px] text-[15px] leading-relaxed text-muted md:text-[17px]">{r.description}</p>
                   <ul className="mt-4 flex flex-wrap gap-2">
                     {[guests(r), r.bed, ...r.amenities.slice(0, 3)].map((a) => (
                       <li key={a} className="rounded-full border border-line px-3 py-1 text-[13px]">{a}</li>
@@ -151,7 +151,7 @@ function ADayHere({ hotel }: { hotel: Hotel }) {
                   <span className="absolute -left-[37px] top-0 grid size-6 place-items-center rounded-full bg-action text-on-action"><s.icon className="size-3.5" /></span>
                   <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-action"><T>{s.time}</T></p>
                   <p className="mt-0.5 font-heading text-[20px] leading-tight md:text-[24px]">{s.title}</p>
-                  {s.text && <p className="mt-1 text-[15px] text-muted">{s.text}</p>}
+                  {s.text && <p className="site-more mt-1 text-[15px] text-muted">{s.text}</p>}
                   {s.price && <p className="mt-1 text-[14px] font-semibold">{s.price}{s.add && <> · <span className="font-normal text-muted"><T>add when you book</T></span></>}</p>}
                 </RevealItem></SiteVisible>
               ))}
@@ -174,7 +174,7 @@ function Host({ hotel }: { hotel: Hotel }) {
           <span className="grid size-20 place-items-center rounded-full bg-action font-heading text-[30px] text-on-action md:size-28 md:text-[40px]">{initials}</span>
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-action"><T>{h.role}</T> · {h.name}</p>
-            <p className="mt-2 font-heading text-[20px] leading-relaxed md:text-[26px]">“{h.note}”</p>
+            <p className="site-more mt-2 font-heading text-[20px] leading-relaxed md:text-[26px]">“{h.note}”</p>
             <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px] text-muted">
               <span>Hosting since {h.since}</span>
               <span className="flex items-center gap-1.5"><Languages className="size-4" /> {h.languages.join(" · ")}</span>

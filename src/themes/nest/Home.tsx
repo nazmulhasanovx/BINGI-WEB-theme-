@@ -157,7 +157,7 @@ function Host({ hotel }: { hotel: Hotel }) {
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-action font-heading text-[24px] text-on-action md:size-20 md:text-[30px]">{initials}</span>
           <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-action md:text-[13px]"><T>{h.role}</T></p>
           <h2 className="mt-1 font-heading text-[24px] md:text-[34px]">{h.name}</h2>
-          <p className="mx-auto mt-4 max-w-[600px] font-heading text-[18px] leading-relaxed md:text-[22px]">“{h.note}”</p>
+          <p className="site-more mx-auto mt-4 max-w-[600px] font-heading text-[18px] leading-relaxed md:text-[22px]">“{h.note}”</p>
           <p className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-muted">
             <span>Hosting since {h.since}</span>
             <span className="flex items-center gap-1.5"><Languages className="size-4" /> {h.languages.join(" · ")}</span>
@@ -191,7 +191,7 @@ function LifeHere({ hotel }: { hotel: Hotel }) {
                     <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-action"><Icon className="size-[18px]" /></span>
                     <span className="min-w-0">
                       <span className="block text-[15px] font-semibold leading-snug">{f.name}</span>
-                      <span className="block text-[13px] text-muted md:text-[14px]">{f.short}</span>
+                      <span className="site-more block text-[13px] text-muted md:text-[14px]">{f.short}</span>
                     </span>
                   </li>
                 );
@@ -214,7 +214,7 @@ function Extras({ hotel }: { hotel: Hotel }) {
         <Reveal>
           <Title label="Add to your stay" title={<DraftText slug={hotel.slug} k="copy.meals-walks-and-pickup" fallback="Meals, walks and pickup" />} />
         </Reveal>
-        <RevealGroup className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+        <RevealGroup label="Add to your stay" className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {items.map((s) => (
             <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><RevealItem className="w-[70%] shrink-0 snap-start sm:w-auto">
               <div className="h-full overflow-hidden rounded-[24px] border border-line bg-surface">
@@ -229,7 +229,7 @@ function Extras({ hotel }: { hotel: Hotel }) {
                 )}
                 <div className="p-4">
                   <h3 className="text-[16px] font-semibold leading-snug">{s.name}</h3>
-                  <p className="mt-1 text-[14px] text-muted">{s.short}</p>
+                  <p className="site-more mt-1 text-[14px] text-muted">{s.short}</p>
                   <p className="mt-2 text-[15px]"><b className="tabular-nums">{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span></p>
                 </div>
               </div>
@@ -281,7 +281,7 @@ function BookBand({ hotel }: { hotel: Hotel }) {
       <Container>
         <Reveal className="relative overflow-hidden rounded-[28px] bg-action px-5 py-10 text-center text-on-action md:px-12 md:py-16">
           <h2 className="font-heading text-[28px] leading-tight md:text-[44px]"><DraftText slug={hotel.slug} k="copy.book-your-stay" fallback="Book your stay" /></h2>
-          <p className="mx-auto mt-2 max-w-[460px] text-[15px] opacity-85 md:text-[17px]">
+          <p className="mx-auto mt-2 max-w-[460px] text-[15px] opacity-95 md:text-[17px]">
             Check-in {hotel.checkIn} · Check-out {hotel.checkOut}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5">

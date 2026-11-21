@@ -44,7 +44,7 @@ export function CourtyardHome({ hotel }: { hotel: Hotel }) {
                 <Kick rule={false}>Our story</Kick>
                 <H hotel={hotel} k="story.title" fallback="A Courtyard with a Story" className="mt-3 text-[38px] md:text-[48px]" />
                 <span aria-hidden className="mt-5 block h-px w-10 bg-[color:var(--lux-accent)]" />
-                <p className="sig-caps mt-5 !leading-[2] text-ink">A restored townhouse turned boutique retreat, celebrating local heritage, craft and the art of slow living.</p>
+                <p className="site-more sig-caps mt-5 !leading-[2] text-ink">A restored townhouse turned boutique retreat, celebrating local heritage, craft and the art of slow living.</p>
                 <div className="mt-6"><Arrow to={href(hotel, "/story")}>Discover our story</Arrow></div>
               </Reveal>
               <div className="grid grid-cols-2 gap-4">
@@ -74,7 +74,7 @@ export function CourtyardHome({ hotel }: { hotel: Hotel }) {
               <p className="sig-caps text-white/80">{`Dine at ${hotel.name}`}</p>
               <H hotel={hotel} k="dining.title" fallback="Local Flavors, Courtyard Style" className="mt-3 text-[40px] text-white md:text-[54px]" />
               <span aria-hidden className="mt-5 block h-px w-10 bg-white/60" />
-              <p className="sig-caps mt-5 max-w-[380px] !leading-[2] text-white/85">{outlet.short}</p>
+              <p className="site-more sig-caps mt-5 max-w-[380px] !leading-[2] text-white/85">{outlet.short}</p>
               <div className="mt-7"><Link href={href(hotel, "/dining")} className="sig-caps inline-flex h-11 items-center gap-2 border border-white/70 px-5 text-white hover:bg-white/10"><T>Explore our dining</T> <ArrowRight className="size-3.5" aria-hidden /></Link></div>
             </div>
           </section>
@@ -85,7 +85,7 @@ export function CourtyardHome({ hotel }: { hotel: Hotel }) {
               <Reveal>
                 <Kick rule={false}>Experience the region</Kick>
                 <h2 className="lux-display mt-3 text-[44px] md:text-[52px]">Culture, Craft &amp; <em className="text-[color:var(--lux-accent-ink)]">Local Life</em></h2>
-                <p className="sig-caps mt-5 !leading-[2] text-ink">Curated experiences that connect you with the people, places and traditions around us.</p>
+                <p className="site-more sig-caps mt-5 !leading-[2] text-ink">Curated experiences that connect you with the people, places and traditions around us.</p>
               </Reveal>
               <Tiles hotel={hotel} />
             </W>
@@ -97,7 +97,7 @@ export function CourtyardHome({ hotel }: { hotel: Hotel }) {
             <div className="flex flex-col justify-center bg-[#3b1d17] px-6 py-14 text-white md:px-12">
               <p className="sig-caps text-white/75">{hotel.name}</p>
               <h2 className="lux-display mt-3 text-[42px] text-white md:text-[52px]">Make It <em>Your Retreat</em></h2>
-              <p className="sig-caps mt-5 !leading-[2] text-white/80">Book your stay and experience the courtyard for yourself.</p>
+              <p className="site-more sig-caps mt-5 !leading-[2] text-white/80">Book your stay and experience the courtyard for yourself.</p>
               <div className="mt-7"><Link href={href(hotel, "/rooms")} className="sig-caps inline-flex h-11 items-center gap-2 bg-white px-5 text-[color:var(--lux-accent-ink)]"><T>Book your stay</T> <ArrowRight className="size-3.5" aria-hidden /></Link></div>
               <Contact hotel={hotel} light className="mt-6" />
             </div>
@@ -116,7 +116,7 @@ export function CourtyardStory({ hotel }: { hotel: Hotel }) {
       <W className="pt-10 md:pt-16">
         <Kick rule={false}>Our story</Kick>
         <h1 className="lux-display mt-3 text-[56px] text-[color:var(--lux-accent-ink)] md:text-[96px]">A Courtyard with a <em>Story</em></h1>
-        <p className="mt-5 max-w-[640px] text-[17px] leading-relaxed text-muted">{hotel.intro}</p>
+        <p className="site-more mt-5 max-w-[640px] text-[17px] leading-relaxed text-muted">{hotel.intro}</p>
       </W>
       <W className="mt-12 grid gap-10 md:grid-cols-[1fr_1.1fr]">
         <Photo src={photo(hotel, /atrium|arch/)} className="aspect-[4/5] [border-radius:50%_50%_0_0/34%_34%_0_0]" sizes="(max-width: 768px) 100vw, 560px" />
@@ -124,7 +124,7 @@ export function CourtyardStory({ hotel }: { hotel: Hotel }) {
           {items.map((d, i) => (
             <li key={d.time} className="grid grid-cols-[96px_1fr] gap-5 border-t border-line py-8">
               <p className="lux-display text-[56px] italic leading-none text-[color:var(--lux-accent-ink)]">{String(i + 1).padStart(2, "0")}</p>
-              <div><p className="sig-caps text-muted">{d.time}</p><h2 className="lux-display mt-2 text-[30px]">{d.title}</h2><p className="mt-2 text-[16px] leading-relaxed text-muted">{d.text}</p></div>
+              <div><p className="sig-caps text-muted">{d.time}</p><h2 className="lux-display mt-2 text-[30px]">{d.title}</h2><p className="site-more mt-2 text-[16px] leading-relaxed text-muted">{d.text}</p></div>
             </li>
           ))}
         </ol>

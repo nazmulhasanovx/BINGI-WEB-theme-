@@ -22,10 +22,11 @@ export function Reveal({ children, delay = 0, y = 24, className, ...rest }: { ch
 }
 
 /** Staggered children for grids and lists. Put <RevealItem> inside. */
-export function RevealGroup({ children, className, stagger = 0.08 }: { children: ReactNode; className?: string; stagger?: number }) {
+export function RevealGroup({ children, className, stagger = 0.08, label }: { children: ReactNode; className?: string; stagger?: number; /** set for a sideways-scrolling row so keyboards can reach it */ label?: string }) {
   return (
     <motion.div
       className={className}
+      {...(label ? { tabIndex: 0, role: "region", "aria-label": label } : {})}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.1 }}

@@ -63,7 +63,7 @@ export function AurelHome({ hotel }: { hotel: Hotel }) {
                 <Reveal>
                   <Kick>Accommodations</Kick>
                   <H hotel={hotel} k="rooms.title" fallback="Rooms for every stay." className="mt-5 text-[48px] uppercase md:text-[60px]" />
-                  <p className="sig-caps mt-5 !leading-[1.9] text-ink">Thoughtfully designed spaces with modern comforts.</p>
+                  <p className="site-more sig-caps mt-5 !leading-[1.9] text-ink">Thoughtfully designed spaces with modern comforts.</p>
                   <div className="mt-6"><Btn to={href(hotel, "/rooms")} ghost className="!border-[color:var(--lux-accent)] !text-[color:var(--lux-accent-ink)]">View all rooms</Btn></div>
                 </Reveal>
                 <RevealGroup className="grid gap-4 sm:grid-cols-3">
@@ -73,7 +73,7 @@ export function AurelHome({ hotel }: { hotel: Hotel }) {
                         <Link href={roomLink(hotel, r)} className="group block bg-surface shadow-[0_14px_30px_-20px_rgb(0_0_0/0.4)]">
                           <div className="relative aspect-[4/3] overflow-hidden"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 640px) 100vw, 320px" className="object-cover transition-transform duration-700 group-hover:scale-105" /></div>
                           <div className="flex items-end justify-between gap-3 p-4">
-                            <span><b className="sig-caps block !text-[12.5px] text-ink">{r.name}</b><span className="sig-caps mt-1 block !text-[10.5px] !tracking-[0.14em] text-muted">{r.short}</span></span>
+                            <span><b className="sig-caps block !text-[12.5px] text-ink">{r.name}</b><span className="site-more sig-caps mt-1 block !text-[10.5px] !tracking-[0.14em] text-muted">{r.short}</span></span>
                             <ArrowRight className="size-5 shrink-0 text-[color:var(--lux-accent-ink)] transition-transform group-hover:translate-x-1" aria-hidden />
                           </div>
                         </Link>
@@ -106,14 +106,14 @@ export function AurelHome({ hotel }: { hotel: Hotel }) {
                 <Reveal>
                   <Kick>Experiences</Kick>
                   <H hotel={hotel} k="experiences.title" fallback="The city at your door." className="mt-5 text-[48px] uppercase md:text-[60px]" />
-                  <p className="sig-caps mt-5 !leading-[1.9] text-ink">Curated experiences that bring you closer to the culture, flavours and energy of the city.</p>
+                  <p className="site-more sig-caps mt-5 !leading-[1.9] text-ink">Curated experiences that bring you closer to the culture, flavours and energy of the city.</p>
                 </Reveal>
                 <RevealGroup className="grid gap-4 sm:grid-cols-3">
                   {hotel.services.filter((s) => s.photo).slice(0, 3).map((s) => (
                     <RevealItem key={s.id}>
                       <Link href={href(hotel, "/experiences")} className="group block bg-surface shadow-[0_14px_30px_-20px_rgb(0_0_0/0.4)]">
                         <div className="relative aspect-[16/10] overflow-hidden"><Image src={s.photo!} alt="" fill sizes="320px" className="object-cover transition-transform duration-700 group-hover:scale-105" /></div>
-                        <div className="flex items-end justify-between gap-3 p-4"><span><b className="sig-caps block !text-[12.5px] text-ink">{s.name}</b><span className="mt-1 block text-[12.5px] text-muted">{s.short}</span></span><ArrowRight className="size-5 shrink-0 text-[color:var(--lux-accent-ink)]" aria-hidden /></div>
+                        <div className="flex items-end justify-between gap-3 p-4"><span><b className="sig-caps block !text-[12.5px] text-ink">{s.name}</b><span className="site-more mt-1 block text-[12.5px] text-muted">{s.short}</span></span><ArrowRight className="size-5 shrink-0 text-[color:var(--lux-accent-ink)]" aria-hidden /></div>
                       </Link>
                     </RevealItem>
                   ))}

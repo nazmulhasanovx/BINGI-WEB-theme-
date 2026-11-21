@@ -50,9 +50,9 @@ export function ResortPanorama({ hotel, look, extra }: { hotel: Hotel; look: Loo
       <div className="px-3 pt-2 md:hidden">
         <div className="relative aspect-[4/3] overflow-hidden rounded-[26px]">
           <Image src={p.src} alt={p.alt} fill priority sizes="100vw" quality={80} className="object-cover" style={{ objectPosition: `${focus[0]}% ${focus[1]}%` }} />
-          <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[11.5px] font-semibold text-white backdrop-blur">The whole {hotel.propertyType === "villa" ? "estate" : "resort"}</span>
+          <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur">The whole {hotel.propertyType === "villa" ? "estate" : "resort"}</span>
         </div>
-        <ul aria-label="In the photo" className="no-scrollbar mt-2.5 flex gap-1.5 overflow-x-auto">
+        <ul tabIndex={0} aria-label="In the photo" className="no-scrollbar mt-2.5 flex gap-1.5 overflow-x-auto">
           {p.spots.map((s) => <li key={s.label} className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium">{s.label}</li>)}
         </ul>
         <HeroIn className="pt-4" delay={0.1}>

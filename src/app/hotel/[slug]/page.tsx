@@ -18,5 +18,6 @@ export default async function HotelHome(props: PageProps<"/hotel/[slug]">) {
       return Home ? [[m, <Home key={m} hotel={hotel} />]] : [];
     }),
   );
-  return <MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={homes} />;
+  // data-home: secondary text (descriptions, notes) is hidden on the home page — it lives on Rooms / room / Explore pages.
+  return <div data-home className="contents"><MasterSwitch slug={hotel.slug} initial={hotel.theme.master} fallback={fallbackMaster(hotel)} homes={homes} /></div>;
 }

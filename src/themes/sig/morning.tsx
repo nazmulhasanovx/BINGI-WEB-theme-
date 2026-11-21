@@ -83,7 +83,7 @@ export function MorningHome({ hotel }: { hotel: Hotel }) {
             <div className="bg-canvas px-6 py-12 md:-ml-24 md:rounded-l-[200px] md:py-20 md:pl-32 md:pr-12">
               <p className="sig-caps text-ink">Experiences</p>
               <H hotel={hotel} k="experiences.title" fallback="Slow Mornings in the Garden." className="mt-2 text-[38px] leading-[1.02] md:text-[44px]" /><Under />
-              <p className="mt-4 max-w-[380px] text-[16px] text-muted">Savour your breakfast outdoors, read, and let the day unfold at a gentler pace.</p>
+              <p className="site-more mt-4 max-w-[380px] text-[16px] text-muted">Savour your breakfast outdoors, read, and let the day unfold at a gentler pace.</p>
             </div>
           </section>
         ),
@@ -123,8 +123,8 @@ export function MorningBreakfast({ hotel }: { hotel: Hotel }) {
         <div className="relative aspect-[4/3] overflow-hidden rounded-[28px]"><Image src={photo(hotel, /breakfast/, hotel.heroPhoto)} alt="" fill priority sizes="(max-width: 768px) 100vw, 600px" className="object-cover" /></div>
       </W>
       <W className="mt-14 grid gap-10 md:grid-cols-2">
-        <ul className="divide-y divide-line border-y border-line">{items.map((s) => <li key={s.id} className="flex items-start justify-between gap-4 py-5"><span><b className="lux-display block text-[24px]">{s.name}</b><span className="text-[15px] text-muted">{s.short}</span></span><b className="shrink-0 rounded-full bg-[#FCEBB7] px-3 py-1 text-[13px]">{s.price ? price(s.price) : "Included"}</b></li>)}</ul>
-        <ol className="space-y-4">{(hotel.dayPlan ?? []).map((d) => <li key={d.time} className="grid grid-cols-[80px_1fr] gap-4 rounded-[22px] bg-surface p-5"><b className="lux-display text-[26px]">{d.time}</b><span><b className="block">{d.title}</b><span className="text-[14.5px] text-muted">{d.text}</span></span></li>)}</ol>
+        <ul className="divide-y divide-line border-y border-line">{items.map((s) => <li key={s.id} className="flex items-start justify-between gap-4 py-5"><span><b className="lux-display block text-[24px]">{s.name}</b><span className="site-more text-[15px] text-muted">{s.short}</span></span><b className="shrink-0 rounded-full bg-[#FCEBB7] px-3 py-1 text-[13px]">{s.price ? price(s.price) : "Included"}</b></li>)}</ul>
+        <ol className="space-y-4">{(hotel.dayPlan ?? []).map((d) => <li key={d.time} className="grid grid-cols-[80px_1fr] gap-4 rounded-[22px] bg-surface p-5"><b className="lux-display text-[26px]">{d.time}</b><span><b className="block">{d.title}</b><span className="site-more text-[14.5px] text-muted">{d.text}</span></span></li>)}</ol>
       </W>
     </div>
   );

@@ -79,9 +79,9 @@ function Rooms({ hotel }: { hotel: Hotel }) {
                     <h2 className="lux-display mt-1 text-[40px] md:text-[56px]">{r.name}</h2>
                     <p className="mt-3 text-[16px] leading-relaxed text-muted">{r.description}</p>
                     <dl className="mt-5 grid grid-cols-3 border-y border-line text-center">
-                      <div className="py-3"><dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted">Size</dt><dd className="mt-1 font-semibold tabular-nums">{r.sizeSqft ? `${r.sizeSqft.toLocaleString()} ft²` : "—"}</dd></div>
-                      <div className="border-x border-line py-3"><dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted">Sleeps</dt><dd className="mt-1 font-semibold">{r.maxAdults + r.maxChildren}</dd></div>
-                      <div className="py-3"><dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted">Bed</dt><dd className="mt-1 truncate px-1 font-semibold">{r.bed}</dd></div>
+                      <div className="py-3"><dt className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">Size</dt><dd className="mt-1 font-semibold tabular-nums">{r.sizeSqft ? `${r.sizeSqft.toLocaleString()} ft²` : "—"}</dd></div>
+                      <div className="border-x border-line py-3"><dt className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">Sleeps</dt><dd className="mt-1 font-semibold">{r.maxAdults + r.maxChildren}</dd></div>
+                      <div className="py-3"><dt className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">Bed</dt><dd className="mt-1 truncate px-1 font-semibold">{r.bed}</dd></div>
                     </dl>
                     <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
                       {off ? <p className="font-semibold text-muted">{!fit ? `Fits up to ${r.maxAdults} adults` : "Not available for these dates"}</p>
@@ -128,7 +128,7 @@ export function IsleRoom({ hotel, room }: { hotel: Hotel; room: RoomCategory }) 
           <p className="mt-5 max-w-2xl text-[16.5px] leading-relaxed text-muted">{room.description}</p>
           <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[22px] border border-line bg-line md:grid-cols-4">
             {[["Size", room.sizeSqft ? `${room.sizeSqft.toLocaleString()} ft²` : "—"], ["Sleeps", `${room.maxAdults} adults${room.maxChildren ? ` + ${room.maxChildren}` : ""}`], ["Bed", room.bed], ["View", room.view ?? "—"]].map(([k, v]) => (
-              <div key={k} className="bg-surface p-5"><dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted">{k}</dt><dd className="isle-accent mt-1.5 text-[20px] leading-tight">{v}</dd></div>
+              <div key={k} className="bg-surface p-5"><dt className="text-[12px] font-semibold uppercase tracking-[0.16em] text-muted">{k}</dt><dd className="isle-accent mt-1.5 text-[20px] leading-tight">{v}</dd></div>
             ))}
           </dl>
           <h2 className="lux-display mt-14 text-[36px]">In your villa</h2>

@@ -3,6 +3,9 @@ import { CancelShort } from "@/components/site/SiteRules";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BedDouble, Clock, MapPin, MessageCircle, Navigation, Phone, Quote, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Wallet } from "lucide-react";
+import { MapEmbed } from "@/components/site/MapEmbed";
+import { reviewSource } from "@/lib/review-source";
+import { BadgeCheck } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { availablePages, formatMoney, showRating, visibleOffers } from "@/lib/data";
 import { Container, MobileMore, SectionHead } from "@/components/ui/Section";
@@ -35,7 +38,7 @@ export function FactsStrip({ hotel }: { hotel: Hotel }) {
             </span>
             <span className="min-w-0">
               <span className="block whitespace-nowrap text-[14px] font-semibold leading-tight md:whitespace-normal md:text-[15px]"><T>{f.title}</T></span>
-              <span className="mt-0.5 block whitespace-nowrap text-[12px] text-muted md:whitespace-normal md:text-[13px]">{f.sub}</span>
+              <span className="site-more mt-0.5 block whitespace-nowrap text-[12px] text-muted md:whitespace-normal md:text-[13px]">{f.sub}</span>
             </span>
           </li>
         ))}
@@ -180,7 +183,7 @@ export function OffersTeaser({ hotel }: { hotel: Hotel }) {
               <span className="flex flex-1 flex-col p-4 sm:p-5">
                 <span className="w-fit rounded-full bg-action px-3 py-1 text-[13px] font-bold text-on-action">{o.value}</span>
                 <span className="mt-3 text-lg font-bold leading-snug">{o.title}</span>
-                <span className="mt-1 text-[14px] text-muted">{o.short}</span>
+                <span className="site-more mt-1 text-[14px] text-muted">{o.short}</span>
               </span>
             </Link>
             </RevealItem></SiteVisible>
@@ -207,7 +210,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
             <p className="mt-1 text-[15px] text-muted">{hotel.reviewCount} reviews</p>
           </div>
           <div tabIndex={0} role="region" aria-label="Guest reviews" className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
-            {hotel.reviews.map((r) => (
+            {hotel.reviews.slice(0, 3).map((r) => (
               <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}><figure className="flex w-[82%] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-line bg-surface p-5 md:w-auto md:max-w-none">
                 <Quote className="size-6 text-brand" />
                 <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed">{r.text}</blockquote>
@@ -215,6 +218,7 @@ export function Reviews({ hotel }: { hotel: Hotel }) {
                   <span>
                     <span className="block font-semibold">{r.name}</span>
                     <span className="text-muted">{r.from} · {r.stayed}</span>
+                    <span className="mt-0.5 flex items-center gap-1 text-muted"><BadgeCheck className="size-3.5" /> <T>{reviewSource(r)}</T></span>
                   </span>
                   <span className="flex items-center gap-1 font-semibold"><Star className="size-4 fill-brand text-brand" /> {r.score}</span>
                 </figcaption>
@@ -251,22 +255,7 @@ export function LocationBlock({ hotel }: { hotel: Hotel }) {
               )}
             </div>
           </div>
-          {/* Map slot: real map embed comes from the hotel's coordinates (B5). Until then, a calm placeholder that links to Google Maps. */}
-          <a href={maps} className="relative block min-h-[220px] overflow-hidden bg-brand-soft lg:min-h-full" aria-label="Open in Google Maps">
-            <svg className="absolute inset-0 size-full text-brand-ring" aria-hidden>
-              <defs>
-                <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
-                  <path d="M36 0H0V36" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              <path d="M-20 160 C 120 120, 220 220, 380 150 S 640 120, 900 190" fill="none" stroke="currentColor" strokeWidth="14" opacity="0.6" />
-            </svg>
-            <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2">
-              <span className="grid size-14 place-items-center rounded-full bg-action text-on-action shadow-float"><MapPin className="size-6" /></span>
-              <span className="rounded-full bg-surface px-3 py-1.5 text-[13px] font-semibold shadow-card">Open in Google Maps</span>
-            </span>
-          </a>
+          <MapEmbed hotel={hotel} className="min-h-[260px] lg:min-h-full" />
         </Reveal>
       </Container>
     </section>

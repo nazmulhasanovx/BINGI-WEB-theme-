@@ -54,7 +54,7 @@ export function ShantiHome({ hotel }: { hotel: Hotel }) {
               <Reveal className="px-5 md:px-0 md:pr-16">
                 <Script>Our Home</Script>
                 <H hotel={hotel} k="story.title" fallback={`The Story of ${hotel.logoText}`} className="mt-1 text-[38px] md:text-[44px]" />
-                <p className="mt-3 max-w-[440px] text-[16px] leading-relaxed text-muted">{hotel.host?.note ?? hotel.intro}</p>
+                <p className="site-more mt-3 max-w-[440px] text-[16px] leading-relaxed text-muted">{hotel.host?.note ?? hotel.intro}</p>
                 {hotel.host && <p className="mt-3 text-[14px] font-semibold">— {hotel.host.name}, {hotel.host.role.toLowerCase()} since {hotel.host.since}</p>}
                 <div className="mt-6"><Pill to={href(hotel, "/explore")}>Our Story</Pill></div>
               </Reveal>
@@ -71,7 +71,7 @@ export function ShantiHome({ hotel }: { hotel: Hotel }) {
                     <RevealItem>
                       <Link href={roomLink(hotel, r)} className="group block overflow-hidden rounded-[20px] bg-surface shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]">
                         <div className="relative aspect-[16/10] overflow-hidden"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover transition-transform duration-700 group-hover:scale-105" /></div>
-                        <div className="p-5"><h3 className="lux-display text-[24px]">{r.name}</h3><p className="mt-1 text-[15px] text-muted">{r.short}</p><p className="mt-3 inline-flex items-center gap-2 text-[15px] font-bold text-[color:var(--lux-accent-ink)]"><T>View Room</T> <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden /></p></div>
+                        <div className="p-5"><h3 className="lux-display text-[24px]">{r.name}</h3><p className="site-more mt-1 text-[15px] text-muted">{r.short}</p><p className="mt-3 inline-flex items-center gap-2 text-[15px] font-bold text-[color:var(--lux-accent-ink)]"><T>View Room</T> <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden /></p></div>
                       </Link>
                     </RevealItem>
                   </SiteVisible>
@@ -85,7 +85,7 @@ export function ShantiHome({ hotel }: { hotel: Hotel }) {
             <W className="py-12 md:py-0 md:pl-[max(24px,calc((100vw-1240px)/2+24px))] md:pr-10">
               <Script>Home Breakfast</Script>
               <H hotel={hotel} k="dining.title" fallback="A Fresh Start Each Morning" className="mt-1 text-[38px] md:text-[46px]" />
-              <p className="mt-3 max-w-[400px] text-[16px] leading-relaxed text-muted">{breakfast.short} {hotel.facilities.find((f) => /breakfast/i.test(f.name))?.short ?? ""}</p>
+              <p className="site-more mt-3 max-w-[400px] text-[16px] leading-relaxed text-muted">{breakfast.short} {hotel.facilities.find((f) => /breakfast/i.test(f.name))?.short ?? ""}</p>
               <div className="mt-6"><Pill to={href(hotel, "/experiences")} solid>{`Breakfast at ${hotel.logoText}`}</Pill></div>
             </W>
             <div className="relative min-h-[320px] md:min-h-[460px]"><Image src={breakfast.photo ?? photo(hotel, /breakfast/)} alt="" fill sizes="(max-width: 768px) 100vw, 60vw" className="object-cover md:[mask-image:linear-gradient(to_right,transparent,black_18%)]" /></div>
@@ -94,7 +94,7 @@ export function ShantiHome({ hotel }: { hotel: Hotel }) {
         gallery: (
           <section className="py-14 md:py-20">
             <W className="grid items-center gap-8 lg:grid-cols-[280px_1fr]">
-              <Reveal><Script>Our Spaces</Script><H hotel={hotel} k="gallery.title" fallback="Garden, Lounge and More" className="mt-1 text-[36px] md:text-[42px]" /><p className="mt-3 text-[15.5px] text-muted">Relax in our green garden, share a quiet moment in the lounge and feel at home throughout the house.</p><div className="mt-5"><Pill to={href(hotel, "/explore")}>View Gallery</Pill></div></Reveal>
+              <Reveal><Script>Our Spaces</Script><H hotel={hotel} k="gallery.title" fallback="Garden, Lounge and More" className="mt-1 text-[36px] md:text-[42px]" /><p className="site-more mt-3 text-[15.5px] text-muted">Relax in our green garden, share a quiet moment in the lounge and feel at home throughout the house.</p><div className="mt-5"><Pill to={href(hotel, "/explore")}>View Gallery</Pill></div></Reveal>
               <div className="grid grid-cols-3 gap-3 md:gap-4">{hotel.gallery.slice(0, 3).map((g) => <div key={g} className="relative aspect-[4/5] overflow-hidden rounded-[18px]"><Image src={g} alt="" fill sizes="(max-width: 768px) 33vw, 300px" className="object-cover" /></div>)}</div>
             </W>
           </section>

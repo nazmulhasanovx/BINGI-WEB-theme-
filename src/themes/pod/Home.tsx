@@ -114,7 +114,7 @@ function Stays({ hotel }: { hotel: Hotel }) {
                         <h3 className="text-[19px] font-bold leading-tight">{r.name}</h3>
                         <p className="shrink-0 text-right"><b className="text-[19px] tabular-nums">{formatMoney(r.fromPrice)}</b><span className="block text-[12px] text-muted"><T>/ night</T></span></p>
                       </div>
-                      <p className="mt-1 text-[14px] text-muted">{r.short}</p>
+                      <p className="site-more mt-1 text-[14px] text-muted">{r.short}</p>
                       <p className="mt-3 flex flex-wrap gap-x-3 text-[13.5px] text-muted"><span className="flex items-center gap-1"><BedDouble className="size-4" /> {r.bed}</span><span className="flex items-center gap-1"><Users className="size-4" /> {r.maxAdults}</span></p>
                     </div>
                   </Link>
@@ -141,7 +141,7 @@ function Facilities({ hotel }: { hotel: Hotel }) {
               <RevealItem key={f.name} className="rounded-[18px] bg-[#0b0a1a] p-4 text-white md:p-5">
                 <Icon className="size-6 text-[#67e8f9]" />
                 <p className="mt-2 text-[15.5px] font-bold">{f.name}</p>
-                <p className="mt-0.5 text-[13.5px] text-white/75">{f.short}</p>
+                <p className="site-more mt-0.5 text-[13.5px] text-white/75">{f.short}</p>
               </RevealItem>
             );
           })}

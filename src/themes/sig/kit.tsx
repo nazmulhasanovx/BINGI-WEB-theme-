@@ -63,7 +63,7 @@ export function Rooms({ hotel, look, cols = 3 }: { hotel: Hotel; look: "card" | 
               </div>
               <div className={clsx("flex flex-1 flex-col", look === "card" || look === "boxed" ? "p-5" : "pt-4")}>
                 <h3 className={clsx(look === "arch" ? "sig-caps !text-[13px] !tracking-[0.18em] text-ink" : "lux-display text-[24px]")}>{r.name}</h3>
-                <p className="mt-1.5 text-[14.5px] text-muted">{r.short}</p>
+                <p className="site-more mt-1.5 text-[14.5px] text-muted">{r.short}</p>
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
                   <span className="inline-flex items-center gap-1.5"><BedDouble className="size-4" aria-hidden /> {r.bed}</span>
                   <span className="inline-flex items-center gap-1.5"><Users className="size-4" aria-hidden /> Up to {r.maxAdults + r.maxChildren}</span>
@@ -91,7 +91,7 @@ export function Tiles({ hotel, over, limit = 3, cats }: { hotel: Hotel; over?: b
                 <Image src={s.photo!} alt="" fill sizes="(max-width: 640px) 100vw, 400px" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
                 {over && <><div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /><p className="absolute inset-x-4 bottom-3 flex items-center justify-between text-[17px] font-bold text-white">{s.name}<ArrowRight className="size-5" aria-hidden /></p></>}
               </div>
-              {!over && <div className="mt-3"><h3 className="sig-caps !text-[13px] text-ink">{s.name}</h3><p className="mt-1 text-[13.5px] text-muted">{s.short}</p></div>}
+              {!over && <div className="mt-3"><h3 className="sig-caps !text-[13px] text-ink">{s.name}</h3><p className="site-more mt-1 text-[13.5px] text-muted">{s.short}</p></div>}
             </Link>
           </RevealItem>
         </SiteVisible>

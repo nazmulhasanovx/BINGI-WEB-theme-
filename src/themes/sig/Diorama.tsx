@@ -338,7 +338,7 @@ export function Diorama({ scene, labels, fallback, count = 3, className = "h-[42
           <span className="absolute -left-[5px] -top-[5px] size-[10px] rounded-full border-2 border-white bg-[color:var(--lux-accent)] shadow" />
           <span className={`absolute left-3 top-3 block whitespace-nowrap rounded-[6px] bg-surface/90 px-2.5 py-1.5 shadow-md backdrop-blur ${ink === "text-white" ? "" : ""}`}>
             <b className="block text-[12px] font-bold uppercase tracking-[0.14em] text-[color:var(--lux-accent-ink)]">{l.title}</b>
-            {l.sub && <span className="block text-[11.5px] text-muted">{l.sub}</span>}
+            {l.sub && <span className="block text-[12px] text-muted">{l.sub}</span>}
           </span>
         </div>
       ))}

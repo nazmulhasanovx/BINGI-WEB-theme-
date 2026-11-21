@@ -50,7 +50,7 @@ export function RootsHome({ hotel }: { hotel: Hotel }) {
               <Reveal className="px-5 md:pl-[max(24px,calc((100vw-1240px)/2+24px))]">
                 <Satisfy>Meet</Satisfy>
                 <H hotel={hotel} k="story.title" fallback="Our Hosts" className="text-[40px] md:text-[48px]" />
-                <p className="mt-3 max-w-[420px] text-[16px] leading-relaxed text-muted">{hotel.host?.note ?? hotel.intro}</p>
+                <p className="site-more mt-3 max-w-[420px] text-[16px] leading-relaxed text-muted">{hotel.host?.note ?? hotel.intro}</p>
                 {hotel.host && <p className="mt-4 text-[14.5px]"><b>{hotel.host.name}</b> · <T>hosting since</T> {hotel.host.since}<span className="mt-2 flex flex-wrap gap-2">{hotel.host.languages.map((l) => <span key={l} className="rounded-full bg-surface px-3 py-1 text-[12.5px] font-semibold">{l}</span>)}</span></p>}
               </Reveal>
               <Reveal className="relative min-h-[300px] md:min-h-[400px]" style={{ clipPath: torn("l") }}><Image src={photo(hotel, /veranda|bungalow/)} alt="" fill sizes="(max-width: 768px) 100vw, 60vw" className="object-cover" /></Reveal>
@@ -60,14 +60,14 @@ export function RootsHome({ hotel }: { hotel: Hotel }) {
         rooms: (
           <section className="py-12 md:py-16">
             <W className="grid gap-8 lg:grid-cols-[260px_1fr]">
-              <Reveal><H hotel={hotel} k="rooms.title" fallback="Our Rooms" className="text-[40px] text-[color:var(--lux-accent-ink)] md:text-[46px]" /><p className="mt-3 text-[16px] text-muted">Cozy, airy and rooted in home comfort — each room is a calm space to rest, read and feel at ease.</p></Reveal>
+              <Reveal><H hotel={hotel} k="rooms.title" fallback="Our Rooms" className="text-[40px] text-[color:var(--lux-accent-ink)] md:text-[46px]" /><p className="site-more mt-3 text-[16px] text-muted">Cozy, airy and rooted in home comfort — each room is a calm space to rest, read and feel at ease.</p></Reveal>
               <RevealGroup className="grid gap-5 sm:grid-cols-3">
                 {hotel.rooms.map((r) => (
                   <SiteVisible key={r.id} slug={hotel.slug} kind="rooms" id={r.id}>
                     <RevealItem>
                       <Link href={roomLink(hotel, r)} className="group block overflow-hidden rounded-[10px] bg-surface shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]">
                         <div className="relative aspect-[4/3] overflow-hidden"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 640px) 100vw, 320px" className="object-cover transition-transform duration-700 group-hover:scale-105" /></div>
-                        <div className="p-4"><h3 className="lux-display text-[21px]">{r.name}</h3><p className="mt-1 text-[14px] text-muted">{r.short}</p><p className="mt-3 flex gap-4 text-[13px] text-muted"><span className="flex items-center gap-1.5"><BedDouble className="size-4" aria-hidden />{r.bed}</span><span className="flex items-center gap-1.5"><Users className="size-4" aria-hidden />Up to {r.maxAdults + r.maxChildren}</span></p></div>
+                        <div className="p-4"><h3 className="lux-display text-[21px]">{r.name}</h3><p className="site-more mt-1 text-[14px] text-muted">{r.short}</p><p className="mt-3 flex gap-4 text-[13px] text-muted"><span className="flex items-center gap-1.5"><BedDouble className="size-4" aria-hidden />{r.bed}</span><span className="flex items-center gap-1.5"><Users className="size-4" aria-hidden />Up to {r.maxAdults + r.maxChildren}</span></p></div>
                       </Link>
                     </RevealItem>
                   </SiteVisible>
@@ -81,14 +81,14 @@ export function RootsHome({ hotel }: { hotel: Hotel }) {
             <div className="relative min-h-[280px] md:min-h-[360px]"><Image src={food.photo ?? photo(hotel, /dish/)} alt="" fill sizes="(max-width: 768px) 100vw, 55vw" className="object-cover" /></div>
             <div className="flex flex-col justify-center bg-[#8E2C22] px-6 py-12 text-white md:-ml-10 md:px-16" style={{ clipPath: torn("l") }}>
               <H hotel={hotel} k="dining.title" fallback="Home-cooked Food" className="text-[38px] text-white md:text-[48px]" />
-              <p className="mt-3 max-w-[420px] text-[16px] text-white/90">{food.short} Simple, seasonal and full of home flavours.</p>
+              <p className="site-more mt-3 max-w-[420px] text-[16px] text-white/90">{food.short} Simple, seasonal and full of home flavours.</p>
             </div>
           </section>
         ) : null,
         experiences: (
           <section className="py-12 md:py-16">
             <W className="grid gap-8 lg:grid-cols-[260px_1fr]">
-              <Reveal><H hotel={hotel} k="experiences.title" fallback="Local Life & Experiences" className="text-[36px] md:text-[42px]" /><p className="mt-3 text-[16px] text-muted">Slow down and explore the warmth, work and wonder of local life.</p></Reveal>
+              <Reveal><H hotel={hotel} k="experiences.title" fallback="Local Life & Experiences" className="text-[36px] md:text-[42px]" /><p className="site-more mt-3 text-[16px] text-muted">Slow down and explore the warmth, work and wonder of local life.</p></Reveal>
               <Tiles hotel={hotel} cats={["activity"]} />
             </W>
           </section>
@@ -100,7 +100,7 @@ export function RootsHome({ hotel }: { hotel: Hotel }) {
               <Reveal className="relative px-5 md:pr-[max(24px,calc((100vw-1240px)/2+24px))]">
                 <Satisfy>Our Story</Satisfy>
                 <H hotel={hotel} k="gallery.title" fallback={`Life at ${hotel.logoText}`} className="text-[38px] md:text-[46px]" />
-                <p className="mt-3 max-w-[420px] text-[16px] text-muted">{hotel.intro}</p>
+                <p className="site-more mt-3 max-w-[420px] text-[16px] text-muted">{hotel.intro}</p>
                 <div className="mt-6 flex gap-4">
                   {hotel.gallery.slice(0, 2).map((g, i) => <div key={g} className={`relative aspect-square w-36 bg-white p-2 pb-7 shadow-lg md:w-44 ${i ? "rotate-3" : "-rotate-3"}`}><div className="relative h-full w-full"><Image src={g} alt="" fill sizes="176px" className="object-cover" /></div></div>)}
                 </div>
@@ -112,7 +112,7 @@ export function RootsHome({ hotel }: { hotel: Hotel }) {
           <section className="bg-[#2f4a2a] py-14 text-center text-white">
             <W>
               <H hotel={hotel} k="reserve.title" fallback={`You're Welcome at ${hotel.logoText}`} className="text-[38px] text-white md:text-[52px]" />
-              <p className="mt-3 text-[16px] text-white/85">Come for the calm, stay for the warmth, and take home a little more of Bangladesh.</p>
+              <p className="site-more mt-3 text-[16px] text-white/85">Come for the calm, stay for the warmth, and take home a little more of Bangladesh.</p>
               <Link href={href(hotel, "/rooms")} className="mt-6 inline-flex h-12 items-center gap-2 rounded-[6px] border-2 border-white/80 bg-[#8E2C22] px-6 font-bold"><CalendarDays className="size-4" aria-hidden /><T>Book Your Stay</T></Link>
               <Contact hotel={hotel} light className="mt-6 justify-center" />
             </W>

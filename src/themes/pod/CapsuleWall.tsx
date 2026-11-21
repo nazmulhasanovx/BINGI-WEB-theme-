@@ -42,7 +42,7 @@ export function CapsuleWall({ hotel }: { hotel: Hotel }) {
         <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Pod types">
           {cats.map((c) => (
             <button key={c.id} onClick={() => setSel(c.id)} aria-pressed={selected.id === c.id}
-              className={clsx("inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[14px] font-medium transition-colors", selected.id === c.id ? "border-white bg-white text-[#0b0a1a]" : "border-white/25 text-white hover:border-white/60")}>
+              className={clsx("inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 py-1.5 text-[14px] font-medium transition-colors", selected.id === c.id ? "border-white bg-white text-[#0b0a1a]" : "border-white/25 text-white hover:border-white/60")}>
               <span className="size-2.5 rounded-full" style={{ background: c.glow, boxShadow: `0 0 10px ${c.glow}` }} />{c.name} · {c.pods}
             </button>
           ))}
@@ -62,7 +62,7 @@ export function CapsuleWall({ hotel }: { hotel: Hotel }) {
                         const on = selected.id === c.id;
                         return (
                           <button key={bed.code} onClick={() => setSel(c.id)} aria-label={`${c.name}, pod ${bed.code}, ${formatMoney(c.price)} per night`}
-                            className={clsx("relative h-9 w-12 rounded-[12px] border transition-all duration-500 md:h-10 md:w-14", on ? "border-transparent" : "border-white/15 opacity-60 hover:opacity-100")}
+                            className={clsx("relative h-11 w-12 rounded-[12px] border transition-all duration-500 md:w-14", on ? "border-transparent" : "border-white/15 opacity-60 hover:opacity-100")}
                             style={on ? { background: `linear-gradient(180deg, ${c.glow}55, ${c.glow}22)`, boxShadow: `0 0 0 1px ${c.glow}, 0 0 18px -4px ${c.glow}`, transitionDelay: anim ? `${(i % 12) * 25}ms` : undefined } : { background: "rgb(255 255 255 / .04)" }}>
                             <span aria-hidden className="absolute inset-x-2 top-1.5 h-1 rounded-full bg-white/50" />
                           </button>

@@ -92,6 +92,8 @@ export interface Review {
   score: number; // out of 5
   text: string;
   stayed: string; // "Oct 2026"
+  /** Where the review came from. direct = asked after a stay booked through BinGi (Guest App / email). */
+  source?: "direct" | "google" | "booking" | "tripadvisor";
 }
 
 export type PaymentMethod =

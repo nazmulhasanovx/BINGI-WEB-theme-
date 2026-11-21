@@ -33,10 +33,10 @@ export function EstateHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="The kitchen" title="A chef who cooks for you alone" />,
         amenities: <Amenities hotel={hotel} src={photo(hotel, /living-room/)} eyebrow="On the estate" title="Staffed like a house, private like a home" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The estate" title="Light, stone, water, trees" />,
-        reviews: <Quote hotel={hotel} />,
+        reviews: <Quote hotel={hotel} look="split" />,
         faq: <Faq hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /infinity/)} eyebrow="Finding us" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /villa-white/)} title="The gates open at two" />,
+        arrival: <Arrival hotel={hotel} look="map" src={photo(hotel, /infinity/)} eyebrow="Finding us" />,
+        reserve: <Reserve hotel={hotel} look="split" src={photo(hotel, /villa-white/)} title="The gates open at two" />,
       }}
     />
   );
@@ -75,7 +75,7 @@ function WholeEstate({ hotel }: { hotel: Hotel }) {
               {hotel.highlights.map((h) => <li key={h} className="flex gap-3"><span aria-hidden className="mt-2.5 h-px w-4 shrink-0 bg-[color:var(--lux-accent)]" />{h}</li>)}
             </ul>
             <a href={waLink(hotel, `Hello ${hotel.name}, we'd like to book the whole estate. Dates: … Guests: …`)} target="_blank" rel="noopener" className="lux-btn mt-8 self-start"><MessageCircle className="size-4" aria-hidden /> <T>Ask for the whole estate</T></a>
-            <p className="mt-3 text-[13px] text-muted"><T>Whole-estate stays are confirmed by our team, usually within a few hours.</T></p>
+            <p className="site-more mt-3 text-[13px] text-muted"><T>Whole-estate stays are confirmed by our team, usually within a few hours.</T></p>
           </Reveal>
         </div>
       </Container>

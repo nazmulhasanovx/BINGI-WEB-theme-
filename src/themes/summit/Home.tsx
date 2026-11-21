@@ -31,9 +31,9 @@ export function SummitHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="Dinner" title="One long table" />,
         amenities: <Amenities hotel={hotel} src={photo(hotel, /aframe|lodge/)} eyebrow="The lodge" title="Warm inside, wild outside" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The ridge" title="Above the weather" />,
-        reviews: <Quote hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /path/)} eyebrow="The road up" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /aerial|tea-hills/)} title="The clouds are expected tomorrow" />,
+        reviews: <Quote hotel={hotel} look="band" />,
+        arrival: <Arrival hotel={hotel} look="band" src={photo(hotel, /path/)} eyebrow="The road up" />,
+        reserve: <Reserve hotel={hotel} look="photo" src={photo(hotel, /aerial|tea-hills/)} title="The clouds are expected tomorrow" />,
       }}
     />
   );
@@ -68,7 +68,7 @@ function Fireside({ hotel }: { hotel: Hotel }) {
                 {items.map((d) => (
                   <li key={d.time + d.title} className="grid grid-cols-[76px_1fr] gap-4 py-5">
                     <p className="lux-display text-[22px] tabular-nums text-[#e2b98c]">{d.time}</p>
-                    <div><h3 className="text-[17px] font-semibold">{d.title}</h3><p className="mt-1 text-[15px] leading-relaxed text-[#f3ebe1]/75">{d.text}</p></div>
+                    <div><h3 className="text-[17px] font-semibold">{d.title}</h3><p className="site-more mt-1 text-[15px] leading-relaxed text-[#f3ebe1]/75">{d.text}</p></div>
                   </li>
                 ))}
               </ol>

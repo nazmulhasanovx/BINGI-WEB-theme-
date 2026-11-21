@@ -166,7 +166,7 @@ function TideClock({ hotel }: { hotel: Hotel }) {
                 <li key={d.time + i} className="grid grid-cols-[34px_70px_1fr] items-baseline gap-3">
                   <span className="grid size-[26px] place-items-center rounded-full border border-[#58d6cf] text-[12px] font-bold">{i + 1}</span>
                   <span className="isle-accent text-[20px] tabular-nums text-[#9fe7e1]">{d.time}</span>
-                  <span><b className="block text-[16.5px]">{d.title}</b><span className="text-[14.5px] text-white/75">{d.text}</span></span>
+                  <span><b className="block text-[16.5px]">{d.title}</b><span className="site-more text-[14.5px] text-white/75">{d.text}</span></span>
                 </li>
               ))}
             </ol>
@@ -197,7 +197,7 @@ function Postcards({ hotel }: { hotel: Hotel }) {
                 <div className="flex items-start justify-between gap-3 px-1 pt-4">
                   <div>
                     <h3 className="isle-accent text-[22px] leading-tight">{s.name}</h3>
-                    <p className="mt-1.5 text-[14px] leading-relaxed text-muted">{s.short}</p>
+                    <p className="site-more mt-1.5 text-[14px] leading-relaxed text-muted">{s.short}</p>
                   </div>
                   <span aria-hidden className="grid size-12 shrink-0 rotate-6 place-items-center border border-dashed border-[color:var(--lux-accent)] text-[9px] font-bold uppercase leading-tight tracking-wider text-[color:var(--lux-accent-ink)]">{hotel.logoText}<br />post</span>
                 </div>
@@ -228,7 +228,7 @@ function Menu({ hotel }: { hotel: Hotel }) {
               {hotel.outlets.map((o) => (
                 <li key={o.id} className="text-center">
                   <h3 className="lux-display text-[26px]">{o.name}</h3>
-                  <p className="mx-auto mt-1 max-w-[380px] text-[14.5px] leading-relaxed text-muted">{o.short}</p>
+                  <p className="site-more mx-auto mt-1 max-w-[380px] text-[14.5px] leading-relaxed text-muted">{o.short}</p>
                   <p className="mt-1.5 text-[12.5px] font-semibold uppercase tracking-[0.16em]">{o.hours} · {o.location}</p>
                 </li>
               ))}

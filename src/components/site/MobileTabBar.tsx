@@ -32,7 +32,7 @@ export function MobileTabBar({ base }: { base: string }) {
               <Link href={tab.href} aria-current={tab.active ? "page" : undefined} className="relative flex h-14 flex-col items-center justify-center gap-0.5 active:scale-95">
                 {tab.active && <motion.span layoutId="tab-dot" className="absolute top-1 h-1 w-6 rounded-full bg-brand" transition={{ type: "spring", stiffness: 500, damping: 36 }} />}
                 <tab.icon className={clsx("size-[22px] transition-colors", tab.active ? "text-action" : "text-muted")} strokeWidth={tab.active ? 2.3 : 1.8} />
-                <span className={clsx("text-[11px] font-semibold", tab.active ? "text-action" : "text-muted")}>{t(tab.label)}</span>
+                <span className={clsx("text-[12px] font-semibold", tab.active ? "text-action" : "text-muted")}>{t(tab.label)}</span>
               </Link>
             </li>
           ) : (

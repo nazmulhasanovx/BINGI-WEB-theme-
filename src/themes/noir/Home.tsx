@@ -38,9 +38,9 @@ export function NoirHome({ hotel }: { hotel: Hotel }) {
         amenities: <Amenities hotel={hotel} src={photo(hotel, /lounge/)} eyebrow="The hotel" title="Made for the night owl" />,
         gallery: <Mosaic hotel={hotel} eyebrow="Gallery" title="Lights, glass, water" />,
         offers: <Offers hotel={hotel} />,
-        reviews: <Quote hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /sunset/)} eyebrow="Find us" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /pool-2|pool/)} title="Tonight, the city is yours" />,
+        reviews: <Quote hotel={hotel} look="band" />,
+        arrival: <Arrival hotel={hotel} look="band" src={photo(hotel, /sunset/)} eyebrow="Find us" />,
+        reserve: <Reserve hotel={hotel} look="split" src={photo(hotel, /pool-2|pool/)} title="Tonight, the city is yours" />,
       }}
     />
   );
@@ -65,7 +65,7 @@ function Rooftop({ hotel }: { hotel: Hotel }) {
               {list.map((o) => (
                 <li key={o.id} className="bg-black/55 p-5 backdrop-blur md:p-6">
                   <h3 className="lux-display text-[26px] text-white">{o.name}</h3>
-                  <p className="mt-1.5 text-[14.5px] leading-relaxed text-white/80">{o.short}</p>
+                  <p className="site-more mt-1.5 text-[14.5px] leading-relaxed text-white/80">{o.short}</p>
                   <p className="mt-3 text-[13px] font-semibold tracking-[0.08em] text-[#DCC08A] tabular-nums">{o.hours} · {o.location}</p>
                 </li>
               ))}

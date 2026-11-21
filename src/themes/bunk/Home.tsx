@@ -134,7 +134,7 @@ function Life({ hotel }: { hotel: Hotel }) {
                 <RevealItem key={f.name} className="rounded-[18px] bg-surface p-4">
                   <Icon className="size-6 text-action" strokeWidth={2} />
                   <p className="mt-2 text-[15.5px] font-bold leading-snug">{f.name}</p>
-                  <p className="mt-0.5 text-[13.5px] text-muted">{f.short}</p>
+                  <p className="site-more mt-0.5 text-[13.5px] text-muted">{f.short}</p>
                 </RevealItem>
               );
             })}
@@ -144,7 +144,7 @@ function Life({ hotel }: { hotel: Hotel }) {
               {events.map((e) => (
                 <SiteVisible key={e.id} slug={hotel.slug} kind="services" id={e.id}><div className="flex min-w-0 items-center gap-3 rounded-[18px] bg-surface p-3 sm:gap-4">
                   {e.photo && <span className="relative size-16 shrink-0 overflow-hidden rounded-[12px]"><Image src={e.photo} alt="" fill sizes="64px" className="object-cover" /></span>}
-                  <div className="min-w-0 flex-1"><p className="truncate text-[15.5px] font-bold">{e.name}</p><p className="truncate text-[13.5px] text-muted">{e.short}</p></div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-[15.5px] font-bold">{e.name}</p><p className="site-more truncate text-[13.5px] text-muted">{e.short}</p></div>
                   <p className="shrink-0 pr-2 text-[15px] font-bold">{e.price ? formatMoney(e.price) : "Free"}</p>
                 </div></SiteVisible>
               ))}
@@ -170,7 +170,7 @@ function Rules({ hotel }: { hotel: Hotel }) {
             return (
               <RevealItem key={r.title} className="flex gap-3 rounded-[18px] border-2 border-ink/90 p-4">
                 <Icon className="mt-0.5 size-5 shrink-0 text-action" />
-                <div><p className="text-[15.5px] font-bold"><T>{r.title}</T></p><p className="mt-0.5 text-[14px] text-muted">{r.text}</p></div>
+                <div><p className="text-[15.5px] font-bold"><T>{r.title}</T></p><p className="site-more mt-0.5 text-[14px] text-muted">{r.text}</p></div>
               </RevealItem>
             );
           })}

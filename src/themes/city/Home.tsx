@@ -132,7 +132,7 @@ function FactStrip({ hotel }: { hotel: Hotel }) {
             <f.icon className="mt-0.5 size-5 shrink-0 text-action" strokeWidth={1.75} />
             <div className="min-w-0">
               <p className="text-[15px] font-semibold leading-snug md:text-[16px]">{f.name}</p>
-              <p className="mt-0.5 text-[13px] text-muted md:text-[14px]">{f.short}</p>
+              <p className="site-more mt-0.5 text-[13px] text-muted md:text-[14px]">{f.short}</p>
             </div>
           </RevealItem>
         ))}
@@ -207,7 +207,7 @@ function WorkAndStay({ hotel, meetings }: { hotel: Hotel; meetings?: boolean }) 
                 </div>
                 <p className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted md:text-[13px]"><T>{t.label}</T></p>
                 <h3 className="mt-1.5 text-[22px] font-semibold leading-tight md:text-[28px]">{t.title}</h3>
-                <p className="mt-1.5 text-[15px] text-muted">{t.sub}</p>
+                <p className="site-more mt-1.5 text-[15px] text-muted">{t.sub}</p>
                 <span className="mt-4 inline-flex items-center gap-1.5 border-b border-ink/20 pb-0.5 text-[15px] font-semibold transition-colors group-hover:border-ink">
                   <T>{t.cta}</T> <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
@@ -279,7 +279,7 @@ function CityOffers({ hotel }: { hotel: Hotel }) {
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-[20px] font-semibold leading-tight md:text-[22px]">{o.title}</h3>
-                    <p className="mt-1 text-[15px] text-muted">{o.short}</p>
+                    <p className="site-more mt-1 text-[15px] text-muted">{o.short}</p>
                   </div>
                   <p className="shrink-0 text-[20px] font-semibold text-action md:text-[22px]">{o.value}</p>
                 </div>

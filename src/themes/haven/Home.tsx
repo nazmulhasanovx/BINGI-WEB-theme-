@@ -31,9 +31,9 @@ export function HavenHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="Nourish" title="Cooked from the garden" />,
         amenities: <Amenities hotel={hotel} src={photo(hotel, /plunge|pool-trees/)} eyebrow="The retreat" title="Everything here is slow on purpose" />,
         gallery: <Mosaic hotel={hotel} eyebrow="The retreat" title="Water, stone, green" />,
-        reviews: <Quote hotel={hotel} eyebrow="In their words" />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /garden/)} eyebrow="Getting here" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /pool-jungle|pool/)} title="Begin your retreat" />,
+        reviews: <Quote hotel={hotel} look="center" eyebrow="In their words" />,
+        arrival: <Arrival hotel={hotel} look="map" src={photo(hotel, /garden/)} eyebrow="Getting here" />,
+        reserve: <Reserve hotel={hotel} look="plain" src={photo(hotel, /pool-jungle|pool/)} title="Begin your retreat" />,
       }}
     />
   );

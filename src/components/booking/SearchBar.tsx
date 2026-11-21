@@ -42,7 +42,7 @@ export function SearchBar() {
       {/* phone */}
       <button
         onClick={openSearch}
-        className="flex w-full items-center gap-3 rounded-full border border-line bg-surface px-4 py-2.5 text-left shadow-float md:hidden"
+        className="book-pill flex w-full items-center gap-3 rounded-full border border-line bg-surface px-4 py-2.5 text-left shadow-float md:hidden"
       >
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-action">
           <CalendarDays className="size-5" />
@@ -67,7 +67,7 @@ export function SearchBar() {
           e.preventDefault();
           submit();
         }}
-        className="relative hidden rounded-[28px] border border-line bg-surface p-2 shadow-float md:grid md:grid-cols-[1fr_1fr] md:gap-1 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center"
+        className="book-bar relative hidden rounded-[28px] border border-line bg-surface p-2 shadow-float md:grid md:grid-cols-[1fr_1fr] md:gap-1 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center"
       >
         <DateTrigger which="checkIn" active={cal && !search.checkIn} onOpen={() => { setGuestsOpen(false); setCal(true); }} />
         <div className="lg:border-l lg:border-line">

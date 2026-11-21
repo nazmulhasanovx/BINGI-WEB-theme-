@@ -30,9 +30,9 @@ export function MaisonHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="Dining & bars" title="Tea at three, martinis at eleven" />,
         amenities: <Amenities hotel={hotel} src={photo(hotel, /columns|windows/)} eyebrow="The house" title="Everything arranged, nothing announced" />,
         offers: <Offers hotel={hotel} />,
-        reviews: <Quote hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /columns/)} eyebrow="The address" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /chandelier/)} title="We have kept a room for you" />,
+        reviews: <Quote hotel={hotel} look="split" />,
+        arrival: <Arrival hotel={hotel} look="split" src={photo(hotel, /columns/)} eyebrow="The address" />,
+        reserve: <Reserve hotel={hotel} look="plain" src={photo(hotel, /chandelier/)} title="We have kept a room for you" />,
       }}
     />
   );

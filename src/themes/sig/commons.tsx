@@ -56,7 +56,7 @@ export function CommonsHome({ hotel }: { hotel: Hotel }) {
                 {hotel.facilities.slice(0, 3).map((f, i) => (
                   <RevealItem key={f.name} className="relative aspect-[3/4] overflow-hidden md:aspect-[4/5] [clip-path:polygon(6%_0,100%_0,94%_100%,0_100%)]">
                     <Image src={hotel.gallery[i] ?? hotel.heroPhoto} alt="" fill sizes="(max-width: 768px) 33vw, 320px" className="object-cover" />
-                    <Sticker className="absolute bottom-3 left-3 !text-[11px] md:!text-[14px]">{f.name}</Sticker>
+                    <Sticker className="absolute bottom-3 left-3 !text-[12px] md:!text-[14px]">{f.name}</Sticker>
                   </RevealItem>
                 ))}
               </RevealGroup>
@@ -69,7 +69,7 @@ export function CommonsHome({ hotel }: { hotel: Hotel }) {
             <W className="relative grid gap-8 lg:grid-cols-[260px_1fr]">
               <Reveal>
                 <h2 className="lux-display text-[52px] uppercase md:text-[64px]">Ways to <span className="sig-marker text-[color:var(--lux-accent-ink)]">stay</span></h2>
-                <p className="mt-4 text-[15px] font-bold uppercase">Comfortable, flexible and made for travellers like you.</p>
+                <p className="site-more mt-4 text-[15px] font-bold uppercase">Comfortable, flexible and made for travellers like you.</p>
               </Reveal>
               <RevealGroup className="grid gap-4 sm:grid-cols-3">
                 {hotel.rooms.map((r) => (
@@ -78,7 +78,7 @@ export function CommonsHome({ hotel }: { hotel: Hotel }) {
                       <Link href={roomLink(hotel, r)} className="group block border-2 border-[#0c0c14] bg-white shadow-[5px_5px_0_#0c0c14] transition-transform hover:-translate-y-1">
                         <div className="relative aspect-[4/3] overflow-hidden border-b-2 border-[#0c0c14]"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 640px) 100vw, 320px" className="object-cover" /></div>
                         <div className="flex items-end justify-between gap-3 p-4">
-                          <span><b className="lux-display block text-[20px] uppercase">{r.name}</b><span className="mt-1 block text-[12.5px] font-bold uppercase text-muted">{r.short}</span><span className="mt-1 block text-[14px] font-bold">{formatMoney(r.fromPrice)} / {r.kind === "dorm" ? "bed" : "night"}</span></span>
+                          <span><b className="lux-display block text-[20px] uppercase">{r.name}</b><span className="site-more mt-1 block text-[12.5px] font-bold uppercase text-muted">{r.short}</span><span className="mt-1 block text-[14px] font-bold">{formatMoney(r.fromPrice)} / {r.kind === "dorm" ? "bed" : "night"}</span></span>
                           <span className="grid size-9 shrink-0 place-items-center bg-[#D7F22B]"><ArrowUpRight className="size-5" aria-hidden /></span>
                         </div>
                       </Link>
@@ -94,14 +94,14 @@ export function CommonsHome({ hotel }: { hotel: Hotel }) {
             <W className="grid items-center gap-8 lg:grid-cols-[1fr_auto_1.2fr]">
               <Reveal>
                 <H hotel={hotel} k="experiences.title" fallback="Community experiences" className="text-[40px] uppercase text-white md:text-[54px]" />
-                <p className="mt-3 max-w-[360px] text-[15px] font-bold uppercase text-white/90">Meet people, share interests and experience the city together.</p>
+                <p className="site-more mt-3 max-w-[360px] text-[15px] font-bold uppercase text-white/90">Meet people, share interests and experience the city together.</p>
               </Reveal>
               <p aria-hidden className="sig-marker hidden rotate-[-6deg] bg-[#D7F22B] px-5 py-4 text-[26px] leading-tight text-[#0c0c14] shadow-[5px_5px_0_#0c0c14] lg:block">Explore<br />Create<br />Share<br />Connect</p>
               <ul className="grid gap-3">
                 {events.map((e) => (
                   <li key={e.id} className="flex items-center gap-4 border-2 border-white/80 bg-[#1822AE] p-3">
                     {e.photo && <span className="relative size-16 shrink-0 overflow-hidden"><Image src={e.photo} alt="" fill sizes="64px" className="object-cover" /></span>}
-                    <span className="min-w-0 flex-1"><b className="block text-[16px]">{e.name}</b><span className="text-[13.5px] text-white/80">{e.short}</span></span>
+                    <span className="min-w-0 flex-1"><b className="block text-[16px]">{e.name}</b><span className="site-more text-[13.5px] text-white/80">{e.short}</span></span>
                     <span className="shrink-0 bg-[#D7F22B] px-2.5 py-1 text-[12px] font-bold uppercase text-[#0c0c14]">{price(e.price)}</span>
                   </li>
                 ))}
@@ -121,7 +121,7 @@ export function CommonsHome({ hotel }: { hotel: Hotel }) {
                 {[hotel.gallery[3], hotel.gallery[4], photo(hotel, /campfire|common/)].filter(Boolean).map((g, i) => (
                   <div key={`${g}-${i}`} className="relative aspect-[3/4] overflow-hidden [clip-path:polygon(0_4%,100%_0,100%_96%,0_100%)]">
                     <Image src={g!} alt="" fill sizes="(max-width: 768px) 33vw, 260px" className="object-cover" />
-                    <Sticker className="absolute bottom-3 left-2 !text-[11px]">{["Cafés & culture", "Art & creative", "Parks & outdoors"][i]}</Sticker>
+                    <Sticker className="absolute bottom-3 left-2 !text-[12px]">{["Cafés & culture", "Art & creative", "Parks & outdoors"][i]}</Sticker>
                   </div>
                 ))}
               </div>

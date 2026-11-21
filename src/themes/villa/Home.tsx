@@ -110,7 +110,7 @@ function Villas({ hotel }: { hotel: Hotel }) {
                   </Link>
                   <div className="flex flex-col p-5 md:p-10">
                     <h3 className="font-heading text-[26px] leading-tight md:text-[36px]">{r.name}</h3>
-                    <p className="mt-2 text-[15px] leading-relaxed text-muted md:text-[16px]">{r.description}</p>
+                    <p className="site-more mt-2 text-[15px] leading-relaxed text-muted md:text-[16px]">{r.description}</p>
                     <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">{specs(r).map((s) => <Spec key={s.label} {...s} />)}</ul>
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-4 pt-6">
                       <FromPrice room={r} className="text-[17px]" />
@@ -169,7 +169,7 @@ function Included({ hotel }: { hotel: Hotel }) {
                   <SiteVisible key={s.id} slug={hotel.slug} kind="services" id={s.id}><li className="flex items-start justify-between gap-4 py-3.5">
                     <span className="flex gap-3">
                       <CheckCircle2 className={`mt-0.5 size-[18px] shrink-0 ${g.included ? "text-action" : "text-muted"}`} />
-                      <span><span className="block text-[15px] font-medium">{s.name}</span><span className="text-[14px] text-muted">{s.short}</span></span>
+                      <span><span className="block text-[15px] font-medium">{s.name}</span><span className="site-more text-[14px] text-muted">{s.short}</span></span>
                     </span>
                     {!g.included && <span className="shrink-0 text-right text-[14px]"><b>{formatMoney(s.price)}</b><span className="block text-muted">{s.unit}</span></span>}
                   </li></SiteVisible>
@@ -201,7 +201,7 @@ function Rules({ hotel }: { hotel: Hotel }) {
           {rules.map((r) => (
             <RevealItem key={r.title} className="flex gap-3.5 border-t border-line pt-5">
               <r.icon className="mt-0.5 size-5 shrink-0 text-action" strokeWidth={1.75} />
-              <div><p className="text-[16px] font-semibold"><T>{r.title}</T></p><p className="mt-1 text-[14.5px] leading-relaxed text-muted">{r.text}</p></div>
+              <div><p className="text-[16px] font-semibold"><T>{r.title}</T></p><p className="site-more mt-1 text-[14.5px] leading-relaxed text-muted">{r.text}</p></div>
             </RevealItem>
           ))}
         </RevealGroup>

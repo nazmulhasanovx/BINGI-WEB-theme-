@@ -28,9 +28,9 @@ export function OrbitHome({ hotel }: { hotel: Hotel }) {
         dining: <Dining hotel={hotel} eyebrow="Dining" title="Breakfast with the whole city" />,
         gallery: <Mosaic hotel={hotel} eyebrow="Gallery" title="Glass, light, altitude" />,
         offers: <Offers hotel={hotel} />,
-        reviews: <Quote hotel={hotel} />,
-        arrival: <Arrival hotel={hotel} src={photo(hotel, /lobby|reception/)} eyebrow="Arrival" />,
-        reserve: <Reserve hotel={hotel} src={photo(hotel, /sunset/)} title="Your floor is ready" />,
+        reviews: <Quote hotel={hotel} look="band" />,
+        arrival: <Arrival hotel={hotel} look="map" src={photo(hotel, /lobby|reception/)} eyebrow="Arrival" />,
+        reserve: <Reserve hotel={hotel} look="split" src={photo(hotel, /sunset/)} title="Your floor is ready" />,
       }}
     />
   );
@@ -58,7 +58,7 @@ function Altitude({ hotel }: { hotel: Hotel }) {
                     <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--lux-r)]"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 768px) 100vw, 280px" className="object-cover transition-transform duration-[1200ms] group-hover:scale-[1.04]" /></div>
                     <div>
                       <h3 className="lux-display text-[28px] md:text-[36px]">{r.name}</h3>
-                      <p className="mt-2 max-w-[520px] text-[15px] leading-relaxed text-muted">{r.description}</p>
+                      <p className="site-more mt-2 max-w-[520px] text-[15px] leading-relaxed text-muted">{r.description}</p>
                       <p className="mt-2 text-[13.5px] text-muted">{r.sizeSqft ? `${r.sizeSqft} sq ft · ` : ""}{r.bed}{r.view ? ` · ${r.view}` : ""}</p>
                     </div>
                     <p className="flex items-center gap-3 text-[15px] md:flex-col md:items-end"><span><span className="text-muted"><T>From</T> </span><b className="tabular-nums">{formatMoney(r.fromPrice)}</b></span><ArrowUpRight className="size-5 text-[color:var(--lux-accent-ink)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden /></p>

@@ -1,6 +1,7 @@
 // BinGi Luxury Collection — shared building blocks (plan: claude/design/Luxury_Collection_10_Themes_Plan_2026-11-10.md).
 // Every luxury theme composes these with its own layout + one signature section. Look (canvas, ink, accent,
 // heading font, radius) comes from `[data-master="<id>"]` tokens in globals.css, so the blocks stay theme-neutral.
+import { reviewSource } from "@/lib/review-source";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -15,6 +16,7 @@ import { DraftText, SiteVisible } from "@/components/site-draft/Draft";
 import { T } from "@/lib/i18n";
 import { mapsLink, photo, telLink, waLink } from "../shared";
 import { facIcon } from "../paid-shared";
+import { MapEmbed } from "@/components/site/MapEmbed";
 
 export const roomHref = (h: Hotel, r: RoomCategory) => `/hotel/${h.slug}/rooms/${r.slug}`;
 export const roomsHref = (h: Hotel) => `/hotel/${h.slug}/rooms`;
@@ -39,7 +41,7 @@ export function Head({ hotel, k, eyebrow, title, intro, center, className, light
       <Eyebrow className={light ? "!text-white/85" : undefined}>{eyebrow}</Eyebrow>
       <span aria-hidden className={clsx("lux-rule mt-4", center && "mx-auto")} />
       <h2 className="lux-display mt-5 text-[34px] md:text-[48px] lg:text-[60px] [overflow-wrap:anywhere]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
-      {intro && <p className={clsx("mt-4 text-[16px] leading-relaxed md:text-[18px]", light ? "text-white/85" : "text-muted")}>{intro}</p>}
+      {intro && <p className={clsx("site-more mt-4 text-[16px] leading-relaxed md:text-[18px]", light ? "text-white/85" : "text-muted")}>{intro}</p>}
     </div>
   );
 }
@@ -163,7 +165,7 @@ export function RoomRows({ hotel, numbered, limit = 4 }: { hotel: Hotel; numbere
               {numbered && <p aria-hidden className="lux-display text-[44px] text-[color:var(--lux-accent)] md:text-[64px]">{ROMAN[i]}</p>}
               <p className="lux-eyebrow">{r.kind === "suite" ? "Suite" : r.kind === "villa" ? "Villa" : r.kind === "cottage" ? "Cottage" : "Room"}</p>
               <h3 className="lux-display mt-3 text-[30px] md:text-[44px]">{r.name}</h3>
-              <p className="mt-4 text-[16px] leading-relaxed text-muted md:text-[17px]">{r.description}</p>
+              <p className="site-more mt-4 text-[16px] leading-relaxed text-muted md:text-[17px]">{r.description}</p>
               <div className="mt-4"><RoomMeta r={r} /></div>
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
                 <Price r={r} />
@@ -215,7 +217,7 @@ export function Amenities({ hotel, src, eyebrow = "The house", title = "Every co
                 return (
                   <li key={f.name} className="flex gap-3.5 border-t border-line py-4">
                     <Icon className="mt-0.5 size-5 shrink-0 text-[color:var(--lux-accent-ink)]" strokeWidth={1.4} aria-hidden />
-                    <span><b className="block text-[15.5px] font-semibold">{f.name}</b><span className="text-[14px] text-muted">{f.short}</span></span>
+                    <span><b className="block text-[15.5px] font-semibold">{f.name}</b><span className="site-more text-[14px] text-muted">{f.short}</span></span>
                   </li>
                 );
               })}
@@ -263,7 +265,7 @@ export function Experiences({ hotel, cats = ["activity", "spa", "celebration", "
               <RevealItem>
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[var(--lux-r)]"><Image src={s.photo!} alt="" fill sizes="(max-width: 640px) 100vw, 300px" className="object-cover" /></div>
                 <h3 className="lux-display mt-4 text-[20px] md:mt-5 md:text-[24px]">{s.name}</h3>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-muted md:mt-2 md:text-[15px]">{s.short}</p>
+                <p className="site-more mt-1.5 text-[14px] leading-relaxed text-muted md:mt-2 md:text-[15px]">{s.short}</p>
                 <p className="mt-3 text-[14.5px]">{s.price > 0 ? <><b className="tabular-nums">{formatMoney(s.price)}</b> <span className="text-muted">{s.unit}</span></> : <b><T>Included</T></b>}</p>
               </RevealItem>
             </SiteVisible>
@@ -292,7 +294,7 @@ export function Dining({ hotel, eyebrow = "Dining", title = "At the table", k = 
               {venues.map((v) => (
                 <li key={v.id} className="py-5">
                   <h3 className="lux-display text-[24px]">{v.name}</h3>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{v.short}</p>
+                  <p className="site-more mt-1.5 text-[15px] leading-relaxed text-muted">{v.short}</p>
                   <p className="mt-2 text-[13.5px] font-medium tabular-nums">{v.meta}</p>
                 </li>
               ))}
@@ -321,7 +323,7 @@ export function Timeline({ hotel, items, eyebrow, title, k, center }: {
                 <p className="lux-display text-[22px] tabular-nums text-[color:var(--lux-accent-ink)] md:text-[28px]">{d.time}</p>
                 <div>
                   <h3 className="mt-1 text-[18px] font-semibold md:mt-0 md:text-[20px]">{d.title}</h3>
-                  <p className="mt-1.5 text-[15.5px] leading-relaxed text-muted">{d.text}</p>
+                  <p className="site-more mt-1.5 text-[15.5px] leading-relaxed text-muted">{d.text}</p>
                 </div>
               </li>
             ))}
@@ -333,9 +335,62 @@ export function Timeline({ hotel, items, eyebrow, title, k, center }: {
 }
 
 /* ================= REVIEWS ================= */
-export function Quote({ hotel, eyebrow = "Guests" }: { hotel: Hotel; eyebrow?: string }) {
+/** Guest words. look: center (one big quote) · split (quote left, more on the right) · band (inverted full-width band). */
+export function Quote({ hotel, eyebrow = "Guests", look = "center" }: { hotel: Hotel; eyebrow?: string; look?: "center" | "split" | "band" }) {
   if (!hotel.reviews.length) return null;
   const [lead, ...rest] = [...hotel.reviews].sort((a, b) => b.score - a.score || b.text.length - a.text.length);
+  const more = rest.slice(0, 2);
+  const rating = showRating(hotel) && <p className="text-[15px]"><b className="tabular-nums">{hotel.reviewScore}</b> / 5 <span className="opacity-70">· {hotel.reviewCount} <T>reviews</T></span></p>;
+  const cap = (r: typeof lead) => <>{r.name} · {r.from} · <T>{reviewSource(r)}</T></>;
+  if (look === "split")
+    return (
+      <Sec>
+        <Container>
+          <div className="grid gap-10 md:grid-cols-[1.35fr_1fr] md:gap-16">
+            <Reveal>
+              <Eyebrow>{eyebrow}</Eyebrow>
+              <span aria-hidden className="lux-rule mt-4" />
+              <SiteVisible slug={hotel.slug} kind="reviews" id={lead.id}>
+                <figure className="mt-8">
+                  <blockquote className="lux-display text-[30px] md:text-[48px]">“{lead.text}”</blockquote>
+                  <figcaption className="mt-6 text-[14.5px] text-muted">{cap(lead)}</figcaption>
+                </figure>
+              </SiteVisible>
+            </Reveal>
+            <RevealGroup className="space-y-8 md:border-l md:border-line md:pl-10 md:pt-14">
+              {rating && <RevealItem>{rating}</RevealItem>}
+              {more.map((r) => (
+                <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}>
+                  <RevealItem><figure><blockquote className="text-[17px] leading-relaxed">“{r.text}”</blockquote><figcaption className="mt-2 text-[13.5px] text-muted">{cap(r)}</figcaption></figure></RevealItem>
+                </SiteVisible>
+              ))}
+            </RevealGroup>
+          </div>
+        </Container>
+      </Sec>
+    );
+  if (look === "band")
+    return (
+      <section className="mt-20 bg-ink py-16 text-canvas md:mt-36 md:py-28">
+        <Container className="max-w-[1080px]">
+          <Reveal>
+            <p className="lux-eyebrow !text-canvas/75"><T>{eyebrow}</T></p>
+            <SiteVisible slug={hotel.slug} kind="reviews" id={lead.id}>
+              <figure className="mt-6">
+                <blockquote className="lux-display text-[32px] md:text-[56px]">“{lead.text}”</blockquote>
+                <figcaption className="mt-6 text-[14.5px] text-canvas/70">{cap(lead)}</figcaption>
+              </figure>
+            </SiteVisible>
+          </Reveal>
+          <div className="mt-10 flex flex-wrap items-end justify-between gap-6 border-t border-canvas/20 pt-8">
+            {rating}
+            <ul className="grid gap-6 md:max-w-[620px] md:grid-cols-2">
+              {more.map((r) => <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}><li><p className="text-[15.5px] leading-relaxed">“{r.text}”</p><p className="mt-2 text-[13px] text-canvas/65">{cap(r)}</p></li></SiteVisible>)}
+            </ul>
+          </div>
+        </Container>
+      </section>
+    );
   return (
     <Sec>
       <Container className="max-w-[1080px]">
@@ -345,21 +400,16 @@ export function Quote({ hotel, eyebrow = "Guests" }: { hotel: Hotel; eyebrow?: s
           <SiteVisible slug={hotel.slug} kind="reviews" id={lead.id}>
             <figure className="mt-8">
               <blockquote className="lux-display mx-auto max-w-[880px] text-[28px] md:text-[46px]">“{lead.text}”</blockquote>
-              <figcaption className="mt-6 text-[14.5px] text-muted">{lead.name} · {lead.from} · {lead.stayed}</figcaption>
+              <figcaption className="mt-6 text-[14.5px] text-muted">{lead.name} · {lead.from} · {lead.stayed} · <T>{reviewSource(lead)}</T></figcaption>
             </figure>
           </SiteVisible>
-          {showRating(hotel) && <p className="mt-6 text-[15px]"><b className="tabular-nums">{hotel.reviewScore}</b> / 5 <span className="text-muted">· {hotel.reviewCount} <T>reviews</T></span></p>}
+          {rating && <div className="mt-6">{rating}</div>}
         </Reveal>
-        {rest.length > 0 && (
-          <RevealGroup className="mt-12 grid gap-6 border-t border-line pt-10 md:grid-cols-3">
-            {rest.slice(0, 3).map((r) => (
+        {more.length > 0 && (
+          <RevealGroup className="mt-12 grid gap-6 border-t border-line pt-10 md:grid-cols-2">
+            {more.map((r) => (
               <SiteVisible key={r.id} slug={hotel.slug} kind="reviews" id={r.id}>
-                <RevealItem>
-                  <figure>
-                    <blockquote className="text-[16px] leading-relaxed">“{r.text}”</blockquote>
-                    <figcaption className="mt-3 text-[13.5px] text-muted">{r.name} · {r.from}</figcaption>
-                  </figure>
-                </RevealItem>
+                <RevealItem><figure><blockquote className="text-[16px] leading-relaxed">“{r.text}”</blockquote><figcaption className="mt-3 text-[13.5px] text-muted">{cap(r)}</figcaption></figure></RevealItem>
               </SiteVisible>
             ))}
           </RevealGroup>
@@ -397,28 +447,53 @@ export function Offers({ hotel, eyebrow = "Book direct", title = "Privileges for
 }
 
 /* ================= ARRIVAL ================= */
-export function Arrival({ hotel, src, eyebrow = "Arrival", title, k = "arrival.title" }: { hotel: Hotel; src?: string; eyebrow?: string; title?: string; k?: string }) {
+/** Getting here. look: split (photo + list) · map (list + live map on request) · band (photo full width, list on a card). */
+export function Arrival({ hotel, src, eyebrow = "Arrival", title, k = "arrival.title", look = "split" }: { hotel: Hotel; src?: string; eyebrow?: string; title?: string; k?: string; look?: "split" | "map" | "band" }) {
   if (!hotel.nearby?.length) return null;
   const transfer = hotel.services.find((s) => s.category === "transfer");
+  const pic = src ?? photo(hotel, /beach|tower|garden|jetty|path|shore/);
+  const info = (
+    <>
+      <Head hotel={hotel} k={k} eyebrow={eyebrow} title={title ?? `${hotel.area}, ${hotel.city}`} className="!mb-6" />
+      <p className="text-[15px] text-muted">{hotel.address}</p>
+      <ul className="mt-5 divide-y divide-line border-y border-line">
+        {hotel.nearby.map((n) => (
+          <li key={n.name} className="flex items-center justify-between gap-3 py-3.5">
+            <span className="flex items-center gap-3 text-[15px]">{n.mode === "walk" ? <Footprints className="size-[18px] text-muted" aria-hidden /> : <Car className="size-[18px] text-muted" aria-hidden />}{n.name}</span>
+            <span className="shrink-0 font-semibold tabular-nums">{n.time}</span>
+          </li>
+        ))}
+      </ul>
+      {transfer && <SiteVisible slug={hotel.slug} kind="services" id={transfer.id}><p className="mt-4 text-[15px]"><b>{transfer.name}</b> — <span className="whitespace-nowrap font-semibold tabular-nums">{formatMoney(transfer.price)} {transfer.unit}</span></p></SiteVisible>}
+      <a href={mapsLink(hotel)} target="_blank" rel="noopener" className="lux-btn-ghost mt-6"><Navigation className="size-4" aria-hidden /> <T>Get directions</T></a>
+    </>
+  );
+  if (look === "map")
+    return (
+      <Sec>
+        <Container>
+          <div className="grid gap-8 md:grid-cols-[1fr_1.15fr] md:items-stretch md:gap-14">
+            <Reveal>{info}</Reveal>
+            <Reveal delay={0.05}><MapEmbed hotel={hotel} className="h-full min-h-[320px] rounded-[var(--lux-r)] border border-line" /></Reveal>
+          </div>
+        </Container>
+      </Sec>
+    );
+  if (look === "band")
+    return (
+      <section className="relative mt-20 md:mt-36">
+        <div className="relative h-[260px] md:absolute md:inset-0 md:h-auto"><Image src={pic} alt="" fill sizes="100vw" className="object-cover" /></div>
+        <Container className="relative md:flex md:justify-end md:py-20">
+          <Reveal className="-mt-10 rounded-[var(--lux-r)] border border-line bg-surface p-6 shadow-float md:mt-0 md:w-[480px] md:p-9">{info}</Reveal>
+        </Container>
+      </section>
+    );
   return (
     <Sec>
       <Container>
         <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-16">
-          <Reveal className="relative aspect-[4/3] overflow-hidden rounded-[var(--lux-r)]"><Image src={src ?? photo(hotel, /beach|tower|garden|jetty|path|shore/)} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" /></Reveal>
-          <Reveal delay={0.05}>
-            <Head hotel={hotel} k={k} eyebrow={eyebrow} title={title ?? `${hotel.area}, ${hotel.city}`} className="!mb-6" />
-            <p className="text-[15px] text-muted">{hotel.address}</p>
-            <ul className="mt-5 divide-y divide-line border-y border-line">
-              {hotel.nearby.map((n) => (
-                <li key={n.name} className="flex items-center justify-between gap-3 py-3.5">
-                  <span className="flex items-center gap-3 text-[15px]">{n.mode === "walk" ? <Footprints className="size-[18px] text-muted" aria-hidden /> : <Car className="size-[18px] text-muted" aria-hidden />}{n.name}</span>
-                  <span className="shrink-0 font-semibold tabular-nums">{n.time}</span>
-                </li>
-              ))}
-            </ul>
-            {transfer && <SiteVisible slug={hotel.slug} kind="services" id={transfer.id}><p className="mt-4 text-[15px]"><b>{transfer.name}</b> — {transfer.short} <span className="whitespace-nowrap font-semibold tabular-nums">{formatMoney(transfer.price)} {transfer.unit}</span></p></SiteVisible>}
-            <a href={mapsLink(hotel)} target="_blank" rel="noopener" className="lux-btn-ghost mt-6"><Navigation className="size-4" aria-hidden /> <T>Get directions</T></a>
-          </Reveal>
+          <Reveal className="relative aspect-[4/3] overflow-hidden rounded-[var(--lux-r)]"><Image src={pic} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" /></Reveal>
+          <Reveal delay={0.05}>{info}</Reveal>
         </div>
       </Container>
     </Sec>
@@ -426,22 +501,37 @@ export function Arrival({ hotel, src, eyebrow = "Arrival", title, k = "arrival.t
 }
 
 /* ================= FAQ ================= */
-export function Faq({ hotel, eyebrow = "Good to know", title = "Before you arrive", k = "faq.title" }: { hotel: Hotel; eyebrow?: string; title?: string; k?: string }) {
+/** look: center (heading over the list) · split (heading left, list right). */
+export function Faq({ hotel, eyebrow = "Good to know", title = "Before you arrive", k = "faq.title", look = "center" }: { hotel: Hotel; eyebrow?: string; title?: string; k?: string; look?: "center" | "split" }) {
   if (!hotel.faq?.length) return null;
+  const list = (
+    <div className="divide-y divide-line border-y border-line">
+      {hotel.faq.map((f) => (
+        <details key={f.q} className="group py-5">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-semibold">
+            {f.q}<span aria-hidden className="text-[22px] font-light transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <p className="mt-3 text-[15.5px] leading-relaxed text-muted">{f.a}</p>
+        </details>
+      ))}
+    </div>
+  );
+  if (look === "split")
+    return (
+      <Sec>
+        <Container>
+          <div className="grid gap-6 md:grid-cols-[1fr_1.5fr] md:gap-16">
+            <Reveal><Head hotel={hotel} k={k} eyebrow={eyebrow} title={title} className="md:sticky md:top-28" /></Reveal>
+            <Reveal delay={0.05}>{list}</Reveal>
+          </div>
+        </Container>
+      </Sec>
+    );
   return (
     <Sec>
       <Container className="max-w-[900px]">
         <Reveal><Head hotel={hotel} k={k} eyebrow={eyebrow} title={title} center /></Reveal>
-        <div className="divide-y divide-line border-y border-line">
-          {hotel.faq.map((f) => (
-            <details key={f.q} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-semibold">
-                {f.q}<span aria-hidden className="text-[22px] font-light transition-transform group-open:rotate-45">+</span>
-              </summary>
-              <p className="mt-3 text-[15.5px] leading-relaxed text-muted">{f.a}</p>
-            </details>
-          ))}
-        </div>
+        {list}
       </Container>
     </Sec>
   );
@@ -458,18 +548,52 @@ export function Concierge({ hotel, light }: { hotel: Hotel; light?: boolean }) {
   );
 }
 
-export function Reserve({ hotel, src, title = "Your stay begins here", k = "reserve.title", eyebrow = "Reservations" }: { hotel: Hotel; src?: string; title?: string; k?: string; eyebrow?: string }) {
+/** Closing call to book. look: photo (dark photo band) · plain (quiet, no photo) · split (photo + words side by side). */
+export function Reserve({ hotel, src, title = "Your stay begins here", k = "reserve.title", eyebrow = "Reservations", look = "photo" }: { hotel: Hotel; src?: string; title?: string; k?: string; eyebrow?: string; look?: "photo" | "plain" | "split" }) {
+  const pic = src ?? photo(hotel, /sunset|night|pool/);
+  const terms = <>{hotel.checkIn} <T>check-in</T> · {hotel.checkOut} <T>check-out</T> · {hotel.policies.cancellation}</>;
+  if (look === "plain")
+    return (
+      <section className="mt-20 border-y border-line bg-surface py-16 md:mt-36 md:py-24">
+        <Container className="text-center">
+          <Reveal>
+            <Eyebrow>{eyebrow}</Eyebrow>
+            <span aria-hidden className="lux-rule mx-auto mt-4" />
+            <h2 className="lux-display mx-auto mt-6 max-w-[820px] text-[38px] md:text-[72px]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
+            <p className="mx-auto mt-4 max-w-[560px] text-[15.5px] text-muted">{terms}</p>
+            <div className="mt-8 flex justify-center"><Concierge hotel={hotel} /></div>
+          </Reveal>
+        </Container>
+      </section>
+    );
+  if (look === "split")
+    return (
+      <section className="mt-20 pb-6 md:mt-36 md:pb-10">
+        <Container>
+          <Reveal className="grid overflow-hidden rounded-[var(--lux-r)] border border-line bg-surface md:grid-cols-2">
+            <div className="relative min-h-[260px] md:min-h-[460px]"><Image src={pic} alt="" fill sizes="(max-width: 768px) 100vw, 620px" className="object-cover" /></div>
+            <div className="flex flex-col justify-center p-7 md:p-14">
+              <Eyebrow>{eyebrow}</Eyebrow>
+              <span aria-hidden className="lux-rule mt-4" />
+              <h2 className="lux-display mt-6 text-[34px] md:text-[54px]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
+              <p className="mt-4 text-[15px] text-muted">{terms}</p>
+              <div className="mt-8"><Concierge hotel={hotel} /></div>
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+    );
   return (
     <section className="mt-20 pb-6 md:mt-36 md:pb-10">
       <Container>
         <Reveal className="relative overflow-hidden rounded-[var(--lux-r)] text-white">
-          <div className="absolute inset-0"><Image src={src ?? photo(hotel, /sunset|night|pool/)} alt="" fill sizes="(max-width: 1240px) 100vw, 1240px" className="object-cover" /></div>
+          <div className="absolute inset-0"><Image src={pic} alt="" fill sizes="(max-width: 1240px) 100vw, 1240px" className="object-cover" /></div>
           <div className="absolute inset-0 bg-black/55" />
           <div className="relative px-6 py-16 text-center md:px-16 md:py-28">
             <p className="lux-eyebrow !text-white/85"><T>{eyebrow}</T></p>
             <span aria-hidden className="lux-rule mx-auto mt-4 !bg-white/70" />
             <h2 className="lux-display mx-auto mt-6 max-w-[760px] text-[36px] text-white md:text-[64px]"><DraftText slug={hotel.slug} k={k} fallback={title} /></h2>
-            <p className="mx-auto mt-4 max-w-[560px] text-[16px] text-white/85">{hotel.checkIn} <T>check-in</T> · {hotel.checkOut} <T>check-out</T> · {hotel.policies.cancellation}</p>
+            <p className="mx-auto mt-4 max-w-[560px] text-[16px] text-white/85">{terms}</p>
             <div className="mt-8 flex justify-center"><Concierge hotel={hotel} light /></div>
           </div>
         </Reveal>

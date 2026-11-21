@@ -65,7 +65,7 @@ export default async function HotelLayout(props: LayoutProps<"/hotel/[slug]">) {
         {showTopBar(hotel.theme.master) && <TopBar hotel={hotel} />}
         <SiteHeader nav={nav} logoText={hotel.logoText} phone={hotel.phone} whatsapp={hotel.whatsapp} base={base} variant={headerStyle(hotel.theme.master)} />
         <main id="main">{props.children}</main>
-        <SiteFooter hotel={hotel} nav={nav} />
+        <SiteFooter hotel={hotel} nav={nav} variant={headerStyle(hotel.theme.master)} />
         <MobileTabBar base={base} />
       </BookingProvider>
       </SmoothScroll>

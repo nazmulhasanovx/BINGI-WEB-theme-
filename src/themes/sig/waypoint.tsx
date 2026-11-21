@@ -73,7 +73,7 @@ export function WaypointHome({ hotel }: { hotel: Hotel }) {
             <W>
               <Reveal className="grid gap-4 md:grid-cols-[auto_1fr] md:items-end md:gap-10">
                 <div><p className="sig-caps text-[#f3c8a8]">Accommodations</p><H hotel={hotel} k="rooms.title" fallback="Stay Your Way" className="mt-2 text-[44px] text-[#fbf1e4] md:text-[54px]" /></div>
-                <p className="border-[#f3c8a8]/40 text-[16px] text-[#fbf1e4]/85 md:border-l md:pl-10">Simple, stylish rooms for every kind of trip — a solo escape, a weekend for two or a road trip with friends.</p>
+                <p className="site-more border-[#f3c8a8]/40 text-[16px] text-[#fbf1e4]/85 md:border-l md:pl-10">Simple, stylish rooms for every kind of trip — a solo escape, a weekend for two or a road trip with friends.</p>
               </Reveal>
               <RevealGroup className="mt-10 grid gap-5 md:grid-cols-3">
                 {hotel.rooms.map((r) => (
@@ -83,7 +83,7 @@ export function WaypointHome({ hotel }: { hotel: Hotel }) {
                         <div className="relative aspect-[16/10]"><Image src={r.photos[0]} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" /></div>
                         <div className="flex flex-1 flex-col p-5">
                           <h3 className="text-[22px] font-extrabold">{r.name}</h3>
-                          <p className="mt-1 text-[14.5px] text-[#6b4e3f]">{r.short}</p>
+                          <p className="site-more mt-1 text-[14.5px] text-[#6b4e3f]">{r.short}</p>
                           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5 text-[13.5px]">
                             <span className="flex gap-4"><span className="flex items-center gap-1.5"><BedDouble className="size-4" aria-hidden />{r.bed}</span><span className="flex items-center gap-1.5"><Users className="size-4" aria-hidden />Up to {r.maxAdults + r.maxChildren}</span></span>
                             <Link href={roomLink(hotel, r)} className="inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-[#C9501C] px-4 font-bold text-[#a94215]">{formatMoney(r.fromPrice)} <ArrowRight className="size-4" aria-hidden /><span className="sr-only">{r.name}</span></Link>
