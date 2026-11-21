@@ -1,0 +1,95 @@
+# Owner onboarding v8 (21 Nov 2026): live HMS order, easy Rooms part. Full walk, desktop + phone, EN + BN.
+from playwright.sync_api import sync_playwright
+import re, json, sys, os
+B="http://localhost:3100"; F=[]
+AXE=open("/tmp/axe/node_modules/axe-core/axe.min.js").read() if os.path.exists("/tmp/axe/node_modules/axe-core/axe.min.js") else None
+os.makedirs("/tmp/ob8", exist_ok=True)
+def t(m,c): print(("PASS " if c else "FAIL ")+m); c or F.append(m)
+def walk(b, W, en=True, kind="resort"):
+  pg=b.new_page(viewport={"width":W,"height":900 if W>500 else 844}); errs=[]; pg.on("pageerror",lambda e:errs.append(str(e))); pg.on("dialog",lambda d:d.accept())
+  T=lambda bn,eng: eng if en else bn
+  NXT=re.compile(T("পরের ধাপ","^Next"))
+  bad=[]; shots=[0]
+  def snap(n):
+    shots[0]+=1; pg.screenshot(path=f"/tmp/ob8/{W}-{'en' if en else 'bn'}-{shots[0]:02d}-{n}.png", full_page=True)
+  def axe():
+    if W<1000 or not en or not AXE: return
+    pg.add_script_tag(content=AXE)
+    r=pg.evaluate("axe.run(document,{runOnly:['wcag2a','wcag2aa']}).then(r=>r.violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>v.id+':'+v.nodes[0].target))")
+    if r: bad.append((h1(), r))
+  def h1(): return pg.locator("h1").first.inner_text() if pg.locator("h1").count() else "?"
+  def nx(name=None):
+    axe(); snap(re.sub(r"\W+","-",h1())[:24])
+    pg.get_by_role("button",name=NXT).last.click(timeout=8000); pg.wait_for_timeout(450)
+  def alert(): a=pg.locator("main:visible [role=alert]"); return a.first.inner_text() if a.count() else ""
+  def draft(): return json.loads(pg.evaluate("localStorage.getItem('bingi-onb-v1')"))["drafts"][0]
+  def ov(): return pg.evaluate("document.documentElement.scrollWidth>innerWidth+1")
+  tag=f"[{W} {'EN' if en else 'BN'} {kind}] "
+  pg.goto(B+"/onboarding"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1200)
+  if en: pg.get_by_role("button",name="EN",exact=True).click()
+  t(tag+"auth: phone first", pg.locator("#ph").count()==1)
+  snap("auth")
+  pg.locator("#ph").fill("12345"); pg.get_by_role("button",name=re.compile("Send code|কোড পাঠান")).click(); t(tag+"bad phone blocked", pg.locator("#otp").count()==0)
+  pg.locator("#ph").fill("01712345678"); pg.get_by_role("button",name=re.compile("Send code|কোড পাঠান")).click(); pg.wait_for_timeout(300)
+  pg.locator("#otp").fill("123456"); pg.get_by_role("button",name=re.compile("Verify|যাচাই")).click(); pg.wait_for_timeout(600)
+  pg.get_by_role("button",name=re.compile("Add a new property|নতুন")).first.click(); pg.wait_for_timeout(1000)
+  # 1.1 type (once)
+  pg.get_by_role("radio",name=re.compile({"resort":"Resort|রিসোর্ট","hotel":"^Hotel|^হোটেল"}[kind])).first.click(); nx()
+  pg.locator("#pname").fill("Hill View "+kind.title()); nx()
+  pg.locator("#ad-road").fill("Kolatoli Road"); pg.locator("#ad-city").fill("Cox's Bazar"); nx()
+  # 1.4 extras: important first, all behind a button
+  tiles=pg.locator("main:visible [aria-pressed]").count()
+  t(tag+"extras: short list first (<=16)", 8<=tiles<=16)
+  t(tag+"extras: suggestion pre-ticked", "Free Wi-Fi" in draft()["extras"])
+  pg.get_by_role("button",name=re.compile("All amenities|সব সুবিধা")).click(); pg.wait_for_timeout(200)
+  t(tag+"extras: all list + search", pg.locator("#am-q").count()==1)
+  nx()
+  # 1.5 contact
+  t(tag+"contact: mobile prefilled + verified", pg.locator("#c-phone").input_value().endswith("345678") and pg.get_by_text(re.compile("Verified|যাচাই হয়েছে")).count()>=1)
+  nx()
+  # 2.x plan & papers
+  t(tag+"documents: NID front/back required", pg.get_by_text(re.compile("NID — front|NID — সামনের")).count()==1)
+  nx()
+  t(tag+"plan: per room price", re.search(r"/(room/month|রুম/মাস)", pg.locator("main:visible").first.inner_text()) is not None)
+  t(tag+"plan: no room packages", "200 rooms" not in pg.locator("main:visible").first.inner_text())
+  nx(); nx()  # plan, setup help
+  t(tag+"start: 'set up first' is default", pg.get_by_role("radio",name=re.compile("Set up first|আগে সেটআপ")).get_attribute("aria-checked")=="true")
+  nx(); nx()  # start, summary
+  # 3.1 building & floors: presets, type not asked again
+  body=pg.locator("main:visible").first.inner_text()
+  t(tag+"rooms: property type not asked again", "What kind of property" not in body and "কী ধরনের property" not in body)
+  t(tag+"rooms: presets filled", draft()["floors"] and (kind!="resort" or draft()["zones"]))
+  nx()
+  # 3.2 types: presets ticked with prices
+  on=[r for r in draft()["types"] if r["on"]]
+  t(tag+"types: presets ticked with price", len(on)>=1 and all(r["price"]>0 for r in on))
+  nx()
+  # 3.3 pick rooms: quick fill + tap
+  pg.get_by_role("button",name=re.compile("Add the next|পরের")).filter(has_text=re.compile("Add the next|নম্বর দিন")).first.click(); pg.wait_for_timeout(300)
+  t(tag+"pick: quick fill made 5", "5 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৫টা রুম" in pg.locator("main:visible").first.inner_text())
+  pg.locator("main:visible button[aria-pressed=false]").filter(has_text=re.compile(r"^\s*\w?\d+\s*$")).first.click(); pg.wait_for_timeout(200)
+  t(tag+"pick: tap adds one (6)", "6 rooms in total" in pg.locator("main:visible").first.inner_text() or "মোট ৬টা রুম" in pg.locator("main:visible").first.inner_text())
+  if kind=="resort":
+    pg.get_by_role("radio",name=re.compile("Cottage|কটেজ")).first.click(); pg.wait_for_timeout(250)
+    pg.locator("main:visible button[aria-pressed=false]").filter(has_text=re.compile(r"^\s*C\d+\s*$")).first.click(); pg.wait_for_timeout(200)
+    t(tag+"pick: cottage numbers C01…", "C01" in pg.locator("main:visible").first.inner_text())
+  t(tag+"pick: no sideways scroll", not ov())
+  nx()
+  t(tag+"review: lists codes", re.search(r"\b10[1-6]\b", pg.locator("main:visible").first.inner_text()) is not None)
+  nx()
+  t(tag+"booking rules", bool(re.search("Booking rules|বুকিংয়ের নিয়ম", h1())))
+  nx(); nx(); nx()  # rules, tools, team
+  nx(); nx()  # payments, website
+  body=pg.locator("main:visible").first.inner_text()
+  t(tag+"finish: required done", re.search("Everything needed to submit is done|জমা দেওয়ার মতো সব তৈরি", body) is not None)
+  axe(); snap("finish"); t(tag+"axe clean on every step", not bad); bad and print(bad[:3])
+  pg.get_by_role("button",name=re.compile("Submit|জমা দিন")).last.click(); pg.wait_for_timeout(600)
+  t(tag+"submitted (prototype)", re.search("Setup submitted|সেটআপ জমা", pg.locator("body").inner_text()) is not None)
+  t(tag+"no page errors", not errs); errs and print(errs[:2])
+  pg.close()
+with sync_playwright() as p:
+  b=p.chromium.launch()
+  walk(b,1440,True,"resort"); walk(b,390,True,"hotel"); walk(b,1440,False,"resort")
+  if '--all' in sys.argv: walk(b,768,True,"hotel"); walk(b,390,False,"resort")
+  b.close()
+print("FAILED:",F) if F else print("ALL PASS")

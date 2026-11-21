@@ -10,6 +10,7 @@ import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
   CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck, Globe, CalendarCheck, ImageIcon,
+  Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby,
 } from "lucide-react";
 import {
   CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, STAFF, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
@@ -23,8 +24,11 @@ import { money } from "../hms/rooms/parts";
 import { MobileSteps, Sidebar } from "./sidebar";
 import { GuestPreview } from "./preview";
 import { AddressSheet } from "./address";
-import { FormSlot, RoomsWhat, RoomsWhere, RoomTypes } from "./rooms-easy";
-import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Primary, Q, Stepper, Tile, field, label } from "./shell";
+import { FormSlot } from "./rooms-easy";
+import { PickRooms, Place, ReviewRooms, Types, saveTypes } from "./rooms-v8";
+import { PROP_ALL, PROP_BN, PROP_SUGGEST, propTop } from "@/lib/onboarding/rooms-v8";
+import { Contact, Documents, SetupHelp, Start, Summary } from "./steps-v8";
+import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Pills, Primary, Q, Stepper, Tile, field, label } from "./shell";
 
 const noop = () => () => {};
 import { TYPE_META as TYPES } from "./types";
@@ -51,25 +55,27 @@ function Flow({ d }: { d: Draft }) {
   const [done, setDone] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [blocked, setBlocked] = useState<string[]>([]);
   const live = rooms.st.units.filter((u) => u.status !== "archived");
   const counts = { total: live.length, published: 0, categories: rooms.st.categories.filter((c) => !c.archived).length };
 
-  const go = (s: StepId) => { setTried(false); edit((x) => { x.step = s; if (!x.seen.includes(s)) x.seen.push(s); }); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const go = (s: StepId) => { setTried(false); setBlocked([]); edit((x) => { x.step = s; if (!x.seen.includes(s)) x.seen.push(s); }); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const i = ORDER.indexOf(stepOf(d.step));
   useEffect(() => { if (stepOf(d.step) !== d.step) edit((x) => { x.step = stepOf(x.step); }); }, [d.step, edit]);
   const next = () => go(ORDER[Math.min(ORDER.length - 1, i + 1)]);
   const back = i > 0 ? () => go(ORDER[i - 1]) : () => router.push("/onboarding");
-  const errs = errorsFor(d, counts.total, t);
+  const errs = [...errorsFor(d, counts.total, t), ...blocked.map((b) => t(`"${b}"-এ রুম আছে — আগে রুমগুলো বাদ দিন।`, `"${b}" has rooms — remove them first.`))];
   const firstTheme = themesFor(d)[0]?.id;
   const cs = checks(d, counts);
   const pct = score(cs);
   const cont = () => {
     if (errs.length) { setTried(true); return; }
-    if (d.step === "2.2") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
+    if (d.step === "3.1") rooms.update((s) => { s.config = configFrom(d, s.config); }, "Accommodation set up from onboarding presets");
+    if (d.step === "3.2") { const blocked = saveTypes(d, rooms); if (blocked.length) { setBlocked(blocked); setTried(true); return; } }
     // the "Best fit" plan counts as chosen unless the owner picks another (one tap less)
-    if (d.step === "6.1" && !d.planPicked) edit((x) => { x.plan = recommend(x); x.planPicked = true; });
+    if (d.step === "2.2" && !d.planPicked) edit((x) => { x.plan = recommend(x); x.planPicked = true; });
     // the owner saw the price rules on this page — count them as checked (defaults are fine)
-    if (d.step === "3.1" && !d.rates.done) edit((x) => { x.rates.done = true; });
+    if (d.step === "4.1" && !d.rates.done) edit((x) => { x.rates.done = true; });
     // no look picked and not "later": keep the best fit that is shown first
     if (d.step === "5.2" && !d.site.theme && !d.site.later && firstTheme) edit((x) => { x.site.theme = firstTheme; });
     next();
@@ -84,15 +90,15 @@ function Flow({ d }: { d: Draft }) {
   if (done) return <Done d={d} />;
 
   const body: Record<StepId, ReactNode> = {
-    "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />,
-    "2.1": <RoomsWhat d={d} />, "2.2": <RoomsWhere d={d} st={rooms.st} />, "2.3": <RoomTypes d={d} rooms={rooms} />,
-    "3.1": <BookingRules d={d} />,
-    "4.1": <Modules d={d} />, "4.2": <Team d={d} />,
+    "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />, "1.5": <Contact d={d} />,
+    "2.1": <Documents d={d} />, "2.2": <Plan d={d} units={counts.total} />, "2.3": <SetupHelp d={d} />, "2.4": <Start d={d} />, "2.5": <Summary d={d} units={counts.total} go={go} />,
+    "3.1": <Place d={d} st={rooms.st} />, "3.2": <Types d={d} />, "3.3": <PickRooms d={d} rooms={rooms} />, "3.4": <ReviewRooms d={d} rooms={rooms} go={go} />,
+    "4.1": <BookingRules d={d} />, "4.2": <Modules d={d} />, "4.3": <Team d={d} />,
     "5.1": <Payments d={d} />, "5.2": <Website d={d} />,
-    "6.1": <Plan d={d} units={counts.total} />, "6.2": <Verify d={d} />, "6.3": <Ready d={d} counts={counts} go={go} />,
+    "6.1": <Ready d={d} counts={counts} go={go} />,
   };
   const later: Partial<Record<StepId, () => void>> = {
-    "1.4": next, "4.2": () => { edit((x) => { x.teamLater = true; }); next(); }, "5.2": () => { edit((x) => { x.site.later = true; }); next(); }, "6.2": () => { edit((x) => { x.verify.later = true; }); next(); },
+    "1.4": next, "2.1": () => { edit((x) => { x.docs.later = true; }); next(); }, "4.3": () => { edit((x) => { x.teamLater = true; }); next(); }, "5.2": () => { edit((x) => { x.site.later = true; }); next(); },
   };
   const required = checks(d, counts).filter((c) => c.level === "required" && !c.ok).map((c) => `${t(c.bn, c.label)} ${t("এখনো বাকি।", "is still missing.")}`);
 
@@ -101,17 +107,17 @@ function Flow({ d }: { d: Draft }) {
     <Canvas>
       <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e7ec]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
       <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={pct}
-        wide={d.step === "6.1"}
-        aside={d.step === "6.1" || d.step === "6.3" ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
+        wide={d.step === "2.2"}
+        aside={d.step === "2.2" || d.step === "6.1" || d.step === "3.3" || d.step === "3.4" ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
           {!formOpen && <Foot back={back}>
             {later[d.step] && <Later onClick={later[d.step]} />}
-            {d.step === "6.3" ? <Primary onClick={submit}>{t("জমা দিন", "Submit")} <Check className="size-[18px]" /></Primary> : <Next onClick={cont} />}
+            {d.step === "6.1" ? <Primary onClick={submit}>{t("জমা দিন", "Submit")} <Check className="size-[18px]" /></Primary> : <Next onClick={cont} />}
           </Foot>}
         </>}>
         <div>
-          {tried && <Errors list={d.step === "6.3" ? required : errs} />}
+          {tried && <Errors list={d.step === "6.1" ? required : errs} />}
           <div key={d.step + lang} className="onb-in">{body[stepOf(d.step)]}</div>
         </div>
       </Card>
@@ -125,16 +131,23 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
   if (d.step === "1.1" && !d.propertyType) e.push(t("একটা ধরন বাছাই করুন।", "Choose a property type."));
   if (d.step === "1.2" && !d.name.trim()) e.push(t("Property-র নাম লিখুন।", "Enter the property name."));
   if (d.step === "1.3" && !(d.road.trim() && d.city.trim())) e.push(t("ঠিকানা দিন — রাস্তা/এলাকা আর শহর।", "Add the address — road/area and city."));
-  if (d.step === "2.1" && !d.stay.length) e.push(t("কমপক্ষে একটা বাছাই করুন।", "Choose at least one."));
-  if (d.step === "2.2") {
+  if (d.step === "1.5" && !validPhone(d.phone)) e.push(t("সঠিক মোবাইল নম্বর দিন।", "Enter a valid mobile number."));
+  if (d.step === "1.5" && d.contact.email && !/^\S+@\S+\.\S+$/.test(d.contact.email)) e.push(t("ইমেইল ঠিক নেই।", "The email doesn't look right."));
+  if (d.step === "3.1") {
+    if (!d.stay.length) e.push(t("কী ভাড়া দেন — কমপক্ষে একটা বাছাই করুন।", "What you rent — choose at least one."));
     const floor = d.stay.some((s) => s === "ROOM" || s === "APARTMENT");
     const zone = d.stay.some((s) => s === "COTTAGE" || s === "VILLA" || s === "OTHER");
     if (floor && !d.floors.length) e.push(t("কয় তলা আছে বাছাই করুন।", "Choose the floors."));
     if (zone && !d.zones.length) e.push(t("কটেজ/ভিলা কোন জায়গায় আছে বাছাই করুন।", "Choose where the cottages/villas are."));
   }
-  if (d.step === "2.3" && !units) e.push(t("কমপক্ষে একটা রুমের ধরন যোগ করুন।", "Add at least one room type."));
-  if (d.step === "3.1" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
-  if (d.step === "4.2" && d.team.some((x) => !validPhone(x.phone))) e.push(t("প্রত্যেকের সঠিক মোবাইল নম্বর দিন।", "Each invite needs a valid mobile number."));
+  if (d.step === "3.2") {
+    if (!d.types.some((r) => r.on)) e.push(t("কমপক্ষে একটা রুমের ধরন টিক দিন।", "Tick at least one room type."));
+    if (d.types.some((r) => r.on && !(r.price > 0))) e.push(t("টিক দেওয়া প্রতিটা ধরনের দাম দিন।", "Each ticked type needs a price."));
+    if (d.types.some((r) => r.on && !r.name.trim())) e.push(t("প্রতিটা ধরনের নাম দিন।", "Each type needs a name."));
+  }
+  if (d.step === "3.3" && !units) e.push(t("কমপক্ষে একটা রুম নম্বর বাছাই করুন।", "Pick at least one room number."));
+  if (d.step === "4.1" && !d.policy.preset) e.push(t("বাতিলের একটা নিয়ম বাছাই করুন।", "Choose a cancellation rule."));
+  if (d.step === "4.3" && d.team.some((x) => !validPhone(x.phone))) e.push(t("প্রত্যেকের সঠিক মোবাইল নম্বর দিন।", "Each invite needs a valid mobile number."));
   if (d.step === "5.1") {
     const p = d.pay;
     if (!p.cash) e.push(t("নগদ টাকা নেওয়া চালু রাখতে হবে।", "Pay at property must stay on."));
@@ -165,6 +178,7 @@ function PropertyType({ d }: { d: Draft }) {
       x.buildings = ["main"];
       x.floors = Array.from({ length: FLOORS[slug] ?? 2 }, (_, i) => i + 1);
       x.zones = x.stay.some((s) => s === "COTTAGE" || s === "VILLA" || s === "OTHER") ? ["garden"] : [];
+      x.types = []; x.extras = [];
     }
   });
   const list = TYPES.filter((x) => x.main || more);
@@ -218,9 +232,19 @@ function Address({ d }: { d: Draft }) {
   );
 }
 
+const PROP_ICON: Record<string, typeof Utensils> = {
+  "Free Wi-Fi": Wifi, Parking: Car, "Power backup": Zap, "24-hour front desk": ConciergeBell, Restaurant: Utensils, "Room service": BellRing, "CCTV security": Cctv,
+  Elevator: ArrowUpDown, Breakfast: Coffee, "Airport transfer": Bus, "Swimming pool": Waves, "Beach access": Umbrella, Garden: Trees, "Conference room": Presentation,
+  Laundry: Shirt, Bonfire: Flame, Gym: Dumbbell, Bar: Wine, "Café": Coffee, Spa: Sparkles, "Event hall": PartyPopper, "Prayer room": Moon, "Kids play area": Baby,
+};
+/** v8: the important ones first (by property type), everything else under "show all" with search. */
 function Extras({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
-  const { t } = useL();
+  const { t, lang } = useL();
+  const [all, setAll] = useState(false);
+  const [q, setQ] = useState("");
+  const top = propTop(d.propertyType);
+  useEffect(() => { if (!d.seen.includes("1.5") && !d.extras.length && PROP_SUGGEST[d.propertyType]) edit((x) => { x.extras = [...PROP_SUGGEST[x.propertyType]]; }); }, [d.propertyType]); // eslint-disable-line react-hooks/exhaustive-deps
   const food = (l: string[]) => l.some((e) => e === "Restaurant" || e === "Bar");
   const tog = (e: string) => edit((x) => {
     const had = food(x.extras);
@@ -229,11 +253,28 @@ function Extras({ d }: { d: Draft }) {
     if (!had && food(x.extras) && !x.modules.includes("restaurant")) x.modules = [...x.modules, "restaurant"];
     if (had && !food(x.extras)) x.modules = x.modules.filter((y) => y !== "restaurant");
   });
+  const nm = (e: string) => t(PROP_BN[e] ?? e, e);
+  const hit = (e: string) => !q || nm(e).toLowerCase().includes(q.toLowerCase()) || e.toLowerCase().includes(q.toLowerCase());
   return (
-    <Q title={t("আর কী কী আছে?", "What else is there?")} why={t("এগুলো দেখে মডিউল আর ওয়েবসাইটের অংশ ঠিক হয়।", "This decides which tools and website sections you get.")}>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {EXTRAS.map((e) => { const I = EXTRA_ICON[e] ?? Sparkles; return <Tile key={e} on={d.extras.includes(e)} onClick={() => tog(e)} icon={<I className="size-5" />} title={t(EXTRA_BN[e] ?? e, e)} />; })}
+    <Q title={t("কী কী সুবিধা আছে?", "What does your property offer?")} sub={t("জরুরিগুলো আগে দেখানো হলো। বাকিগুলো \"সব সুবিধা\"-তে।", "The important ones are first. The rest are under \"All amenities\".")} why={t("গেস্ট এগুলো দেখে বুক করে। রেস্টুরেন্ট/বার বাছলে রেস্টুরেন্ট টুল চালু হবে।", "Guests decide on these. Restaurant/Bar turns on the restaurant tool.")}>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        {top.map((e) => { const I = PROP_ICON[e] ?? Sparkles; return <Tile key={e} on={d.extras.includes(e)} onClick={() => tog(e)} icon={<I className="size-5" />} title={nm(e)} />; })}
       </div>
+      {!all ? (
+        <button onClick={() => setAll(true)} className="mt-4 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#b11c29]">+ {t("সব সুবিধা দেখুন", "All amenities")}</button>
+      ) : (
+        <div className="onb-in mt-6 rounded-xl border border-[#e3e7ec] bg-white p-4">
+          <label htmlFor="am-q" className="sr-only">{t("খুঁজুন", "Search")}</label>
+          <input id="am-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("সুবিধা খুঁজুন", "Search amenities")} className={field} />
+          <div className="mt-4 space-y-4">
+            {PROP_ALL.map((g) => { const items = g.items.filter((e) => !top.includes(e) && hit(e)); return items.length ? (
+              <div key={g.group[1]}><p className="text-[13px] font-semibold text-[#4d5664]">{t(...g.group)}</p><div className="mt-1.5 flex flex-wrap gap-2">{items.map((e) => <Chip key={e} on={d.extras.includes(e)} onClick={() => tog(e)}>{nm(e)}</Chip>)}</div></div>
+            ) : null; })}
+          </div>
+          <p className="mt-4 text-[12.5px] text-[#4d5664]">{t("প্রোটোটাইপ তালিকা। আসল HMS-এ backend-এর পুরো তালিকা থাকবে।", "Prototype list. The real HMS uses the full backend list.")}</p>
+        </div>
+      )}
+      {d.extras.length > 0 && <p className="mt-4 text-[14px] text-[#4d5664]">{t(`${num(d.extras.length, lang)}টা বাছাই`, `${d.extras.length} picked`)}</p>}
     </Q>
   );
 }
@@ -472,16 +513,24 @@ function Website({ d }: { d: Draft }) {
 }
 
 // ---------------- Part 6 ----------------
-function Plan({ d, units }: { d: Draft; units: number }) {
+function Plan({ d, units: made }: { d: Draft; units: number }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
+  // Rooms come later (part 3): price on the owner's estimate until rooms exist, then on the real count.
+  const units = made || d.units;
   const rec = recommend(d);
   const n = (v: number) => num(money(v), lang);
   return (
     <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব${units < MIN_BILLED ? ` (কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল)` : ""}। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms${units < MIN_BILLED ? ` (minimum ${MIN_BILLED} billed)` : ""}. ${TRIAL_DAYS} days free.`)}>
-      <div role="radiogroup" aria-label={t("বিলিং", "Billing")} className="inline-flex rounded-lg border border-[#858c97] bg-white p-1">
-        {([1, 6, 12] as Cycle[]).map((c) => <button key={c} role="radio" aria-checked={d.cycle === c} onClick={() => edit((x) => { x.cycle = c; })} className={clsx("h-9 rounded-md px-3.5 text-[14px] font-semibold", d.cycle === c ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:bg-[#e9edf2]")}>{c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`)}{CYCLE_OFF[c] ? <span className={clsx("ml-1.5 text-[12.5px]", d.cycle === c ? "text-[#ffb4ad]" : "text-[#b11c29]")}>−{num(CYCLE_OFF[c] * 100, lang)}%</span> : null}</button>)}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-3 rounded-xl border border-[#c6ccd4] bg-white px-4 py-2.5">
+          <span className="text-[15px] font-semibold">{made ? t("আপনার রুম", "Your rooms") : t("আনুমানিক কয়টা রুম?", "About how many rooms?")}</span>
+          {made ? <b className="text-[17px] tabular-nums">{num(made, lang)}</b> : <Stepper label={t("রুম", "Rooms")} value={d.units} set={(n) => edit((x) => { x.units = n; })} min={1} max={500} />}
+        </div>
+        <Pills label={t("বিলিং", "Billing")} value={d.cycle} onChange={(c) => edit((x) => { x.cycle = c; })}
+          items={([1, 6, 12] as Cycle[]).map((c) => ({ v: c, label: c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`), sub: CYCLE_OFF[c] ? `−${num(CYCLE_OFF[c] * 100, lang)}%` : undefined }))} />
       </div>
+      {!made && <p className="mt-2 text-[13px] text-[#4d5664]">{t("আসল বিল হবে রুম অংশে যতগুলো রুম যোগ করবেন ততগুলোর।", "The real bill follows the rooms you add in the Rooms part.")}</p>}
       <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="mt-5 grid gap-3 md:grid-cols-3">
         {(Object.keys(PLANS) as PlanId[]).map((p) => {
           const P = PLANS[p]; const on = (d.planPicked ? d.plan : rec) === p; const q = quote(p, units, d.cycle);

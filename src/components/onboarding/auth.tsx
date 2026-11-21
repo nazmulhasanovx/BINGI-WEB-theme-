@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
-import { ArrowRight, Building2, Clock, Plus, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Building2, Clock, Mail, Plus, ShieldCheck } from "lucide-react";
 import { setProperty } from "../hms/property";
 import { Canvas, Ghost, Header, Primary, field } from "./shell";
 
 import { SECTIONS, STEP_TITLE, newDraft, num, stepOf, useL, useOnboarding, validPhone } from "@/lib/onboarding/store";
 
-const INTRO: [string, string][] = [["ধরন, নাম, ঠিকানা", "Type, name, address"], ["রুম, তলা, রুম নম্বর, দাম", "Rooms, floors, numbers, prices"], ["দামের নিয়ম, বাতিলের নিয়ম", "Price rules, cancellation"], ["কোন কোন কাজ, টিম", "Tools and team"], ["গেস্ট পেমেন্ট, ওয়েবসাইট", "Guest payments, website"], ["প্ল্যান, কাগজপত্র, জমা", "Plan, documents, submit"]];
 import { TYPE_META as TYPES } from "./types";
 
 const noop = () => () => {};
@@ -51,51 +51,61 @@ function Auth() {
     update((s) => { s.phone = phone.replace(/[\s-]/g, ""); s.verified = true; });
   };
   return (
-    <main className="mx-auto max-w-[1000px] px-3 py-8 sm:px-6 sm:py-14">
-      <div className="overflow-hidden rounded-xl bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05),0_20px_50px_-30px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] lg:grid lg:grid-cols-[1.1fr_1fr]">
-        <div className="hidden border-r border-[#e3e7ec] bg-[#f4f6f8] p-10 lg:block">
-          <p className="text-[15px] font-semibold">{t("সেটআপে যা যা করবেন", "What you'll set up")}</p>
-          <ol className="mt-5 space-y-4">
-            {SECTIONS.map((x, i) => (
-              <li key={x.id} className="flex items-start gap-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full border border-[#858c97] bg-white text-[13px] font-semibold">{num(i + 1, lang)}</span>
-                <span><span className="block text-[15px] font-semibold">{t(x.bn, x.label)}</span><span className="text-[13.5px] text-[#4d5664]">{t(...INTRO[i])}</span></span>
-              </li>
-            ))}
-          </ol>
+    <main className="mx-auto max-w-[1180px] px-3 py-6 sm:px-6 sm:py-10">
+      <div className="grid min-h-[620px] gap-3 rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgb(16_24_40/0.05),0_20px_50px_-30px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee] lg:grid-cols-2">
+        <div className="flex flex-col justify-center px-4 py-8 sm:px-12">
+          <div className="mx-auto w-full max-w-[400px]">
+            <span className="mx-auto grid size-16 place-items-center rounded-full bg-[#f4f6f8] ring-8 ring-[#f4f6f8]/60"><span className="grid size-12 place-items-center rounded-full bg-white shadow-sm"><Image src="/brand/bingi-hms-mark.svg" alt="" width={26} height={26} className="size-[26px]" /></span></span>
+            {!sent ? (
+              <form onSubmit={send} noValidate className="mt-5">
+                <h1 className="text-center text-[26px] font-semibold leading-tight">{t("আপনার property সেটআপ করুন", "Set up your property")}</h1>
+                <p className="mt-1.5 text-center text-[15px] text-[#4d5664]">{t("মোবাইল নম্বর দিয়ে শুরু করুন। নতুন হলে এই নম্বরেই অ্যাকাউন্ট খুলবে।", "Start with your mobile number. New here? This creates your account.")}</p>
+                <label className="mt-7 block text-[14.5px] font-semibold" htmlFor="ph">{t("মোবাইল নম্বর", "Mobile number")}</label>
+                <div className="mt-1.5 flex gap-2">
+                  <span className="grid h-11 place-items-center rounded-lg border border-[#c6ccd4] bg-[#f4f6f8] px-3 text-[14.5px] font-semibold">+880</span>
+                  <input id="ph" inputMode="tel" autoComplete="tel" autoFocus value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01712 345678" className={field + " flex-1 text-[16px]"} aria-invalid={!!err} aria-describedby={err ? "pherr" : undefined} />
+                </div>
+                {err && <p id="pherr" role="alert" className="mt-2 text-[14px] font-medium text-[#8e1621]">{err}</p>}
+                <Primary type="submit" className="mt-5 w-full">{t("কোড পাঠান", "Send code")}</Primary>
+                <div className="my-6 flex items-center gap-3 text-[12px] font-medium uppercase tracking-[0.08em] text-[#80869a]"><span className="h-px flex-1 bg-[#e3e7ec]" />{t("অথবা", "or continue with")}<span className="h-px flex-1 bg-[#e3e7ec]" /></div>
+                <div className="grid gap-2.5">
+                  <button type="button" disabled title={t("প্রোটোটাইপে নেই", "Not in the prototype")} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d3d8df] bg-white text-[14.5px] font-semibold text-[#0f1720] disabled:cursor-not-allowed disabled:opacity-60"><GoogleMark />Google</button>
+                  <button type="button" disabled title={t("প্রোটোটাইপে নেই", "Not in the prototype")} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d3d8df] bg-white text-[14.5px] font-semibold text-[#0f1720] disabled:cursor-not-allowed disabled:opacity-60"><Mail className="size-[18px]" />{t("ইমেইল", "Email")}</button>
+                </div>
+                <p className="mt-2 text-center text-[12.5px] text-[#80869a]">{t("Google ও ইমেইল — প্রোটোটাইপে বন্ধ। আগে মোবাইল যাচাই হবে।", "Google and email are off in the prototype. Mobile is verified first.")}</p>
+                <p className="mt-6 text-center text-[13px] text-[#4d5664]">{t("চালিয়ে গেলে আপনি BinGi-র শর্ত ও গোপনীয়তা নীতিতে রাজি।", "By continuing you agree to BinGi's Terms and Privacy Policy.")}</p>
+              </form>
+            ) : (
+              <form onSubmit={verify} noValidate className="mt-5">
+                <h1 className="text-center text-[26px] font-semibold leading-tight">{t("কোডটা দিন", "Enter the code")}</h1>
+                <p className="mt-1.5 text-center text-[15px] text-[#4d5664]">{t(`${num(phone, lang)} নম্বরে পাঠানো হয়েছে।`, `Sent to ${phone}.`)} <button type="button" onClick={() => { setSent(false); setCode(""); setErr(""); }} className="font-semibold text-[#b11c29]">{t("নম্বর বদলান", "Change")}</button></p>
+                <label className="mt-7 block text-[14.5px] font-semibold" htmlFor="otp">{t("৬ সংখ্যার কোড", "6-digit code")}</label>
+                <input id="otp" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={field + " mt-1.5 h-14 text-center font-mono text-[26px] tracking-[0.45em]"} aria-invalid={!!err} />
+                {err && <p role="alert" className="mt-2 text-[14px] font-medium text-[#8e1621]">{err}</p>}
+                <p className="mt-3 rounded-lg bg-[#fdf6e7] px-3 py-2 text-[13.5px] text-[#7a4a0b]">{t(`প্রোটোটাইপ: SMS যায় না। কোড ${DEMO_OTP} দিন।`, `Prototype: no SMS is sent. Use code ${DEMO_OTP}.`)}</p>
+                <Primary type="submit" className="mt-5 w-full" disabled={code.length !== 6}>{t("যাচাই করুন", "Verify")}</Primary>
+              </form>
+            )}
+          </div>
         </div>
-        <div className="p-6 sm:p-10">
-                    {!sent ? (
-            <form onSubmit={send} noValidate>
-              <h1 className="mt-1 text-[28px] font-semibold leading-tight sm:text-[32px]">{t("আপনার property সেটআপ করুন", "Set up your property")}</h1>
-              <p className="mt-2 text-[16px] text-[#4d5664]">{t("৬টা ছোট ধাপ। যেকোনো সময় থামিয়ে পরে চালিয়ে যেতে পারবেন।", "Six short parts. Stop anytime and continue later.")}</p>
-              <ul className="mt-5 space-y-2 text-[15px]">
-                {[t("৭ দিন ফ্রি ট্রায়াল", "7-day free trial"), t("রুম, কটেজ, ভিলা — সব এক জায়গায়", "Rooms, cottages, villas — one setup"), t("যেকোনো ধাপে BinGi টিমের সাহায্য", "Help from the BinGi team at any step")].map((x) => <li key={x} className="flex items-center gap-2.5"><ShieldCheck className="size-5 text-[#1c7d45]" />{x}</li>)}
-              </ul>
-              <label className="mt-7 block text-[15px] font-semibold" htmlFor="ph">{t("মোবাইল নম্বর", "Mobile number")}</label>
-              <div className="mt-2 flex gap-2">
-                <span className="grid h-12 place-items-center rounded-xl border border-[#c6ccd4] bg-[#f4f6f8] px-3 text-[15px] font-semibold">🇧🇩 +880</span>
-                <input id="ph" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01712 345678" className={field + " flex-1 text-[17px]"} aria-invalid={!!err} aria-describedby={err ? "pherr" : undefined} />
-              </div>
-              {err && <p id="pherr" role="alert" className="mt-2 text-[14px] font-medium text-[#8e1621]">{err}</p>}
-              <Primary type="submit" className="mt-6 w-full">{t("কোড পাঠান", "Send code")}</Primary>
-              <p className="mt-4 text-[13px] text-[#4d5664]">{t("চালিয়ে গেলে আপনি BinGi-র শর্ত ও গোপনীয়তা নীতিতে রাজি।", "By continuing you agree to BinGi's Terms and Privacy Policy.")}</p>
-            </form>
-          ) : (
-            <form onSubmit={verify} noValidate>
-              <h1 className="mt-1 text-[28px] font-semibold leading-tight sm:text-[32px]">{t("কোডটা দিন", "Enter the code")}</h1>
-              <p className="mt-2 text-[16px] text-[#4d5664]">{t(`${phone} নম্বরে পাঠানো হয়েছে।`, `Sent to ${phone}.`)} <button type="button" onClick={() => { setSent(false); setCode(""); setErr(""); }} className="font-semibold text-[#b11c29]">{t("নম্বর বদলান", "Change")}</button></p>
-              <label className="mt-7 block text-[15px] font-semibold" htmlFor="otp">{t("৬ সংখ্যার কোড", "6-digit code")}</label>
-              <input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={field + " mt-2 h-14 text-center font-mono text-[26px] tracking-[0.45em]"} aria-invalid={!!err} />
-              {err && <p role="alert" className="mt-2 text-[14px] font-medium text-[#8e1621]">{err}</p>}
-              <p className="mt-3 rounded-xl bg-[#fdf6e7] px-3 py-2 text-[13.5px] text-[#7a4a0b]">{t(`প্রোটোটাইপ: SMS যায় না। কোড ${DEMO_OTP} দিন।`, `Prototype: no SMS is sent. Use code ${DEMO_OTP}.`)}</p>
-              <Primary type="submit" className="mt-6 w-full" disabled={code.length !== 6}>{t("যাচাই করুন", "Verify")}</Primary>
-            </form>
-          )}
+        <div className="relative hidden overflow-hidden rounded-xl lg:block">
+          <Image src="/demo/coral-cove/hero.jpg" alt="" fill sizes="590px" className="object-cover" priority />
+          <div className="absolute inset-x-5 bottom-5 rounded-xl bg-white/95 p-5 shadow-lg backdrop-blur">
+            <p className="text-[17px] font-semibold">{t("একবার property-র ধরন বাছুন — বাকিটা পরের ধাপ, পরের ধাপ।", "Pick your property type once — then just Next, Next.")}</p>
+            <ol className="mt-3 flex flex-wrap gap-1.5">
+              {SECTIONS.map((x, i) => <li key={x.id} className="inline-flex items-center gap-1.5 rounded-full bg-[#f4f6f8] px-2.5 py-1 text-[12.5px] font-semibold text-[#4d5664]"><span className="grid size-4 place-items-center rounded-full bg-white text-[10.5px]">{num(i + 1, lang)}</span>{t(x.bn, x.label)}</li>)}
+            </ol>
+            <p className="mt-3 flex items-center gap-1.5 text-[13px] text-[#4d5664]"><ShieldCheck className="size-4 text-[#1c7d45]" />{t("প্রায় ১০ মিনিট · যেকোনো সময় থামিয়ে পরে চালিয়ে যান", "About 10 minutes · stop anytime and continue later")}</p>
+          </div>
+          <span className="absolute left-4 top-4 rounded-md bg-white/90 px-2 py-0.5 text-[11.5px] font-semibold text-[#4d5664]">{t("ডেমো ছবি", "Demo photo")}</span>
         </div>
       </div>
     </main>
   );
+}
+
+function GoogleMark() {
+  return <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z" /><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1 .7-2.4 1.1-4 1.1-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z" /><path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z" /><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z" /></svg>;
 }
 
 function MyProperties() {

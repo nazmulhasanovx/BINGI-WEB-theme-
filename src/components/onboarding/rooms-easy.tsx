@@ -19,7 +19,7 @@ export type { Form };
 type Rooms = ReturnType<typeof useRooms>;
 /** While a room type is being added, its own Back / Next / Save take over the card footer (one set of buttons at a time). */
 export const FormSlot = createContext<{ slot: HTMLElement | null; setOpen: (o: boolean) => void }>({ slot: null, setOpen: () => {} });
-const STAY_ICON: Record<CoreType, typeof BedDouble> = { ROOM: BedDouble, COTTAGE: House, VILLA: Castle, APARTMENT: Building, OTHER: Sparkles };
+export const STAY_ICON: Record<CoreType, typeof BedDouble> = { ROOM: BedDouble, COTTAGE: House, VILLA: Castle, APARTMENT: Building, OTHER: Sparkles };
 
 // ---------- 2.1 What you rent ----------
 export function RoomsWhat({ d }: { d: Draft }) {
@@ -35,7 +35,7 @@ export function RoomsWhat({ d }: { d: Draft }) {
 }
 
 // ---------- 2.2 Where they are (presets only) ----------
-export function RoomsWhere({ d, st }: { d: Draft; st: Rooms["st"] }) {
+export function RoomsWhere({ d, st, head, title }: { d: Draft; st: Rooms["st"]; head?: ReactNode; title?: string }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
   const floorTypes = d.stay.some((s) => STAY.find((x) => x.id === s)?.where === "floor");
@@ -51,7 +51,8 @@ export function RoomsWhere({ d, st }: { d: Draft; st: Rooms["st"] }) {
   const setFloors = (n: number, g: boolean) => edit((x) => { x.floors = [...(g ? [0] : []), ...Array.from({ length: n }, (_, i) => i + 1)]; });
   const bs = d.buildings.length ? d.buildings : ["main"];
   return (
-    <Q title={t("কোথায় আছে?", "Where are they?")} why={t("তালিকা থেকে বাছাই করুন — রুম নম্বর এখান থেকে আপনা-আপনি তৈরি হবে।", "Pick from the lists — room numbers are made from this automatically.")}>
+    <Q title={title ?? t("কোথায় আছে?", "Where are they?")} sub={head ? t("আপনার property-র ধরন দেখে আগেই সাজানো আছে। মিলিয়ে নিন, দরকার হলে বদলান।", "Already set from your property type. Check it and change anything that's different.") : undefined} why={t("তালিকা থেকে বাছাই করুন — রুম নম্বর এখান থেকে আপনা-আপনি তৈরি হবে।", "Pick from the lists — room numbers are made from this automatically.")}>
+      {head}
       {floorTypes && (
         <div className="space-y-5">
           <div>
@@ -92,12 +93,12 @@ export function RoomsWhere({ d, st }: { d: Draft; st: Rooms["st"] }) {
 }
 
 // ---------- 2.3 Room types, one after another ----------
-const AM_ICON: Record<string, typeof Wifi> = {
+export const AM_ICON: Record<string, typeof Wifi> = {
   "Free Wi-Fi": Wifi, "Air conditioning": AirVent, Fan: Fan, "Hot water": Flame, "Smart TV": Tv, "Attached bathroom": Bath, "Rain shower": ShowerHead, Toiletries: Sparkles,
   "Tea & coffee": Coffee, Minibar: Wine, Fridge: Refrigerator, Balcony: Armchair, "Sea view": Waves, "Garden view": Trees, "Hill view": Mountain, "Work desk": Laptop,
   "Hair dryer": Wind, Parking: Car, "Wheelchair access": Accessibility, Kitchenette: CookingPot, "Living room": Sofa, Safe: Lock,
 };
-const AM_BN: Record<string, string> = {
+export const AM_BN: Record<string, string> = {
   "Free Wi-Fi": "ফ্রি ওয়াই-ফাই", "Air conditioning": "এসি", Fan: "ফ্যান", "Hot water": "গরম পানি", "Smart TV": "স্মার্ট টিভি", "Attached bathroom": "অ্যাটাচড বাথরুম", "Rain shower": "রেইন শাওয়ার",
   Toiletries: "টয়লেট্রিজ", "Tea & coffee": "চা ও কফি", Minibar: "মিনিবার", Fridge: "ফ্রিজ", Balcony: "বারান্দা", "Sea view": "সমুদ্র দেখা যায়", "Garden view": "বাগান দেখা যায়",
   "Hill view": "পাহাড় দেখা যায়", "Work desk": "কাজের টেবিল", "Hair dryer": "হেয়ার ড্রায়ার", Parking: "পার্কিং", "Wheelchair access": "হুইলচেয়ার", Kitchenette: "ছোট রান্নাঘর", "Living room": "বসার ঘর", Safe: "লকার",
@@ -299,7 +300,7 @@ function TypeForm({ d, rooms, form: f, setForm, onDone }: { d: Draft; rooms: Roo
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return <div><p className="text-[15.5px] font-semibold">{title}</p><div className="mt-2 flex flex-wrap gap-2">{children}</div></div>;
 }
-function placeName(p: LocNode, c: { nodes: LocNode[] }, lang: "bn" | "en") {
+export function placeName(p: LocNode, c: { nodes: LocNode[] }, lang: "bn" | "en") {
   if (p.kind === "FLOOR") {
     const b = c.nodes.find((n) => n.id === p.parent);
     const multi = c.nodes.filter((n) => n.kind === "BUILDING" || n.kind === "TOWER").length > 1;

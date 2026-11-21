@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronRight, CircleHelp, HelpCircle, MessageCircle, Phone, X } from "lucide-react";
 import { setOnbLang, useL } from "@/lib/onboarding/store";
 
@@ -165,3 +165,27 @@ export function Errors({ list }: { list: string[] }) {
 
 export const field = "h-11 w-full rounded-lg border border-[#858c97] bg-white px-3.5 text-[15.5px] outline-none transition-colors placeholder:text-[#8a8f9c] focus:border-[#0f1720] focus:ring-2 focus:ring-[#0f1720]/10";
 export const label = "block text-[14px] font-semibold";
+
+/** Pill tabs with a sliding active pill (reference 21 Nov: rounded track, filled active pill). */
+export function Pills<T extends string | number>({ items, value, onChange, label, size = "md" }: { items: { v: T; label: ReactNode; sub?: ReactNode }[]; value: T; onChange: (v: T) => void; label: string; size?: "md" | "sm" }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = wrap.current?.querySelector<HTMLElement>('[aria-checked="true"]');
+    if (el) setBox({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [value, items.length]);
+  return (
+    <div ref={wrap} role="radiogroup" aria-label={label} className="relative inline-flex max-w-full overflow-x-auto rounded-full border border-[#c6ccd4] bg-white p-1 [scrollbar-width:none]">
+      {box && <span aria-hidden className="absolute inset-y-1 rounded-full bg-[#0f1720] transition-[left,width] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ left: box.left, width: box.width }} />}
+      {items.map((it) => {
+        const on = it.v === value;
+        return (
+          <button key={String(it.v)} type="button" role="radio" aria-checked={on} onClick={() => onChange(it.v)}
+            className={clsx("relative z-[1] inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full font-semibold transition-colors duration-200", size === "sm" ? "h-8 px-3 text-[13.5px]" : "h-9 px-4 text-[14.5px]", on ? "text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>
+            {it.label}{it.sub != null && <span className={clsx("text-[12px] font-medium", on ? "text-white/80" : "text-[#5b6270]")}>{it.sub}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

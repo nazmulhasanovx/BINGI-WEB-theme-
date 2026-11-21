@@ -2,9 +2,9 @@
 // Left sidebar (host-extranet style): property, % complete, the 6 parts with their steps and what is done.
 import clsx from "clsx";
 import { useState } from "react";
-import { BedDouble, Building2, CalendarCheck, Check, ChevronDown, Circle, CircleDot, LayoutGrid, Send, Wallet, type LucideIcon } from "lucide-react";
+import { BedDouble, Building2, CalendarCheck, Check, ChevronDown, Circle, CircleDot, Send, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
 
-const ICON: Record<string, LucideIcon> = { s1: Building2, s2: BedDouble, s3: CalendarCheck, s4: LayoutGrid, s5: Wallet, s6: Send };
+const ICON: Record<string, LucideIcon> = { s1: Building2, s2: ShieldCheck, s3: BedDouble, s4: CalendarCheck, s5: Wallet, s6: Send };
 import { ORDER, SECTIONS, STEP_TITLE, minutesLeft, num, sectionOf, stepOf, useL, type Check as C, type Draft, type StepId } from "@/lib/onboarding/store";
 
 /** A step is done when the owner has moved past it (or, for required data, when the check passes). */

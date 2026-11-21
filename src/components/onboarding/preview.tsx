@@ -9,19 +9,21 @@ import { TYPE_META } from "./types";
 const POLICY: Record<string, [string, string]> = { flexible: ["নমনীয় বাতিল", "Flexible cancellation"], moderate: ["মাঝারি বাতিল", "Moderate cancellation"], strict: ["কড়া বাতিল", "Strict cancellation"] };
 
 const TIP: Partial<Record<StepId, [string, string]>> = {
-  "1.1": ["ধরন দেখে পরের প্রশ্নগুলো আপনা-আপনি সাজানো হয় — যেমন রিসোর্টে কটেজ/ভিলা।", "The type sets up the next questions — e.g. cottages and villas for a resort."],
+  "1.1": ["ধরন একবারই বাছবেন — রুম, তলা, নম্বর সব এখান থেকে সাজানো হয়।", "You pick the type once — rooms, floors and numbers are set up from it."],
   "1.2": ["গেস্টরা যে নাম চেনে সেটাই দিন। এটাই ওয়েবসাইট আর মার্কেটপ্লেসে দেখাবে।", "Use the name guests know. It shows on your website and the marketplace."],
   "1.3": ["সঠিক পিন দিলে গেস্ট ম্যাপে সহজে খুঁজে পায়।", "An exact pin helps guests find you on the map."],
   "1.4": ["রেস্টুরেন্ট/বার বাছলে রেস্টুরেন্ট টুল আপনা-আপনি চালু হবে।", "Picking Restaurant/Bar turns on the restaurant tool for you."],
-  "2.1": ["যা যা ভাড়া দেন সব বাছুন — পরে আলাদা আলাদা নম্বর পাবে।", "Pick everything you rent — each gets its own numbers."],
-  "2.2": ["নম্বর আমরা বানিয়ে দিই — 101, 102… বা C01, C02… নিজে লিখতে হবে না।", "We make the numbers for you — 101, 102… or C01, C02…"],
-  "2.3": ["একটা ধরন যোগ করুন, তারপর আরেকটা। ছবি পরে HMS-এ দেবেন।", "Add one type, then the next. Photos come later in HMS."],
-  "3.1": ["বেশিরভাগ হোটেল মাঝারি বাতিল নিয়ম রাখে — গেস্ট ও আপনার দুজনের জন্যই নিরাপদ।", "Most hotels use moderate cancellation — fair to guests and to you."],
-  "4.1": ["যা চালান না বন্ধ রাখুন — মেনু ছোট থাকবে। পরে যেকোনো সময় চালু করা যায়।", "Turn off what you don't run — a shorter menu. Turn on anytime."],
-  "4.2": ["টিম এখনই না দিলেও চলবে — ড্যাশবোর্ড থেকে পরে দাওয়াত দিতে পারবেন।", "You can invite your team later from the dashboard."],
+  "1.5": ["বুকিং কনফার্মেশনে এই নম্বর আর ইমেইল যায়।", "Booking confirmations show this number and email."],
+  "2.1": ["কাগজ এখন না থাকলে পরে দিন। যাচাই শেষ হলে অনলাইন বুকিং খোলে।", "No papers now? Add them later. Online booking opens after verification."],
+  "2.3": ["বেশিরভাগ property নিজেই ১০ মিনিটে সেটআপ করে।", "Most properties finish on their own in about 10 minutes."],
+  "2.4": ["আগে সেটআপ করলে এখন কোনো টাকা লাগে না।", "Setting up first costs nothing now."],
+  "3.1": ["তলা আর জায়গা ঠিক থাকলে রুম নম্বর আপনা-আপনি তৈরি হয়।", "With the right floors and zones, room numbers are made for you."],
+  "3.2": ["দাম পরে HMS-এর রেট ক্যালেন্ডারে দিন অনুযায়ী বদলানো যায়।", "You can change prices by date later in the HMS rates calendar."],
+  "4.1": ["চেক-ইন/আউটের সময় পরে ড্যাশবোর্ড থেকে বদলানো যায়।", "You can change check-in/out times later in the dashboard."],
+  "4.2": ["যা চালান না বন্ধ রাখুন — মেনু ছোট থাকবে। পরে যেকোনো সময় চালু করা যায়।", "Turn off what you don't run — a shorter menu. Turn on anytime."],
+  "4.3": ["টিম এখনই না দিলেও চলবে — ড্যাশবোর্ড থেকে পরে দাওয়াত দিতে পারবেন।", "You can invite your team later from the dashboard."],
   "5.1": ["নগদ সবসময় চালু। অনলাইন পেমেন্ট BinGi যাচাইয়ের পর চালু হয়।", "Cash is always on. Online payments start after BinGi verifies you."],
-  "5.2": ["থিম পরে যেকোনো সময় বদলানো যায় — লেখা, ছবি সব থাকবে।", "You can change the theme anytime — your text and photos stay."],
-  "6.2": ["কাগজ এখন না থাকলে পরে দিন। যাচাই শেষ হলে অনলাইন বুকিং খোলে।", "No papers now? Add them later. Online booking opens after verification."],
+  "5.2": ["এখান থেকে কিছু পাবলিক হয় না — পরে HMS থেকে পাবলিশ করবেন।", "Nothing goes public here — you publish later from HMS."],
 };
 
 export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; units: number }) {
@@ -49,7 +51,7 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
           <ul className="space-y-1.5 border-t border-[#e3e7ec] pt-2.5 text-[13.5px] text-[#4d5664]">
             <li className="flex items-center gap-2"><BedDouble className="size-4 shrink-0 text-[#8a909c]" />{units ? t(`${num(units, lang)}টা রুম · ${num(cats.length, lang)} ধরন`, `${units} rooms · ${cats.length} types`) : t("রুম এখনো যোগ হয়নি", "No rooms yet")}</li>
             {d.policy.preset && <li className="flex items-center gap-2"><ShieldCheck className="size-4 shrink-0 text-[#8a909c]" />{t(...POLICY[d.policy.preset])}</li>}
-            {d.seen.includes("3.1") && <li className="flex items-center gap-2"><Clock className="size-4 shrink-0 text-[#8a909c]" />{t("চেক-ইন", "Check-in")} {num(d.policy.checkIn, lang)} · {t("চেক-আউট", "Check-out")} {num(d.policy.checkOut, lang)}</li>}
+            {d.seen.includes("4.1") && <li className="flex items-center gap-2"><Clock className="size-4 shrink-0 text-[#8a909c]" />{t("চেক-ইন", "Check-in")} {num(d.policy.checkIn, lang)} · {t("চেক-আউট", "Check-out")} {num(d.policy.checkOut, lang)}</li>}
             {d.seen.includes("5.1") && pays && <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0 text-[#8a909c]" />{pays}</li>}
           </ul>
           <div className="flex items-end justify-between border-t border-[#e3e7ec] pt-2.5">

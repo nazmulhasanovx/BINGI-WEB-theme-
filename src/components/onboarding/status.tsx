@@ -57,7 +57,7 @@ function Body() {
           <div role="alert" className="mt-6 rounded-xl border border-[#f6cfcb] bg-[#fff4f3] p-4">
             <p className="font-semibold text-[#9b241d]">{t("BinGi একটা পরিবর্তন চেয়েছে", "BinGi asked for a change")}</p>
             <p className="mt-1 text-[14.5px] text-[#9b241d]">{d.note}</p>
-            <Link href="/onboarding/flow" onClick={() => edit((x) => { x.step = "6.2"; x.status = "draft"; })} className="mt-3 inline-flex h-10 items-center rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white">{t("ঠিক করে আবার জমা দিন", "Fix and resubmit")}</Link>
+            <Link href="/onboarding/flow" onClick={() => edit((x) => { x.step = "2.1"; x.status = "draft"; })} className="mt-3 inline-flex h-10 items-center rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white">{t("ঠিক করে আবার জমা দিন", "Fix and resubmit")}</Link>
           </div>
         )}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -67,7 +67,7 @@ function Body() {
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
           <Link href="/hms" onClick={() => setProperty(d.slug)} className="inline-flex h-12 items-center rounded-xl bg-[#b11c29] px-6 text-[15.5px] font-semibold text-white">{t("HMS খুলুন", "Open HMS")}</Link>
-          {d.status !== "needs-changes" && <Ghost onClick={() => edit((x) => { x.status = "draft"; x.step = "6.3"; })} className="h-12">{t("সেটআপ বদলান", "Edit setup")}</Ghost>}
+          {d.status !== "needs-changes" && <Ghost onClick={() => edit((x) => { x.status = "draft"; x.step = "6.1"; })} className="h-12">{t("সেটআপ বদলান", "Edit setup")}</Ghost>}
         </div>
       </div>
       <div className="mt-6 rounded-xl border border-dashed border-[#d5d8e0] bg-white/60 p-4">
