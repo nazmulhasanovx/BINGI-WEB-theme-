@@ -18,6 +18,7 @@ import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/r
 import { BN_NAME, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, configFrom8, isZoneCore, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
 import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
+import { TYPE_META } from "./types";
 import { Chip, Errors, Ghost, Pills, Primary, Stepper, Tile, field } from "./shell";
 
 type Rooms = ReturnType<typeof useRooms>;
@@ -35,8 +36,9 @@ export function placeLabel(d: Draft, c: Config, n: LocNode, bn: boolean) {
 }
 
 // ---------- 3.1 Where they are ----------
-export function Place({ d, st }: { d: Draft; st: Rooms["st"] }) {
+export function Place({ d, st, goStep }: { d: Draft; st: Rooms["st"]; goStep: (s: StepId) => void }) {
   const { edit } = useOnboarding();
+  const PT = TYPE_META.find((x) => x.slug === d.propertyType);
   const { t, lang } = useL();
   const bn = lang === "bn";
   const fits = FITS[d.propertyType] ?? ["ROOM"];
@@ -60,7 +62,14 @@ export function Place({ d, st }: { d: Draft; st: Rooms["st"] }) {
     <section>
       <Head title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Set up from your property type. Check it and change what's different.")} />
       <div className="mt-6 space-y-4">
-        <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")} hint={t("যা যা আছে সব বাছাই করুন", "Pick everything you have")}>
+        <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")} hint={t("আপনার property-র ধরন দেখে আগেই বাছাই করা", "Already picked from your property type")}>
+          {PT && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl bg-[#0f1720] px-4 py-3 text-white">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/10"><PT.icon className="size-5" aria-hidden /></span>
+              <span className="min-w-0 flex-1"><span className="block text-[12.5px] text-white/65">{t("আপনার property", "Your property")}</span><span className="block text-[16px] font-semibold">{t(PT.bn, PT.en)}</span></span>
+              <button onClick={() => goStep("1.1")} className="h-9 rounded-full bg-white/10 px-3.5 text-[13.5px] font-semibold hover:bg-white/20">{t("বদলান", "Change")}</button>
+            </div>
+          )}
           <div className="grid gap-2.5 sm:grid-cols-3">
             {shown.map((s) => {
               const on = d.stay.includes(s.id);

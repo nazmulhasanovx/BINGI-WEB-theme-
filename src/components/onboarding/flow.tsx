@@ -92,7 +92,7 @@ function Flow({ d }: { d: Draft }) {
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />, "1.5": <Contact d={d} />,
     "2.1": <Documents d={d} />, "2.2": <PlanV8 d={d} units={counts.total} />, "2.3": <SetupHelp d={d} />, "2.4": <Start d={d} />, "2.5": <Summary d={d} units={counts.total} go={go} />,
-    "3.1": <Place d={d} st={rooms.st} />, "3.2": <AddRooms d={d} rooms={rooms} onForm={setFormOpen} />, "3.3": <ReviewRooms d={d} rooms={rooms} go={go} />,
+    "3.1": <Place d={d} st={rooms.st} goStep={go} />, "3.2": <AddRooms d={d} rooms={rooms} onForm={setFormOpen} />, "3.3": <ReviewRooms d={d} rooms={rooms} go={go} />,
     "4.1": <BookingRules d={d} />, "4.2": <Modules d={d} />, "4.3": <Team d={d} />,
     "5.1": <Payments d={d} />, "5.2": <Website d={d} />,
     "6.1": <Ready d={d} counts={counts} go={go} />,
