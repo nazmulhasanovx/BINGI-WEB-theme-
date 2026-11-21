@@ -28,6 +28,7 @@ import { FormSlot } from "./rooms-easy";
 import { AddRooms, Place, ReviewRooms } from "./rooms-v8";
 import { PROP_ALL, PROP_BN, PROP_SUGGEST, configFrom8, propTop } from "@/lib/onboarding/rooms-v8";
 import { Contact, Documents, SetupHelp, Start, Summary } from "./steps-v8";
+import { PlanV8 } from "./plan-v8";
 import { Canvas, Card, Chip, Errors, Foot, Ghost, Header, Later, Next, Pills, Primary, Q, Stepper, Tile, field, label } from "./shell";
 
 const noop = () => () => {};
@@ -90,7 +91,7 @@ function Flow({ d }: { d: Draft }) {
 
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />, "1.5": <Contact d={d} />,
-    "2.1": <Documents d={d} />, "2.2": <Plan d={d} units={counts.total} />, "2.3": <SetupHelp d={d} />, "2.4": <Start d={d} />, "2.5": <Summary d={d} units={counts.total} go={go} />,
+    "2.1": <Documents d={d} />, "2.2": <PlanV8 d={d} units={counts.total} />, "2.3": <SetupHelp d={d} />, "2.4": <Start d={d} />, "2.5": <Summary d={d} units={counts.total} go={go} />,
     "3.1": <Place d={d} st={rooms.st} />, "3.2": <AddRooms d={d} rooms={rooms} onForm={setFormOpen} />, "3.3": <ReviewRooms d={d} rooms={rooms} go={go} />,
     "4.1": <BookingRules d={d} />, "4.2": <Modules d={d} />, "4.3": <Team d={d} />,
     "5.1": <Payments d={d} />, "5.2": <Website d={d} />,
@@ -505,66 +506,6 @@ function Website({ d }: { d: Draft }) {
 }
 
 // ---------------- Part 6 ----------------
-function Plan({ d, units: made }: { d: Draft; units: number }) {
-  const { edit } = useOnboarding();
-  const { t, lang } = useL();
-  // Rooms come later (part 3): price on the owner's estimate until rooms exist, then on the real count.
-  const units = made || d.units;
-  const rec = recommend(d);
-  const n = (v: number) => num(money(v), lang);
-  return (
-    <Q title={t("আপনার প্ল্যান", "Your plan")} sub={t(`প্রতি রুম হিসেবে মাসিক দাম — কিছু লুকানো নেই। আপনার ${num(units, lang)}টা রুম ধরে হিসাব${units < MIN_BILLED ? ` (কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল)` : ""}। ${num(TRIAL_DAYS, lang)} দিন ফ্রি।`, `A simple monthly rate per room — nothing hidden. Priced on your ${units} rooms${units < MIN_BILLED ? ` (minimum ${MIN_BILLED} billed)` : ""}. ${TRIAL_DAYS} days free.`)}>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div className="flex items-center gap-3 rounded-xl border border-[#c6ccd4] bg-white px-4 py-2.5">
-          <span className="text-[15px] font-semibold">{made ? t("আপনার রুম", "Your rooms") : t("আনুমানিক কয়টা রুম?", "About how many rooms?")}</span>
-          {made ? <b className="text-[17px] tabular-nums">{num(made, lang)}</b> : <Stepper label={t("রুম", "Rooms")} value={d.units} set={(n) => edit((x) => { x.units = n; })} min={1} max={500} />}
-        </div>
-        <Pills label={t("বিলিং", "Billing")} value={d.cycle} onChange={(c) => edit((x) => { x.cycle = c; })}
-          items={([1, 6, 12] as Cycle[]).map((c) => ({ v: c, label: c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} months`), sub: CYCLE_OFF[c] ? `−${num(CYCLE_OFF[c] * 100, lang)}%` : undefined }))} />
-      </div>
-      {!made && <p className="mt-2 text-[13px] text-[#4d5664]">{t("আসল বিল হবে রুম অংশে যতগুলো রুম যোগ করবেন ততগুলোর।", "The real bill follows the rooms you add in the Rooms part.")}</p>}
-      <div role="radiogroup" aria-label={t("প্ল্যান", "Plan")} className="mt-5 grid gap-3 md:grid-cols-3">
-        {(Object.keys(PLANS) as PlanId[]).map((p) => {
-          const P = PLANS[p]; const on = (d.planPicked ? d.plan : rec) === p; const q = quote(p, units, d.cycle);
-          const low = planRank(p) < planRank(rec);
-          return (
-            <button key={p} role="radio" aria-checked={on} onClick={() => edit((x) => { x.plan = p; x.planPicked = true; })}
-              className={clsx("relative flex flex-col rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow]", on ? "order-first border-[#b11c29] shadow-[inset_0_0_0_1px_#b11c29] sm:order-none" : "border-[#c6ccd4] hover:border-[#9aa0ac]")}>
-              <span className="flex items-center justify-between gap-2 pr-7"><span className="text-[19px] font-semibold">{P.label}</span>{rec === p && <span className="rounded bg-[#b11c29] px-1.5 py-0.5 text-[11.5px] font-semibold text-white">{t("আপনার জন্য", "Best fit")}</span>}</span>
-              <span className="mt-1 text-[13.5px] text-[#4d5664]">{t(P.forBn, P.for)}</span>
-              <span className="mt-2 flex flex-wrap gap-1">{P.tags.map(([bn, en]) => <span key={en} className="rounded bg-[#fdecea] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#8e1621]">{t(bn, en)}</span>)}</span>
-              <span className="mt-3 text-[28px] font-semibold leading-none">{P.perUnitRegular && <s className="mr-1.5 text-[16px] font-normal text-[#4d5664]">৳{num(P.perUnitRegular, lang)}</s>}৳{num(P.perUnit, lang)}<span className="text-[13px] font-normal text-[#4d5664]"> /{t("রুম/মাস", "room/month")}</span></span>
-              <span className="mt-3 space-y-1.5 border-t border-[#e3e7ec] pt-3 text-[13px] text-[#4d5664]">
-                <span className="block">{t(`${num(q.billed, lang)} রুম · ৳${n(q.monthly)}/মাস`, `${q.billed} rooms · ৳${n(q.monthly)}/month`)}</span>
-                <span className="block">{t(`বুকিং ফি: মার্কেটপ্লেস ${num(P.fees[0], lang)}% · ওয়েব ${num(P.fees[1], lang)}% · ওয়াক-ইন ${num(P.fees[2], lang)}%`, `Booking fees: Marketplace ${P.fees[0]}% · Web ${P.fees[1]}% · Walk-in ${P.fees[2]}%`)}</span>
-                <span className="block">{P.activation ? <>{t("অ্যাক্টিভেশন", "Activation")} {P.activationRegular && <s>৳{n(P.activationRegular)}</s>} ৳{n(P.activation)}</> : t("অ্যাক্টিভেশন ফি নেই", "No activation fee")}</span>
-              </span>
-              <span className="mt-3 border-t border-[#e3e7ec] pt-3 text-[12.5px] font-semibold">{t(...P.includesTitle)}</span>
-              <span className="mt-1.5 space-y-1">{P.includes.map(([bn, en]) => <span key={en} className="flex items-start gap-1.5 text-[13px] text-[#4d5664]"><Check className="mt-0.5 size-3.5 shrink-0 text-[#b11c29]" strokeWidth={3} />{t(bn, en)}</span>)}</span>
-              {low && <span className="mt-3 rounded bg-[#fdf6e7] px-2 py-1 text-[12px] text-[#7a4a0b]">{t("আপনার বাছাই করা কিছু টুল এতে নেই", "Some tools you picked aren't in this plan")}</span>}
-              <span aria-hidden className={clsx("absolute right-4 top-4 grid size-5 place-items-center rounded-full border", on ? "border-[#b11c29] bg-[#b11c29]" : "hidden")}><span className="size-2 rounded-full bg-white" /></span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-[#858c97] bg-white px-4 py-3">
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Custom</span><span className="text-[13.5px] text-[#4d5664]">{t("একাধিক property, হোটেল গ্রুপ — কোটেশন রিভিউর পরে", "Hotel groups and chains — quotation after review")}</span></span>
-        <span className="text-[13.5px] font-semibold text-[#4d5664]">{t("সাহায্য চাপুন → কল", "Tap Help → call")}</span>
-      </div>
-      {d.planPicked && (() => { const q = quote(d.plan, units, d.cycle); return (
-        <div className="mt-5 grid gap-1.5 rounded-xl border border-[#e3e7ec] bg-white p-4 text-[14.5px]"><dl className="grid gap-1.5">
-          <Row k={t(`${num(q.billed, lang)} রুম × ৳${num(PLANS[d.plan].perUnit, lang)} × ${num(d.cycle, lang)} মাস`, `${q.billed} rooms × ৳${PLANS[d.plan].perUnit} × ${d.cycle} mo`)} v={`৳${n(q.gross)}`} />
-          {q.off > 0 && <Row k={t("ছাড়", "Discount")} v={`−৳${n(q.off)}`} />}
-          <Row k={t("অ্যাক্টিভেশন (একবার)", "Activation (one time)")} v={`৳${n(q.activation)}`} />
-          <div className="mt-1 flex justify-between border-t border-[#e3e7ec] pt-2 font-semibold"><dt>{t("ট্রায়ালের পর", "After the trial")}</dt><dd>৳{n(q.total)}</dd></div>
-          </dl>
-          {units < MIN_BILLED && <p className="text-[12.5px] text-[#4d5664]">{t(`কমপক্ষে ${num(MIN_BILLED, lang)}টা রুমের বিল হয়`, `Billing starts at ${MIN_BILLED} rooms`)}</p>}
-          <p className="text-[12.5px] text-[#4d5664]">{t("ট্যাক্স প্রযোজ্য হলে আলাদা", "Taxes extra where applicable")}</p>
-        </div>
-      ); })()}
-    </Q>
-  );
-}
 function Row({ k, v }: { k: string; v: string }) { return <div className="flex justify-between gap-3"><dt className="text-[#4d5664]">{k}</dt><dd className="font-semibold tabular-nums">{v}</dd></div>; }
 
 function Verify({ d }: { d: Draft }) {

@@ -8,7 +8,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronRight, CircleHelp, HelpCircle, MessageCircle, Phone, X } from "lucide-react";
-import { setOnbLang, useL } from "@/lib/onboarding/store";
+import { num, setOnbLang, useL } from "@/lib/onboarding/store";
 
 export function Header({ right, title }: { right?: ReactNode; title?: ReactNode }) {
   const [help, setHelp] = useState(false);
@@ -123,11 +123,11 @@ export function Ghost({ children, className, ...p }: React.ButtonHTMLAttributes<
 export function Tile({ on, onClick, title, sub, icon, badge, disabled, locked, role = "button", big, children }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; disabled?: boolean; locked?: boolean; role?: "button" | "radio"; big?: boolean; children?: ReactNode }) {
   const radio = role === "radio";
   return (
-    <div className={clsx("rounded-xl border bg-white transition-[border-color,box-shadow] duration-150", on ? "border-[#0f1720] shadow-[inset_0_0_0_1px_#0f1720]" : "border-[#c6ccd4] hover:border-[#9aa0ac]", disabled && "opacity-50")}>
+    <div className={clsx("rounded-2xl border transition-[border-color,box-shadow,background-color] duration-200", on ? "border-[#b11c29] bg-[#fffafa] shadow-[inset_0_0_0_1px_#b11c29,0_10px_24px_-18px_rgb(177_28_41/0.5)]" : "border-[#d3d8df] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.04)] hover:border-[#9aa0ac] hover:shadow-[0_8px_20px_-16px_rgb(15_23_32/0.35)]", disabled && "opacity-50")}>
       <button type="button" role={radio ? "radio" : undefined} aria-checked={radio ? on : undefined} aria-pressed={radio ? undefined : on} aria-disabled={locked || undefined}
         onClick={locked ? undefined : onClick} disabled={disabled}
         className={clsx("flex w-full items-center gap-3.5 px-4 text-left", big ? "min-h-[76px] py-3.5" : "min-h-[60px] py-3")}>
-        {icon && <span className="grid size-10 shrink-0 place-items-center text-[#0f1720]">{icon}</span>}
+        {icon && <span className={clsx("grid size-10 shrink-0 place-items-center rounded-xl transition-colors", on ? "bg-[#fdecea] text-[#b11c29]" : "bg-[#f4f6f8] text-[#0f1720]")}>{icon}</span>}
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2 text-[15.5px] font-semibold leading-snug">{title}{badge && <span className="rounded bg-[#e9edf2] px-1.5 py-0.5 text-[11.5px] font-medium text-[#4d5664]">{badge}</span>}</span>
           {sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-[#4d5664]">{sub}</span>}
@@ -149,10 +149,11 @@ export function Chip({ on, onClick, children, disabled, title, label }: { on: bo
 }
 
 export function Stepper({ value, set, min = 0, max = 99, label }: { value: number; set: (n: number) => void; min?: number; max?: number; label: string }) {
+  const { lang } = useL();
   return (
     <div className="inline-flex items-center gap-3" role="group" aria-label={label}>
       <button type="button" aria-label={`${label} −`} onClick={() => set(Math.max(min, value - 1))} disabled={value <= min} className="grid size-9 place-items-center rounded-full border border-[#b8bdc7] text-[18px] font-medium hover:border-[#0f1720] disabled:opacity-30">−</button>
-      <span className="min-w-[28px] text-center text-[17px] font-semibold tabular-nums" aria-live="polite">{value}</span>
+      <span className="min-w-[28px] text-center text-[17px] font-semibold tabular-nums" aria-live="polite">{num(value, lang)}</span>
       <button type="button" aria-label={`${label} +`} onClick={() => set(Math.min(max, value + 1))} disabled={value >= max} className="grid size-9 place-items-center rounded-full border border-[#b8bdc7] text-[18px] font-medium hover:border-[#0f1720] disabled:opacity-30">+</button>
     </div>
   );
@@ -167,7 +168,7 @@ export const field = "h-11 w-full rounded-lg border border-[#858c97] bg-white px
 export const label = "block text-[14px] font-semibold";
 
 /** Pill tabs with a sliding active pill (reference 21 Nov: rounded track, filled active pill). */
-export function Pills<T extends string | number>({ items, value, onChange, label, size = "md" }: { items: { v: T; label: ReactNode; sub?: ReactNode }[]; value: T; onChange: (v: T) => void; label: string; size?: "md" | "sm" }) {
+export function Pills<T extends string | number>({ items, value, onChange, label, size = "md", tone = "ink" }: { items: { v: T; label: ReactNode; sub?: ReactNode }[]; value: T; onChange: (v: T) => void; label: string; size?: "md" | "sm" | "lg"; tone?: "ink" | "brand" }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ left: number; width: number } | null>(null);
   useLayoutEffect(() => {
@@ -176,13 +177,13 @@ export function Pills<T extends string | number>({ items, value, onChange, label
   }, [value, items.length]);
   return (
     <div ref={wrap} role="radiogroup" aria-label={label} className="relative inline-flex max-w-full overflow-x-auto rounded-full border border-[#c6ccd4] bg-white p-1 [scrollbar-width:none]">
-      {box && <span aria-hidden className="absolute inset-y-1 rounded-full bg-[#0f1720] transition-[left,width] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ left: box.left, width: box.width }} />}
+      {box && <span aria-hidden className={clsx("absolute inset-y-1 rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]", tone === "brand" ? "bg-gradient-to-t from-[#b11c29] via-[#d42f3c] to-[#e8404a] shadow-[0_6px_18px_-6px_rgb(177_28_41/0.6)]" : "bg-[#0f1720]")} style={{ left: box.left, width: box.width }} />}
       {items.map((it) => {
         const on = it.v === value;
         return (
           <button key={String(it.v)} type="button" role="radio" aria-checked={on} onClick={() => onChange(it.v)}
-            className={clsx("relative z-[1] inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full font-semibold transition-colors duration-200", size === "sm" ? "h-8 px-3 text-[13.5px]" : "h-9 px-4 text-[14.5px]", on ? "text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>
-            {it.label}{it.sub != null && <span className={clsx("text-[12px] font-medium", on ? "text-white/80" : "text-[#5b6270]")}>{it.sub}</span>}
+            className={clsx("relative z-[1] inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full font-semibold transition-colors duration-200", size === "sm" ? "h-8 px-3 text-[13.5px]" : size === "lg" ? "h-11 px-5 text-[15px]" : "h-9 px-4 text-[14.5px]", on ? "text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>
+            {it.label}{it.sub != null && <span className={clsx("text-[12px]", tone === "brand" ? clsx("rounded-full px-1.5 py-0.5 font-semibold", on ? "bg-white/20 text-white" : "bg-[#fdecea] text-[#b11c29]") : clsx("font-medium", on ? "text-white/80" : "text-[#5b6270]"))}>{it.sub}</span>}
           </button>
         );
       })}
