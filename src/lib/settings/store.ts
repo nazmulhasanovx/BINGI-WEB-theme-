@@ -52,7 +52,10 @@ export type Settings = {
   otas?: Record<string, OtaSetup>;
   /** How guests can book online, per channel (live HMS "Booking Requests", now for website + marketplace). At least one choice stays on. */
   booking?: { website: BookCh; marketplace: BookCh; same: boolean };
+  /** iCal calendar sync per room code (22 Nov 2026). Prototype: links are saved and checked for format only — nothing is fetched or published. */
+  ical?: { token: string; feeds: Record<string, IcalFeed[]> };
 };
+export type IcalFeed = { id: string; src: string; url: string; added: string };
 export type BookCh = { full: boolean; partial: boolean; request: boolean; pct: number };
 /** Old single "Website bookings pay" → the three choices. */
 export const bookingOf = (s: Pick<Settings, "booking" | "policy">): NonNullable<Settings["booking"]> => {

@@ -21,6 +21,7 @@ import { PROP_ALL, propTop } from "@/lib/onboarding/rooms-v8";
 import { hasRestaurant } from "../bookings/extras";
 import { feesOf } from "@/lib/finance/store";
 import { OtaCard } from "./ota";
+import { IcalCard } from "./ical";
 import { printHtml } from "../meals/print";
 import { PhotoButton } from "../photo";
 import { useNavMode } from "../Shell";
@@ -404,6 +405,7 @@ export function ChannelsPage() {
           <ChRow name="Walk-in & phone" desc="Front desk books in Bookings" status="Always on" tone="green" href="/hms/bookings/walkin" />
         </Card>
         <OtaCard h={h} />
+        <IcalCard h={h} />
       </div>
     </>
   );
