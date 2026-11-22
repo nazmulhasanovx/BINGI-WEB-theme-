@@ -35,6 +35,7 @@ const panel = "hms-pop absolute right-0 top-full z-50 mt-2 rounded-2xl border bo
 import { refundsDue, toCollect } from "@/lib/payments/ledger";
 import { useExpenses } from "@/lib/expenses/store";
 import { can } from "@/lib/plan";
+import { setViewAs, useDeptViews, useViewAs, type ViewId } from "@/lib/hrm/views";
 import { useChatData } from "./chat/page";
 import { useCommData } from "./communication/data";
 import { useRestaurant } from "./meals/shared";
@@ -69,7 +70,7 @@ function useNotes(): Note[] {
     const rf = refundsDue(bk.list).length;
     if (rf) out.push({ id: `rf-${rf}`, icon: RotateCcw, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(rf, "refund")} to give back`, sub: "Guests paid more than the bill", href: "/hms/payments?tab=refunds" });
     const fail = comm.st.log.filter((m) => m.status === "failed").length;
-    if (fail) out.push({ id: `msg-${fail}`, icon: AlertTriangle, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(fail, "message")} not delivered`, sub: "Check the number or email, then resend", href: "/hms/communication?tab=history" });
+    if (fail && can(h, "communication")) out.push({ id: `msg-${fail}`, icon: AlertTriangle, tone: "bg-[#fde8e8] text-[#b11c29]", title: `${pl(fail, "message")} not delivered`, sub: "Check the number or email, then resend", href: "/hms/communication?tab=history" });
     const arriving = g.rows.filter((r) => r.state === "Arriving today");
     if (arriving.length) out.push({ id: "arr", icon: CalendarCheck, tone: "bg-[#fdefe7] text-[#d9622b]", title: `${arriving.length} guest${arriving.length > 1 ? "s" : ""} arriving today`, sub: arriving.map((r) => r.name).slice(0, 3).join(", "), href: "/hms/guests" });
     const noId = g.rows.filter((r) => r.state === "In house" && r.idMissing);
@@ -147,6 +148,9 @@ export function LanguageMenu() {
 // ---------------- Account ----------------
 export function AccountMenu() {
   const h = useProperty();
+  const as = useViewAs();
+  const { views } = useDeptViews();
+  const router = useRouter();
   const { open, setOpen, ref } = usePop();
   const [app, setApp] = useState(false);
   const inst = useInstall();
@@ -160,7 +164,11 @@ export function AccountMenu() {
       </button>
       {open && (
         <div role="menu" className={clsx(panel, "w-[260px]")}>
-          <div className="px-3 py-2.5"><p className="text-[14.5px] font-bold">Md Yeapas</p><p className="text-[12.5px] text-hms-muted">Owner · {h.name}</p></div>
+          <div className="px-3 py-2.5"><p className="text-[14.5px] font-bold">Md Yeapas</p><p className="text-[12.5px] text-hms-muted">{as ? `Viewing as ${as.name}` : "Owner"} · {h.name}</p></div>
+          <label className="mx-3 mb-2 block"><span className="text-[12px] font-medium text-hms-muted">View the HMS as (preview)</span>
+            <select aria-label="View as role" value={as?.id ?? "owner"} onChange={(e) => { const id = e.target.value as ViewId; setViewAs(id === "owner" ? null : id); setOpen(false); router.push("/hms"); }} className="mt-1 h-9 w-full rounded-lg border border-hms-line bg-white px-2 text-[13.5px] outline-none focus:border-hms-ink">
+              {views.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select></label>
           <div className="my-1 border-t border-hms-line" />
           <Link role="menuitem" href="/hms/staff/people" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><User className="size-4 text-hms-muted" />My profile</Link>
           <Link role="menuitem" href="/hms/news" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] hover:bg-hms-hover"><Megaphone className="size-4 text-hms-muted" />BinGi news & updates</Link>

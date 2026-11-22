@@ -9,6 +9,7 @@ import { channelLabel, dmy, dow, dueOf, flags, payState, useBookings, type BStat
 import { useBkMode, type BkMode } from "@/lib/bookings/mode";
 import { useGuests, type GuestRow } from "@/lib/guests/store";
 import { useProperty } from "../property";
+import { can } from "@/lib/plan";
 import { Menu } from "../staff/ui";
 
 type Ctx = { bk: Bk; guests: Map<string, GuestRow>; g: ReturnType<typeof useGuests>; mode: BkMode; open: (code: string | null, view?: "checkin" | "checkout") => void; toast: (t: string) => void };
@@ -41,9 +42,10 @@ export function ModeSwitch() { return null; }
 function ViewBar({ tab }: { tab: BkTab }) {
   const t = tab === "today" ? "list" : tab;
   const more = MORE.find((m) => m.id === t);
+  const h = useProperty();
   return (
     <nav aria-label="Bookings views" className="flex shrink-0 items-center gap-1">
-      {VIEWS.map((v) => <Link key={v.id} href={v.href} aria-current={t === v.id ? "page" : undefined} className={viewBtn(t === v.id)}><v.icon className="size-4" />{v.label}</Link>)}
+      {VIEWS.filter((v) => v.id !== "board" || can(h, "roomBoard")).map((v) => <Link key={v.id} href={v.href} aria-current={t === v.id ? "page" : undefined} className={viewBtn(t === v.id)}><v.icon className="size-4" />{v.label}</Link>)}
       <details className="relative">
         <summary className={clsx(viewBtn(!!more), "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>{more ? more.label.replace(/ \(.*/, "") : "More"}<ChevronDown className="size-4" /></summary>
         <div className="hms-pop absolute right-0 top-full z-30 mt-1 w-[230px] rounded-2xl border border-hms-line bg-white p-1.5 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.25)]">

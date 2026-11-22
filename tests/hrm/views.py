@@ -12,7 +12,7 @@ with sync_playwright() as p:
   t("HRM has Department views tab", tab.count()>=1)
   tab.first.click(); pg.wait_for_url("**/staff/views"); pg.wait_for_timeout(800)
   opts=pg.get_by_role("listbox", name="Department views").get_by_role("option")
-  t("8 department views", opts.count()==8)
+  t("10 department views", opts.count()==10)
   names=[o.inner_text() for o in opts.all()]
   t("owner + front desk + housekeeping + kitchen + finance present", all(any(n in x for x in names) for n in ["Owner","Front desk","Housekeeping","Restaurant & kitchen","Accounts & finance","Security"]))
   t("front desk selected first", "Front desk view" in pg.locator("h2").filter(has_text="view").first.inner_text())
@@ -54,7 +54,7 @@ with sync_playwright() as p:
   # compare all
   pg.get_by_role("radio", name="Compare all").click(); pg.wait_for_timeout(300)
   tbl=pg.get_by_role("region", name="Compare all views")
-  t("matrix 20 modules × 8 views", tbl.locator("tbody tr").count()==22 and tbl.locator("thead th").count()==9)
+  t("matrix 20 modules × 10 views", tbl.locator("tbody tr").count()==22 and tbl.locator("thead th").count()==11)
   pg.screenshot(path="/tmp/dv/3_compare.png", full_page=True)
   # See HMS as front desk
   pg.get_by_role("radio", name="By department").click(); pg.get_by_role("listbox", name="Department views").get_by_role("option", name=re.compile("^Front desk")).click(); pg.wait_for_timeout(200)

@@ -5,12 +5,14 @@ import type { Hotel } from "./types";
 
 export type Feature =
   | "housekeeping" | "restaurant" | "restaurantFull" | "qrOrdering" | "expenses" | "services"
-  | "hrm" | "inventory" | "diningPage";
+  | "hrm" | "inventory" | "diningPage" | "cashbox" | "communication" | "roomBoard";
 
 /** Lowest plan that includes the feature. Restaurant is "Limited" on Business (one outlet) and full on Ultra. */
 export const MIN_PLAN: Record<Feature, Hotel["plan"]> = {
   housekeeping: "business", restaurant: "business", restaurantFull: "ultra", qrOrdering: "business",
   expenses: "business", services: "business", hrm: "ultra", inventory: "ultra", diningPage: "ultra",
+  // Modules, Plans & Roles v1 (22 Nov 2026): Cashbox + Room board from Business, Communication Center on Ultra.
+  cashbox: "business", communication: "ultra", roomBoard: "business",
 };
 
 export const can = (h: Pick<Hotel, "plan">, f: Feature) => planAllows(h.plan, MIN_PLAN[f]);

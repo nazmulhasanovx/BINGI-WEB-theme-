@@ -56,7 +56,7 @@ with sync_playwright() as p:
   t("group link on booking", link.count()==1)
   link.click(); pg.wait_for_timeout(1300)
   t("group page", "/hms/bookings/group?g=" in pg.url and "2 rooms" in M())
-  pg.get_by_role("button",name=re.compile("^Full")).click(); pg.get_by_role("radio",name="bKash").click(); pg.get_by_role("button",name="Take payment").click(); pg.wait_for_timeout(400)
+  pg.get_by_role("button",name=re.compile("^Full ·")).click(); pg.get_by_role("radio",name="bKash").click(); pg.get_by_role("button",name="Take payment").click(); pg.wait_for_timeout(400)
   t(f"group paid ({ST()})", "shared across 2 rooms" in ST() and "Group payment" not in M())
   axe(pg,"group")
   # ---- calendar drag move

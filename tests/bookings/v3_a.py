@@ -21,7 +21,7 @@ with sync_playwright() as p:
   # ---- booking policies live in Settings (one home)
   pg.goto(B+"/hms/settings/policies"); pg.wait_for_timeout(1200)
   t("settings page", "Cancellation & no-show" in M())
-  pg.get_by_label("Late check-out",exact=True).select_option("charge")
+  pg.get_by_role("button",name="With a fee").nth(1).click()
   f=pg.get_by_label("Late check-out fee"); f.fill(""); f.type("2000"); t("typing keeps focus", f.input_value()=="2000")
   pg.get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300); t("settings saved", "saved" in ST())
   axe(pg,"settings")

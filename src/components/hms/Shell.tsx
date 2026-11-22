@@ -2,9 +2,10 @@
 // HMS shell — sidebar + header, 1:1 with the live HMS (hms.bingi.app, Nov 2026).
 // Every module page renders inside this, so other modules can be designed in this repo too.
 import { ChatBadge } from "./chat/page";
-import { can, type Feature } from "@/lib/plan";
-/** Sidebar items that need a plan feature: shown with a small lock when the plan does not include them. */
-const GATE: Record<string, Feature> = { housekeeping: "housekeeping", meals: "restaurant", inventory: "inventory", "other-services": "services", operations: "expenses" };
+// Plan × role (src/lib/access.ts): Starter hides what its plan lacks; Business/Ultra show a higher plan's module with a lock
+// (Owner + Manager only); a role without the module never sees it.
+import { AccessGuard, UpgradeCard, ViewOnlyBanner, useAccess } from "./access";
+import { moduleOfPath } from "@/lib/access";
 import { MealsBadge } from "./meals/shared";
 import Link from "next/link";
 import { imgSrc } from "@/lib/img";
@@ -27,7 +28,7 @@ import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } f
 import { NewsBanner, NewsPopup } from "./news";
 import { FullscreenButton } from "./app-install";
 import { useAppServiceWorker } from "@/lib/app-mode";
-import { setViewAs, useViewAs, visibleIds } from "@/lib/hrm/views";
+import { setViewAs, useViewAs } from "@/lib/hrm/views";
 import { useBilling, monthName, dShort } from "@/lib/billing/store";
 import { useRooms } from "@/lib/rooms/store";
 
@@ -131,7 +132,8 @@ function ShellInner({ children }: { children: ReactNode }) {
         <ViewAsBanner />
         <BillBanner />
         <SetupModeBanner />
-        <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className="min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
+        <ViewOnlyBanner />
+        <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className="min-h-0 flex-1 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0"><AccessGuard>{children}</AccessGuard></main>
       </div>
       <TabBar activeId={active.id} onMore={() => setDrawer(true)} />
       {drawer && <MobileDrawer activeId={active.id} onClose={() => setDrawer(false)} />}
@@ -149,6 +151,7 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
         <img src={imgSrc(collapsed ? "/brand/bingi-hms-mark.svg" : "/brand/bingi-hms.svg")} alt="BinGi HMS" className={collapsed ? "h-9 w-auto object-contain" : "h-8 w-auto"} />
       </Link>
       <NavList activeId={activeId} collapsed={collapsed} />
+      {!collapsed && <UpgradeCard />}
       <div className="shrink-0 border-t border-hms-line p-3">
         {!collapsed && <ModeSwitch />}
         <PropertySwitcher collapsed={collapsed} />
@@ -183,11 +186,10 @@ function ModeSwitch() {
   );
 }
 
-/** "See HMS as…" (HRM → Department views): only that department's modules, until Exit. */
-function useKeep() {
-  const as = useViewAs();
-  const { st } = useSettings(useProperty());
-  return as ? visibleIds(as, st.roles) : null;
+/** Ids the sidebar shows: allowed by the plan (or locked) and by the role / department view. */
+function useShown() {
+  const { level } = useAccess();
+  return { show: (id: string) => level(id) !== "hidden", locked: (id: string) => level(id) === "locked" };
 }
 /** Month-end bill: shows on every page while a BinGi bill is open (not on the billing page itself). */
 function BillBanner() {
@@ -219,12 +221,12 @@ function ViewAsBanner() {
 
 function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: boolean; big?: boolean }) {
   const [mode] = useNavMode();
-  const keep = useKeep();
+  const { show, locked } = useShown();
   const [openG, setOpenG] = useState<string[]>([]);
   const fold = mode === "expandable" && !collapsed;
   return (
     <nav className={clsx("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-3", big ? "px-3" : "px-2")} aria-label="HMS">
-      {GROUPS.map((g0) => ({ ...g0, items: keep ? g0.items.filter((i) => keep.has(i.id)) : g0.items })).filter((g) => g.items.length).map((g) => {
+      {GROUPS.map((g0) => ({ ...g0, items: g0.items.filter((i) => show(i.id)) })).filter((g) => g.items.length).map((g) => {
         const hasActive = g.items.some((i) => i.id === activeId);
         const isOpen = !fold || hasActive || openG.includes(g.label);
         return (
@@ -235,11 +237,11 @@ function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: bo
                   <span className="flex-1">{g.label}</span><ChevronDown className={clsx("size-3.5 transition-transform", !isOpen && "-rotate-90")} />
                 </button>
               : <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>)}
-            {isOpen && <div className={fold ? "hms-fade" : undefined}>{g.items.map((i) => <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} big={big} />)}</div>}
+            {isOpen && <div className={fold ? "hms-fade" : undefined}>{g.items.map((i) => <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} big={big} locked={locked(i.id)} />)}</div>}
           </div>
         );
       })}
-      {(!keep || keep.has("settings")) && <div className="mt-2.5 border-t border-hms-line pt-2.5">
+      {show("settings") && <div className="mt-2.5 border-t border-hms-line pt-2.5">
         <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} big={big} />
       </div>}
     </nav>
@@ -249,8 +251,8 @@ function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: bo
 /** Phones: bottom tab bar (iOS style). "More" opens the full menu. */
 const TABS = ["dashboard", "bookings", "rooms", "guests"];
 function TabBar({ activeId, onMore }: { activeId: string; onMore: () => void }) {
-  const keep = useKeep();
-  const items = (keep ? [...TABS.filter((id) => keep.has(id)), ...ALL_ITEMS.map((i) => i.id).filter((id) => keep.has(id) && !TABS.includes(id))].slice(0, 4) : TABS).map((id) => ALL_ITEMS.find((i) => i.id === id)!);
+  const { show } = useShown();
+  const items = [...TABS.filter(show), ...ALL_ITEMS.map((i) => i.id).filter((id) => show(id) && !TABS.includes(id))].slice(0, 4).map((id) => ALL_ITEMS.find((i) => i.id === id)!);
   const inMore = !TABS.includes(activeId);
   return (
     <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-hms-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -277,15 +279,15 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
       <div role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest("a")) onClose(); }} className="hms-drawer-l flex h-full w-[min(300px,86vw)] flex-col bg-white shadow-2xl">
         <div className="flex h-14 shrink-0 items-center justify-between px-4">{/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}<img src={imgSrc("/brand/bingi-hms.svg")} alt="BinGi HMS" className="h-7 w-auto" /><button autoFocus onClick={onClose} aria-label="Close menu" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-5" /></button></div>
         <NavList activeId={activeId} collapsed={false} big />
+        <UpgradeCard big />
         <div className="shrink-0 border-t border-hms-line p-3"><PropertySwitcher collapsed={false} /></div>
       </div>
     </div>
   );
 }
 
-function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean; collapsed: boolean; big?: boolean }) {
+function NavItem({ item, active, collapsed, big, locked }: { item: Item; active: boolean; collapsed: boolean; big?: boolean; locked?: boolean }) {
   const Icon = item.icon;
-  const hotel = useProperty();
   return (
     <Link
       href={item.href}
@@ -300,7 +302,7 @@ function NavItem({ item, active, collapsed, big }: { item: Item; active: boolean
     >
       <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
-      {!collapsed && GATE[item.id] && !can(hotel, GATE[item.id]) ? <Lock aria-label={`Not in your plan`} className={clsx("size-3.5 shrink-0", active ? "text-white/80" : "text-hms-muted")} /> : null}
+      {!collapsed && locked ? <Lock aria-label={`Not in your plan`} className={clsx("size-3.5 shrink-0", active ? "text-white/80" : "text-hms-muted")} /> : null}
       {!collapsed && item.id === "chat" ? <ChatBadge active={active} /> : null}
       {!collapsed && item.id === "meals" ? <MealsBadge active={active} /> : null}
       {!collapsed && item.badge ? (
@@ -372,6 +374,8 @@ function PropertySwitcher({ collapsed }: { collapsed: boolean }) {
 function Header({ onMenu }: { onMenu: () => void }) {
   const path = usePathname();
   const crumbs = useCrumbs(path);
+  const { show } = useShown();
+  const targets = SEARCH_TARGETS.filter((t) => { const m = moduleOfPath(t.href.split("?")[0]); return !m || show(m); });
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-hms-line bg-white px-3 sm:gap-3 sm:px-4">
       <button onClick={onMenu} aria-label="Open menu" className="grid size-9 shrink-0 place-items-center rounded-lg hover:bg-hms-hover md:hidden"><MenuIcon className="size-5" /></button>
@@ -390,7 +394,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       <span className="ml-1 hidden rounded-full bg-hms-amber-soft px-2 py-0.5 text-[11px] font-semibold text-hms-amber lg:inline">Prototype · demo data</span>
       <Link href="/onboarding" aria-label="Add a new property (onboarding)" className="ml-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg btn-glow px-2.5 text-[12.5px] font-semibold text-white sm:inline-flex"><Plus className="size-4" aria-hidden /><span>New property</span></Link>
       <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-        <SearchBox items={SEARCH_TARGETS} />
+        <SearchBox items={targets} />
         <span className="hidden sm:block"><LanguageMenu /></span>
         <FullscreenButton className="hidden sm:grid" />
         <Notifications />

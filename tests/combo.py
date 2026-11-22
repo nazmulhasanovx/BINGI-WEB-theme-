@@ -32,8 +32,11 @@ with sync_playwright() as p:
       allowed=RANK[plan]>=RANK[need]
       go(prop,path,1100)
       lock=pg.locator(f"nav a[href='{path}'] svg[aria-label='Not in your plan']").count()>0
+      shown=pg.locator(f"nav[aria-label='HMS'] a[href='{path}']").count()>0
       gate="is part of" in pg.inner_text("main")
-      t(f"{prop}({plan}) {name}: lock={lock} gate={gate} expected {'open' if allowed else 'locked'}", lock==(not allowed) and gate==(not allowed))
+      # Modules, Plans & Roles v1: Starter hides what its plan lacks; Business/Ultra show it with a lock.
+      want_lock = (not allowed) and plan!="starter"; want_shown = allowed or plan!="starter"
+      t(f"{prop}({plan}) {name}: lock={lock} shown={shown} gate={gate} expected {'open' if allowed else 'locked'}", lock==want_lock and shown==want_shown and gate==(not allowed))
     go(prop,"/hms/reports")
     labels=pg.locator("nav[aria-label=Reports] button").all_inner_texts()
     bad=[r for r,n in REPORT_NEED.items() if (r in labels)!=(RANK[plan]>=RANK[n])]
@@ -65,6 +68,8 @@ with sync_playwright() as p:
     t(f"{prop} refunds tab ({n_rf}) = dashboard ({rf_d})", n_rf==rf_d)
     if PLANS[prop]!="starter":
       go(prop,"/hms/operations"); ov=kpi("Waiting approval"); t(f"{prop} Expenses waiting ({ov}) = dashboard ({ex_d})", ov==ex_d)
+    if PLANS[prop]!="ultra":  # Communication Center is Ultra (Modules, Plans & Roles v1): no dead-end alert below Ultra
+      t(f"{prop} no failed-message alert without Communication Center", fl_d==0 and fl_b==0); continue
     go(prop,"/hms/communication?tab=history"); pg.get_by_label("Status").select_option("failed"); pg.wait_for_timeout(250)
     nf=0 if "No messages match" in pg.inner_text("main") else pg.locator("main ul li").count()
     t(f"{prop} failed messages in history ({nf}) = dashboard ({fl_d})", nf==fl_d)

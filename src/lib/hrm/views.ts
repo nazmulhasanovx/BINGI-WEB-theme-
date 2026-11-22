@@ -5,7 +5,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import type { Area, Perm, Role } from "@/lib/settings/store";
 import type { Dept } from "./store";
 
-export type ViewId = "owner" | "management" | "front" | "housekeeping" | "kitchen" | "maintenance" | "security" | "finance";
+export type ViewId = "owner" | "management" | "front" | "housekeeping" | "kitchen" | "maintenance" | "security" | "finance" | "store" | "hr";
 export type DeptView = { id: ViewId; name: string; bn: string; dept?: Dept; role: string; home: string; modules: string[]; widgets: string[]; actions: string[] };
 
 /** Sidebar modules (same ids as the HMS sidebar) and the role area that decides view / edit. */
@@ -20,11 +20,11 @@ export const MODULES: { id: string; label: string; group: string; area?: Area; h
   { id: "staff", label: "Staff", group: "Property & team", area: "Staff", href: "/hms/staff" },
   { id: "inventory", label: "Inventory", group: "Property & team", area: "Inventory", href: "/hms/inventory" },
   { id: "other-services", label: "Other Services", group: "Property & team", area: "Bookings", href: "/hms/other-services" },
-  { id: "discounts", label: "Discounts & Rates", group: "Money & pricing", area: "Money", href: "/hms/discounts" },
-  { id: "payments", label: "Payments", group: "Money & pricing", area: "Money", href: "/hms/payments" },
-  { id: "cashbox", label: "Cashbox", group: "Money & pricing", area: "Money", href: "/hms/cashbox" },
-  { id: "finance", label: "Finance", group: "Money & pricing", area: "Money", href: "/hms/finance" },
-  { id: "operations", label: "Expenses", group: "Money & pricing", area: "Money", href: "/hms/operations" },
+  { id: "discounts", label: "Discounts & Rates", group: "Money & pricing", area: "Rates", href: "/hms/discounts" },
+  { id: "payments", label: "Payments", group: "Money & pricing", area: "Desk money", href: "/hms/payments" },
+  { id: "cashbox", label: "Cashbox", group: "Money & pricing", area: "Desk money", href: "/hms/cashbox" },
+  { id: "finance", label: "Finance", group: "Money & pricing", area: "Office money", href: "/hms/finance" },
+  { id: "operations", label: "Expenses", group: "Money & pricing", area: "Office money", href: "/hms/operations" },
   { id: "billing", label: "Billing & Subscription", group: "Money & pricing", area: "Settings", href: "/hms/billing" },
   { id: "reports", label: "Reports", group: "Reports & online", area: "Reports", href: "/hms/reports" },
   { id: "communication", label: "Communication Center", group: "Reports & online", area: "Guests", href: "/hms/communication" },
@@ -49,6 +49,8 @@ export const WIDGETS: { id: string; label: string; module: string }[] = [
   { id: "maintenance", label: "Open maintenance", module: "housekeeping" },
   { id: "orders", label: "Open meal orders", module: "meals" },
   { id: "low-stock", label: "Low stock", module: "inventory" },
+  { id: "to-receive", label: "Purchases to receive", module: "inventory" },
+  { id: "absent", label: "Late or absent today", module: "staff" },
   { id: "expenses", label: "Expenses to approve", module: "operations" },
   { id: "on-duty", label: "Staff on duty", module: "staff" },
   { id: "leave", label: "Leave requests", module: "staff" },
@@ -89,7 +91,11 @@ export const DEFAULT_VIEWS: DeptView[] = [
   { id: "security", name: "Security", bn: "সিকিউরিটি", dept: "Security", role: "", home: "dashboard",
     modules: ["dashboard", "guests"], widgets: ["arrivals", "inhouse"], actions: [] },
   { id: "finance", name: "Accounts & finance", bn: "অ্যাকাউন্টস", dept: "Finance", role: "accountant", home: "finance",
-    modules: ["dashboard", "bookings", "payments", "cashbox", "finance", "operations", "inventory", "staff", "reports"], widgets: ["revenue", "cash", "due", "expenses"], actions: ["add-expense", "take-payment", "close-day"] },
+    modules: ["dashboard", "bookings", "payments", "cashbox", "finance", "operations", "billing", "inventory", "staff", "reports"], widgets: ["revenue", "cash", "due", "expenses"], actions: ["add-expense", "take-payment", "close-day"] },
+  { id: "store", name: "Store", bn: "স্টোর", role: "store", home: "inventory",
+    modules: ["dashboard", "inventory", "meals", "operations", "reports"], widgets: ["low-stock", "to-receive", "orders"], actions: ["stock-request"] },
+  { id: "hr", name: "HR", bn: "এইচআর", role: "hr", home: "staff",
+    modules: ["dashboard", "staff", "reports"], widgets: ["on-duty", "absent", "leave"], actions: ["approve-leave"] },
 ];
 
 // ---------- store (browser only) ----------
@@ -140,6 +146,7 @@ export function levelOf(v: DeptView, mod: string, roles: Role[]): Perm {
   const r = roles.find((x) => x.id === v.role);
   if (!r) return "none";
   if (r.locked) return "edit";
+  if (mod === "billing") return r.id === "accountant" ? "view" : "none";
   const a = MODULE.get(mod)?.area;
   return a ? r.perms[a] ?? "none" : "view";
 }

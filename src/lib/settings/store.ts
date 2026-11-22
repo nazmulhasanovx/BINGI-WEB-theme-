@@ -9,7 +9,9 @@ import { HOTEL_TAX } from "@/lib/rooms/store";
 export type PayKind = "cash" | "mfs" | "bank" | "gateway";
 export type PayMethodRow = { id: string; name: string; kind: PayKind; account: string; enabled: boolean; atProperty: boolean; onWebsite: boolean; upcoming?: boolean };
 export type Perm = "none" | "view" | "edit";
-export const AREAS = ["Bookings", "Rooms & housekeeping", "Guests", "Restaurant", "Inventory", "Staff", "Money", "Reports", "Website", "Settings"] as const;
+/** Role areas (Modules, Plans & Roles v1, 22 Nov 2026). "Money" is split: Desk money = Payments + Cashbox (front desk takes money);
+ *  Office money = Finance + Expenses. Rates = Discounts & Rates. Billing is Owner only (Accountant can view). */
+export const AREAS = ["Bookings", "Rooms & housekeeping", "Guests", "Restaurant", "Inventory", "Staff", "Desk money", "Office money", "Rates", "Reports", "Website", "Settings"] as const;
 export type Area = (typeof AREAS)[number];
 export type Role = { id: string; name: string; locked?: boolean; perms: Record<Area, Perm> };
 /** Automatic messages (edited in Communication Center). New ids are merged into saved settings on read. */
@@ -76,11 +78,27 @@ const perms = (edit: Area[], view: Area[] = []) => Object.fromEntries(AREAS.map(
 export const DEFAULT_ROLES: Role[] = [
   { id: "owner", name: "Owner", locked: true, perms: all("edit") },
   { id: "manager", name: "Manager", perms: { ...all("edit"), Settings: "view" } },
-  { id: "front", name: "Front office", perms: perms(["Bookings", "Guests"], ["Rooms & housekeeping", "Restaurant", "Money"]) },
-  { id: "accountant", name: "Accountant", perms: perms(["Money", "Reports"], ["Bookings", "Inventory", "Staff"]) },
+  { id: "front", name: "Front office", perms: perms(["Bookings", "Guests", "Desk money"], ["Rooms & housekeeping", "Restaurant", "Rates"]) },
+  { id: "accountant", name: "Accountant", perms: perms(["Desk money", "Office money", "Reports"], ["Bookings", "Restaurant", "Inventory", "Staff"]) },
   { id: "hk", name: "Housekeeping", perms: perms(["Rooms & housekeeping"], ["Bookings"]) },
   { id: "fnb", name: "Restaurant", perms: perms(["Restaurant"], ["Inventory", "Guests"]) },
+  { id: "store", name: "Store", perms: perms(["Inventory"], ["Restaurant", "Office money", "Reports"]) },
+  { id: "hr", name: "HR", perms: perms(["Staff"], ["Reports"]) },
 ];
+/** Roles saved before 22 Nov had one "Money" area: copy it to Desk + Office money and Rates; add the new default roles. */
+function migrateRoles(saved: unknown): Role[] {
+  if (!Array.isArray(saved)) return DEFAULT_ROLES;
+  const old = (saved as Role[]).some((r) => "Money" in (r.perms ?? {}));
+  const out = (saved as Role[]).map((r) => {
+    const p = { ...r.perms } as Record<string, Perm>;
+    const m = p.Money;
+    if (m) { p["Desk money"] ??= m; p["Office money"] ??= m; p.Rates ??= m; delete p.Money; }
+    for (const a of AREAS) p[a] ??= r.locked ? "edit" : "none";
+    return { ...r, perms: p as Record<Area, Perm> };
+  });
+  if (old) for (const d of DEFAULT_ROLES) if (!out.some((r) => r.id === d.id)) out.push(d);
+  return out;
+}
 
 const seed = (h: Hotel): Settings => ({
   profile: { name: h.name, type: String(h.propertyType ?? "hotel"), phone: h.phone ?? "", email: h.email ?? "", address: h.address ?? "", city: h.city ?? "", postcode: "", tradeLicense: "", tin: "", bin: "", billingName: "", billingPhone: "", billingEmail: "" },
@@ -121,7 +139,7 @@ function mergeRules(saved?: MsgRule[]): MsgRule[] {
 function read(h: Hotel): Settings {
   const c = cache.get(h.slug); if (c) { applyTax(c); return c; }
   let s = seed(h);
-  try { const raw = localStorage.getItem(KEY(h.slug)); if (raw) { const v = JSON.parse(raw); s = { ...s, ...v, profile: { ...s.profile, ...v.profile }, policy: { ...s.policy, ...v.policy }, tax: { ...s.tax, ...v.tax }, hk: { ...s.hk, ...v.hk }, docs: { ...s.docs, ...v.docs, contract: { ...s.docs.contract, ...v.docs?.contract } }, messages: { ...s.messages, ...v.messages, rules: mergeRules(v.messages?.rules) } }; } } catch {}
+  try { const raw = localStorage.getItem(KEY(h.slug)); if (raw) { const v = JSON.parse(raw); s = { ...s, ...v, profile: { ...s.profile, ...v.profile }, policy: { ...s.policy, ...v.policy }, tax: { ...s.tax, ...v.tax }, hk: { ...s.hk, ...v.hk }, docs: { ...s.docs, ...v.docs, contract: { ...s.docs.contract, ...v.docs?.contract } }, messages: { ...s.messages, ...v.messages, rules: mergeRules(v.messages?.rules) }, roles: migrateRoles(v.roles) }; } } catch {}
   cache.set(h.slug, s);
   applyTax(s);
   return s;

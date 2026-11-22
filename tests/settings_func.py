@@ -108,7 +108,7 @@ with sync_playwright() as p:
   c0=inv.count(); inv.first.click(); pg.wait_for_timeout(300)
   t("invite sends", "Invite sent" in ST() and pg.get_by_role("button",name=re.compile("^Invite ")).count()==c0-1)
   pg.get_by_role("button",name="Roles").click(); pg.wait_for_timeout(200)
-  pg.get_by_label("Front office · Money").select_option("edit")
+  pg.get_by_label("Front office · Office money").select_option("edit")
   pg.get_by_label("New role name").fill("Night auditor"); pg.get_by_role("button",name="Add role").click(); save()
   t("roles saved + new role", "Night auditor" in M() and "Roles saved" in ST())
   pg.get_by_role("button",name="Users").click(); pg.wait_for_timeout(200)

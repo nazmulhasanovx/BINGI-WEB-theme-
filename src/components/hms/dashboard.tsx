@@ -28,6 +28,9 @@ import { useExpenses } from "@/lib/expenses/store";
 import { useRestaurant } from "./meals/shared";
 import { useChatData } from "./chat/page";
 import { useCommData } from "./communication/data";
+import { useAccess } from "./access";
+import { RoleHome } from "./role-home";
+import { seesLocks } from "@/lib/access";
 import { AlertTriangle, Globe, MessageSquare, Receipt, RotateCcw } from "lucide-react";
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -36,7 +39,14 @@ const short = (iso: string) => `${iso.slice(8, 10)} ${MON[Number(iso.slice(5, 7)
 const stay = (a: string, b: string) => (a.slice(0, 7) === b.slice(0, 7) ? `${a.slice(8, 10)}–${short(b)}` : `${short(a)} – ${short(b)}`);
 const bdt = (n: number) => `BDT ${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
 
+/** Owner and Manager get the plan dashboard; every other role gets its own home (role-home.tsx). */
 export function Dashboard() {
+  const { view, roleId } = useAccess();
+  if (view && !seesLocks(roleId)) return <RoleHome v={view} />;
+  return <PlanDashboard />;
+}
+
+function PlanDashboard() {
   const [allPri, setAllPri] = useState(false);
   const h = useProperty();
   const { st } = useRooms(h);
@@ -84,6 +94,10 @@ export function Dashboard() {
   const failed = comm.st.log.filter((m) => m.status === "failed").length;
   const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
   const webReq = useGuestState(h.slug).bookings.filter((b) => b.bookingStatus === "pending").length;
+  // Starter: where this month's bookings came from (walk-in and phone count as direct at the desk).
+  const month = TODAY.slice(0, 7);
+  const mine = bk.list.filter((b) => b.from.startsWith(month) && b.status !== "Cancelled");
+  const sources: [string, number][] = [["Walk-in & phone", mine.filter((b) => b.channel === "Walk-in" || b.channel === "Phone").length], ["Website", mine.filter((b) => b.channel === "Website").length], ["Marketplace", mine.filter((b) => b.channel === "Marketplace").length], ["Other", mine.filter((b) => !["Walk-in", "Phone", "Website", "Marketplace"].includes(b.channel)).length]];
   const priorities = [
     { icon: Globe, text: `${n(webReq, "website request")} to accept`, href: "/hms/bookings", show: webReq > 0 },
     { icon: Wallet, text: `${n(collect.length, "guest")} to collect from today`, href: "/hms/payments?tab=collect", show: collect.length > 0 },
@@ -93,7 +107,7 @@ export function Dashboard() {
     { icon: MessageSquare, text: `${n(chat.unread, "unread guest message")}`, href: "/hms/chat", show: chat.unread > 0 },
     { icon: Receipt, text: `${n(exPending, "expense")} waiting approval`, href: "/hms/operations?tab=list", show: exPending > 0 },
     { icon: RotateCcw, text: `${n(refunds, "refund")} to give back`, href: "/hms/payments?tab=refunds", show: refunds > 0 },
-    { icon: AlertTriangle, text: `${n(failed, "message")} not delivered`, href: "/hms/communication?tab=history", show: failed > 0 },
+    { icon: AlertTriangle, text: `${n(failed, "message")} not delivered`, href: "/hms/communication?tab=history", show: failed > 0 && can(h, "communication") },
     { icon: UserRoundCheck, text: `${n(attIssues, "attendance exception")}`, href: "/hms/staff/attendance", show: hasHrm && attIssues > 0 },
   ].filter((p) => p.show);
 
@@ -182,7 +196,7 @@ export function Dashboard() {
               </ul></>
             ) : <p className="px-5 pb-5 text-[14px] text-hms-muted">No arrivals today. Add rooms and publish them to start taking bookings.</p>}
           </section>
-          <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} qr={qrWaiting} orders={ordersToday} menu={menuItems} />
+          <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} qr={qrWaiting} orders={ordersToday} menu={menuItems} sources={sources} />
         </div>
       </div>
     </div>
@@ -216,8 +230,8 @@ function WebsiteCard({ h, published, domain }: { h: Hotel; published: boolean; d
   );
 }
 
-/** Third card by plan: Ultra = team & inventory · Business = restaurant today · Starter = upgrade. */
-function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant, qr, orders, menu }: { onDuty: number; lowStock: number; hasHrm: boolean; hasRestaurant: boolean; qr: number; orders: number; menu: number }) {
+/** Third card by plan: Ultra = team & inventory · Business = restaurant today · Starter = booking sources (the upgrade card sits in the sidebar). */
+function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant, qr, orders, menu, sources }: { onDuty: number; lowStock: number; hasHrm: boolean; hasRestaurant: boolean; qr: number; orders: number; menu: number; sources: [string, number][] }) {
   if (hasHrm) {
     const rows: [typeof UsersRound, string, string][] = [[UsersRound, "Staff on duty", String(onDuty)], [Boxes, "Low stock", `${lowStock} item${lowStock === 1 ? "" : "s"}`], [ChefHat, "Restaurant orders today", String(orders)]];
     return <Rows title="Team & inventory" rows={rows} cta="Open Staff" href="/hms/staff" />;
@@ -226,10 +240,21 @@ function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant, qr, orders, menu }:
     const rows: [typeof UsersRound, string, string][] = [[QrCode, "QR orders waiting", String(qr)], [ChefHat, "Orders today", String(orders)], [Sparkles, "Menu items on sale", String(menu)]];
     return <Rows title="Restaurant today" rows={rows} cta="Open meals" href="/hms/meals" />;
   }
+  const total = sources.reduce((t, [, n]) => t + n, 0);
   return (
-    <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#b11c29] to-[#7a1320] p-5 text-white">
-      <div><Sparkles className="size-6" /><h2 className="mt-3 text-[18px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, restaurant & QR ordering and expenses — and lower booking fees.</p></div>
-      <Link href="/hms/billing" className="mt-5 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-white px-4 text-[14px] font-semibold text-[#8e1621]">See Business <ArrowRight className="size-4" /></Link>
+    <section aria-labelledby="src" className="flex flex-col rounded-xl border border-hms-line bg-white p-5">
+      <h2 id="src" className="text-[18px] font-bold">Booking sources</h2>
+      <p className="text-[13px] text-hms-muted">This month · {total} booking{total === 1 ? "" : "s"}</p>
+      <ul className="mt-2 flex-1 divide-y divide-hms-line">
+        {sources.filter(([k, n]) => k !== "Other" || n > 0).map(([k, n]) => (
+          <li key={k} className="flex items-center gap-3 py-2.5">
+            <span className="flex-1 text-[14.5px]">{k}</span>
+            <span className="h-1.5 w-20 overflow-hidden rounded-full bg-hms-hover" aria-hidden><span className="block h-full rounded-full bg-[#d9622b]" style={{ width: `${total ? (n / total) * 100 : 0}%` }} /></span>
+            <span className="w-8 text-right text-[18px] font-bold tabular-nums">{n}</span>
+          </li>
+        ))}
+      </ul>
+      <Link href="/hms/reports" className="mt-3 inline-flex h-10 items-center justify-center rounded-lg border border-hms-line text-[14px] font-semibold hover:bg-hms-hover">Open reports</Link>
     </section>
   );
 }

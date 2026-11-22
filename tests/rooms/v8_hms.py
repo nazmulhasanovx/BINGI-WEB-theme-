@@ -43,7 +43,7 @@ with sync_playwright() as p:
     # settings amenities
     pg.goto(B+"/hms/settings/profile"); pg.wait_for_timeout(1500)
     body=pg.locator("body").inner_text()
-    t(tag+"settings: property amenities card", "Property amenities" in body and "Most guests look for" in body)
+    t(tag+"settings: property amenities card", "Amenities" in body and "Most guests look for" in body)
     pg.get_by_role("button", name="Parking").first.click(); pg.wait_for_timeout(200)
     t(tag+"settings: amenity toggles → save bar", "Unsaved changes" in pg.locator("body").inner_text())
     pg.screenshot(path=f"{SH}/{W}-settings.png", full_page=True)
