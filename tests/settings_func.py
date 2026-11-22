@@ -39,7 +39,8 @@ with sync_playwright() as p:
   save(); t(f"profile saved ({ST()})", "saved" in ST().lower())
   # who gets bills now lives on Billing
   pg.goto(B+"/hms/billing"); pg.wait_for_timeout(1200)
-  pg.get_by_label("Billing contact name").fill("Rafiq Owner"); pg.get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300)
+  pg.get_by_role("button",name=re.compile("^Bills go to")).click(); pg.wait_for_timeout(200)
+  pg.get_by_label("Billing contact name").fill("Rafiq Owner"); pg.get_by_role("dialog").get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300)
   pg.goto(B+"/hms/settings"); pg.wait_for_timeout(900)
   done=re.search(r"(\d+) of (\d+)", M())
   t(f"checklist updated (BIN + billing) {done and done.group(0)}", done is not None and int(done.group(1))>=4 and "Property profile updated" in M())
