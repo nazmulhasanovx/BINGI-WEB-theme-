@@ -24,9 +24,9 @@ export function methodsFrom(h: Hotel, rows: PayRow[] | undefined, pol?: { websit
   // HMS Settings › How guests book › Website (full / partial advance / booking request)
   if (booking?.website) {
     const c = booking.website; const out: PaymentMethod[] = [];
-    if (c.full) out.push(...base.filter((m) => m.kind === "mfs-manual" || m.kind === "card-online"));
-    const mfs = base.find((m) => m.kind === "mfs-manual") as Extract<PaymentMethod, { kind: "mfs-manual" }> | undefined;
-    if (c.partial && mfs) out.splice(0, 0, { kind: "advance", percent: Math.min(100, Math.max(1, c.pct || 30)), via: { provider: mfs.provider, number: mfs.number } });
+    // online money always goes through BinGi (SSLCommerz / EPS), not to the hotel's own numbers
+    if (c.full) out.push({ kind: "card-online", gatewayApproved: true });
+    if (c.partial) out.push({ kind: "advance", percent: Math.min(100, Math.max(1, c.pct || 30)) });
     if (c.request) out.push({ kind: "pay-at-property" });
     return out.length ? out : base;
   }

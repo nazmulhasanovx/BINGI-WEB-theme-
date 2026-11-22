@@ -12,7 +12,7 @@ export interface Cart {
   promo?: string;
 }
 
-export type PaymentChoice = "pay-at-property" | "mfs-manual" | "advance" | "card-online";
+export type PaymentChoice = "pay-at-property" | "mfs-manual" | "advance" | "card-online" | "online-full";
 
 export interface GuestBooking {
   id: string; // WBK-2026-000123
@@ -23,7 +23,7 @@ export interface GuestBooking {
   guest: { name: string; phone: string; email?: string; arrival?: string; request?: string };
   payment: { method: PaymentChoice; dueNow: number; reference?: string; provider?: string };
   bookingStatus: "pending" | "confirmed" | "cancelled";
-  paymentStatus: "unpaid" | "pay-at-hotel" | "advance-submitted" | "paid";
+  paymentStatus: "unpaid" | "pay-at-hotel" | "advance-submitted" | "advance-paid" | "paid";
   /** Set when the hotel accepts it in BinGi HMS Bookings. */
   hmsCode?: string;
 }

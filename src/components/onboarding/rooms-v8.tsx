@@ -212,7 +212,7 @@ function PriceBreak({ d, rows }: { d: Draft; rows: [string, number][] }) {
             <td className="px-3 py-2.5 text-right">{tk(g * (1 - mkt / 100))}</td>
           </tr>); })}</tbody>
       </table>
-      <p className="border-t border-[#eef0f3] px-3 py-2 text-[12px] text-[#5b6270]">{t(`${PLANS[plan].label} প্ল্যানের BinGi ফি, গেস্টের মোট বিলের উপর। ভ্যাট আর সার্ভিস চার্জ আপনার কাছেই থাকে, সরকারকে জমা আপনার দায়িত্ব। অনলাইন পেমেন্টের গেটওয়ে চার্জ আলাদা।`, `BinGi fee of the ${PLANS[plan].label} plan, on the guest's total. VAT and service stay with you (you remit VAT). Online payment gateway charge is separate.`)}</p>
+      <p className="border-t border-[#eef0f3] px-3 py-2 text-[12px] text-[#5b6270]">{t(`${PLANS[plan].label} প্ল্যানের BinGi ফি, গেস্টের মোট বিলের উপর। ভ্যাট আর সার্ভিস চার্জ আপনার কাছেই থাকে, সরকারকে জমা আপনার দায়িত্ব। অনলাইনের টাকা SSLCommerz / EPS হয়ে আগে BinGi-তে আসে, আপনি চাইলে আপনার অ্যাকাউন্টে যায় (গেটওয়ে চার্জ আলাদা)।`, `BinGi fee of the ${PLANS[plan].label} plan, on the guest's total. VAT and service stay with you (you remit VAT). Online money comes to BinGi through SSLCommerz / EPS and is paid out to you when you ask (gateway charge separate).`)}</p>
     </div>
   );
 }

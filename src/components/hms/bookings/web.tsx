@@ -35,7 +35,8 @@ function Req({ w, setStatus }: { w: GuestBooking; setStatus: ReturnType<typeof u
   const [unit, setUnit] = useState(free[0]?.code ?? "");
   const [paidOk, setPaidOk] = useState(false);
   const [err, setErr] = useState("");
-  const adv = w.paymentStatus === "advance-submitted" ? w.payment.dueNow : 0;
+  const online = w.paymentStatus === "advance-paid" || (w.paymentStatus === "paid" && w.payment.dueNow > 0);
+  const adv = w.paymentStatus === "advance-submitted" || online ? w.payment.dueNow : 0;
   const accept = () => {
     setErr("");
     if (!cat) return setErr("This room type is not set up in Rooms — add it first");
@@ -48,8 +49,10 @@ function Req({ w, setStatus }: { w: GuestBooking; setStatus: ReturnType<typeof u
     if (!res.ok) return setErr(res.error);
     const code = res.codes[0];
     if (w.quote.extrasTotal > 0) bk.addCharge(code, "Website extras", w.quote.extrasTotal);
-    if (adv > 0 && paidOk) bk.pay(code, adv, "bKash", `Website advance · ${w.payment.provider ?? "MFS"}${w.payment.reference ? ` ref ${w.payment.reference}` : ""}`);
-    setStatus(w.id, "confirmed", adv > 0 && paidOk ? "paid" : undefined, code);
+    const way = (w.payment.provider ?? "").split(" ")[0];
+    if (online) bk.pay(code, adv, way === "Card" ? "Card" : way === "Bank" ? "Bank" : "bKash", `Website online · ${w.payment.provider ?? "BinGi"}${w.payment.reference ? ` ref ${w.payment.reference}` : ""}`);
+    else if (adv > 0 && paidOk) bk.pay(code, adv, "bKash", `Website advance · ${w.payment.provider ?? "MFS"}${w.payment.reference ? ` ref ${w.payment.reference}` : ""}`);
+    setStatus(w.id, "confirmed", online ? w.paymentStatus : adv > 0 && paidOk ? "paid" : undefined, code);
     toast(`${w.guest.name} accepted · ${code}${unit ? ` · Room ${unit}` : ""}`);
     open(code);
   };
@@ -61,14 +64,14 @@ function Req({ w, setStatus }: { w: GuestBooking; setStatus: ReturnType<typeof u
           <p className="text-[13.5px] text-[#3a414c]">{r?.name ?? w.stay.roomSlug} · {dm(from)} → {dm(to)} · {n} night{n > 1 ? "s" : ""} · {w.stay.adults + w.stay.children} guest{w.stay.adults + w.stay.children > 1 ? "s" : ""}{w.stay.plan === "breakfast" ? " · with breakfast" : ""}</p>
           {w.guest.request && <p className="text-[13px] text-hms-muted">“{w.guest.request}”</p>}
         </div>
-        <div className="text-right"><b className="text-[16px] tabular-nums">{tk(w.quote.total)}</b><p className="text-[12.5px] text-hms-muted">{w.paymentStatus === "pay-at-hotel" ? "Pays at the hotel" : w.paymentStatus === "advance-submitted" ? `${tk(adv)} sent by ${w.payment.provider ?? "MFS"} — check it` : w.paymentStatus}</p></div>
+        <div className="text-right"><b className="text-[16px] tabular-nums">{tk(w.quote.total)}</b><p className="text-[12.5px] text-hms-muted">{w.paymentStatus === "pay-at-hotel" ? "Pays at the hotel" : w.paymentStatus === "advance-submitted" ? `${tk(adv)} sent by ${w.payment.provider ?? "MFS"} — check it` : online ? `${tk(adv)} paid online · BinGi` : w.paymentStatus}</p></div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <select aria-label={`Room for ${w.guest.name}`} value={unit} onChange={(e) => setUnit(e.target.value)} className="h-10 rounded-lg border border-hms-line bg-white px-2 text-[14px]">
           <option value="">{free.length ? "Assign later" : "No room free — assign later"}</option>
           {free.map((u) => <option key={u.code} value={u.code}>Room {u.code}</option>)}
         </select>
-        {adv > 0 && <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={paidOk} onChange={(e) => setPaidOk(e.target.checked)} className="size-4 accent-[#b11c29]" />I checked the {tk(adv)} payment{w.payment.reference ? ` (ref ${w.payment.reference})` : ""}</label>}
+        {adv > 0 && !online && <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={paidOk} onChange={(e) => setPaidOk(e.target.checked)} className="size-4 accent-[#b11c29]" />I checked the {tk(adv)} payment{w.payment.reference ? ` (ref ${w.payment.reference})` : ""}</label>}
         <span className="flex-1" />
         <button onClick={() => { setStatus(w.id, "cancelled"); toast(`${w.guest.name}'s request declined`); }} className={clsx(bSoft, "!h-10")}><XIcon className="size-4" />Decline</button>
         <button onClick={accept} className={clsx(bMain, "!h-10")}><Check className="size-4" />Accept</button>

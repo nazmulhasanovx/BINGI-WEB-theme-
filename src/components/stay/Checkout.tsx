@@ -3,6 +3,7 @@
 import { useSiteRules } from "@/lib/site-rules";
 import { BookingPausedCard, useBookingPaused } from "@/components/site/BookingPaused";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { Check, Lock } from "lucide-react";
@@ -24,21 +25,43 @@ interface Option {
   mfs?: { provider: string; number: string };
 }
 
-/** Only methods the hotel has switched on. Card appears only when the gateway is approved. */
+/** Online money goes through BinGi's checkout (SSLCommerz / EPS) — never to the hotel's own number. */
 function paymentOptions(methods: PaymentMethod[]): Option[] {
-  const mfs = methods.find((m) => m.kind === "mfs-manual") as Extract<PaymentMethod, { kind: "mfs-manual" }> | undefined;
   const out: Option[] = [];
-  for (const m of methods) {
-    if (m.kind === "pay-at-property")
-      out.push({ id: "pay-at-property", title: "Request to book", sub: "The hotel confirms first. Pay when you arrive.", dueNow: () => 0, needsRef: false });
-    if (m.kind === "advance" && (m.via ?? mfs))
-      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${(m.via ?? mfs)!.provider}`, sub: "Rest on arrival.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs: m.via ?? mfs });
-    if (m.kind === "mfs-manual")
-      out.push({ id: "mfs-manual", title: `Pay in full with ${m.provider}`, sub: `Send Money to ${m.number}.`, dueNow: (t) => t, needsRef: true, mfs: { provider: m.provider, number: m.number } });
-    if (m.kind === "card-online" && m.gatewayApproved)
-      out.push({ id: "card-online", title: "Card / online", sub: "Secure online payment.", dueNow: (t) => t, needsRef: false });
-  }
+  const online = methods.some((m) => m.kind === "mfs-manual" || (m.kind === "card-online" && m.gatewayApproved));
+  const adv = methods.find((m) => m.kind === "advance") as Extract<PaymentMethod, { kind: "advance" }> | undefined;
+  if (online) out.push({ id: "online-full", title: "Pay in full online", sub: "bKash, Nagad, card or bank — secure checkout by BinGi.", dueNow: (t) => t, needsRef: false });
+  if (adv) out.push({ id: "advance", title: `Pay ${adv.percent}% online now`, sub: "Rest at the hotel. Secure checkout by BinGi.", dueNow: (t) => Math.round((t * adv.percent) / 100), needsRef: false });
+  if (methods.some((m) => m.kind === "pay-at-property")) out.push({ id: "pay-at-property", title: "Request to book", sub: "The hotel confirms first. Pay when you arrive.", dueNow: () => 0, needsRef: false });
   return out;
+}
+const GATEWAY_WAYS = [["bKash", "Approve in the bKash app"], ["Nagad", "Approve in the Nagad app"], ["Card", "Visa · Mastercard · Amex"], ["Bank", "Internet banking"]] as const;
+/** Stand-in for the SSLCommerz / EPS payment page. Prototype: nothing is charged. */
+function GatewaySheet({ hotel, amount, onPaid, onClose }: { hotel: Hotel; amount: number; onPaid: (way: string, ref: string) => void; onClose: () => void }) {
+  const [way, setWay] = useState<string>("bKash");
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/30 sm:items-center sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Secure payment" onClick={(e) => e.stopPropagation()} className="w-full max-w-[440px] rounded-t-3xl bg-surface p-5 shadow-2xl sm:rounded-3xl">
+        <p className="flex items-center gap-2 text-[13px] font-semibold text-muted"><Lock className="size-4" />Secure payment · SSLCommerz / EPS</p>
+        <p className="mt-2 text-[14px] text-muted">To BinGi for {hotel.name}</p>
+        <p className="text-[30px] font-bold tabular-nums">{formatMoney(amount)}</p>
+        <div role="radiogroup" aria-label="Pay with" className="mt-4 space-y-2">
+          {GATEWAY_WAYS.map(([id, sub]) => (
+            <button key={id} role="radio" aria-checked={way === id} onClick={() => setWay(id)} className={clsx("flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left", way === id ? "border-action bg-brand-soft" : "border-line")}>
+              <span className={clsx("size-4 shrink-0 rounded-full border-2", way === id ? "border-action bg-action" : "border-line")} />
+              <span><b className="block text-[15px]">{id}</b><span className="text-[13px] text-muted">{sub}</span></span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[12.5px] text-muted">Prototype — nothing is charged. The real page opens on the gateway.</p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button className="flex-1" onClick={() => onPaid(way, `SSL${Date.now().toString(36).toUpperCase().slice(-8)}`)}>Pay {formatMoney(amount)}</Button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 function Section({ n, title, children, done }: { n: number; title: string; children: React.ReactNode; done?: boolean }) {
@@ -77,7 +100,7 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
   const rules = useSiteRules(hotel);
   const options = paymentOptions(rules.methods);
   const [pay, setPay] = useState<PaymentChoice>(options[0]?.id ?? "pay-at-property");
-  const [ref, setRef] = useState("");
+  const [gate, setGate] = useState(false);
   const [agree, setAgree] = useState(false);
   const [tried, setTried] = useState(false);
 
@@ -89,12 +112,17 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
   const opt = options.find((o) => o.id === pay) ?? options[0];
   const dueNow = opt ? opt.dueNow(q.total) : 0;
   const guestOk = name.trim().length >= 2 && !!phone && (!email || /\S+@\S+\.\S+/.test(email));
-  const payOk = !opt?.needsRef || ref.trim().length >= 6;
+  const payOk = !!opt;
   const ready = guestOk && payOk && agree;
 
   const confirm = () => {
     setTried(true);
     if (!ready || !opt) return;
+    if (dueNow > 0) { setGate(true); return; }
+    place();
+  };
+  const place = (way?: string, ref?: string) => {
+    if (!opt) return;
     const b: GuestBooking = {
       id: newBookingId(),
       createdAt: new Date().toISOString(),
@@ -102,9 +130,9 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
       extras: cart.extras,
       quote: q,
       guest: { name: name.trim(), phone, email: email || undefined, arrival: arrival || undefined, request: request || undefined },
-      payment: { method: opt.id, dueNow, reference: ref || undefined, provider: opt.mfs?.provider },
+      payment: { method: opt.id, dueNow, reference: ref, provider: way ? `${way} via BinGi` : undefined },
       bookingStatus: "pending",
-      paymentStatus: opt.id === "pay-at-property" ? "pay-at-hotel" : opt.id === "card-online" ? "paid" : "advance-submitted",
+      paymentStatus: opt.id === "pay-at-property" ? "pay-at-hotel" : opt.id === "advance" ? "advance-paid" : "paid",
     };
     addBooking(b);
     signIn({ phone, name: name.trim() });
@@ -154,7 +182,7 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
             <div className="space-y-2" role="radiogroup" aria-label="Payment method">
               {options.map((o) => (
                 <label key={o.id} className={clsx("flex cursor-pointer gap-3 rounded-2xl border p-4 transition-colors", pay === o.id ? "border-action bg-brand-soft" : "border-line hover:border-brand-ring")}>
-                  <input type="radio" name="pay" className="sr-only" checked={pay === o.id} onChange={() => { setPay(o.id); setRef(""); }} />
+                  <input type="radio" name="pay" className="sr-only" checked={pay === o.id} onChange={() => setPay(o.id)} />
                   <span className={clsx("mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2", pay === o.id ? "border-action bg-action" : "border-line")}>
                     {pay === o.id && <Check className="size-3 text-on-action" strokeWidth={3} />}
                   </span>
@@ -165,13 +193,7 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
                 </label>
               ))}
             </div>
-            {opt?.needsRef && (
-              <label className="mt-4 block">
-                <span className="text-sm font-semibold">{opt.mfs?.provider} transaction ID</span>
-                <input className={clsx(input, "mt-1.5 uppercase", tried && !payOk && "border-red-400")} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. 9JH4K2L8PQ" />
-                <span className="mt-1.5 block text-[13px] text-muted">Send {formatMoney(dueNow)} to {opt.mfs?.number}. The hotel checks it and confirms your booking.</span>
-              </label>
-            )}
+            <p className="mt-3 flex items-center gap-1.5 text-[13px] text-muted"><Lock className="size-3.5" />Online payments go to BinGi through SSLCommerz / EPS, then to {hotel.name}.</p>
           </Section>
 
           <Section n={3} title="Review" done={agree}>
@@ -182,7 +204,7 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
             </label>
             {tried && !agree && <p className="mt-1.5 text-sm text-red-700">Please accept the policies to continue.</p>}
             <Button size="lg" className="mt-5 hidden w-full md:flex" onClick={confirm}>
-              <Lock className="size-4" /> {dueNow ? `Book · pay ${formatMoney(dueNow)} now` : "Book now · pay on arrival"}
+              <Lock className="size-4" /> {dueNow ? `Book · pay ${formatMoney(dueNow)} now` : "Book now · send request"}
             </Button>
           </Section>
         </div>
@@ -202,13 +224,14 @@ function CheckoutForm({ hotel }: { hotel: Hotel }) {
       <div className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-4 pt-3 shadow-[0_-8px_24px_-18px_rgb(22_24_29/0.35)] md:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted">{dueNow ? "Pay now" : "Pay on arrival"}</p>
+            <p className="text-xs text-muted">{dueNow ? "Pay now online" : "Pay at the hotel"}</p>
             <p className="text-lg font-bold tabular-nums">{formatMoney(dueNow || q.total)}</p>
           </div>
           <Button size="lg" onClick={confirm}>Book now</Button>
         </div>
         {tried && !ready && <p className="pb-1 pt-2 text-center text-[13px] text-red-700">Complete the highlighted steps above.</p>}
       </div>
+      {gate && <GatewaySheet hotel={hotel} amount={dueNow} onClose={() => setGate(false)} onPaid={(way, r) => { setGate(false); place(way, r); }} />}
     </div>
   );
 }

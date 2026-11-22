@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ArrowUpRight, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
-import { useSettings, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
+import { useSettings, bookingOf, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
 import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
@@ -19,6 +19,7 @@ import { useSite } from "@/lib/site";
 import { PLAN_LABEL } from "@/themes/manifest";
 import { PROP_ALL, propTop } from "@/lib/onboarding/rooms-v8";
 import { hasRestaurant } from "../bookings/extras";
+import { feesOf } from "@/lib/finance/store";
 import { OtaCard } from "./ota";
 import { printHtml } from "../meals/print";
 import { PhotoButton } from "../photo";
@@ -88,6 +89,8 @@ const Pill = ({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 const Grid = ({ children, cols = 2 }: { children: ReactNode; cols?: 2 | 3 }) => <div className={clsx("grid gap-4", cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>{children}</div>;
 const Go = ({ href, children }: { href: string; children: ReactNode }) => <Link href={href} className="inline-flex items-center gap-1 text-[13.5px] font-medium text-hms-blue hover:underline">{children}<ArrowUpRight className="size-3.5" /></Link>;
 
+/** "8% marketplace · 1% website" for the property's plan. */
+const PLANS_FEES = (h: Hotel) => { if (h.plan === "enterprise") return "By agreement"; const [m, w] = feesOf(h); return `${w}% website · ${m}% marketplace`; };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const okPhone = (v: string) => { const d = v.replace(/\D/g, ""); return /^(?:880|0)1[3-9]\d{8}$/.test(d) || /^(?:880|0)[2-9]\d{6,9}$/.test(d); };
 /** Settings pages register “unsaved changes” here so the left list can ask before leaving. */
@@ -417,25 +420,30 @@ function ChRow({ name, desc, status, tone, href }: { name: string; desc: string;
 
 // ============ Money ============
 export function PaymentsPage() {
-  const { s, save, toast } = useS();
+  const { h, s, save, toast } = useS();
   const f = useDraft(s.payments); const rows = f.d;
   const set = (id: string, patch: Partial<(typeof rows)[number]>) => f.setD(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const bw = bookingOf(s).website;
+  const choose = [bw.full && "Full payment", bw.partial && `${bw.pct}% advance`, bw.request && "Booking request"].filter(Boolean).join(" · ") || "Not set";
   return (
     <>
-      <PageHead title="Guest payments" desc="How guests can pay you. Cash goes to the Cashbox." />
-      <Card pad={false}>
-        <div className="hidden grid-cols-[1.3fr_1.4fr_90px_90px_60px] gap-3 border-b border-hms-line px-5 py-2.5 text-[12.5px] font-semibold text-hms-muted md:grid"><span>Method</span><span>Account</span><span>At hotel</span><span>Website</span><span>On</span></div>
-        {rows.map((r) => (
-          <div key={r.id} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2.5 border-b border-hms-line px-5 py-3 last:border-b-0 md:grid-cols-[1.3fr_1.4fr_90px_90px_60px]">
-            <p className={clsx("flex items-center gap-2 text-[14.5px] font-medium", !r.enabled && "text-hms-muted")}>{r.name}{r.upcoming && <Badge tone="amber">Coming soon</Badge>}</p>
-            <span className="justify-self-end md:order-last md:justify-self-start"><Toggle label={`${r.name} on`} on={r.enabled} disabled={r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { enabled: v })} /></span>
-            <div className="col-span-2 md:col-span-1">{r.kind === "cash" ? <span className="text-[13.5px] text-hms-muted">Cashbox</span> : r.upcoming ? <span className="text-[13.5px] text-hms-muted">—</span> : <Input aria-label={`${r.name} account`} value={r.account} onChange={(e) => set(r.id, { account: e.target.value })} placeholder={r.kind === "mfs" ? "Merchant / personal number" : "Bank, account no., branch"} />}</div>
-            <label className="col-span-2 flex items-center gap-2 text-[13px] text-hms-muted md:col-span-1"><Toggle label={`${r.name} at the hotel`} on={r.enabled && r.atProperty} disabled={!r.enabled || r.upcoming} onChange={(v) => set(r.id, { atProperty: v })} /><span className="md:hidden">At the hotel</span></label>
-            <label className="col-span-2 flex items-center gap-2 text-[13px] text-hms-muted md:col-span-1"><Toggle label={`${r.name} on website`} on={r.enabled && r.onWebsite} disabled={!r.enabled || r.upcoming || r.kind === "cash"} onChange={(v) => set(r.id, { onWebsite: v })} /><span className="md:hidden">On website</span></label>
+      <PageHead title="Guest payments" desc="Online money comes through BinGi. Money at the hotel stays with you." />
+      <Card title="Online — website & marketplace" action={<Badge tone="amber">Prototype · no money moves</Badge>}>
+        <Row label="Payment page"><Value>SSLCommerz / EPS <span className="font-normal text-hms-muted">· run by BinGi</span></Value></Row>
+        <Row label="Guests pay with"><Value>bKash · Nagad · card · bank</Value></Row>
+        <Row label="Money goes to" hint="Then to you when you ask"><span className="flex flex-wrap items-center gap-3"><Value>Your BinGi balance</Value><Go href="/hms/finance?tab=settlements">Request a payout</Go></span></Row>
+        <Row label="Fees"><span className="flex flex-wrap items-center gap-3"><span className="text-[14.5px]">{PLANS_FEES(h)} + gateway fee</span><Go href="/hms/finance">Finance</Go></span></Row>
+        <Row label="What guests can choose"><Go href="/hms/settings/booking">{choose}</Go></Row>
+      </Card>
+      <Card title="At the property" desc="Front desk takes these. Payouts also go to a bKash or bank account here." className="mt-4" pad={false}>
+        {rows.filter((r) => r.kind !== "gateway").map((r) => (
+          <div key={r.id} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2.5 border-b border-hms-line px-5 py-3 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)_auto]">
+            <p className={clsx("text-[14.5px] font-medium", !r.enabled && "text-hms-muted")}>{r.name}</p>
+            <span className="justify-self-end sm:order-last"><Toggle label={`${r.name} on`} on={r.enabled} disabled={r.kind === "cash"} onChange={(v) => set(r.id, { enabled: v, atProperty: v })} /></span>
+            <div className="col-span-2 sm:col-span-1">{r.kind === "cash" ? <span className="text-[13.5px] text-hms-muted">Goes to the Cashbox</span> : r.id === "card" ? <span className="text-[13.5px] text-hms-muted">POS machine at the desk</span> : <Input aria-label={`${r.name} account`} value={r.account} disabled={!r.enabled} onChange={(e) => set(r.id, { account: e.target.value })} placeholder={r.kind === "mfs" ? "Merchant / personal number" : "Bank, account no., branch"} />}</div>
           </div>
         ))}
       </Card>
-      <p className="mt-3 text-[13px] text-hms-muted">Website payments are recorded by staff after checking — no live gateway in this prototype.</p>
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
         const miss = rows.find((r) => r.enabled && !r.upcoming && r.kind !== "cash" && r.kind !== "gateway" && r.id !== "card" && !r.account.trim());
         if (miss) return toast(`Add the ${miss.name} account first`);

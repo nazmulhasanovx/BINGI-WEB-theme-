@@ -27,10 +27,10 @@ export function ledger(o: {
   for (const b of o.bookings) {
     const guest = o.guestName(b.guestId);
     for (const p of b.payments) {
-      const web = p.note?.startsWith("Website advance");
+      const web = (p.note?.startsWith("Website advance") || p.note?.startsWith("Website online"));
       rows.push({
         id: `b-${b.code}-${p.id}`, at: p.at, source: "booking", kind: p.amount < 0 ? "refund" : "payment", ref: b.code, booking: b.code, guest,
-        amount: p.amount, method: p.method as Method, by: p.by, note: p.note, gateway: web ? p.note!.replace(/^Website advance · ?/, "Website · ") : undefined,
+        amount: p.amount, method: p.method as Method, by: p.by, note: p.note, gateway: web ? p.note!.replace(/^Website (advance|online) · ?/, "Website · ") : undefined,
       });
     }
     if (b.deposit) {

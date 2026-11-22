@@ -535,7 +535,7 @@ function Payments({ d }: { d: Draft }) {
   return (
     <Q title={t("গেস্ট কীভাবে টাকা দেবে?", "How do guests pay?")} sub={t("নগদ সবসময় চালু। যেগুলো নেন সেগুলো চালু করুন।", "Cash is always on. Turn on what else you accept.")}>
       <div className="space-y-4">
-      <Section n={1} title={t("সরাসরি আপনাকে", "Paid to you directly")} hint={t("কাউন্টারে, মোবাইল ওয়ালেটে বা ব্যাংকে", "At the desk, by mobile wallet or bank")}>
+      <Section n={1} title={t("হোটেলে সরাসরি আপনাকে", "At the hotel — paid to you")} hint={t("কাউন্টারে নগদ, আপনার bKash / Nagad বা ব্যাংকে", "Cash at the desk, your bKash / Nagad or bank")}>
       <div className="grid gap-2.5">
         <Tile on={p.cash} onClick={() => tog("cash")} icon={<Banknote className="size-6" />} title={t("নগদ / কাউন্টারে", "Cash at the desk")} sub={t("সবসময় চালু থাকবে", "Always on")} />
         <Tile on={p.bkash} onClick={() => tog("bkash")} icon={<Smartphone className="size-6" />} title="bKash" sub={p.bkash && p.bkashNo ? `${p.bkashNo} · ${t(types.find((x) => x[0] === (p.bkashType ?? "personal"))![1], types.find((x) => x[0] === (p.bkashType ?? "personal"))![2])}` : t("গেস্ট আপনার নম্বরে পাঠাবে", "Guest sends to your number")}>
@@ -552,7 +552,7 @@ function Payments({ d }: { d: Draft }) {
             <div><span className={label}>{t("অ্যাকাউন্টের ধরন", "Account type")}</span><div className="mt-1.5 flex flex-wrap gap-2">{types.map(([v, bn, en]) => <Chip key={v} on={(p.nagadType ?? "personal") === v} onClick={() => setP((x) => { x.nagadType = v; })}>{t(bn, en)}</Chip>)}</div></div>
           </div>
         </Tile>
-        <Tile on={p.bank} onClick={() => tog("bank")} icon={<Landmark className="size-6" />} title={t("ব্যাংক ট্রান্সফার", "Bank transfer")} sub={p.bank && p.bankName ? `${p.bankName} · ${p.bankAcc ?? ""}` : t("অগ্রিম টাকার জন্য", "For advance payments")}>
+        <Tile on={p.bank} onClick={() => tog("bank")} icon={<Landmark className="size-6" />} title={t("ব্যাংক ট্রান্সফার", "Bank transfer")} sub={p.bank && p.bankName ? `${p.bankName} · ${p.bankAcc ?? ""}` : t("গ্রুপ বা অফিসের বুকিংয়ের জন্য", "For group and company bookings")}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label htmlFor="bk-bank" className={label}>{t("ব্যাংক", "Bank")}</label><select id="bk-bank" value={p.bankName ?? ""} onChange={(e) => setP((x) => { x.bankName = e.target.value; })} className={field + " mt-1.5"}><option value="">{t("বাছাই করুন", "Choose")}</option>{BANKS.map((b) => <option key={b}>{b}</option>)}</select></div>
             <In id="bk-holder" lab={t("অ্যাকাউন্টের নাম", "Account name")} value={p.bankHolder} set={(v) => setP((x) => { x.bankHolder = v; })} />
@@ -568,9 +568,9 @@ function Payments({ d }: { d: Draft }) {
       )}
       </Section>
 
-      <Section n={2} title={t("BinGi Payments — অনলাইনে কার্ড ও ওয়ালেট", "BinGi Payments — online cards & wallets")} hint={t("গেস্ট ওয়েবসাইটে অনলাইনে পে করবে। যাচাই ও অনুমোদনের পরে চালু হয়।", "Guests pay online on your website. Goes live after verification and approval.")}>
+      <Section n={2} title={t("অনলাইন পেমেন্ট — BinGi-র মাধ্যমে", "Online payments — through BinGi")} hint={t("ওয়েবসাইট আর মার্কেটপ্লেসে গেস্ট SSLCommerz / EPS দিয়ে পে করে। টাকা আগে BinGi-তে আসে, আপনি চাইলে আপনার অ্যাকাউন্টে পাঠানো হয়।", "On your website and the marketplace guests pay through SSLCommerz / EPS. The money comes to BinGi first and is sent to you when you ask.")}>
       <div role="radiogroup" aria-label="BinGi Payments" className="grid gap-2.5">
-        <Tile role="radio" on={p.bingi === "apply"} onClick={() => setP((x) => { x.bingi = "apply"; })} icon={<Wallet className="size-6" />} title={t("এখনই আবেদন করুন", "Apply now")} sub={t("সেটেলমেন্ট অ্যাকাউন্ট দিন", "Add your settlement account")}>
+        <Tile role="radio" on={p.bingi === "apply"} onClick={() => setP((x) => { x.bingi = "apply"; })} icon={<Wallet className="size-6" />} title={t("টাকা কোথায় পাবেন — এখনই দিন", "Where to send your money — add now")} sub={t("ব্যাংক বা bKash মার্চেন্ট", "Bank or bKash merchant")}>
           <div role="radiogroup" aria-label={t("সেটেলমেন্ট কোথায়", "Settle to")} className="flex flex-wrap gap-2">
             <Chip on={st.method === "bank"} onClick={() => setS("method", "bank")}>{t("ব্যাংক অ্যাকাউন্ট", "Bank account")}</Chip>
             <Chip on={st.method === "bkash"} onClick={() => setS("method", "bkash")}>{t("bKash মার্চেন্ট", "bKash merchant")}</Chip>
@@ -591,7 +591,7 @@ function Payments({ d }: { d: Draft }) {
           )}
           <p className="mt-3 text-[12.5px] text-[#4d5664]">{t("প্রোটোটাইপ: তথ্য শুধু এই ব্রাউজারে থাকে, কোথাও পাঠানো হয় না।", "Prototype: kept in this browser only, not sent anywhere.")}</p>
         </Tile>
-        <Tile role="radio" on={p.bingi === "later"} onClick={() => setP((x) => { x.bingi = "later"; })} icon={<Clock className="size-6" />} title={t("পরে সেটআপ করবো", "Set up later")} sub={t("HMS → সেটিংস → কানেক্টিভিটি থেকে পরে আবেদন", "Apply later in HMS → Settings → Connectivity")} />
+        <Tile role="radio" on={p.bingi === "later"} onClick={() => setP((x) => { x.bingi = "later"; })} icon={<Clock className="size-6" />} title={t("পরে সেটআপ করবো", "Set up later")} sub={t("HMS → সেটিংস → গেস্ট পেমেন্ট থেকে পরে দেবেন", "Add it later in HMS → Settings → Guest payments")} />
       </div>
       </Section>
       </div>

@@ -23,7 +23,7 @@ export const feesOf = (h: Hotel): [number, number, number] => (h.plan === "enter
 
 /** Money that came in through BinGi: website advances (gateway) and marketplace prepayments. */
 const online = (b: Booking, p: Booking["payments"][number]) =>
-  p.amount > 0 && (p.note?.startsWith("Website advance") || (b.channel === "Marketplace" && (p.method === "bKash" || p.method === "Card") && p.at.slice(0, 10) <= b.from));
+  p.amount > 0 && ((p.note?.startsWith("Website advance") || p.note?.startsWith("Website online")) || (b.channel === "Marketplace" && (p.method === "bKash" || p.method === "Card") && p.at.slice(0, 10) <= b.from));
 
 export function ledger(h: Hotel, bookings: Booking[], messaging: { date: string; ref: string; text: string; cost: number }[], settlements: Settlement[]): Entry[] {
   const [mkt, web] = feesOf(h);

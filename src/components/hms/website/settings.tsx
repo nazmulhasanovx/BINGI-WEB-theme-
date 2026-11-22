@@ -33,7 +33,7 @@ export function BookingPage() {
             {([["full", "Full payment"], ["partial", `Advance ${ch.pct}%`], ["request", "Booking request"]] as const).map(([k, l]) => <li key={k} className="flex items-center justify-between"><span>{l}</span>{ch[k] ? <Badge tone="green">On</Badge> : <Badge>Off</Badge>}</li>)}
           </ul>
           <Link href="/hms/settings/booking" className="mt-3 inline-flex h-9 items-center rounded-full border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Change in Settings</Link>
-          <p className="mt-2 text-[12.5px] text-hms-muted">Payment numbers: {bkash?.number ? `${bkash.provider} ${bkash.number}` : "add in Guest payments"} · Card {card?.gatewayApproved ? "ready" : "needs an approved gateway"}.</p>
+          <p className="mt-2 text-[12.5px] text-hms-muted">Online payments go to BinGi through SSLCommerz / EPS, then to you as a payout (Finance).</p>
         </Card>
         <Card title="During booking">
           <ul className="divide-y divide-hms-line">

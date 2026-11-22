@@ -11,8 +11,8 @@ import { SCtx } from "./pages";
 
 type Ch = "website" | "marketplace";
 const OPTS = [
-  { k: "full", icon: CreditCard, title: "Full payment", desc: "Guest pays the whole stay online. Booking is confirmed at once.", best: "Sure money, fewer no-shows" },
-  { k: "partial", icon: SlidersHorizontal, title: "Advance payment", desc: "Guest pays a part now, the rest at the hotel.", best: "Commitment now, flexible for the guest" },
+  { k: "full", icon: CreditCard, title: "Full payment", desc: "Guest pays the whole stay online through BinGi. Confirmed at once.", best: "Sure money, fewer no-shows" },
+  { k: "partial", icon: SlidersHorizontal, title: "Advance payment", desc: "Guest pays a part online now, the rest at the hotel.", best: "Commitment now, flexible for the guest" },
   { k: "request", icon: MessageSquareText, title: "Booking request", desc: "Guest sends a request. You confirm, decline or call back.", best: "Price talks, groups, special requests" },
 ] as const;
 const tk = (n: number) => `৳${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
@@ -44,7 +44,7 @@ export function BookingChoicesPage() {
       </div>
       {locked && <p className="mb-3 rounded-xl bg-[#f4f6f8] px-4 py-2.5 text-[13.5px] text-hms-muted">The marketplace uses your website choices. Turn off “Same as website” to set it apart.</p>}
 
-      <div className={clsx("grid gap-3 md:grid-cols-3", locked && "pointer-events-none opacity-60")} aria-disabled={locked || undefined}>
+      <div className={clsx("grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]", locked && "pointer-events-none opacity-60")} aria-disabled={locked || undefined}>
         {OPTS.map((o) => {
           const on = c[o.k];
           return (
@@ -72,11 +72,11 @@ export function BookingChoicesPage() {
           {OPTS.filter((o) => c[o.k]).map((o) => (
             <li key={o.k} className="flex items-center gap-3 rounded-xl border border-hms-line px-4 py-3">
               <span className="size-4 shrink-0 rounded-full border-2 border-[#b8bdc7]" aria-hidden />
-              <span className="text-[14.5px]"><b className="font-semibold">{o.k === "full" ? "Pay in full now" : o.k === "partial" ? `Pay ${c.pct}% now` : "Request to book"}</b> <span className="text-hms-muted">· {o.k === "full" ? "bKash, Nagad or card" : o.k === "partial" ? "rest at the hotel" : "the hotel confirms first"}</span></span>
+              <span className="text-[14.5px]"><b className="font-semibold">{o.k === "full" ? "Pay in full online" : o.k === "partial" ? `Pay ${c.pct}% online now` : "Request to book"}</b> <span className="text-hms-muted">· {o.k === "full" ? "bKash, Nagad, card or bank" : o.k === "partial" ? "rest at the hotel" : "the hotel confirms, pay at the hotel"}</span></span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[12.5px] text-hms-muted">{tab === "website" ? "Your website checkout follows this now." : <>Saved for the marketplace. <Badge tone="amber">Prototype</Badge> The marketplace app reads it when connected.</>} Payment numbers come from Guest payments.</p>
+        <p className="mt-3 text-[12.5px] text-hms-muted">{tab === "website" ? "Your website checkout follows this now." : <>Saved for the marketplace. <Badge tone="amber">Prototype</Badge> The marketplace app reads it when connected.</>} Online payments go to BinGi through SSLCommerz / EPS, then to you as a payout.</p>
       </Card>
 
       {dirty && (

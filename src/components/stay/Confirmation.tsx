@@ -17,9 +17,10 @@ export const BOOKING_STATUS: Record<GuestBooking["bookingStatus"], { label: stri
 };
 export const PAYMENT_STATUS: Record<GuestBooking["paymentStatus"], { label: string; cls: string }> = {
   unpaid: { label: "Unpaid", cls: "bg-line text-muted" },
-  "pay-at-hotel": { label: "Pay on arrival", cls: "bg-sky-50 text-sky-800" },
+  "pay-at-hotel": { label: "Request · pay at the hotel", cls: "bg-sky-50 text-sky-800" },
   "advance-submitted": { label: "Payment sent · being checked", cls: "bg-amber-50 text-amber-800" },
-  paid: { label: "Paid", cls: "bg-emerald-50 text-emerald-800" },
+  "advance-paid": { label: "Advance paid online", cls: "bg-emerald-50 text-emerald-800" },
+  paid: { label: "Paid online", cls: "bg-emerald-50 text-emerald-800" },
 };
 
 export function icsFor(hotel: Hotel, b: GuestBooking) {

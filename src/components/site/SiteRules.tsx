@@ -11,7 +11,7 @@ export function CancelPolicy({ hotel }: { hotel: Hotel }) {
 }
 export function AcceptedPayments({ hotel }: { hotel: Hotel }) {
   const r = useSiteRules(hotel);
-  const pay = r.methods.map((p) => (p.kind === "pay-at-property" ? "Booking request — pay at the hotel" : p.kind === "mfs-manual" ? `${p.provider} (send money)` : p.kind === "advance" ? `${p.percent}% advance` : p.gatewayApproved ? "Card / online" : null)).filter(Boolean);
+  const pay = [...new Set(r.methods.map((p) => (p.kind === "pay-at-property" ? "Booking request — pay at the hotel" : p.kind === "mfs-manual" || (p.kind === "card-online" && p.gatewayApproved) ? "Online via BinGi (bKash, Nagad, card)" : p.kind === "advance" ? `${p.percent}% advance online` : null)).filter(Boolean))];
   return <>Accepted: {pay.join(" · ")}.</>;
 }
 /** Short line for the home facts strip: follows HMS Booking policies once saved. */
