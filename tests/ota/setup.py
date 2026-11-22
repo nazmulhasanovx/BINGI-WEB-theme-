@@ -1,0 +1,43 @@
+# OTA setup (22 Nov 2026): Website & channels → OTAs → Set up (Account → Rooms → Prices → Sync) → "Send to BinGi".
+# Truth: never shows "Connected"/"Live"; status after sending is "Waiting for BinGi".
+from playwright.sync_api import sync_playwright
+import re, os
+os.makedirs("/tmp/ota", exist_ok=True)
+B="http://localhost:3100"; F=[]
+def t(m,c): print(("PASS " if c else "FAIL ")+m); c or F.append(m)
+with sync_playwright() as p:
+  b=p.chromium.launch()
+  for W in [1440, 390]:
+    pg=b.new_page(viewport={"width":W,"height":900}); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(B+"/hms"); pg.evaluate("localStorage.clear(); localStorage.setItem('hms-property','azure-bay')")
+    pg.goto(B+"/hms/settings/channels"); pg.wait_for_timeout(1500)
+    for x in pg.locator("[data-news-popup]").get_by_role("button",name="Later").all(): x.click()
+    main=pg.inner_text("main")
+    t(f"[{W}] 4 OTAs with Set up + not-live label", main.count("Set up")>=4 and "Sync not live yet" in main)
+    pg.screenshot(path=f"/tmp/ota/{W}-list.png", full_page=True)
+    pg.get_by_role("button", name="Set up").first.click(); d=pg.get_by_role("dialog", name="Set up Booking.com")
+    t(f"[{W}] step 1 account", "Step 1 of 4" in d.inner_text())
+    d.get_by_role("button", name="Next").click(); t(f"[{W}] ID required", "Enter your Booking.com Hotel ID" in d.inner_text())
+    d.get_by_label("Booking.com Hotel ID").fill("1234567"); pg.screenshot(path=f"/tmp/ota/{W}-1.png")
+    d.get_by_role("button", name="Next").click(); pg.wait_for_timeout(150)
+    t(f"[{W}] step 2 rooms list", "Step 2 of 4" in d.inner_text() and d.get_by_role("switch").count()>=3)
+    pg.screenshot(path=f"/tmp/ota/{W}-2.png")
+    d.get_by_role("button", name="Next").click(); pg.wait_for_timeout(150)
+    t(f"[{W}] step 3 price table", "Step 3 of 4" in d.inner_text() and "On Booking.com" in d.inner_text())
+    d.get_by_role("button", name="20%").click(); t(f"[{W}] markup applied", "BinGi price" in d.inner_text())
+    pg.screenshot(path=f"/tmp/ota/{W}-3.png")
+    d.get_by_role("button", name="Next").click(); pg.wait_for_timeout(150)
+    t(f"[{W}] step 4 sync + summary", "1234567" in d.inner_text() and "+ 20%" in d.inner_text())
+    d.get_by_role("button", name="Send to BinGi").click(); pg.wait_for_timeout(200)
+    t(f"[{W}] sent, not live", "Sent to BinGi" in d.inner_text() and "not live yet" in d.inner_text())
+    pg.screenshot(path=f"/tmp/ota/{W}-4.png")
+    d.get_by_role("button", name="Done").click(); pg.wait_for_timeout(200)
+    main=pg.inner_text("main")
+    t(f"[{W}] row shows waiting for BinGi", "Waiting for BinGi" in main and "Setup sent" in main)
+    t(f"[{W}] never claims connected/live", not re.search(r"\bConnected\b|\bLive\b", main))
+    t(f"[{W}] kept after reload", pg.reload() or pg.wait_for_timeout(1200) or "Waiting for BinGi" in pg.inner_text("main"))
+    t(f"[{W}] no sideways scroll", pg.evaluate("document.documentElement.scrollWidth<=innerWidth+1"))
+    t(f"[{W}] no page errors", not errs); errs and print(errs[:2])
+    pg.close()
+  b.close()
+print("FAILED:",F) if F else print("ALL PASS")

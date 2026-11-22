@@ -5,6 +5,7 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { CalendarClock, Check, ChevronRight, Download, Lock, ReceiptText, Wallet, X } from "lucide-react";
 import { useRooms } from "@/lib/rooms/store";
 import { useSettings } from "@/lib/settings/store";
@@ -183,13 +184,14 @@ function IosRow({ label, value, warn, onClick }: { label: string; value?: string
   );
 }
 function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
+  return createPortal(
     <div className="hms-fade fixed inset-0 z-[90] flex items-end justify-center bg-[#0f1720]/25 sm:items-center sm:p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className="hms-up w-full max-w-[480px] rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl">
         <div className="mb-3 flex items-center justify-between"><h2 className="text-[17px] font-bold">{title}</h2><button onClick={onClose} aria-label="Close" className="grid size-8 place-items-center rounded-full bg-[#f1f2f5] text-hms-muted hover:text-hms-ink"><X className="size-4" /></button></div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -197,7 +199,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 function PaySheet({ inv, balance, onClose, onPaid }: { inv: Invoice; balance: number; onClose: () => void; onPaid: (by: string) => void }) {
   const [m, setM] = useState<string>(balance >= inv.total ? "BinGi balance" : "bKash");
   const opts = [...(balance >= inv.total ? [{ id: "BinGi balance", sub: `${tk(balance)} available` }] : []), ...METHODS];
-  return (
+  return createPortal(
     <div className="hms-fade fixed inset-0 z-[90] flex items-end justify-center bg-[#0f1720]/25 sm:items-center sm:p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Pay bill" onClick={(e) => e.stopPropagation()} className="hms-up w-full max-w-[460px] overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
         <div className="border-b border-hms-line px-5 py-4">
@@ -219,7 +221,8 @@ function PaySheet({ inv, balance, onClose, onPaid }: { inv: Invoice; balance: nu
           <button onClick={() => onPaid(m)} className="btn-glow inline-flex h-10 items-center rounded-xl px-4 text-[14px] font-semibold text-white">Pay {tk(inv.total)}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -256,7 +259,7 @@ function PlansSheet({ current, cycle, rooms, onClose, onAsk }: { current: PlanId
   const billed = Math.max(MIN_BILLED, rooms);
   const order: PlanId[] = ["starter", "business", "ultra"];
   const up = order.indexOf(pick) > order.indexOf(current), down = order.indexOf(pick) < order.indexOf(current);
-  return (
+  return createPortal(
     <div className="hms-fade fixed inset-0 z-[90] flex items-end justify-center bg-[#0f1720]/25 sm:items-center sm:p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Plans & prices" onClick={(e) => e.stopPropagation()} className="hms-up flex max-h-[92vh] w-full max-w-[860px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
         <div className="flex flex-wrap items-center gap-3 border-b border-hms-line px-5 py-4">
@@ -279,6 +282,7 @@ function PlansSheet({ current, cycle, rooms, onClose, onAsk }: { current: PlanId
           <button disabled={pick === current && c === cycle} onClick={() => onAsk(pick, c)} className="btn-glow inline-flex h-10 items-center rounded-xl px-4 text-[14px] font-semibold text-white disabled:opacity-45">Ask BinGi to change</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

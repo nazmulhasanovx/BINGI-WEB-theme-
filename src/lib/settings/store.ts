@@ -48,6 +48,12 @@ export type Settings = {
   userRoles: Record<string, string>;
   security: { twoStep: boolean; staffTwoStep: boolean; timeout: number };
   log: { at: string; by: string; text: string }[];
+  /** OTA setup answers per OTA (22 Nov 2026). Sync is NOT live — "sent" means BinGi got the request. */
+  otas?: Record<string, OtaSetup>;
+};
+export type OtaSetup = {
+  has: boolean; propertyId: string; rooms: Record<string, { on: boolean; otaName: string; allot: number }>; markup: number;
+  sync: { availability: boolean; rates: boolean; bookings: boolean; cancellations: boolean }; keep: number; status: "draft" | "sent"; sentAt?: string;
 };
 
 /** Bangladesh hotel default before the owner sets their own (HOTEL_TAX itself changes per property). */

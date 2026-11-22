@@ -19,6 +19,7 @@ import { useSite } from "@/lib/site";
 import { PLAN_LABEL } from "@/themes/manifest";
 import { PROP_ALL, propTop } from "@/lib/onboarding/rooms-v8";
 import { hasRestaurant } from "../bookings/extras";
+import { OtaCard } from "./ota";
 import { printHtml } from "../meals/print";
 import { PhotoButton } from "../photo";
 import { useNavMode } from "../Shell";
@@ -399,9 +400,7 @@ export function ChannelsPage() {
           <ChRow name="BinGi Marketplace" desc="Guests find you on bingi.app" status={o.marketplace ? "Listed" : "Paused"} tone={o.marketplace ? "green" : "gray"} href="/hms/website/online" />
           <ChRow name="Walk-in & phone" desc="Front desk books in Bookings" status="Always on" tone="green" href="/hms/bookings/walkin" />
         </Card>
-        <Card title="OTAs" desc="Enter OTA bookings by hand with the OTA booking ID — Bookings shows the source.">
-          {OTAS.map((n) => <ChRow key={n} name={n} desc="Rates, availability and bookings sync" status="Coming soon" tone="amber" />)}
-        </Card>
+        <OtaCard h={h} />
       </div>
     </>
   );
