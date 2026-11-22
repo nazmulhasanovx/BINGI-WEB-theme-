@@ -17,4 +17,4 @@ export const can = (h: Pick<Hotel, "plan">, f: Feature) => planAllows(h.plan, MI
 export const minPlanLabel = (f: Feature) => PLAN_LABEL[MIN_PLAN[f]];
 export const planLabel = (h: Pick<Hotel, "plan">) => PLAN_LABEL[h.plan];
 /** Where every "see plan / upgrade" link goes (subscription lives in Settings › Billing). */
-export const BILLING_HREF = "/hms/settings/billing";
+export const BILLING_HREF = "/hms/billing";

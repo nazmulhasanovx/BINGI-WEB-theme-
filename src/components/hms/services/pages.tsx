@@ -42,7 +42,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
       <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-hms-coral-soft text-hms-red"><Lock className="size-7" /></span>
       <h1 className="mt-4 text-[22px] font-bold">Other Services is part of Business</h1>
       <p className="mx-auto mt-2 max-w-[440px] text-[14.5px] text-hms-muted">Sell airport transfers, laundry, extra beds and experiences, and charge them to the guest’s booking. {h.name} is on the Starter plan.</p>
-      <Link href="/hms/settings/billing" className={clsx(btnPrimary, "mt-5")}>See Business plan</Link>
+      <Link href="/hms/billing" className={clsx(btnPrimary, "mt-5")}>See Business plan</Link>
     </div></div></div>
   );
   const get = (id: string) => svc.st.orders.find((x) => x.id === id);

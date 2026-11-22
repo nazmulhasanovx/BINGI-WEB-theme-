@@ -229,7 +229,7 @@ function PlanCard({ onDuty, lowStock, hasHrm, hasRestaurant, qr, orders, menu }:
   return (
     <section className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-[#b11c29] to-[#7a1320] p-5 text-white">
       <div><Sparkles className="size-6" /><h2 className="mt-3 text-[18px] font-bold">Need more tools?</h2><p className="mt-1 text-[14px] text-white/85">Business adds housekeeping, restaurant & QR ordering and expenses — and lower booking fees.</p></div>
-      <Link href="/hms/settings/billing" className="mt-5 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-white px-4 text-[14px] font-semibold text-[#8e1621]">See Business <ArrowRight className="size-4" /></Link>
+      <Link href="/hms/billing" className="mt-5 inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-white px-4 text-[14px] font-semibold text-[#8e1621]">See Business <ArrowRight className="size-4" /></Link>
     </section>
   );
 }

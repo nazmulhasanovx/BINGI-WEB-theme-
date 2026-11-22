@@ -66,6 +66,24 @@ function ToggleRow({ title, desc, on, onChange, right }: { title: string; desc?:
     </div>
   );
 }
+/** iOS-settings row: name (and one short hint) on the left, the control on the right. */
+function Row({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="grid gap-2 border-b border-hms-line py-3.5 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(0,230px)_minmax(0,1fr)] sm:items-center sm:gap-6">
+      <div className="min-w-0"><p className="text-[14.5px] font-medium">{label}</p>{hint && <p className="text-[12.5px] text-hms-muted">{hint}</p>}</div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+/** A value that is shown, not edited. */
+const Value = ({ children }: { children: ReactNode }) => <p className="text-[14.5px] font-semibold">{children}</p>;
+/** Small number box inside a sentence. */
+const InNum = ({ value, onChange, label, w = "w-16", max }: { value: number; onChange: (n: number) => void; label: string; w?: string; max?: number }) => (
+  <input aria-label={label} inputMode="numeric" value={String(value)} onChange={(e) => { const n = Number(e.target.value.replace(/[^\d]/g, "")) || 0; onChange(max ? Math.min(max, n) : n); }} className={clsx("mx-1 inline-block h-9 rounded-lg border border-hms-line bg-white px-2 text-center text-[14.5px] font-semibold tabular-nums outline-none focus:border-hms-coral", w)} />
+);
+const Pill = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) => (
+  <button type="button" aria-pressed={on} onClick={onClick} className={clsx("h-9 rounded-full border px-3.5 text-[13.5px] font-medium transition-colors", on ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:border-[#9aa0ac]")}>{children}</button>
+);
 const Grid = ({ children, cols = 2 }: { children: ReactNode; cols?: 2 | 3 }) => <div className={clsx("grid gap-4", cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>{children}</div>;
 const Go = ({ href, children }: { href: string; children: ReactNode }) => <Link href={href} className="inline-flex items-center gap-1 text-[13.5px] font-medium text-hms-blue hover:underline">{children}<ArrowUpRight className="size-3.5" /></Link>;
 
@@ -86,7 +104,7 @@ export function OverviewPage() {
     [!!(s.profile.bin || s.profile.tin), "VAT / tax registration number", "profile"],
     [s.policy.reviewed, "Booking policies checked", "policies"],
     [s.payments.some((p) => p.enabled && p.kind !== "cash" && p.account.trim()), "A payment method besides cash", "payments"],
-    [!!s.profile.billingName, "Billing contact", "profile"],
+    [!!s.profile.billingName, "Who gets BinGi bills", "/hms/billing"],
     [staffIn > 1, "Staff invited to the HMS", "users"],
   ];
   const done = items.filter((i) => i[0]).length;
@@ -98,7 +116,7 @@ export function OverviewPage() {
           <div className="mb-3 h-2 rounded-full bg-hms-hover"><div className="h-2 rounded-full bg-hms-green transition-[width]" style={{ width: `${(done / items.length) * 100}%` }} /></div>
           <ul className="divide-y divide-hms-line">
             {items.map(([ok, t, to]) => (
-              <li key={t}><Link href={`/hms/settings/${to}`} className="flex items-center gap-3 py-2.5 text-[14px] hover:text-hms-coral">
+              <li key={t}><Link href={to.startsWith("/") ? to : `/hms/settings/${to}`} className="flex items-center gap-3 py-2.5 text-[14px] hover:text-hms-coral">
                 {ok ? <CircleCheck className="size-5 text-hms-green" /> : <Circle className="size-5 text-[#c3c8d0]" />}
                 <span className={clsx("flex-1", ok && "text-hms-muted line-through decoration-[#c3c8d0]")}>{t}</span>
                 {!ok && <span className="text-[13px] font-medium text-hms-blue">Set up</span>}
@@ -120,7 +138,7 @@ const NEW_CODE: Record<string, string> = { home: "homestay", cottage: "lodge", v
 const propertyCodeOf = (h: Hotel) => h.propertyCode || NEW_CODE[h.propertyType] || h.propertyType;
 /** Property amenities — onboarding v8 order: top list for the property type first, the rest grouped behind "All amenities". */
 function PropAmenities({ type, value, onChange }: { type: string; value: string[]; onChange: (v: string[]) => void }) {
-  const [all, setAll] = useState(() => value.some((v) => !propTop(type).includes(v)));
+  const [all, setAll] = useState(false);
   const [q, setQ] = useState("");
   const top = propTop(type);
   const tog = (a: string) => onChange(value.includes(a) ? value.filter((x) => x !== a) : [...value, a]);
@@ -151,33 +169,27 @@ export function ProfilePage() {
   const { st: rooms } = useRooms(useProperty());
   return (
     <>
-      <PageHead title="Property profile" desc="Shown on invoices, confirmations and your website." />
+      <PageHead title="Property profile" desc="On invoices, confirmations and your website." />
       <div className="space-y-4">
         <Card title="Property">
-          <Grid><Field label="Property name"><Input value={p.name} onChange={set("name")} /></Field>
-            <Field label="Property type" hint={<>{rooms.units.length} rooms · change rooms in <Link className="text-hms-blue underline underline-offset-2" href="/hms/rooms">Rooms</Link></>}><Input value={p.type.replace(/^\w/, (c) => c.toUpperCase())} readOnly className="bg-hms-hover" /></Field>
-            <Field label="Phone"><Input inputMode="tel" value={p.phone} onChange={set("phone")} placeholder="01XXX-XXXXXX" /></Field>
-            <Field label="Email"><Input type="email" value={p.email} onChange={set("email")} /></Field>
-            <Field label="Address"><Input value={p.address} onChange={set("address")} /></Field>
-            <div className="grid grid-cols-2 gap-4"><Field label="City"><Input value={p.city} onChange={set("city")} /></Field><Field label="Postcode"><Input inputMode="numeric" value={p.postcode} onChange={set("postcode")} /></Field></div>
-          </Grid>
+          <Row label="Name"><Input aria-label="Property name" value={p.name} onChange={set("name")} /></Row>
+          <Row label="Type" hint="Set when the property was created"><Value>{p.type.replace(/^\w/, (c) => c.toUpperCase()).replace(/-/g, " ")} <span className="font-normal text-hms-muted">· {rooms.units.length} rooms in <Link className="text-hms-blue underline underline-offset-2" href="/hms/rooms">Rooms</Link></span></Value></Row>
+          <Row label="Phone and email" hint="Guests see these"><div className="grid gap-2 sm:grid-cols-2"><Input aria-label="Phone" inputMode="tel" value={p.phone} onChange={set("phone")} placeholder="01XXX-XXXXXX" /><Input aria-label="Email" type="email" value={p.email} onChange={set("email")} placeholder="Email" /></div></Row>
+          <Row label="Address"><div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px_110px]"><Input aria-label="Address" value={p.address} onChange={set("address")} placeholder="Road, area" /><Input aria-label="City" value={p.city} onChange={set("city")} placeholder="City" /><Input aria-label="Postcode" inputMode="numeric" value={p.postcode} onChange={set("postcode")} placeholder="Postcode" /></div></Row>
         </Card>
-        <Card title="Property amenities" desc="Shown on your website and marketplace listing. The important ones first — the same list as onboarding.">
+        <Card title="Amenities" desc="Shown on your website and marketplace.">
           <PropAmenities type={propertyCodeOf(h)} value={p.amenities ?? h.facilities.map((f) => f.name).filter((n) => PROP_ALL.some((g) => g.items.includes(n)))} onChange={(v) => f.setD({ ...p, amenities: v })} />
         </Card>
         <Card title="Business registration" desc="Printed on invoices when filled.">
-          <Grid cols={3}><Field label="Trade licence no."><Input value={p.tradeLicense} onChange={set("tradeLicense")} /></Field><Field label="TIN"><Input value={p.tin} onChange={set("tin")} /></Field><Field label="VAT BIN"><Input value={p.bin} onChange={set("bin")} /></Field></Grid>
-        </Card>
-        <Card title="Billing contact" desc="Who gets BinGi bills and reminders.">
-          <Grid cols={3}><Field label="Name"><Input value={p.billingName} onChange={set("billingName")} /></Field><Field label="Phone"><Input inputMode="tel" value={p.billingPhone} onChange={set("billingPhone")} /></Field><Field label="Email"><Input type="email" value={p.billingEmail} onChange={set("billingEmail")} /></Field></Grid>
+          <Row label="Trade licence no."><Input aria-label="Trade licence no." value={p.tradeLicense} onChange={set("tradeLicense")} /></Row>
+          <Row label="TIN"><Input aria-label="TIN" value={p.tin} onChange={set("tin")} /></Row>
+          <Row label="VAT BIN"><Input aria-label="VAT BIN" value={p.bin} onChange={set("bin")} /></Row>
         </Card>
       </div>
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
         if (!p.name.trim()) return toast("Property name can't be empty");
         if (p.email && !EMAIL.test(p.email.trim())) return toast("Check the email address");
-        if (p.billingEmail && !EMAIL.test(p.billingEmail.trim())) return toast("Check the billing email");
         if (p.phone && !okPhone(p.phone)) return toast("Check the phone number");
-        if (p.billingPhone && !okPhone(p.billingPhone)) return toast("Check the billing phone");
         save((x) => { x.profile = p; }, "Property profile updated"); toast("Property profile saved"); }} />
     </>
   );
@@ -194,8 +206,24 @@ export function BrandingPage() {
         {hasRestaurant(h) ? <BrandSlot k="restaurantLogo" label="Restaurant logo" hint="On menus and restaurant receipts" wide />
           : <div className="flex items-center gap-4 pt-4"><div className="flex-1"><p className="text-[14.5px] font-medium text-hms-muted">Restaurant logo</p></div><PlanLock plan="Ultra" /></div>}
       </Card>
+      <BrandWhere />
       <p className="mt-3 text-[13px] text-hms-muted">Website colours and fonts: <Go href="/hms/website/design">Website Management</Go></p>
     </>
+  );
+}
+/** Where the logo shows — small previews with the uploaded logo. */
+function BrandWhere() {
+  const { h, s } = useS();
+  const logo = s.branding.logo;
+  const L = ({ dark }: { dark?: boolean }) => logo ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={logo} alt="" className="h-6 max-w-[90px] object-contain" /> : <span className={clsx("text-[12px] font-bold", dark ? "text-white" : "text-hms-ink")}>{h.name}</span>;
+  return (
+    <Card title="Where it shows" className="mt-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-white p-3"><L /><div className="mt-3 space-y-1.5"><div className="h-1.5 w-3/4 rounded bg-[#e9edf2]" /><div className="h-1.5 w-1/2 rounded bg-[#e9edf2]" /><div className="h-1.5 w-2/3 rounded bg-[#e9edf2]" /></div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Invoices & confirmations</figcaption></figure>
+        <figure><div className="h-[110px] overflow-hidden rounded-xl border border-hms-line bg-gradient-to-br from-[#4b5563] to-[#111827] p-3"><div className="flex items-center justify-between"><L dark /><span className="h-1.5 w-12 rounded bg-white/40" /></div><div className="mt-6 h-2 w-2/3 rounded bg-white/70" /></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Website header</figcaption></figure>
+        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-[#fdf8ef] p-3"><div className="flex justify-center"><L /></div><div className="mt-3 space-y-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex justify-between"><span className="h-1.5 w-1/2 rounded bg-[#e8dccb]" /><span className="h-1.5 w-8 rounded bg-[#e8dccb]" /></div>)}</div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Receipts & menus</figcaption></figure>
+      </div>
+    </Card>
   );
 }
 
@@ -221,15 +249,12 @@ export function RegionalPage() {
     <>
       <PageHead title="Language & region" desc="For everyone at this property." />
       <Card>
-        <Grid>
-          <Field label="Country"><Input value="Bangladesh" readOnly className="bg-hms-hover" /></Field>
-          <Field label="Time zone"><Sel label="Time zone" value={r.tz} onChange={(v) => f.setD({ ...r, tz: v })} options={["Asia/Dhaka (GMT+6)", "Asia/Kolkata (GMT+5:30)", "Asia/Dubai (GMT+4)", "UTC"]} /></Field>
-          <Field label="Currency" hint="Changing currency needs BinGi support — old amounts are not converted."><Input value={r.currency} readOnly className="bg-hms-hover" /></Field>
-          <Field label="Date format"><Sel label="Date format" value={r.dateFmt} onChange={(v) => f.setD({ ...r, dateFmt: v as typeof r.dateFmt })} options={[["DD MMM YYYY", "10 Nov 2026"], ["DD/MM/YYYY", "10/11/2026"], ["YYYY-MM-DD", "2026-11-10"]]} /></Field>
-          <Field label="Time format"><Segmented value={r.timeFmt} onChange={(v) => f.setD({ ...r, timeFmt: v })} options={[{ v: "12", label: "4:30 PM" }, { v: "24", label: "16:30" }]} /></Field>
-          <Field label="Staff language"><Sel label="Staff language" value={r.lang} onChange={(v) => f.setD({ ...r, lang: v })} options={["English", "Bangla"]} /></Field>
-          <Field label="Second language (optional)"><Sel label="Second language" value={r.lang2} onChange={(v) => f.setD({ ...r, lang2: v })} options={[["", "None"], "English", "Bangla"]} /></Field>
-        </Grid>
+        <Row label="Country and currency" hint="Contact BinGi to change"><Value>Bangladesh · ৳ Taka (BDT)</Value></Row>
+        <Row label="Time zone"><Sel label="Time zone" value={r.tz} onChange={(v) => f.setD({ ...r, tz: v })} options={["Asia/Dhaka (GMT+6)", "Asia/Kolkata (GMT+5:30)", "Asia/Dubai (GMT+4)", "UTC"]} /></Row>
+        <Row label="Date"><Sel label="Date format" value={r.dateFmt} onChange={(v) => f.setD({ ...r, dateFmt: v as typeof r.dateFmt })} options={[["DD MMM YYYY", "10 Nov 2026"], ["DD/MM/YYYY", "10/11/2026"], ["YYYY-MM-DD", "2026-11-10"]]} /></Row>
+        <Row label="Time"><Segmented value={r.timeFmt} onChange={(v) => f.setD({ ...r, timeFmt: v })} options={[{ v: "12", label: "4:30 PM" }, { v: "24", label: "16:30" }]} /></Row>
+        <Row label="Staff screens in" hint="Each person can switch with EN / বাংলা at the top"><Sel label="Staff screens language" value={r.lang} onChange={(v) => f.setD({ ...r, lang: v })} options={["English", "Bangla"]} /></Row>
+        <Row label="Guest bills also in" hint="Printed under the main language"><Sel label="Second language on guest bills" value={r.lang2} onChange={(v) => f.setD({ ...r, lang2: v })} options={[["", "Nothing — one language"], "English", "Bangla"]} /></Row>
         <p className="mt-4 rounded-xl bg-hms-hover px-4 py-3 text-[13.5px]">Looks like: <b>{date}</b> · <b>{r.timeFmt === "12" ? "4:30 PM" : "16:30"}</b> · <b>৳5,750</b></p>
       </Card>
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => { save((x) => { x.regional = r; }, "Language & region updated"); toast("Saved"); }} />
@@ -251,33 +276,24 @@ export function PoliciesPage() {
       <PageHead title="Booking policies" desc="Used by Bookings, confirmations and your website." />
       <div className="space-y-4">
         <Card title="Check-in & check-out">
-          <Grid>
-            <Field label="Check-in from"><Input type="time" value={b.checkIn} onChange={(e) => setB({ checkIn: e.target.value })} /></Field>
-            <Field label="Check-out by"><Input type="time" value={b.checkOut} onChange={(e) => setB({ checkOut: e.target.value })} /></Field>
-            <Field label="Early check-in"><div className={clsx("grid gap-2", p.early === "charge" && "grid-cols-[1fr_120px]")}><Sel label="Early check-in" value={p.early} onChange={(v) => setP({ early: v as typeof p.early })} options={MODES} />{p.early === "charge" && <Num label="Early check-in fee" value={b.earlyFee} onChange={(n) => setB({ earlyFee: n })} suffix="৳" />}</div></Field>
-            <Field label="Late check-out"><div className={clsx("grid gap-2", p.late === "charge" && "grid-cols-[1fr_120px]")}><Sel label="Late check-out" value={p.late} onChange={(v) => setP({ late: v as typeof p.late })} options={MODES} />{p.late === "charge" && <Num label="Late check-out fee" value={b.lateFee} onChange={(n) => setB({ lateFee: n })} suffix="৳" />}</div></Field>
-          </Grid>
+          <Row label="Times"><div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14.5px]"><span>Check-in from</span><span className="w-[150px]"><Input aria-label="Check-in from" type="time" value={b.checkIn} onChange={(e) => setB({ checkIn: e.target.value })} /></span><span>check-out by</span><span className="w-[150px]"><Input aria-label="Check-out by" type="time" value={b.checkOut} onChange={(e) => setB({ checkOut: e.target.value })} /></span></div></Row>
+          <Row label="Early check-in"><div className="flex flex-wrap items-center gap-2">{MODES.map(([v, l]) => <Pill key={v} on={p.early === v} onClick={() => setP({ early: v as typeof p.early })}>{l}</Pill>)}{p.early === "charge" && <span className="text-[14px]">৳<InNum label="Early check-in fee" value={b.earlyFee} onChange={(n) => setB({ earlyFee: n })} w="w-20" /></span>}</div></Row>
+          <Row label="Late check-out"><div className="flex flex-wrap items-center gap-2">{MODES.map(([v, l]) => <Pill key={v} on={p.late === v} onClick={() => setP({ late: v as typeof p.late })}>{l}</Pill>)}{p.late === "charge" && <span className="text-[14px]">৳<InNum label="Late check-out fee" value={b.lateFee} onChange={(n) => setB({ lateFee: n })} w="w-20" /></span>}</div></Row>
         </Card>
-        <Card title="Cancellation & no-show" desc="Bookings suggests this fee when staff cancel.">
-          <Grid cols={3}>
-            <Field label="Free cancellation until" hint="days before arrival"><Num label="Free cancellation days" value={b.freeCancelDays} onChange={(n) => setB({ freeCancelDays: Math.min(60, Math.floor(n)) })} /></Field>
-            <Field label="Late cancellation fee" hint="of the first night"><Num label="Late cancellation fee" value={b.cancelFeePct} onChange={(n) => setB({ cancelFeePct: Math.min(100, n) })} suffix="%" /></Field>
-            <Field label="No-show fee" hint="of the first night"><Num label="No-show fee" value={b.noShowFeePct} onChange={(n) => setB({ noShowFeePct: Math.min(100, n) })} suffix="%" /></Field>
-          </Grid>
+        <Card title="Cancellation & no-show">
+          <p className="text-[14.5px] leading-[2.6]">Free cancellation up to<InNum label="Free cancellation days" value={b.freeCancelDays} onChange={(n) => setB({ freeCancelDays: n })} max={60} />days before arrival.<br />
+            After that, the guest pays<InNum label="Late cancellation fee" value={b.cancelFeePct} onChange={(n) => setB({ cancelFeePct: n })} max={100} />% of the first night.<br />
+            No-show: the guest pays<InNum label="No-show fee" value={b.noShowFeePct} onChange={(n) => setB({ noShowFeePct: n })} max={100} />% of the first night.</p>
         </Card>
         <Card title="Payment">
-          <Grid cols={3}>
-            <Field label="Website bookings pay"><Sel label="Website bookings pay" value={p.websitePay} onChange={(v) => setP({ websitePay: v as typeof p.websitePay })} options={[["full", "Full amount"], ["advance", "An advance"], ["hotel", "At the hotel"]]} /></Field>
-            {p.websitePay === "advance" && <Field label="Advance"><Num label="Advance percent" value={p.advancePct} onChange={(n) => setP({ advancePct: Math.min(100, n) })} suffix="%" /></Field>}
-            <Field label="Security deposit at check-in" hint="Held, not part of the bill"><Num label="Security deposit" value={b.depositDefault} onChange={(n) => setB({ depositDefault: n })} suffix="৳" /></Field>
-          </Grid>
+          <Row label="Website bookings pay"><div className="flex flex-wrap items-center gap-2">{([["full", "Full amount"], ["advance", "An advance"], ["hotel", "At the hotel"]] as const).map(([v, l]) => <Pill key={v} on={p.websitePay === v} onClick={() => setP({ websitePay: v })}>{l}</Pill>)}{p.websitePay === "advance" && <span className="text-[14px]"><InNum label="Advance percent" value={p.advancePct} onChange={(n) => setP({ advancePct: n })} max={100} />%</span>}</div></Row>
+          <Row label="Security deposit" hint="Held at check-in, returned at check-out"><span className="text-[14.5px]">৳<InNum label="Security deposit" value={b.depositDefault} onChange={(n) => setB({ depositDefault: n })} w="w-24" /></span></Row>
         </Card>
-        <Card title="Children & extra bed">
-          <Grid cols={3}>
-            <Field label="Children stay free up to age"><Num label="Children free age" value={p.childFreeAge} onChange={(n) => setP({ childFreeAge: Math.min(17, n) })} /></Field>
-            <Field label="Extra bed"><Segmented value={p.extraBed ? "y" : "n"} onChange={(v) => setP({ extraBed: v === "y" })} options={[{ v: "y", label: "Available" }, { v: "n", label: "Not available" }]} /></Field>
-            {p.extraBed && <Field label="Extra bed price" hint="per night"><Num label="Extra bed price" value={p.extraBedPrice} onChange={(n) => setP({ extraBedPrice: n })} suffix="৳" /></Field>}
-          </Grid>
+        <Card title="Children, pets & extra bed">
+          <Row label="Children" hint="Same choice as onboarding"><div className="flex flex-wrap gap-2">{([["all", "All ages"], ["6+", "6 and over"], ["12+", "12 and over"], ["none", "Adults only"]] as const).map(([v, l]) => <Pill key={v} on={(p.children ?? "all") === v} onClick={() => setP({ children: v })}>{l}</Pill>)}</div></Row>
+          {(p.children ?? "all") !== "none" && <Row label="Children stay free"><span className="text-[14.5px]">up to age<InNum label="Children free age" value={p.childFreeAge} onChange={(n) => setP({ childFreeAge: n })} max={17} /></span></Row>}
+          <Row label="Pets"><div className="flex flex-wrap gap-2">{([["no", "Not allowed"], ["small", "Small, on request"], ["yes", "Welcome"]] as const).map(([v, l]) => <Pill key={v} on={(p.pets ?? "no") === v} onClick={() => setP({ pets: v })}>{l}</Pill>)}</div></Row>
+          <Row label="Extra bed"><div className="flex flex-wrap items-center gap-2"><Pill on={p.extraBed} onClick={() => setP({ extraBed: true })}>Available</Pill><Pill on={!p.extraBed} onClick={() => setP({ extraBed: false })}>Not available</Pill>{p.extraBed && <span className="text-[14.5px]">৳<InNum label="Extra bed price" value={p.extraBedPrice} onChange={(n) => setP({ extraBedPrice: n })} w="w-20" />a night</span>}</div></Row>
         </Card>
       </div>
       <SaveBar dirty={f.dirty} onDiscard={f.discard} onSave={() => {
@@ -353,7 +369,7 @@ export function HousekeepingRulesPage() {
 
 export function RestaurantPage() {
   const { h } = useS();
-  if (!hasRestaurant(h)) return (<><PageHead title="Restaurant & inventory" /><Card><div className="flex items-center gap-3"><Lock className="size-5 text-hms-muted" /><p className="flex-1 text-[14.5px]">Restaurant & Bar comes with Business (full on Ultra). Inventory comes with Ultra.</p><Go href="/hms/settings/billing">See plan</Go></div></Card></>);
+  if (!hasRestaurant(h)) return (<><PageHead title="Restaurant & inventory" /><Card><div className="flex items-center gap-3"><Lock className="size-5 text-hms-muted" /><p className="flex-1 text-[14.5px]">Restaurant & Bar comes with Business (full on Ultra). Inventory comes with Ultra.</p><Go href="/hms/billing">See plan</Go></div></Card></>);
   const links: [string, string, string][] = [
     ["Restaurant settings", "Order approval, opening hours, restaurant VAT & service charge", "/hms/meals/settings"],
     ["Menu", "Items, prices, recipes", "/hms/meals/menu"],
@@ -628,7 +644,7 @@ export function ActivityPage() {
 function AppPrefCard() {
   const [open, setOpen] = useState(false);
   return (
-    <Card title="App & full screen" desc="Use BinGi HMS like an app: install it from the browser, or work in full screen." className="mt-4">
+    <Card title="App & full screen" className="mt-4">
       <AppCard onOpen={() => setOpen(true)} />
       {open && <InstallSheet onClose={() => setOpen(false)} />}
     </Card>
@@ -647,18 +663,17 @@ export function PreferencesPage() {
         <ToggleRow title="Reduce motion" desc="Turns off page and panel animations." on={prefs.reduceMotion} onChange={(v) => setPrefs({ reduceMotion: v })} />
       </Card>
       <AppPrefCard />
-      <Card title="Font" desc="Changes the HMS text for you on this device. Bangla always shows in Hind Siliguri. Guest website fonts are set in Website Management." className="mt-4" pad={false}>
-        <div role="radiogroup" aria-label="Font" className="grid gap-2 px-5 pb-5 pt-3 sm:grid-cols-2 xl:grid-cols-3">
+      <Card title="Font" desc="Only the HMS on this device. Bangla always uses Hind Siliguri." className="mt-4">
+        <p data-preview={prefs.font} style={{ fontFamily: FONTS.find((x) => x.id === prefs.font)?.sample }} className="mb-3 rounded-xl bg-hms-hover px-4 py-3 text-[18px] font-semibold">Room 204 · ৳12,500 <span className="text-[14px] font-normal" lang="bn">· অতিথি দুপুর ২টায় আসবেন</span></p>
+        <div role="radiogroup" aria-label="Font" className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
           {FONTS.map((f) => {
             const on = prefs.font === f.id;
             return (
-              <button key={f.id} type="button" role="radio" aria-checked={on} aria-label={f.name} onClick={() => setPrefs({ font: f.id })}
-                className={clsx("flex flex-col items-stretch rounded-2xl border p-4 text-left transition-colors", on ? "border-[#f3c4c0] bg-[#fff6f6]" : "border-hms-line hover:border-[#c9ced6]")}>
-                <span className="flex items-center justify-between gap-2"><b className="text-[14.5px]">{f.name}</b>{on && <span className="grid size-5 place-items-center rounded-full bg-[#c8232e] text-white"><CircleCheck className="size-3.5" /></span>}</span>
-                <span className="text-[12.5px] text-hms-muted">{f.by}</span>
-                <span data-sample={f.id} style={{ fontFamily: f.sample }} className="mt-3 block text-[22px] font-semibold leading-tight tracking-[-0.01em]">Room 204 · ৳12,500</span>
-                <span style={{ fontFamily: f.sample }} className="block text-[14px]">Check in at 2 PM <span lang="bn">· অতিথি দুপুর ২টায় আসবেন</span></span>
-                <span className="mt-2 text-[12px] text-hms-muted">{f.note}</span>
+              <button key={f.id} type="button" role="radio" aria-checked={on} aria-label={f.name} title={f.note} onClick={() => setPrefs({ font: f.id })}
+                className={clsx("flex h-12 items-center gap-3 rounded-xl border px-3.5 text-left transition-colors", on ? "border-[#f3c4c0] bg-[#fff6f6]" : "border-hms-line hover:border-[#c9ced6]")}>
+                <span className={clsx("size-4 shrink-0 rounded-full border-2", on ? "border-[#c8232e] bg-[#c8232e] shadow-[inset_0_0_0_3px_white]" : "border-[#b8bdc7]")} />
+                <span data-sample={f.id} style={{ fontFamily: f.sample }} className="min-w-0 flex-1 truncate text-[15px] font-semibold">{f.name}</span>
+                {f.id === "bingi" && <span className="text-[12px] text-hms-muted">Default</span>}
               </button>
             );
           })}

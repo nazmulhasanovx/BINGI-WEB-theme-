@@ -37,7 +37,7 @@ export type Settings = {
   profile: { name: string; type: string; phone: string; email: string; address: string; city: string; postcode: string; tradeLicense: string; tin: string; bin: string; billingName: string; billingPhone: string; billingEmail: string; amenities?: string[] };
   branding: { logo?: string; icon?: string; restaurantLogo?: string };
   regional: { tz: string; currency: string; dateFmt: "DD MMM YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"; timeFmt: "12" | "24"; lang: string; lang2: string };
-  policy: { early: "request" | "none" | "charge" | "free"; late: "request" | "none" | "charge" | "free"; childFreeAge: number; childNote: string; extraBed: boolean; extraBedPrice: number; websitePay: "full" | "advance" | "hotel"; advancePct: number; reviewed: boolean };
+  policy: { early: "request" | "none" | "charge" | "free"; late: "request" | "none" | "charge" | "free"; children?: "all" | "6+" | "12+" | "none"; pets?: "no" | "small" | "yes"; childFreeAge: number; childNote: string; extraBed: boolean; extraBedPrice: number; websitePay: "full" | "advance" | "hotel"; advancePct: number; reviewed: boolean };
   tax: { vat: number; service: number; minRate: number; discountBy: "Front desk" | "Manager" | "Owner"; discountLimit: number };
   hk: { dirtyOnCheckout: boolean; inspection: boolean; autoRelease: boolean; priority: "Low" | "Normal" | "High" };
   payments: PayMethodRow[];

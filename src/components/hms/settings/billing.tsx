@@ -5,8 +5,9 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState } from "react";
-import { CalendarClock, Check, CircleAlert, Download, FileText, Lock, Wallet } from "lucide-react";
+import { CalendarClock, Check, Download, Lock, Wallet } from "lucide-react";
 import { useRooms } from "@/lib/rooms/store";
+import { useSettings } from "@/lib/settings/store";
 import { useLicences } from "@/lib/licences";
 import { ledger, summary, useFinance } from "@/lib/finance/store";
 import { messagingCost } from "@/lib/communication/store";
@@ -26,8 +27,21 @@ function invoiceDoc(h: { name: string; address?: string }, inv: Invoice) {
 <h1>BinGi subscription bill</h1><p class="m">${inv.id} · ${monthName(inv.month)} · issued ${dLong(inv.issued)} · due ${dLong(inv.due)}</p>
 <p><b>${h.name}</b><br><span class="m">${h.address ?? ""}</span></p><table>${rows}<tr class="t"><td>Total</td><td class="r">${tk(inv.total)}</td></tr></table>
 <p class="m">${inv.status === "paid" ? `Paid ${inv.paidAt ? dLong(inv.paidAt) : ""} · ${inv.paidBy ?? ""}` : "Not paid yet"}</p>
-<p class="demo">Prototype bill — no money moved. VAT on the subscription is not decided yet.</p></body></html>`;
+<p class="demo">Prototype bill — no money moved.</p></body></html>`;
 }
+
+/** Sidebar "Billing & Subscription" opens this page on its own (not inside Settings). */
+export function BillingRoute() {
+  return <div className="h-full overflow-y-auto"><div className="hms-page hms-page-in max-w-[1180px]"><BillingPage /></div></div>;
+}
+
+const METHODS = [
+  { id: "bKash", sub: "Approve in the bKash app" },
+  { id: "Nagad", sub: "Approve in the Nagad app" },
+  { id: "Card", sub: "Visa · Mastercard · Amex" },
+  { id: "Bank", sub: "Bank transfer · 1–2 working days" },
+] as const;
+const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 export function BillingPage() {
   const { h, bk, comm } = useCommData();
@@ -35,7 +49,9 @@ export function BillingPage() {
   const fin = useFinance(h);
   const lic = useLicences(h.slug);
   const bl = useBilling(h, rooms.units);
+  const set = useSettings(h);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [paying, setPaying] = useState<Invoice | null>(null);
   const [toast, setToast] = useState("");
   const say = (t: string) => { setToast(t); window.setTimeout(() => setToast(""), 2400); };
   const ym = bl.today.slice(0, 7);
@@ -48,39 +64,61 @@ export function BillingPage() {
   ];
   const cur = monthBill(h, rooms.units, ym, bl.st.cycle, extra);
   const inUse = roomsInUse(rooms.units).length;
-  const dim = daysIn(ym); const dayNo = Number(bl.today.slice(8, 10));
   const tl = timeline(ym);
   const enterprise = h.plan === "enterprise";
   const plan = h.plan as PlanId;
   const cycleLabel = CYCLES.find((c) => c[0] === bl.st.cycle)![1].split(" ·")[0];
+  const open = bl.open;
+  const billed = Math.max(MIN_BILLED, inUse);
 
   return (
     <>
-      <PageHead title="Billing & plan" desc={`Your BinGi subscription for ${h.name}. Prototype: no money moves.`} actions={!enterprise ? <Btn variant="outline" onClick={() => setPlansOpen(true)}>Plans &amp; prices</Btn> : undefined} />
+      <PageHead title="Billing" desc={`Your BinGi bill for ${h.name}.`} actions={!enterprise ? <Btn variant="outline" onClick={() => setPlansOpen(true)}>Change plan</Btn> : undefined} />
 
-      {bl.open && (
-        <div role="alert" className={clsx("mb-4 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-[14px]", bl.open.status === "overdue" ? "border-[#f3c4c0] bg-[#fdecec] text-[#8e1621]" : "border-[#f1dfb8] bg-[#fdf8ec] text-[#6b4309]")}>
-          <CircleAlert className="size-5 shrink-0" />
-          <p className="min-w-0 flex-1"><b className="font-semibold">{bl.open.status === "overdue" ? `${monthName(bl.open.month)} bill is overdue` : `${monthName(bl.open.month)} bill is ready`} · {tk(bl.open.total)}</b> · {bl.open.status === "overdue" ? "After the grace days online booking pauses until paid (proposed rule — not applied in this prototype). Your data and bookings are safe." : `Due ${dLong(bl.open.due)}. Auto-pay could not cover it from your BinGi balance.`}</p>
-          <button onClick={() => { bl.pay(bl.open!.id, `${bl.st.method} (demo)`); say(`${bl.open!.id} paid · demo`); }} className="btn-glow inline-flex h-10 items-center gap-2 rounded-xl px-4 text-[14px] font-semibold text-white"><Wallet className="size-4" />Pay {tk(bl.open.total)}</button>
-        </div>
-      )}
+      {/* 1 — what to pay now */}
+      <section aria-label="Pay" className={clsx("rounded-2xl border p-5 sm:p-6", open ? (open.status === "overdue" ? "border-[#f3c4c0] bg-[#fdf3f3]" : "border-[#f1dfb8] bg-[#fffaf0]") : "border-hms-line bg-white")}>
+        {open ? (
+          <div className="flex flex-wrap items-center gap-5">
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-2 text-[14px] font-semibold"><Badge tone={STATUS[open.status][0]}>{open.status === "overdue" ? "Overdue" : "To pay"}</Badge>{monthName(open.month)} bill</p>
+              <p className="mt-2 text-[36px] font-bold leading-none tabular-nums">{tk(open.total)}</p>
+              <p className="mt-2 text-[14px] text-hms-muted">{open.status === "overdue" ? "Online booking pauses until this is paid. Your data and bookings stay." : `Pay by ${dLong(open.due)}.`}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => printHtml(invoiceDoc(h, open))} className="inline-flex h-12 items-center gap-1.5 rounded-xl border border-hms-line bg-white px-4 text-[14.5px] font-semibold hover:bg-hms-hover"><Download className="size-4" />Bill PDF</button>
+              <button onClick={() => setPaying(open)} className="btn-glow inline-flex h-12 items-center gap-2 rounded-xl px-6 text-[15.5px] font-semibold text-white"><Wallet className="size-5" />Pay now</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-5">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#e8f4ec] text-[#1c7d45]"><Check className="size-6" /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[18px] font-semibold">Nothing to pay now</p>
+              <p className="mt-0.5 text-[14px] text-hms-muted">Next bill: about <b className="text-hms-ink tabular-nums">{tk(cur.total)}</b> on {dLong(tl[3].date)} · pay by {dLong(tl[4].date)}{bl.st.autopay ? " · auto-pay is on" : ""}</p>
+            </div>
+          </div>
+        )}
+        {/* short timeline */}
+        <ol aria-label="When you pay" className="mt-5 grid grid-cols-3 gap-2 border-t border-black/5 pt-4 text-[13px]">
+          {[["Now", open ? `${monthName(open.month)} bill open` : `${monthName(ym)} running`, true], [dShort(tl[3].date), "Bill comes (PDF + SMS)", false], [dShort(tl[4].date), "Pay by this day", false]].map(([d2, txt, on], i) => (
+            <li key={i} className="flex items-start gap-2"><span className={clsx("mt-1 size-2.5 shrink-0 rounded-full", on ? "bg-[#c8232e]" : "bg-[#c6ccd4]")} /><span><b className="block font-semibold">{d2 as string}</b><span className="text-hms-muted">{txt as string}</span></span></li>
+          ))}
+        </ol>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {/* 2 — plan */}
         <Card title="Your plan" action={<Badge tone="blue">{PLAN_LABEL[h.plan]}</Badge>}>
-          {enterprise ? <p className="text-[14px]">Enterprise is billed by agreement with BinGi. Contact your account manager for changes.</p> : <>
-            <p className="text-[28px] font-bold tabular-nums">{tk(cur.rate)}<span className="text-[14px] font-medium text-hms-muted"> / room / month · {cycleLabel}</span></p>
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[14px]">
-              <dt className="text-hms-muted">Rooms in use</dt><dd className="text-right font-semibold tabular-nums">{inUse}</dd>
-              <dt className="text-hms-muted">Rooms billed</dt><dd className="text-right font-semibold tabular-nums">{Math.max(MIN_BILLED, inUse)}{inUse < MIN_BILLED && <span className="font-normal text-hms-muted"> (min {MIN_BILLED})</span>}</dd>
-              <dt className="text-hms-muted">Booking fee</dt><dd className="text-right font-semibold">{PLANS[plan].fees[0]}% marketplace · {PLANS[plan].fees[1]}% website · 0% walk-in</dd>
-            </dl>
-            {bl.st.change && <p className="mt-3 rounded-xl bg-[#eef3fd] px-3 py-2 text-[13px] text-[#1e3a8a]">Change asked: <b>{PLANS[bl.st.change.plan].label} · {CYCLES.find((c) => c[0] === bl.st.change!.cycle)![1]}</b> from {dLong(bl.st.change.from)}. BinGi confirms it. <button onClick={() => { bl.cancelChange(); say("Change request cancelled"); }} className="font-semibold underline underline-offset-2">Cancel</button></p>}
-            <p className="mt-3 text-[12.5px] text-hms-muted">Booking and gateway fees are taken from online payments in <Link href="/hms/finance" className="underline underline-offset-2">Finance</Link> — they are not on this bill.</p>
+          {enterprise ? <p className="text-[14px]">Billed by agreement with BinGi.</p> : <>
+            <p className="text-[28px] font-bold tabular-nums">{tk(cur.rate)}<span className="text-[14px] font-medium text-hms-muted"> per room / month · {cycleLabel}</span></p>
+            <p className="mt-1 text-[14px]">{inUse ? `${plural(billed, "room")} billed` : `No rooms published yet — ${plural(MIN_BILLED, "room")} is billed`}</p>
+            <p className="mt-2 text-[13px] text-hms-muted">Booking fee {PLANS[plan].fees[0]}% marketplace · {PLANS[plan].fees[1]}% website · 0% walk-in — taken in <Link href="/hms/finance" className="underline underline-offset-2">Finance</Link>, not on this bill.</p>
+            {bl.st.change && <p className="mt-3 rounded-xl bg-[#eef3fd] px-3 py-2 text-[13px] text-[#1e3a8a]">Asked: <b>{PLANS[bl.st.change.plan].label} · {CYCLES.find((c) => c[0] === bl.st.change!.cycle)![1]}</b> from {dLong(bl.st.change.from)}. <button onClick={() => { bl.cancelChange(); say("Change request cancelled"); }} className="font-semibold underline underline-offset-2">Cancel</button></p>}
           </>}
         </Card>
 
-        <Card title={`${monthName(ym)} so far`} action={<span className="text-[12.5px] text-hms-muted">Day {Math.min(dayNo, dim)} of {dim}</span>}>
+        {/* 3 — this month */}
+        <Card title={`${monthName(ym)} so far`}>
           <ul className="divide-y divide-hms-line text-[14px]" aria-label="This month's bill">
             {cur.lines.map((l) => (
               <li key={l.id} className="flex items-start justify-between gap-3 py-2.5">
@@ -89,72 +127,114 @@ export function BillingPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-1 flex items-baseline justify-between border-t border-hms-line pt-3"><span className="text-[15px] font-semibold">Expected bill</span><span className="text-[22px] font-bold tabular-nums">{tk(cur.total)}</span></div>
-          <p className="mt-1 text-[12.5px] text-hms-muted">Comes on {dLong(tl[3].date)} · due {dLong(tl[4].date)}. VAT on the subscription: not decided yet.</p>
+          <div className="mt-1 flex items-baseline justify-between border-t border-hms-line pt-3"><span className="text-[15px] font-semibold">Expected</span><span className="text-[22px] font-bold tabular-nums">{tk(cur.total)}</span></div>
         </Card>
       </div>
 
-      {/* how the month-end bill arrives */}
-      <Card title="How your bill comes" desc="Every month, the same steps. Pay after use: the bill on the 1st is for the month that just ended." className="mt-4" pad={false}>
-        <ol aria-label="Billing steps" className="grid gap-2 px-5 pb-5 pt-3 sm:grid-cols-3 xl:grid-cols-6">
-          {tl.map((s, i) => {
-            const past = s.date < bl.today, now = !past && (i === 0 || tl[i - 1].date < bl.today) && s.date >= bl.today;
-            return (
-              <li key={s.id} className={clsx("relative rounded-2xl border p-3", now ? "border-[#f3c4c0] bg-[#fff6f6]" : past ? "border-hms-line bg-[#fafafb]" : "border-hms-line bg-white")}>
-                <span className={clsx("grid size-7 place-items-center rounded-full text-[12.5px] font-bold", past ? "bg-[#16a34a] text-white" : now ? "bg-[#c8232e] text-white" : "bg-[#eef0f3] text-[#4d5664]")}>{past ? <Check className="size-4" /> : i + 1}</span>
-                <p className="mt-2 text-[12.5px] font-semibold text-hms-muted">{dShort(s.date)}{now && " · next"}</p>
-                <p className="text-[14px] font-semibold">{s.title}</p>
-                <p className="mt-0.5 text-[12.5px] leading-snug text-hms-muted">{s.text}</p>
-              </li>
-            );
-          })}
-        </ol>
-        <div className="grid gap-2 border-t border-hms-line px-5 py-4 text-[13px] text-hms-muted sm:grid-cols-2">
-          <p><b className="text-hms-ink">Rooms:</b> billed on rooms in use (at least {MIN_BILLED}). A room added mid-month is charged only for the days left. A room removed stops from next month.</p>
-          <p><b className="text-hms-ink">6 or 12 months:</b> paid at the start of the cycle at the lower rate; month-end bills then only carry extra rooms and add-ons.</p>
-          <p><b className="text-hms-ink">New property:</b> nothing is billed in the 7-day trial. The first bill has the activation fee and the rest of that month.</p>
-          <p><b className="text-hms-ink">Late:</b> reminders on the 1st, 5th and {DUE_DAY}th. After the {GRACE_DAY}th, online booking pauses until paid — never your data.</p>
-        </div>
+      {/* 4 — bills */}
+      <Card title="Bills" className="mt-4" pad={false}>
+        <ul className="divide-y divide-hms-line" aria-label="Bills">
+          {bl.invoices.map((inv) => (
+            <li key={inv.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+              <span className="min-w-0 flex-1"><b className="block text-[14.5px]">{monthName(inv.month)}</b><span className="text-[12.5px] text-hms-muted">{inv.status === "paid" ? `Paid ${inv.paidAt ? dShort(inv.paidAt) : ""} · ${inv.paidBy}` : `Pay by ${dShort(inv.due)}`}</span></span>
+              <Badge tone={STATUS[inv.status][0]}>{STATUS[inv.status][1]}</Badge>
+              <b className="w-24 text-right tabular-nums">{tk(inv.total)}</b>
+              <button onClick={() => printHtml(invoiceDoc(h, inv))} aria-label={`Bill PDF ${monthName(inv.month)}`} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-hms-line px-3 text-[13px] font-semibold hover:bg-hms-hover"><Download className="size-3.5" />PDF</button>
+              {inv.status !== "paid" && <button onClick={() => setPaying(inv)} className="btn-glow inline-flex h-9 items-center rounded-xl px-3.5 text-[13px] font-semibold text-white">Pay</button>}
+            </li>
+          ))}
+          {!bl.invoices.length && <li className="px-5 py-6 text-[14px] text-hms-muted">No bills yet. The first one comes on {dLong(tl[3].date)}.</li>}
+        </ul>
       </Card>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <Card title="Auto-pay">
-          <div className="space-y-3 px-0 text-[14px]">
-            <div className="flex items-center justify-between gap-3"><span><b className="block font-medium">Pay the bill by itself on the 1st</b><span className="text-[12.5px] text-hms-muted">BinGi balance first ({tk(money.available)} now), then the method below</span></span><Toggle on={bl.st.autopay} onChange={(v) => { bl.setAutopay(v); say(v ? "Auto-pay on" : "Auto-pay off"); }} label="Auto-pay" /></div>
-            <div><p className="mb-1.5 text-[13px] font-semibold">Saved method</p>
-              <div role="radiogroup" aria-label="Saved method" className="flex gap-1.5">{(["bKash", "Card", "Bank"] as const).map((m) => <button key={m} role="radio" aria-checked={bl.st.method === m} onClick={() => bl.setMethod(m)} className={clsx("h-10 flex-1 rounded-xl text-[14px] font-semibold", bl.st.method === m ? "bg-[#ffecec] text-[#c8232e] ring-1 ring-[#f3c4c0]" : "bg-[#eef0f3] text-[#3a414c] hover:bg-[#e3e6eb]")}>{m}</button>)}</div>
-              <p className="mt-1.5 text-[12.5px] text-hms-muted">Charging a saved method is not connected in this prototype.</p>
-            </div>
-            <p className="text-[12.5px] text-hms-muted">Bills go to the billing contact in <Link href="/hms/settings/profile" className="underline underline-offset-2">Property profile</Link>.</p>
-          </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {/* 5 — auto-pay */}
+        <Card title="Auto-pay" action={<Toggle on={bl.st.autopay} onChange={(v) => { bl.setAutopay(v); say(v ? "Auto-pay on" : "Auto-pay off"); }} label="Auto-pay" />}>
+          <p className="text-[14px]">{bl.st.autopay ? "The bill is paid by itself when it comes." : "Off — you pay each bill here."}</p>
+          <p className="mt-1 text-[13px] text-hms-muted">First from your BinGi balance (<b className="text-hms-ink tabular-nums">{tk(money.available)}</b> — online booking money BinGi holds for you), then:</p>
+          <div role="radiogroup" aria-label="Auto-pay method" className="mt-2.5 flex gap-1.5">{(["bKash", "Card", "Bank"] as const).map((m) => <button key={m} role="radio" aria-checked={bl.st.method === m} onClick={() => bl.setMethod(m)} className={clsx("h-10 flex-1 rounded-xl text-[14px] font-semibold", bl.st.method === m ? "bg-[#ffecec] text-[#c8232e] ring-1 ring-[#f3c4c0]" : "bg-[#eef0f3] text-[#3a414c] hover:bg-[#e3e6eb]")}>{m}</button>)}</div>
         </Card>
-
-        <Card title="Bills" pad={false} action={<span className="text-[12.5px] text-hms-muted">{bl.invoices.length}</span>}>
-          <ul className="divide-y divide-hms-line" aria-label="Bills">
-            {bl.invoices.map((inv) => (
-              <li key={inv.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[#e8f0fe] text-[#1d4ed8]"><FileText className="size-5" /></span>
-                <span className="min-w-0 flex-1"><b className="block text-[14px]">{monthName(inv.month)}</b><span className="text-[12.5px] text-hms-muted">{inv.id} · {inv.status === "paid" ? `paid ${inv.paidAt ? dShort(inv.paidAt) : ""} · ${inv.paidBy}` : `due ${dShort(inv.due)}`}{inv.demo ? " · demo" : ""}</span></span>
-                <Badge tone={STATUS[inv.status][0]}>{STATUS[inv.status][1]}</Badge>
-                <b className="w-20 text-right tabular-nums">{tk(inv.total)}</b>
-                <button onClick={() => printHtml(invoiceDoc(h, inv))} aria-label={`Invoice PDF ${monthName(inv.month)}`} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-hms-line px-3 text-[13px] font-semibold hover:bg-hms-hover"><Download className="size-3.5" />PDF</button>
-              </li>
-            ))}
-            {!bl.invoices.length && <li className="px-5 py-6 text-[14px] text-hms-muted">No bills yet.</li>}
-          </ul>
-        </Card>
+        {/* 6 — who gets the bill */}
+        <BillingContact h={h} set={set} say={say} />
       </div>
 
+      {/* 7 — rules, folded */}
+      <details className="group mt-4 rounded-2xl border border-hms-line bg-white px-5 py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold">How billing works<span className="text-[13px] font-medium text-hms-muted group-open:hidden">Show</span><span className="hidden text-[13px] font-medium text-hms-muted group-open:inline">Hide</span></summary>
+        <ul className="mt-3 grid gap-2 text-[13.5px] text-hms-muted sm:grid-cols-2">
+          <li><b className="text-hms-ink">Pay after use.</b> The bill on the 1st is for the month that just ended.</li>
+          <li><b className="text-hms-ink">Rooms.</b> Billed on published rooms (at least {MIN_BILLED}). A room added mid-month counts only for the days left.</li>
+          <li><b className="text-hms-ink">6 or 12 months.</b> Paid at the start at the lower rate; monthly bills then only carry extra rooms and add-ons.</li>
+          <li><b className="text-hms-ink">Late.</b> Reminders on the 1st, 5th and {DUE_DAY}th. After the {GRACE_DAY}th, online booking pauses until paid — never your data.</li>
+        </ul>
+      </details>
+
       {!enterprise && <section aria-label="Demo" className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-hms-line px-4 py-3 text-[13px] text-hms-muted">
-        <CalendarClock className="size-4" /><span className="mr-auto">Demo: see the month end now.</span>
-        <Btn variant="outline" disabled={bl.st.invoices.some((i) => i.month === ym)} onClick={() => { bl.demoCloseMonth(ym, cur.lines, cur.total, money.available >= cur.total); say(bl.st.autopay && money.available >= cur.total ? `${monthName(ym)} bill paid by auto-pay` : `${monthName(ym)} bill is ready`); }}>Close {monthName(ym)}</Btn>
+        <CalendarClock className="size-4" /><span className="mr-auto">Prototype — no money moves. Demo: see the month end now.</span>
+        <Btn variant="outline" disabled={bl.st.invoices.some((i) => i.month === ym)} onClick={() => { bl.demoCloseMonth(ym, cur.lines, cur.total, false); say(`${monthName(ym)} bill is ready`); }}>Make {monthName(ym)} bill</Btn>
         <Btn variant="outline" disabled={!bl.open || bl.open.status === "overdue"} onClick={() => bl.demoOverdue()}>Skip past grace</Btn>
         <Btn variant="ghost" onClick={() => { bl.demoReset(); say("Demo reset"); }}>Reset</Btn>
       </section>}
 
+      {paying && <PaySheet inv={paying} balance={money.available} onClose={() => setPaying(null)} onPaid={(by) => { bl.pay(paying.id, `${by} (demo)`); setPaying(null); say(`${monthName(paying.month)} bill paid · ${by} · demo`); }} />}
       {plansOpen && <PlansSheet current={plan} cycle={bl.st.cycle} rooms={inUse} onClose={() => setPlansOpen(false)} onAsk={(p, c) => { const from = p !== plan && ["starter", "business", "ultra"].indexOf(p) > ["starter", "business", "ultra"].indexOf(plan) ? bl.today : `${nextMonth(bl.today.slice(0, 7))}-01`; bl.askChange({ plan: p, cycle: c, from }); setPlansOpen(false); say("Change request sent to BinGi"); }} />}
       {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><Check className="size-4 text-[#7ee2a8]" />{toast}</div>}
     </>
+  );
+}
+
+/** Pick a method → confirm. Prototype: marks the bill paid; no gateway is called. */
+function PaySheet({ inv, balance, onClose, onPaid }: { inv: Invoice; balance: number; onClose: () => void; onPaid: (by: string) => void }) {
+  const [m, setM] = useState<string>(balance >= inv.total ? "BinGi balance" : "bKash");
+  const opts = [...(balance >= inv.total ? [{ id: "BinGi balance", sub: `${tk(balance)} available` }] : []), ...METHODS];
+  return (
+    <div className="hms-fade fixed inset-0 z-[90] flex items-end justify-center bg-[#0f1720]/25 sm:items-center sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Pay bill" onClick={(e) => e.stopPropagation()} className="hms-up w-full max-w-[460px] overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+        <div className="border-b border-hms-line px-5 py-4">
+          <p className="text-[13px] text-hms-muted">{monthName(inv.month)} bill · {inv.id}</p>
+          <p className="text-[28px] font-bold tabular-nums">{tk(inv.total)}</p>
+        </div>
+        <div role="radiogroup" aria-label="Pay with" className="space-y-2 p-5">
+          <p className="text-[13.5px] font-semibold">Pay with</p>
+          {opts.map((o) => (
+            <button key={o.id} role="radio" aria-checked={m === o.id} onClick={() => setM(o.id)} className={clsx("flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left", m === o.id ? "border-[#c8232e] bg-[#fff6f6]" : "border-hms-line hover:border-[#c9ced6]")}>
+              <span className={clsx("size-4 shrink-0 rounded-full border-2", m === o.id ? "border-[#c8232e] bg-[#c8232e] shadow-[inset_0_0_0_3px_white]" : "border-[#b8bdc7]")} />
+              <span><b className="block text-[14.5px]">{o.id}</b><span className="text-[12.5px] text-hms-muted">{o.sub}</span></span>
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 border-t border-hms-line px-5 py-3.5">
+          <p className="mr-auto text-[12.5px] text-hms-muted">Prototype — nothing is charged.</p>
+          <Btn variant="outline" onClick={onClose}>Cancel</Btn>
+          <button onClick={() => onPaid(m)} className="btn-glow inline-flex h-10 items-center rounded-xl px-4 text-[14px] font-semibold text-white">Pay {tk(inv.total)}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Who gets bills and reminders (moved here from Property profile). */
+function BillingContact({ h, set, say }: { h: { name: string }; set: ReturnType<typeof useSettings>; say: (t: string) => void }) {
+  const p = set.st.profile;
+  const [d, setD] = useState({ name: p.billingName, phone: p.billingPhone, email: p.billingEmail });
+  const dirty = d.name !== p.billingName || d.phone !== p.billingPhone || d.email !== p.billingEmail;
+  const save = () => {
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) return say("Check the email");
+    if (d.phone && !/^(\+?880|0)1[3-9]\d{8}$/.test(d.phone.replace(/[\s-]/g, ""))) return say("Check the phone number");
+    set.save((s) => { s.profile.billingName = d.name.trim(); s.profile.billingPhone = d.phone.trim(); s.profile.billingEmail = d.email.trim(); }, "Billing contact updated");
+    say("Saved");
+  };
+  const inp = "h-10 w-full rounded-lg border border-hms-line bg-white px-3 text-[14px] outline-none focus:border-hms-coral";
+  return (
+    <Card title="Bills go to" action={dirty ? <Btn onClick={save}>Save</Btn> : undefined}>
+      <div className="grid gap-2.5">
+        <input aria-label="Billing contact name" placeholder={`Name (e.g. owner of ${h.name})`} value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} className={inp} />
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <input aria-label="Billing phone" inputMode="tel" placeholder="Phone for SMS" value={d.phone} onChange={(e) => setD({ ...d, phone: e.target.value })} className={inp} />
+          <input aria-label="Billing email" type="email" placeholder="Email for the PDF" value={d.email} onChange={(e) => setD({ ...d, email: e.target.value })} className={inp} />
+        </div>
+      </div>
+    </Card>
   );
 }
 

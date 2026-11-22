@@ -61,7 +61,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { id: "cashbox", label: "Cashbox", icon: Wallet, href: "/hms/cashbox" },
       { id: "finance", label: "Finance", icon: Landmark, href: "/hms/finance" },
       { id: "operations", label: "Expenses", icon: Activity, href: "/hms/operations" },
-      { id: "billing", label: "Billing & Subscription", icon: ReceiptText, href: "/hms/settings/billing" },
+      { id: "billing", label: "Billing & Subscription", icon: ReceiptText, href: "/hms/billing" },
     ],
   },
   {
@@ -195,12 +195,12 @@ function BillBanner() {
   const path = usePathname();
   const { st } = useRooms(h);
   const { open } = useBilling(h, st.units);
-  if (!open || path.startsWith("/hms/settings/billing")) return null;
+  if (!open || path.startsWith("/hms/billing")) return null;
   const late = open.status === "overdue";
   return (
     <div role="region" aria-label="BinGi bill" className={clsx("flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 text-[13.5px] sm:px-6", late ? "border-[#f3c4c0] bg-[#fdecec] text-[#8e1621]" : "border-[#f1dfb8] bg-[#fdf8ec] text-[#6b4309]")}>
       <p className="min-w-0 flex-1"><b className="font-semibold">{monthName(open.month)} BinGi bill {late ? "is overdue" : "is ready"} · ৳{new Intl.NumberFormat("en-IN").format(open.total)}</b>{late ? " · pay to keep online booking on" : ` · due ${dShort(open.due)}`}</p>
-      <Link href="/hms/settings/billing" className="font-semibold underline underline-offset-4">{late ? "Pay now" : "See bill"}</Link>
+      <Link href="/hms/billing" className="font-semibold underline underline-offset-4">{late ? "Pay now" : "See bill"}</Link>
     </div>
   );
 }

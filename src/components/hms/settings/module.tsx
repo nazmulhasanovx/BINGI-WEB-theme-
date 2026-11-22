@@ -5,12 +5,20 @@ import { useSettings } from "@/lib/settings/store";
 import { Toast } from "../bookings/ui";
 import { SettingsNav, SettingsPhoneNav } from "./frame";
 import * as P from "./pages";
-import { BillingPage } from "./billing";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+/** Billing has its own page from the sidebar now (22 Nov); old links land there. */
+function ToBilling() {
+  const router = useRouter();
+  useEffect(() => { router.replace("/hms/billing"); }, [router]);
+  return null;
+}
 
 const PAGES: Record<string, ComponentType> = {
   overview: P.OverviewPage, profile: P.ProfilePage, branding: P.BrandingPage, regional: P.RegionalPage,
   policies: P.PoliciesPage, taxes: P.TaxesPage, housekeeping: P.HousekeepingRulesPage, restaurant: P.RestaurantPage,
-  channels: P.ChannelsPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: BillingPage,
+  channels: P.ChannelsPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: ToBilling,
   messages: P.MessagesPage, users: P.UsersPage, security: P.SecurityPage, properties: P.PropertiesPage,
   activity: P.ActivityPage, preferences: P.PreferencesPage,
 };

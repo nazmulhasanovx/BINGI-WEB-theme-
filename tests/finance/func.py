@@ -15,7 +15,7 @@ with sync_playwright() as p:
   av=v("Available balance"); col=v("Paid online"); fee=v("BinGi booking fees"); gw=v("Gateway fees"); ms=v("SMS & email"); rf=v("Online refunds"); po=v("Paid out to you")
   print(av,col,fee,gw,ms,rf,po)
   t("balance arithmetic", abs(max(0,col-fee-gw-ms-rf-po)-av)<0.02)
-  t("subscription invoices link to Settings billing", pg.get_by_role("link",name=re.compile("Subscription invoices")).get_attribute("href")=="/hms/settings/billing")
+  t("subscription invoices link to Billing", pg.get_by_role("link",name=re.compile("Subscription invoices")).get_attribute("href")=="/hms/billing")
   # ledger filter
   pg.get_by_role("tab",name="Ledger").click(); pg.wait_for_timeout(400)
   pg.get_by_label("Type").select_option("fee"); pg.wait_for_timeout(300)

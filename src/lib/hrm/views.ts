@@ -25,7 +25,7 @@ export const MODULES: { id: string; label: string; group: string; area?: Area; h
   { id: "cashbox", label: "Cashbox", group: "Money & pricing", area: "Money", href: "/hms/cashbox" },
   { id: "finance", label: "Finance", group: "Money & pricing", area: "Money", href: "/hms/finance" },
   { id: "operations", label: "Expenses", group: "Money & pricing", area: "Money", href: "/hms/operations" },
-  { id: "billing", label: "Billing & Subscription", group: "Money & pricing", area: "Settings", href: "/hms/settings/billing" },
+  { id: "billing", label: "Billing & Subscription", group: "Money & pricing", area: "Settings", href: "/hms/billing" },
   { id: "reports", label: "Reports", group: "Reports & online", area: "Reports", href: "/hms/reports" },
   { id: "communication", label: "Communication Center", group: "Reports & online", area: "Guests", href: "/hms/communication" },
   { id: "website", label: "Website Management", group: "Reports & online", area: "Website", href: "/hms/website/overview" },

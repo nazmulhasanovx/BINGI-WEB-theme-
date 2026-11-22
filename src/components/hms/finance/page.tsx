@@ -43,7 +43,7 @@ export function FinancePage() {
     <div className="h-full overflow-y-auto"><div className="hms-page">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Finance</h1><p className="text-[14.5px] text-hms-muted">Money guests paid online through BinGi, fees, and payouts to you.</p></div>
-        <Link href="/hms/settings/billing" className={clsx(btnLine, "h-10")}>Subscription invoices<ChevronRight className="size-4" aria-hidden /></Link>
+        <Link href="/hms/billing" className={clsx(btnLine, "h-10")}>Subscription invoices<ChevronRight className="size-4" aria-hidden /></Link>
       </div>
       <div role="tablist" aria-label="Finance" className="-mx-1 mt-4 flex gap-1 overflow-x-auto border-b border-hms-line px-1">
         {TABS.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => go(k)} className={clsx("-mb-px flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[14.5px] font-semibold", tab === k ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}{k === "settlements" && d.fin.st.settlements.some((s) => s.status === "requested") && <span className="rounded-full bg-hms-amber-soft px-2 text-[12px] text-hms-amber">1</span>}</button>)}

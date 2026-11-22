@@ -22,7 +22,6 @@ export const S_PAGES: SPage[] = [
   { id: "channels", label: "Website & channels", group: "Online", icon: Globe, kw: "website marketplace ota booking.com agoda expedia airbnb online booking" },
   { id: "payments", label: "Guest payments", group: "Money", icon: CreditCard, kw: "cash bkash nagad card bank gateway payment methods" },
   { id: "documents", label: "Invoices & documents", group: "Money", icon: FileText, kw: "invoice receipt prefix terms footer paper contract letter confirmation printer" },
-  { id: "billing", label: "Billing & plan", group: "Money", icon: BedDouble, kw: "plan subscription bills upgrade modules" },
   { id: "messages", label: "Guest messages", group: "Messages", icon: MessageSquare, kw: "notification email sms whatsapp template chat shortcut location" },
   { id: "users", label: "Users & roles", group: "Access", icon: Users, kw: "staff invite permissions role access" },
   { id: "security", label: "Security", group: "Access", icon: ShieldCheck, kw: "password two-step 2fa sessions timeout" },

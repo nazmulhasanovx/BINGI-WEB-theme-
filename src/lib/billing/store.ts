@@ -49,8 +49,8 @@ export function monthBill(h: Hotel, units: Unit[], ym: string, cycle: Cycle, ext
   const base = Math.max(MIN_BILLED, start);
   const added = used.filter((u) => !fromStart(u)).sort((a, b) => a.created.localeCompare(b.created));
   const lines: Line[] = [];
-  if (cycle === 1) lines.push({ id: "plan", label: `${PLANS[plan].label} plan`, detail: `${base} rooms × ৳${rate} (${start < MIN_BILLED ? `${start} in use, minimum ${MIN_BILLED}` : "rooms in use on the 1st"})`, amount: base * rate });
-  else lines.push({ id: "plan", label: `${PLANS[plan].label} plan · ${cycle}-month`, detail: `Paid at the start of the cycle (${base} rooms × ৳${rate} × ${cycle})`, amount: 0, note: "prepaid" });
+  if (cycle === 1) lines.push({ id: "plan", label: `${PLANS[plan].label} plan`, detail: `${base} ${base === 1 ? "room" : "rooms"} × ৳${rate}${start < MIN_BILLED ? " · minimum billed" : ""}`, amount: base * rate });
+  else lines.push({ id: "plan", label: `${PLANS[plan].label} plan · ${cycle}-month`, detail: `Paid at the start of the cycle (${base} ${base === 1 ? "room" : "rooms"} × ৳${rate} × ${cycle})`, amount: 0, note: "prepaid" });
   // Rooms added this month above what is already billed: charged for the days left.
   const free = Math.max(0, base - start);
   const charged = added.slice(free);

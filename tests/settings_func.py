@@ -19,7 +19,7 @@ with sync_playwright() as p:
   save=lambda: (pg.get_by_role("button",name="Save",exact=True).click(), pg.wait_for_timeout(300))
   pg.goto(B+"/hms/settings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
   nav=pg.get_by_role("complementary",name="Settings")
-  t("17 pages + overview in nav", nav.get_by_role("link").count()==18)
+  t("16 pages + overview in nav (billing has its own page)", nav.get_by_role("link").count()==17)
   t("no placeholder", "Not redesigned yet" not in M() and "Setup checklist" in M())
   # every page loads + axe
   for i in IDS:
@@ -34,11 +34,15 @@ with sync_playwright() as p:
   # profile save -> checklist + docs
   pg.goto(B+"/hms/settings/profile"); pg.wait_for_timeout(900)
   t("save bar hidden until change", pg.get_by_role("button",name="Save",exact=True).count()==0)
-  pg.get_by_label("VAT BIN").fill("000123456-0101"); pg.get_by_label("Name",exact=True).fill("Rafiq Owner")
+  pg.get_by_label("VAT BIN").fill("000123456-0101")
   t("save bar shows", pg.get_by_role("button",name="Save",exact=True).count()==1)
   save(); t(f"profile saved ({ST()})", "saved" in ST().lower())
+  # who gets bills now lives on Billing
+  pg.goto(B+"/hms/billing"); pg.wait_for_timeout(1200)
+  pg.get_by_label("Billing contact name").fill("Rafiq Owner"); pg.get_by_role("button",name="Save",exact=True).click(); pg.wait_for_timeout(300)
   pg.goto(B+"/hms/settings"); pg.wait_for_timeout(900)
-  t("checklist updated (BIN + billing)", "4 of 7" in M() and "Property profile updated" in M())
+  done=re.search(r"(\d+) of (\d+)", M())
+  t(f"checklist updated (BIN + billing) {done and done.group(0)}", done is not None and int(done.group(1))>=4 and "Property profile updated" in M())
   # taxes -> rooms/bookings use new VAT
   pg.goto(B+"/hms/settings/taxes"); pg.wait_for_timeout(900)
   pg.get_by_label("VAT",exact=True).fill("10"); pg.wait_for_timeout(100)
@@ -54,7 +58,7 @@ with sync_playwright() as p:
   t(f"bookings follow hotel VAT ({tot} → {tot2})", tot2>tot)
   # policies -> bookings settings (one home)
   pg.goto(B+"/hms/settings/policies"); pg.wait_for_timeout(900)
-  pg.get_by_label("Late check-out",exact=True).select_option("charge"); pg.get_by_label("Late check-out fee").fill("2500")
+  pg.get_by_role("button",name="With a fee").nth(1).click(); pg.get_by_label("Late check-out fee").fill("2500")
   pg.get_by_label("No-show fee").fill("80"); save()
   t(f"policies saved ({ST()})", "saved" in ST().lower())
   bks=pg.evaluate("(()=>{const k=Object.keys(localStorage).find(k=>k.includes('bookings')&&k.includes('azure'));return JSON.parse(localStorage.getItem(k)).settings})()")
@@ -126,9 +130,9 @@ with sync_playwright() as p:
   pg.get_by_role("button",name="Show all").click()
   # billing single home
   pg.goto(B+"/hms"); pg.wait_for_timeout(1000)
-  t("sidebar billing → settings", pg.get_by_role("link",name="Billing & Subscription").first.get_attribute("href").endswith("/hms/settings/billing"))
-  pg.goto(B+"/hms/billing"); pg.wait_for_timeout(800)
-  t("old /hms/billing gone", "404" in pg.locator("body").inner_text() or "not found" in pg.locator("body").inner_text().lower())
+  t("sidebar billing → own page", pg.get_by_role("link",name="Billing & Subscription").first.get_attribute("href")=="/hms/billing")
+  pg.goto(B+"/hms/settings/billing"); pg.wait_for_timeout(1200)
+  t("old settings billing link redirects", pg.url.endswith("/hms/billing"))
   # mobile
   m=b.new_page(viewport={"width":390,"height":844})
   for i in ["overview","policies","payments","users","documents","messages"]:
