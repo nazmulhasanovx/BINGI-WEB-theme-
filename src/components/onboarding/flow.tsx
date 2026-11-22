@@ -22,7 +22,7 @@ import { MASTER_LIST, PLAN_ORDER } from "@/themes/manifest";
 import { setProperty } from "../hms/property";
 import { money } from "../hms/rooms/parts";
 import { MobileSteps, Sidebar, progressOf } from "./sidebar";
-import { GuestPreview } from "./preview";
+import { PropertyPreview } from "../rooms/property-preview";
 import { AddressSheet } from "./address";
 import { FormSlot } from "./rooms-easy";
 import { AddRooms, Place, ReviewRooms } from "./rooms-v8";
@@ -108,7 +108,7 @@ function Flow({ d }: { d: Draft }) {
       <Header title={d.name || t("নতুন property", "New property")} right={<Link href="/onboarding" aria-label={t("সেভ করে বের হন", "Save & exit")} className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-[#e3e7ec]"><span className="sm:hidden">{t("বের হন", "Exit")}</span><span className="hidden sm:inline">{t("সেভ করে বের হন", "Save & exit")}</span></Link>} />
       <Card sidebar={<Sidebar d={d} cs={cs} pct={pct} go={go} />} mobileNav={<MobileSteps d={d} cs={cs} pct={pct} go={go} />} progress={pct}
         wide={d.step === "2.2" || (d.step === "3.2" && formOpen)}
-        aside={d.step === "2.2" || d.step === "6.1" || d.step === "3.3" || (d.step === "3.2" && formOpen) ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
+        aside={d.step === "3.1" ? <PropertyPreview d={d} /> : undefined}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
           {!formOpen && d.step === "2.2" && <PlanLine d={d} made={counts.total} />}

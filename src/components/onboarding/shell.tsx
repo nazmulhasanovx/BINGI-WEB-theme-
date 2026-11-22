@@ -64,7 +64,7 @@ export function Card({ sidebar, mobileNav, progress, children, footer, aside, wi
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileNav && <div className="border-b border-[#e3e7ec] bg-white lg:hidden">{mobileNav}</div>}
         <main className="flex-1 px-4 pb-10 pt-6 sm:px-10 sm:pt-10">
-          <div className={clsx("mx-auto", wide ? "max-w-[1040px]" : aside ? "max-w-[680px] xl:grid xl:max-w-[1040px] xl:grid-cols-[minmax(0,1fr)_300px] xl:gap-12" : "max-w-[680px]")}>
+          <div className={clsx("mx-auto", wide ? "max-w-[1040px]" : aside ? "max-w-[680px] xl:grid xl:max-w-[1100px] xl:grid-cols-[minmax(0,1fr)_400px] xl:gap-10" : "max-w-[680px]")}>
             <div className="min-w-0">{children}</div>
             {aside && <aside className="hidden xl:block"><div className="sticky top-[104px]">{aside}</div></aside>}
           </div>

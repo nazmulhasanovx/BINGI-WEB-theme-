@@ -17,6 +17,7 @@ import { PLANS, SetupCtx, num, quote, recommend, useL, useSetupEdit, type Draft,
 import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/rooms-easy";
 import { BN_NAME, CUSTOM_PRESETS, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, cleanPrefix, codeOf, configFrom8, stayOf, kOne, kMany, floorsOf, isZoneCore, kindName, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
+import { PropertyPreview } from "../rooms/property-preview";
 import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
 import { TYPE_META } from "./types";
 import { Chip, Errors, Ghost, Pills, Primary, Stepper, Tile, field } from "./shell";
@@ -36,7 +37,7 @@ export function placeLabel(d: Draft, c: Config, n: LocNode, bn: boolean) {
 }
 
 // ---------- 3.1 Where they are ----------
-export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"]; goStep?: (s: StepId) => void; head?: boolean }) {
+export function Place({ d, st, goStep, head = true, drawing = true }: { d: Draft; st: Rooms["st"]; goStep?: (s: StepId) => void; head?: boolean; /** Show the live drawing on top below xl (onboarding; the xl drawing sits in the side column). */ drawing?: boolean }) {
   const edit = useSetupEdit();
   const PT = TYPE_META.find((x) => x.slug === d.propertyType);
   const { t, lang } = useL();
@@ -67,11 +68,10 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
   const setGround = (g: boolean) => setFloors(Math.max(top, 1), g);
   const bs = d.buildings.length ? d.buildings : ["main"];
   const shown = STAY.filter((s) => fits.includes(s.id) || more);
-  const levels = [...[...d.floors].filter((l) => l > 0).sort((x, y) => y - x), ...(ground ? [0] : []), ...Array.from({ length: d.place.basements }, (_, i) => -(i + 1))];
-  const sample = (L: number) => (L > 0 ? `${L}01` : L === 0 ? (d.ground === "G" ? "G01" : "001") : `B${-L}01`);
   return (
     <section>
       {head && <Head title={t("কোথায় আছে?", "Where are they?")} />}
+      {drawing && <PropertyPreview d={d} className="mx-auto mt-5 max-w-[420px] xl:hidden" />}
       <div className="mt-6 space-y-4">
         <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")}
           hint={PT ? t(`${PT.bn} হিসেবে আগেই বাছাই করা`, `Picked for a ${PT.en.toLowerCase()}`) : undefined}
@@ -99,7 +99,7 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
                 <button onClick={() => setOpenB(true)} className="h-9 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]">{t("বদলান", "Change")}</button>
               </div>
             ) : (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]">
+            <div>
               <div className="space-y-5">
                 <div>
                   <ul className="space-y-2">
@@ -138,30 +138,6 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
                   <summary className="cursor-pointer list-none font-semibold text-[#4d5664] hover:text-[#0f1720]">{t("তলার নাম বদলান", "Rename floors")} · <span className="font-normal">{d.place.floorStyle === "level" ? t("এখন: লেভেল", "now: Level") : t("এখন: ফ্লোর", "now: Floor")}</span></summary>
                   <div className="mt-2"><Pills size="sm" label={t("তলার নাম", "Floor names")} value={d.place.floorStyle} onChange={(v) => edit((x) => { x.place.floorStyle = v; })} items={[{ v: "floor", label: t("ফ্লোর ১, ২…", "Floor 1, 2…") }, { v: "level", label: t("লেভেল ১, ২…", "Level 1, 2…") }]} /></div>
                 </details>
-              </div>
-              <div aria-label={t("দেখতে যেমন", "Preview")} role="img">
-                <p className="mb-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#5b6270]">{t("দেখতে যেমন", "Preview")}</p>
-                <div className="flex gap-2 overflow-x-auto rounded-xl bg-[#f4f6f8] p-3">
-                  {bs.slice(0, 3).map((b) => {
-                    const B = BUILDINGS.find((x) => x.id === b) ?? BUILDINGS[0];
-                    const ls = [...Array.from({ length: floorsOf(d, b) }, (_, i) => floorsOf(d, b) - i), ...(ground ? [0] : [])];
-                    const shownL = ls.length > 7 ? [...ls.slice(0, 3), NaN, ...ls.slice(-3)] : ls;
-                    return (
-                      <div key={b} className="min-w-[150px] flex-1">
-                        <p className="mb-1 truncate text-center text-[12px] font-semibold">{d.place.bNames?.[b]?.trim() || t(B.bn, B.en)}</p>
-                        <div className="mx-auto h-2.5 w-[86%] rounded-t-lg bg-[#b8bdc7]" />
-                        <div className="space-y-1 rounded-b-md border-x-2 border-[#b8bdc7] bg-[#e9edf2] px-1 pt-1">
-                          {shownL.map((L, k) => Number.isNaN(L) ? <p key={`gap${k}`} className="text-center text-[12px] leading-3 text-[#5b6270]">⋮</p> : (
-                            <div key={L} className="flex items-center justify-between gap-2 rounded bg-white px-2 py-1 text-[12px]"><span className="font-medium">{levelName(d.place.floorStyle, L, bn)}</span><span className="font-mono text-[11.5px] text-[#4d5664]">{sample(L)}, {sample(L).replace(/1$/, "2")}…</span></div>
-                          ))}
-                        </div>
-                        <div className="h-1 rounded bg-[#1c7d45]/70" title={t("মাটি", "Ground")} />
-                        {d.place.basements > 0 && <div className="space-y-1 bg-[#dfe3e8] px-1 py-1">{Array.from({ length: d.place.basements }, (_, i) => -(i + 1)).map((L) => <div key={L} className="flex items-center justify-between gap-2 rounded bg-[#f4f6f8] px-2 py-1 text-[12px] text-[#4d5664]"><span>{levelName(d.place.floorStyle, L, bn)}</span><span className="font-mono text-[11.5px]">{sample(L)}…</span></div>)}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-                {bs.length > 3 && <p className="mt-1 text-center text-[12px] text-[#5b6270]">+{num(bs.length - 3, lang)} {t("বিল্ডিং", "more")}</p>}
               </div>
             </div>
             )}

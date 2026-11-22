@@ -8,9 +8,14 @@ import { useProperty } from "../property";
 import { TODAY, leaves, nodePath, publishIssues, unitRate, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
 import { CORE, TEMPLATES, preset as presetOf, propertyTypeFor, youtubeId, type CoreType } from "@/lib/rooms/catalog";
 import { Btn, Chip, Drawer, Empty, Field, Input, Select } from "../staff/ui";
-import { AmenityPicker, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
+import { AmenityPicker, Hydrated, PRESET_ICON, RoomsFrame, Section, money, useToast } from "./parts";
 import { STATE, useUnitStates } from "./state";
 import { useHousekeeping } from "@/lib/housekeeping/store";
+import { useSettings } from "@/lib/settings/store";
+import { draftFromConfig, savedAnswers } from "@/lib/rooms/hms-setup";
+import { kindName } from "@/lib/onboarding/rooms-v8";
+import { sceneModel } from "@/lib/onboarding/scene";
+import { PropertyPreview } from "@/components/rooms/property-preview";
 
 const fmtStamp = (s?: string) => (s ? `${s.slice(8, 10)} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(s.slice(5, 7)) - 1]} ${s.slice(0, 4)}${s.length > 10 ? `, ${s.slice(11, 16)}` : ""}` : "—");
 
@@ -299,6 +304,41 @@ function CategoryDrawer({ st, c, onClose }: { st: RoomsState; c: Category; onClo
 }
 
 // ---------------- Setup summary ----------------
+/** The saved setup at a glance — same parts as the onboarding setup, with the live drawing. */
+function SetupNow() {
+  const h = useProperty();
+  const { st } = useRooms(h);
+  const { st: ss } = useSettings(h);
+  const c = st.config;
+  // The drawing shows the SAVED setup (not unsaved edits); the owner's own kind name comes from their setup answers.
+  const d = useMemo(() => {
+    const x = draftFromConfig(h, st, ss.tax.vat, ss.tax.service);
+    const own = savedAnswers(h.slug);
+    if (own?.place.custom) x.place.custom = own.place.custom;
+    return x;
+  }, [h, st, ss.tax.vat, ss.tax.service]);
+  const m = sceneModel(d);
+  return (
+        <section className="mb-4 rounded-2xl border border-[#e3e7ec] bg-white p-4 sm:p-5" aria-labelledby="setup-now">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div><h2 id="setup-now" className="text-[17px] font-semibold">Your property</h2><p className="mt-0.5 text-[14px] text-[#4d5664]">Same setup as onboarding · version {c.version} · saved {fmtStamp(c.savedAt)}</p></div>
+                <Link href="/hms/rooms/setup" className="inline-flex h-10 items-center rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]">Edit setup</Link>
+              </div>
+              <dl className="mt-4 divide-y divide-[#e9edf2] rounded-xl border border-[#e3e7ec] text-[14.5px]">
+                <div className="flex gap-4 px-4 py-3"><dt className="w-[132px] shrink-0 text-[#4d5664]">Property type</dt><dd className="font-medium">{propertyTypeFor(h).label}</dd></div>
+                <div className="flex gap-4 px-4 py-3"><dt className="w-[132px] shrink-0 text-[#4d5664]">What you rent</dt><dd className="flex flex-wrap gap-1.5">{d.stay.map((k) => <span key={k} className="rounded-md bg-[#e9edf2] px-2 py-0.5 text-[13.5px] font-medium">{kindName(d, k, false)}</span>)}</dd></div>
+                {m.buildings.length > 0 && <div className="flex gap-4 px-4 py-3"><dt className="w-[132px] shrink-0 text-[#4d5664]">Building & floors</dt><dd className="space-y-1">{m.buildings.map((b) => <p key={b.key}><span className="font-medium">{b.name}</span> · {b.top} {d.place.floorStyle === "level" ? "level" : "floor"}{b.top === 1 ? "" : "s"}{b.ground ? " + ground" : ""}{b.basements ? ` + ${b.basements} basement${b.basements === 1 ? "" : "s"}` : ""}</p>)}</dd></div>}
+                {m.zones.length > 0 && <div className="flex gap-4 px-4 py-3"><dt className="w-[132px] shrink-0 text-[#4d5664]">{d.place.zoneStyle === "block" ? "Blocks" : "Zones"}</dt><dd className="flex flex-wrap gap-1.5">{m.zones.map((z) => <span key={z.key} className="rounded-md bg-[#e9edf2] px-2 py-0.5 text-[13.5px]">{z.name}</span>)}</dd></div>}
+              </dl>
+            </div>
+            <PropertyPreview d={d} lang="en" className="mx-auto w-full max-w-[440px]" />
+          </div>
+        </section>
+  );
+}
+
 export function ConfigurationPage() {
   const h = useProperty();
   const { st } = useRooms(h);
@@ -306,13 +346,8 @@ export function ConfigurationPage() {
   const count = (id: string) => st.units.filter((u) => u.node === id || c.nodes.some((n) => n.parent === id && n.id === u.node)).length;
   return (
     <RoomsFrame tab="setup">
+      {c.configured && <Hydrated><SetupNow /></Hydrated>}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Setup" desc={`Version ${c.version} · saved ${fmtStamp(c.savedAt)}`} right={<Link href="/hms/rooms/setup" className="inline-flex h-10 items-center rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]">Edit setup</Link>}>
-          <dl className="grid grid-cols-[130px_1fr] gap-y-2 text-[14.5px]">
-            <dt className="text-[#4d5664]">Property type</dt><dd className="font-medium">{propertyTypeFor(h).label}</dd>
-            <dt className="text-[#4d5664]">Types on</dt><dd className="font-medium">{c.enabled.map((t) => CORE[t].plural).join(", ")}</dd>
-          </dl>
-        </Section>
         <Section title="Numbering">
           <ul className="space-y-1.5 text-[14.5px]">
             {c.enabled.map((t) => <li key={t}><span className="font-medium">{CORE[t].plural}:</span> {TEMPLATES.find((x) => x.v === c.numbering[t].template)?.label} · {leaves(c, t).length} {leaves(c, t).length === 1 ? "location" : "locations"}</li>)}

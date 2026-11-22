@@ -11,16 +11,17 @@ import { useSettings } from "@/lib/settings/store";
 import type { CoreType } from "@/lib/rooms/catalog";
 import { AddRooms, Place } from "@/components/onboarding/rooms-v8";
 import { FormSlot } from "@/components/onboarding/rooms-easy";
+import { PropertyPreview } from "@/components/rooms/property-preview";
 import { useProperty } from "../property";
 import { Btn } from "../staff/ui";
 import { Hydrated, useToast } from "./parts";
 import { AddPage } from "./wizard";
 
-function Frame({ title, sub, children, footer, bare }: { title: string; sub: string; children: ReactNode; footer: ReactNode; bare?: boolean }) {
+function Frame({ title, sub, children, footer, bare, wide }: { title: string; sub: string; children: ReactNode; footer: ReactNode; bare?: boolean; wide?: boolean }) {
   return (
     <div className="flex h-full flex-col bg-[#f4f6f8]">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[920px] px-4 pb-10 pt-5 sm:px-6">
+        <div className={`mx-auto ${wide ? "max-w-[1240px]" : "max-w-[920px]"} px-4 pb-10 pt-5 sm:px-6`}>
           {!bare && <div className="flex flex-wrap items-start justify-between gap-3">
             <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">{title}</h1><p className="mt-0.5 text-[15px] text-[#4d5664]">{sub}</p></div>
             <Link href="/hms/rooms" className="text-[14.5px] font-medium text-[#4d5664] hover:text-[#0f1720]">Cancel</Link>
@@ -29,7 +30,7 @@ function Frame({ title, sub, children, footer, bare }: { title: string; sub: str
         </div>
       </div>
       <div className="border-t border-[#e3e7ec] bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
-        <div className="mx-auto flex max-w-[920px] flex-wrap items-center gap-2">{footer}</div>
+        <div className={`mx-auto flex ${wide ? "max-w-[1240px]" : "max-w-[920px]"} flex-wrap items-center gap-2`}>{footer}</div>
       </div>
     </div>
   );
@@ -65,13 +66,19 @@ function SetupInner() {
   };
   return (
     <SetupCtx.Provider value={host}>
-      <Frame title={st.config.configured ? "Edit where your rooms are" : "Where are your rooms?"} sub="Set up from your property type. Check it and change what's different."
+      <Frame wide title={st.config.configured ? "Edit where your rooms are" : "Where are your rooms?"} sub="The same setup as onboarding — the drawing follows every change."
         footer={<><Link href="/hms/rooms" className="h-10 px-2 text-[14.5px] font-medium leading-10 text-[#4d5664] hover:text-[#0f1720]">Back</Link><span className="ml-auto" /><Btn kind="primary" onClick={save}>Save setup</Btn></>}>
         {stale && (
           <div role="alert" className="mb-4 rounded-xl border border-[#f3c4c0] bg-[#ffe7e4] px-4 py-3 text-[14.5px] text-[#a3261f]">Someone else saved the setup while you were editing (now version {st.config.version}). Nothing was saved — reload the page and make your change again.</div>
         )}
-        <Place d={d} st={st} head={false} />
-        <p className="mt-4 text-[13px] text-[#4d5664]">Rooms you already added keep their numbers and places. A floor, zone or kind that has rooms can't be removed.</p>
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
+          <div className="min-w-0">
+            <PropertyPreview d={d} lang="en" className="mx-auto mb-5 max-w-[440px] lg:hidden" />
+            <Place d={d} st={st} head={false} drawing={false} />
+            <p className="mt-4 text-[13px] text-[#4d5664]">Rooms you already added keep their numbers and places. A floor, zone or kind that has rooms can&apos;t be removed.</p>
+          </div>
+          <aside className="hidden lg:block"><div className="sticky top-4"><PropertyPreview d={d} lang="en" /></div></aside>
+        </div>
       </Frame>
     </SetupCtx.Provider>
   );

@@ -19,6 +19,9 @@ function save(d: Draft) {
   try { const all = JSON.parse(localStorage.getItem(KEY) ?? "{}"); all[d.slug] = d; localStorage.setItem(KEY, JSON.stringify(all)); } catch {}
 }
 
+/** The owner's setup answers kept for this property (custom kind name etc.), if any. */
+export const savedAnswers = (slug: string) => (typeof window === "undefined" ? null : load(slug));
+
 /** Read the saved setup back into the answers the screens use (for properties set up before v8). */
 export function draftFromConfig(h: Hotel, st: RoomsState, vat: number, sc: number): Draft {
   const d = newDraft(0);

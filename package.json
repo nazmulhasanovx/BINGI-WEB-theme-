@@ -51,6 +51,7 @@
     "@fontsource/satisfy": "^5.3.0",
     "@fontsource/spectral": "^5.3.0",
     "@fontsource/young-serif": "^5.3.0",
+    "@remotion/player": "4.0.545",
     "@types/three": "^0.187.0",
     "clsx": "^2.1.1",
     "fflate": "^0.8.2",
@@ -61,6 +62,7 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "remotion": "4.0.545",
     "three": "^0.187.0"
   },
   "devDependencies": {
