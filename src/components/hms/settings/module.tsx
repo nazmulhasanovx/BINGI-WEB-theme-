@@ -5,6 +5,7 @@ import { useSettings } from "@/lib/settings/store";
 import { Toast } from "../bookings/ui";
 import { SettingsNav, SettingsPhoneNav } from "./frame";
 import * as P from "./pages";
+import { BookingChoicesPage } from "./booking-choices";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +19,7 @@ function ToBilling() {
 const PAGES: Record<string, ComponentType> = {
   overview: P.OverviewPage, profile: P.ProfilePage, branding: P.BrandingPage, regional: P.RegionalPage,
   policies: P.PoliciesPage, taxes: P.TaxesPage, housekeeping: P.HousekeepingRulesPage, restaurant: P.RestaurantPage,
-  channels: P.ChannelsPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: ToBilling,
+  channels: P.ChannelsPage, booking: BookingChoicesPage, payments: P.PaymentsPage, documents: P.DocumentsPage, billing: ToBilling,
   messages: P.MessagesPage, users: P.UsersPage, security: P.SecurityPage, properties: P.PropertiesPage,
   activity: P.ActivityPage, preferences: P.PreferencesPage,
 };

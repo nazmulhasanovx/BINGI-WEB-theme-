@@ -18,8 +18,18 @@ export function cancelText(r: BkRules) {
 }
 
 /** Filter the hotel's checkout methods by HMS Guest payments; use the HMS account number when one is saved. */
-export function methodsFrom(h: Hotel, rows: PayRow[] | undefined, pol?: { websitePay?: "full" | "advance" | "hotel"; advancePct?: number }): PaymentMethod[] {
+type Ch = { full: boolean; partial: boolean; request: boolean; pct: number };
+export function methodsFrom(h: Hotel, rows: PayRow[] | undefined, pol?: { websitePay?: "full" | "advance" | "hotel"; advancePct?: number }, booking?: { website: Ch }): PaymentMethod[] {
   const base = byRows(h, rows);
+  // HMS Settings › How guests book › Website (full / partial advance / booking request)
+  if (booking?.website) {
+    const c = booking.website; const out: PaymentMethod[] = [];
+    if (c.full) out.push(...base.filter((m) => m.kind === "mfs-manual" || m.kind === "card-online"));
+    const mfs = base.find((m) => m.kind === "mfs-manual") as Extract<PaymentMethod, { kind: "mfs-manual" }> | undefined;
+    if (c.partial && mfs) out.splice(0, 0, { kind: "advance", percent: Math.min(100, Math.max(1, c.pct || 30)), via: { provider: mfs.provider, number: mfs.number } });
+    if (c.request) out.push({ kind: "pay-at-property" });
+    return out.length ? out : base;
+  }
   if (!pol?.websitePay) return base;
   // HMS Settings › Booking policies › "Website bookings pay"
   const hasMfs = base.some((m) => m.kind === "mfs-manual");
@@ -47,8 +57,8 @@ export function useSiteRules(h: Hotel) {
   useEffect(() => {
     const load = () => {
       const bk = read<{ settings?: BkRules }>(`bingi-bookings-v1-${h.slug}`);
-      const st = read<{ payments?: PayRow[]; policy?: { websitePay?: "full" | "advance" | "hotel"; advancePct?: number } }>(`bingi.settings.v1.${h.slug}`);
-      setV({ cancel: bk?.settings ? cancelText(bk.settings) : h.policies.cancellation, methods: methodsFrom(h, st?.payments, st?.policy), freeDays: bk?.settings ? bk.settings.freeCancelDays : null });
+      const st = read<{ payments?: PayRow[]; policy?: { websitePay?: "full" | "advance" | "hotel"; advancePct?: number }; booking?: { website: Ch } }>(`bingi.settings.v1.${h.slug}`);
+      setV({ cancel: bk?.settings ? cancelText(bk.settings) : h.policies.cancellation, methods: methodsFrom(h, st?.payments, st?.policy, st?.booking), freeDays: bk?.settings ? bk.settings.freeCancelDays : null });
     };
     load();
     window.addEventListener("storage", load);

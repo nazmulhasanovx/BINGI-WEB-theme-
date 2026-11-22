@@ -50,6 +50,16 @@ export type Settings = {
   log: { at: string; by: string; text: string }[];
   /** OTA setup answers per OTA (22 Nov 2026). Sync is NOT live — "sent" means BinGi got the request. */
   otas?: Record<string, OtaSetup>;
+  /** How guests can book online, per channel (live HMS "Booking Requests", now for website + marketplace). At least one choice stays on. */
+  booking?: { website: BookCh; marketplace: BookCh; same: boolean };
+};
+export type BookCh = { full: boolean; partial: boolean; request: boolean; pct: number };
+/** Old single "Website bookings pay" → the three choices. */
+export const bookingOf = (s: Pick<Settings, "booking" | "policy">): NonNullable<Settings["booking"]> => {
+  if (s.booking) return s.booking;
+  const w = s.policy.websitePay;
+  const web: BookCh = { full: w === "full", partial: w === "advance", request: w === "hotel", pct: s.policy.advancePct || 30 };
+  return { website: web, marketplace: { ...web }, same: true };
 };
 export type OtaSetup = {
   has: boolean; propertyId: string; rooms: Record<string, { on: boolean; otaName: string; allot: number }>; markup: number;

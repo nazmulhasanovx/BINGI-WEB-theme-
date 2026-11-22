@@ -287,7 +287,7 @@ export function PoliciesPage() {
             No-show: the guest pays<InNum label="No-show fee" value={b.noShowFeePct} onChange={(n) => setB({ noShowFeePct: n })} max={100} />% of the first night.</p>
         </Card>
         <Card title="Payment">
-          <Row label="Website bookings pay"><div className="flex flex-wrap items-center gap-2">{([["full", "Full amount"], ["advance", "An advance"], ["hotel", "At the hotel"]] as const).map(([v, l]) => <Pill key={v} on={p.websitePay === v} onClick={() => setP({ websitePay: v })}>{l}</Pill>)}{p.websitePay === "advance" && <span className="text-[14px]"><InNum label="Advance percent" value={p.advancePct} onChange={(n) => setP({ advancePct: n })} max={100} />%</span>}</div></Row>
+          <Row label="How guests book online" hint="Full payment, advance or request"><Go href="/hms/settings/booking">Website & marketplace choices</Go></Row>
           <Row label="Security deposit" hint="Held at check-in, returned at check-out"><span className="text-[14.5px]">৳<InNum label="Security deposit" value={b.depositDefault} onChange={(n) => setB({ depositDefault: n })} w="w-24" /></span></Row>
         </Card>
         <Card title="Children, pets & extra bed">

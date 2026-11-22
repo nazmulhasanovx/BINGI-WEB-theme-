@@ -99,7 +99,7 @@ export interface Review {
 export type PaymentMethod =
   | { kind: "pay-at-property" }
   | { kind: "mfs-manual"; provider: "bKash" | "Nagad" | "Rocket"; number: string }
-  | { kind: "advance"; percent: number }
+  | { kind: "advance"; percent: number; via?: { provider: "bKash" | "Nagad" | "Rocket"; number: string } }
   | { kind: "card-online"; gatewayApproved: boolean };
 
 export interface Hotel {

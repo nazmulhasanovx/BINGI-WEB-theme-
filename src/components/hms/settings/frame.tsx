@@ -7,7 +7,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { unsaved } from "./pages";
-import { Activity, BedDouble, Brush, Building2, CalendarClock, CreditCard, FileText, Globe, Home, KeyRound, Languages, MessageSquare, Palette, Receipt, Search, ShieldCheck, SlidersHorizontal, UtensilsCrossed, Users } from "lucide-react";
+import { Activity, CalendarCheck, BedDouble, Brush, Building2, CalendarClock, CreditCard, FileText, Globe, Home, KeyRound, Languages, MessageSquare, Palette, Receipt, Search, ShieldCheck, SlidersHorizontal, UtensilsCrossed, Users } from "lucide-react";
 
 export type SPage = { id: string; label: string; group: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; kw: string };
 export const S_PAGES: SPage[] = [
@@ -20,6 +20,7 @@ export const S_PAGES: SPage[] = [
   { id: "housekeeping", label: "Housekeeping rules", group: "Stay & operations", icon: Brush, kw: "dirty inspection out of order priority" },
   { id: "restaurant", label: "Restaurant & inventory", group: "Stay & operations", icon: UtensilsCrossed, kw: "kitchen accept printer pos inventory modules" },
   { id: "channels", label: "Website & channels", group: "Online", icon: Globe, kw: "website marketplace ota booking.com agoda expedia airbnb online booking" },
+  { id: "booking", label: "How guests book", group: "Online", icon: CalendarCheck, kw: "booking request negotiation full payment partial advance percent website marketplace checkout" },
   { id: "payments", label: "Guest payments", group: "Money", icon: CreditCard, kw: "cash bkash nagad card bank gateway payment methods" },
   { id: "documents", label: "Invoices & documents", group: "Money", icon: FileText, kw: "invoice receipt prefix terms footer paper contract letter confirmation printer" },
   { id: "messages", label: "Guest messages", group: "Messages", icon: MessageSquare, kw: "notification email sms whatsapp template chat shortcut location" },

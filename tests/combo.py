@@ -121,7 +121,7 @@ with sync_playwright() as p:
   pg.get_by_text(re.compile("^Pay 30% now")).click(); pg.wait_for_timeout(300)
   adv=num(re.search(r"Pay 30% now with bKash\s*৳([\d,]+) now", pg.locator("main").inner_text()).group(1))
   pg.get_by_placeholder("e.g. 9JH4K2L8PQ").fill("COMBO7TRX9"); pg.get_by_role("checkbox").last.check()
-  pg.get_by_role("button",name=re.compile("^Book (now|·)")).first.click(); pg.wait_for_timeout(2500)
+  pg.get_by_role("button",name=re.compile("^Book (· pay|now · pay)")).first.click(); pg.wait_for_timeout(2500)
   t("website booking confirmed page", "/confirmation" in pg.url or "confirmed" in pg.inner_text("body").lower(), pg.url)
   go(P,"/hms",1800); t("dashboard shows the website request", re.search(r"\d+ website requests? to accept", pri()) is not None)
   t("bell shows the website request", "website request" in bell())

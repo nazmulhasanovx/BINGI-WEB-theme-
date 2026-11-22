@@ -19,7 +19,7 @@ with sync_playwright() as p:
   save=lambda: (pg.get_by_role("button",name="Save",exact=True).click(), pg.wait_for_timeout(300))
   pg.goto(B+"/hms/settings"); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(1500)
   nav=pg.get_by_role("complementary",name="Settings")
-  t("16 pages + overview in nav (billing has its own page)", nav.get_by_role("link").count()==17)
+  t("17 pages + overview in nav (billing own page, + How guests book)", nav.get_by_role("link").count()==18)
   t("no placeholder", "Not redesigned yet" not in M() and "Setup checklist" in M())
   # every page loads + axe
   for i in IDS:

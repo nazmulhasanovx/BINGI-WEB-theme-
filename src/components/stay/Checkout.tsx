@@ -30,9 +30,9 @@ function paymentOptions(methods: PaymentMethod[]): Option[] {
   const out: Option[] = [];
   for (const m of methods) {
     if (m.kind === "pay-at-property")
-      out.push({ id: "pay-at-property", title: "Pay on arrival", sub: "Cash or card when you check in.", dueNow: () => 0, needsRef: false });
-    if (m.kind === "advance" && mfs)
-      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${mfs.provider}`, sub: "Rest on arrival.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs });
+      out.push({ id: "pay-at-property", title: "Request to book", sub: "The hotel confirms first. Pay when you arrive.", dueNow: () => 0, needsRef: false });
+    if (m.kind === "advance" && (m.via ?? mfs))
+      out.push({ id: "advance", title: `Pay ${m.percent}% now with ${(m.via ?? mfs)!.provider}`, sub: "Rest on arrival.", dueNow: (t) => Math.round((t * m.percent) / 100), needsRef: true, mfs: m.via ?? mfs });
     if (m.kind === "mfs-manual")
       out.push({ id: "mfs-manual", title: `Pay in full with ${m.provider}`, sub: `Send Money to ${m.number}.`, dueNow: (t) => t, needsRef: true, mfs: { provider: m.provider, number: m.number } });
     if (m.kind === "card-online" && m.gatewayApproved)

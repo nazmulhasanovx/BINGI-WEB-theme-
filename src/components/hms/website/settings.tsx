@@ -11,6 +11,7 @@ import { BarChart3, Check, CircleCheck, Copy, ExternalLink, Eye, Inbox, MessageS
 import { MANIFESTS, PLAN_LABEL, planAllows } from "@/themes/manifest";
 import { slotText, type Inquiry } from "@/lib/site";
 import { useWM } from "./WebsiteModule";
+import { bookingOf, useSettings } from "@/lib/settings/store";
 import { MediaPicker } from "./content";
 import { Badge, Btn, Card, Empty, Field, Input, NotWired, PageHead, PlanLock, Segmented, SourceLink, TextArea, Toggle, fmtDate } from "./ui";
 
@@ -21,23 +22,18 @@ export function BookingPage() {
   const set = <K extends keyof typeof b>(k: K, v: (typeof b)[K]) => site.edit((x) => { x.booking[k] = v; });
   const card = hotel.payments.find((p) => p.kind === "card-online") as { gatewayApproved?: boolean } | undefined;
   const bkash = hotel.payments.find((p) => p.kind === "mfs-manual") as { provider?: string; number?: string } | undefined;
+  const ch = bookingOf(useSettings(hotel).st).website;
   return (
     <>
       <PageHead title="Booking Engine" desc="How guests book and pay." actions={<SourceLink href="/hms/payments" label="Payments" />} />
       <NotWired what="Booking engine settings" />
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="How guests can pay" desc="Only methods you turn on here appear at checkout.">
-          <ul className="divide-y divide-hms-line">
-            <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium">Pay on arrival</b><span className="text-[13px] text-hms-muted">Cash or card on arrival</span></span><Toggle label="Pay at the hotel" on={b.payAtHotel} onChange={(v) => set("payAtHotel", v)} /></li>
-            <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium">{bkash?.provider ?? "bKash"} (send money)</b><span className="text-[13px] text-hms-muted">{bkash?.number ? `To ${bkash.number} · guest enters the transaction ID` : "Add a number in Payments first"}</span></span><Toggle label="bKash" on={b.bkash && !!bkash} disabled={!bkash} onChange={(v) => set("bkash", v)} /></li>
-            <li className="flex items-center gap-3 py-3">
-              <span className="flex-1"><b className="block text-[14px] font-medium">Advance payment</b><span className="text-[13px] text-hms-muted">Guest pays part now, rest on arrival</span></span>
-              {b.advance && <span className="flex items-center gap-1"><Input type="number" aria-label="Advance percent" min={10} max={90} step={5} value={b.advancePercent} onChange={(e) => set("advancePercent", Math.max(10, Math.min(90, Number(e.target.value) || 30)))} className="h-9 w-[72px] text-right" /><span className="text-[13px] text-hms-muted">%</span></span>}
-              <Toggle label="Advance payment" on={b.advance} onChange={(v) => set("advance", v)} />
-            </li>
-            <li className="flex items-center gap-3 py-3"><span className="flex-1"><b className="block text-[14px] font-medium text-hms-muted">Card / online payment</b><span className="text-[13px] text-hms-muted">{card?.gatewayApproved ? "Gateway approved" : "Needs an approved payment gateway"}</span></span>{card?.gatewayApproved ? <Badge tone="green">Ready</Badge> : <SourceLink href="/hms/settings" label="Connect gateway" />}</li>
+        <Card title="How guests book" desc="Full payment, advance or booking request — one place for the website and the marketplace.">
+          <ul className="space-y-2 text-[14px]">
+            {([["full", "Full payment"], ["partial", `Advance ${ch.pct}%`], ["request", "Booking request"]] as const).map(([k, l]) => <li key={k} className="flex items-center justify-between"><span>{l}</span>{ch[k] ? <Badge tone="green">On</Badge> : <Badge>Off</Badge>}</li>)}
           </ul>
-          {!b.payAtHotel && !b.bkash && !b.advance && <p className="mt-2 text-[13px] text-hms-red">Turn on at least one, or guests can&apos;t book.</p>}
+          <Link href="/hms/settings/booking" className="mt-3 inline-flex h-9 items-center rounded-full border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Change in Settings</Link>
+          <p className="mt-2 text-[12.5px] text-hms-muted">Payment numbers: {bkash?.number ? `${bkash.provider} ${bkash.number}` : "add in Guest payments"} · Card {card?.gatewayApproved ? "ready" : "needs an approved gateway"}.</p>
         </Card>
         <Card title="During booking">
           <ul className="divide-y divide-hms-line">
