@@ -1,7 +1,7 @@
 "use client";
 import clsx from "clsx";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Copy, Info, Layers, Pencil, UserPlus } from "lucide-react";
+import { Fragment, useState } from "react";
+import { ChevronLeft, ChevronRight, Copy, Info, Layers, UserPlus } from "lucide-react";
 import { SHIFT_TIME, addDays, dayName, emp, fmt, fmtShort, useHrm, weekDays, type Shift } from "@/lib/hrm/store";
 import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Person, Select } from "./ui";
@@ -60,7 +60,10 @@ export function SchedulePage() {
             ) : <span className="flex-1">No coverage gaps this week.</span>}
             {gaps.length > 0 && <button onClick={() => setAssign(gaps[0].i)} className="flex shrink-0 items-center gap-1.5 font-medium text-[#b11c29]"><UserPlus className="size-4" /> Assign</button>}
           </div>
-          <Btn onClick={() => setTpl(true)}><Layers className="size-[18px]" /> Shift templates</Btn>
+          <div className="flex gap-2">
+            {hasWeek && <Btn onClick={() => { if (window.confirm("Replace this week with last week's shifts?")) copyPrev(); }}><Copy className="size-[18px]" /> Copy last week</Btn>}
+            <Btn onClick={() => setTpl(true)}><Layers className="size-[18px]" /> Shift templates</Btn>
+          </div>
         </div>
 
         {!hasWeek ? (
@@ -75,24 +78,27 @@ export function SchedulePage() {
                 </tr>
               </thead>
               <tbody>
-                {staff.map((e) => (
-                  <tr key={e.id} className="border-t border-[#e3e7ec]">
-                    <td className="px-3 py-3"><Person name={e.name} id={e.id} /></td>
-                    {days.map((d) => {
-                      const s = st.roster.cells[e.id]?.[d];
-                      return (
-                        <td key={d} className="border-l border-[#e3e7ec] px-1.5 py-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <div className={clsx("flex h-[50px] min-w-0 flex-1 flex-col justify-center rounded-xl px-2.5 leading-tight", s ? TONE[s] : "border border-dashed border-[#d3d8df]")}>
-                              <span className="text-[15px]">{s ?? "—"}</span>
-                              {s && SHIFT_TIME[s] && <span className="text-[14.5px] text-[#4d5664]">{SHIFT_TIME[s]}</span>}
-                            </div>
-                            <button onClick={() => setEdit({ emp: e.id, date: d })} aria-label={`Edit ${e.name} ${fmtShort(d)}`} className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#d3d8df] bg-white hover:bg-[#f4f6f8]"><Pencil className="size-3.5" /></button>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
+                {/* Grouped by department; tap a day to change the shift (22 Nov: no pencil on every cell). */}
+                {[...new Set(staff.map((e) => e.dept))].map((dept) => (
+                  <Fragment key={dept}>
+                    <tr className="border-t border-[#e3e7ec] bg-[#fafbfc]"><td colSpan={8} className="px-3 py-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-[#5b6270]">{dept} · {staff.filter((e) => e.dept === dept).length}</td></tr>
+                    {staff.filter((e) => e.dept === dept).map((e) => (
+                      <tr key={e.id} className="border-t border-[#e3e7ec]">
+                        <td className="px-3 py-3"><Person name={e.name} id={e.id} /></td>
+                        {days.map((d) => {
+                          const s = st.roster.cells[e.id]?.[d];
+                          return (
+                            <td key={d} className="border-l border-[#e3e7ec] px-1.5 py-2">
+                              <button onClick={() => setEdit({ emp: e.id, date: d })} aria-label={`Edit ${e.name} ${fmtShort(d)}`} className={clsx("flex h-[50px] w-full min-w-0 flex-col justify-center rounded-xl px-2.5 text-left leading-tight transition-shadow hover:ring-2 hover:ring-[#0f1720]/15 focus-visible:ring-2 focus-visible:ring-[#0f1720]/30", s ? TONE[s] : "border border-dashed border-[#d3d8df]")}>
+                                <span className="text-[15px]">{s ?? "—"}</span>
+                                {s && SHIFT_TIME[s] && <span className="text-[14.5px] text-[#4d5664]">{SHIFT_TIME[s]}</span>}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

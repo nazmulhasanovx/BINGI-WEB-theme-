@@ -54,17 +54,16 @@ export function PayrollPage() {
                   </div>
                   {open && (
                     <div className="mt-2">
-                      <Table cols={[{ label: "Employee", w: "24%" }, { label: "Gross (BDT)", align: "right" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Due (BDT)", align: "right" }, { label: "Payment status", align: "center" }, { label: "Actions", w: "170px" }]}>
+                      <Table cols={[{ label: "Employee", w: "24%" }, { label: "Gross (BDT)", align: "right" }, { label: "Net (BDT)", align: "right" }, { label: "Paid (BDT)", align: "right" }, { label: "Due (BDT)", align: "right" }, { label: "Payment status", align: "center" }, { label: "", w: "56px" }]}>
                         {r.lines.filter((l) => nameOk(l.emp, l)).map((l) => (
-                          <tr key={l.emp}>
-                            <td><Person name={emp(st, l.emp)?.name ?? l.emp} id="" /></td>
+                          <tr key={l.emp} onClick={(ev) => { if (!(ev.target as HTMLElement).closest("button,a,[role=menu]")) go(`/hms/staff/payroll/${r.id}?emp=${l.emp}`); }} className="cursor-pointer hover:bg-[#f7f8fa]">
+                            <td><Link href={`/hms/staff/payroll/${r.id}?emp=${l.emp}`} aria-label={`Open pay for ${emp(st, l.emp)?.name}`} className="block"><Person name={emp(st, l.emp)?.name ?? l.emp} id="" /></Link></td>
                             <td className="text-right">{money(l.gross)}</td>
                             <td className="text-right">{money(lineNet(l))}</td>
                             <td className="text-right">{money(l.paid)}</td>
                             <td className="text-right">{money(lineNet(l) - l.paid)}</td>
                             <td className="text-center"><Chip tone={PS_TONE(payStatus(l))}>{payStatus(l)}</Chip></td>
-                            <td><div className="flex gap-2"><Link href={`/hms/staff/payroll/${r.id}?emp=${l.emp}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-4" /> Open</Link>
-                              <Menu label={`Payroll actions for ${emp(st, l.emp)?.name}`} items={[{ label: "Payslip", onClick: () => go(`/hms/staff/payroll/${r.id}?emp=${l.emp}`) }, ...(r.status === "approved" && lineNet(l) > l.paid ? [{ label: "Record payment", onClick: () => go(`/hms/staff/payroll/${r.id}?pay=${l.emp}`) }] : []), { label: "Open employee", onClick: () => go(`/hms/staff/people/${l.emp}`) }]} /></div></td>
+                            <td><div className="flex justify-end gap-2"><Menu label={`Payroll actions for ${emp(st, l.emp)?.name}`} items={[{ label: "Payslip", onClick: () => go(`/hms/staff/payroll/${r.id}?emp=${l.emp}`) }, ...(r.status === "approved" && lineNet(l) > l.paid ? [{ label: "Record payment", onClick: () => go(`/hms/staff/payroll/${r.id}?pay=${l.emp}`) }] : []), { label: "Open employee", onClick: () => go(`/hms/staff/people/${l.emp}`) }]} /></div></td>
                           </tr>
                         ))}
                       </Table>

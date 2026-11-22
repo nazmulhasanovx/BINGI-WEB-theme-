@@ -3,7 +3,7 @@ import { can } from "@/lib/plan";
 import Link from "next/link";
 import clsx from "clsx";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowUpRight, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
+import { ArrowUpRight, ChevronRight, CircleCheck, Circle, ImagePlus, Lock, Monitor, Plus, Printer as PrinterIcon, Trash2 } from "lucide-react";
 import type { Hotel } from "@/lib/types";
 import { useProperty, PROPERTIES, setProperty } from "../property";
 import { useSettings, bookingOf, AREAS, type Settings, type Perm, type Role, type Area } from "@/lib/settings/store";
@@ -541,6 +541,11 @@ export function UsersPage() {
   return (
     <>
       <PageHead title="Users & roles" desc="Who can open the HMS and what they can change. Staff records stay in Staff." actions={<Segmented value={tab} onChange={setTab} options={[{ v: "users", label: "Users" }, { v: "roles", label: "Roles" }]} />} />
+      {/* 22 Nov: Department views (what each department's HMS looks like) are set up from here too. */}
+      <Link href="/hms/staff/views" className="flex items-center gap-3 rounded-2xl border border-hms-line bg-white px-5 py-3.5 hover:bg-hms-hover">
+        <span className="min-w-0 flex-1"><b className="block text-[15px] font-semibold">Department views</b><span className="text-[13.5px] text-hms-muted">The sidebar, home page and quick actions each department sees. What they may change still comes from the role.</span></span>
+        <ChevronRight className="size-5 shrink-0 text-hms-muted" aria-hidden />
+      </Link>
       {tab === "users" && <Card pad={false}>
         <div className="flex items-center gap-3 border-b border-hms-line px-5 py-3"><span className="grid size-9 place-items-center rounded-full bg-hms-coral text-[13px] font-semibold text-white">YO</span><p className="flex-1 text-[14px] font-medium">You</p><Badge tone="purple">Owner</Badge></div>
         {people.map((e) => {

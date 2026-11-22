@@ -27,7 +27,7 @@ export function OperationsPage() {
       <Card>
         <h2 className="text-[24px] font-semibold">Team Operations</h2>
         <div className="mt-3 flex flex-wrap gap-2 border-b border-[#e3e7ec] pb-3">
-          {([["app", "Approvals"], ["srv", "Services"], ["perf", "Performance & training"], ["comm", "Communication"], ["off", "Offboarding"]] as const).map(([v, l]) => (
+          {([["app", "Requests log"], ["srv", "Services"], ["perf", "Performance & training"], ["comm", "Communication"], ["off", "Offboarding"]] as const).map(([v, l]) => (
             <button key={v} onClick={() => setTab(v)} className={clsx("whitespace-nowrap rounded-xl px-5 py-2 text-[16px]", tab === v ? "bg-[#ffe7e4] font-medium text-[#b11c29]" : "hover:bg-[#f4f6f8]")}>{l}</button>
           ))}
         </div>

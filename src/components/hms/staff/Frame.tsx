@@ -2,27 +2,26 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
-import { ChevronDown, Filter, Search, Settings } from "lucide-react";
+import { ChevronDown, Filter, Search, Wrench } from "lucide-react";
 import { useProperty } from "../property";
 import { useHrm } from "@/lib/hrm/store";
 import { Menu, Toast } from "./ui";
-import { useHrmMode } from "@/lib/hrm/mode";
-import { ModeSwitch } from "./easy";
 
 export type StaffTab = "overview" | "people" | "attendance" | "schedule" | "views" | "leave" | "payroll" | "hiring" | "operations" | "settings";
+// One HR (22 Nov 2026): no Easy / Full switch. Six tabs by how often they are used; rare tools sit in the Tools menu.
 const MAIN: { id: StaffTab; label: string; href: string }[] = [
-  { id: "overview", label: "Overview", href: "/hms/staff" },
+  { id: "overview", label: "Today", href: "/hms/staff" },
   { id: "people", label: "People", href: "/hms/staff/people" },
   { id: "attendance", label: "Attendance", href: "/hms/staff/attendance" },
   { id: "schedule", label: "Schedule", href: "/hms/staff/schedule" },
-  { id: "views", label: "Department views", href: "/hms/staff/views" },
-];
-export const MORE: { id: StaffTab; label: string; href: string }[] = [
   { id: "leave", label: "Leave", href: "/hms/staff/leave" },
-  { id: "payroll", label: "Payroll & Benefits", href: "/hms/staff/payroll" },
-  { id: "hiring", label: "Hiring", href: "/hms/staff/hiring" },
-  { id: "operations", label: "Team Operations", href: "/hms/staff/operations" },
-  { id: "settings", label: "Reports & Settings", href: "/hms/staff/settings" },
+  { id: "payroll", label: "Payroll", href: "/hms/staff/payroll" },
+];
+export const MORE: { id: StaffTab; label: string; href: string; hint: string }[] = [
+  { id: "hiring", label: "Hiring", href: "/hms/staff/hiring", hint: "Jobs, candidates, offers" },
+  { id: "operations", label: "Team operations", href: "/hms/staff/operations", hint: "Requests log, training, notices, exits" },
+  { id: "views", label: "Department views", href: "/hms/staff/views", hint: "What each department sees in the HMS" },
+  { id: "settings", label: "HR settings & reports", href: "/hms/staff/settings", hint: "Attendance method, leave, payroll rules" },
 ];
 
 // Toasts live in a tiny module store so any component (inside or outside StaffFrame) can show one.
@@ -42,7 +41,6 @@ export function StaffFrame({
   const { st, reset } = useHrm();
   const toast = useSyncExternalStore(subToast, () => toastText, () => null);
   const setToast = showToast;
-  const { mode, setMode } = useHrmMode();
   const [more, setMore] = useState(false);
   const [fOpen, setFOpen] = useState(false);
   const inMore = MORE.some((m) => m.id === tab);
@@ -65,36 +63,27 @@ export function StaffFrame({
               <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
             </div>
             <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap sm:gap-2.5">
-              <ModeSwitch />
-              <Link href="/hms/staff/settings" aria-label="Settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-3 text-[14.5px] font-medium hover:bg-[#f4f6f8] sm:px-4"><Settings className="size-[18px]" /><span className="hidden sm:inline">Settings</span></Link>
+              <div className="relative">
+                <button onClick={() => setMore((m) => !m)} aria-expanded={more} aria-haspopup="menu" aria-label="Tools" className={clsx("inline-flex h-10 items-center gap-2 rounded-xl border bg-white px-3 text-[14.5px] font-medium hover:bg-[#f4f6f8] sm:px-4", inMore ? "border-[#b11c29] text-[#b11c29]" : "border-[#d3d8df]")}><Wrench className="size-[18px]" /><span className="hidden sm:inline">{inMore ? MORE.find((m) => m.id === tab)!.label : "Tools"}</span><ChevronDown className="size-4" /></button>
+                {more && (
+                  <div role="menu" aria-label="HR tools" className="hms-pop absolute right-0 top-full z-40 mt-1.5 w-[290px] rounded-xl border border-[#e3e7ec] bg-white p-1.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
+                    {MORE.map((m) => (
+                      <Link role="menuitem" key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 hover:bg-[#f4f6f8]", tab === m.id && "bg-[#fff4f3]")}>
+                        <span className={clsx("block text-[14.5px] font-semibold", tab === m.id && "text-[#b11c29]")}>{m.label}</span><span className="block text-[12.5px] text-[#5b6270]">{m.hint}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               {action}
               <Menu label="More actions" items={[{ label: "Export staff (CSV)", onClick: exportCsv }, { label: "Reset demo data", onClick: () => { reset(); setToast("Demo data reset"); } , danger: true }]} />
             </div>
           </div>
 
-          {mode === "easy" && (
-            <div role="status" className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-2.5 text-[14px] text-[#6b4309]">
-              <span>This is a Full HR page. Easy mode only shows your team list.</span>
-              <Link href="/hms/staff" className="font-semibold underline underline-offset-4">Back to Team</Link>
-              <button onClick={() => setMode("full")} className="font-semibold underline underline-offset-4">Stay in Full HR</button>
-            </div>
-          )}
           <nav className="no-scrollbar mt-4 flex items-end gap-1 overflow-x-auto border-b border-hms-line sm:overflow-visible" aria-label="Team & HR">
-            {[...MAIN, ...MORE.map((m) => ({ ...m, mobile: true }))].map((t) => (
-              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", "mobile" in t && "sm:hidden", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
+            {MAIN.map((t) => (
+              <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
             ))}
-            <div className="relative hidden sm:block">
-              <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("flex items-center gap-1.5 -mb-px border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", inMore ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>
-                {inMore ? MORE.find((m) => m.id === tab)!.label : "More"} <ChevronDown className="size-4" />
-              </button>
-              {more && (
-                <div className="hms-pop absolute left-0 top-full z-40 mt-1 w-[230px] rounded-xl border border-[#e3e7ec] bg-white p-1 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
-                  {MORE.map((m) => (
-                    <Link key={m.id} href={m.href} onClick={() => setMore(false)} className={clsx("block rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f4f6f8]", tab === m.id && "font-semibold text-[#b11c29]")}>{m.label}</Link>
-                  ))}
-                </div>
-              )}
-            </div>
           </nav>
 
           {!hideSearch && (

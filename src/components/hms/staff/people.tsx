@@ -19,8 +19,10 @@ export function PeoplePage() {
   const qq = useQuery("q");
   const [qState, setQ] = useState<string | null>(null);
   const q = qState ?? qq ?? "";
-  const [tab, setTab] = useState<"dir" | "inv" | "join">("dir");
-  const [f, setF] = useState<"all" | "active" | "inactive" | "former">("all");
+  // One row of filters (22 Nov): the old Invitations / Joining & probation tabs are two more chips here.
+  const [f, setF] = useState<"all" | "active" | "inactive" | "former" | "inv" | "join">("all");
+  const tab = f === "inv" ? "inv" : f === "join" ? "join" : "dir";
+  const router = useRouter();
   const [dept, setDept] = useState<"all" | Dept>("all");
   const [acc, setAcc] = useState("all");
   const [etype, setEtype] = useState("all");
@@ -38,28 +40,25 @@ export function PeoplePage() {
       filters={<><FilterSelect label="Account access" value={acc} onChange={(v) => { setAcc(v); setPage(1); }} options={[{ v: "linked", label: "Linked" }, { v: "invited", label: "Invited" }, { v: "not-invited", label: "Not invited" }, { v: "disabled", label: "Disabled" }]} /><FilterSelect label="Employment" value={etype} onChange={(v) => { setEtype(v); setPage(1); }} options={["Full time", "Part time", "Contract"].map((x) => ({ v: x, label: x }))} /></>} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>}
       right={<label className="relative inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] bg-white px-4 text-[15px] font-medium"><Layers className="size-[18px]" /><select value={dept} onChange={(e) => { setDept(e.target.value as Dept); setPage(1); }} className="appearance-none bg-transparent pr-6 outline-none" aria-label="Department"><option value="all">All departments</option>{st.settings.departments.map((d) => <option key={d}>{d}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 size-4" /></label>}>
       <Card>
-        <div className="mb-4 border-b border-[#e3e7ec] pb-3">
-          <Pills value={tab} onChange={setTab} items={[{ v: "dir", label: `Staff directory (${counts.all})` }, { v: "inv", label: `Invitations (${invites.length})` }, { v: "join", label: `Joining & probation (${joining.length})` }]} />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <FilterChips value={f} onChange={(v) => { setF(v); setPage(1); }} items={[{ v: "all", label: `All (${counts.all})` }, { v: "active", label: `Active (${counts.active})` }, { v: "inv", label: `App invites (${invites.length})` }, { v: "join", label: `Joining & probation (${joining.length})` }, { v: "inactive", label: `Inactive (${counts.inactive})` }, { v: "former", label: counts.former ? `Former (${counts.former})` : "Former" }]} />
         </div>
         {tab === "dir" && (
           <>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <FilterChips value={f} onChange={(v) => { setF(v); setPage(1); }} items={[{ v: "all", label: `All (${counts.all})` }, { v: "active", label: `Active (${counts.active})` }, { v: "inactive", label: `Inactive (${counts.inactive})` }, { v: "former", label: counts.former ? `Former staff (${counts.former})` : "Former staff" }]} />
-              <span className="text-[14.5px] text-[#4d5664]">{counts.all} staff · {counts.active} active · {counts.inactive} inactive</span>
-            </div>
             {list.length === 0 ? <Empty icon={<UserRound className="size-6" />} title="No staff found" text="Try another name, ID or department." /> : (
-              <Table cols={[{ label: "Employee", w: "24%" }, { label: "Department" }, { label: "Position" }, { label: "Employment" }, { label: "Account access" }, { label: "Actions", w: "160px" }]}>
+              <Table cols={[{ label: "Employee", w: "26%" }, { label: "Department" }, { label: "Position" }, { label: "Employment" }, { label: "Staff app" }, { label: "", w: "56px" }]}>
                 {list.slice((p - 1) * PER, p * PER).map((e) => (
-                  <tr key={e.id}>
-                    <td><Person name={e.name} id={e.id} /></td>
+                  // Whole row opens the person (no separate Open button); the ⋯ menu keeps the other actions.
+                  <tr key={e.id} onClick={(ev) => { if (!(ev.target as HTMLElement).closest("button,a,[role=menu]")) router.push(`/hms/staff/people/${e.id}`); }} className="cursor-pointer hover:bg-[#f7f8fa]">
+                    <td><Link href={`/hms/staff/people/${e.id}`} className="block rounded-lg focus-visible:outline-2" aria-label={`Open ${e.name}`}><Person name={e.name} id={e.id} /></Link></td>
                     <td>{e.dept}</td>
                     <td>{e.position}</td>
                     <td><Chip tone={STATUS[e.status][1]}>{STATUS[e.status][0]}</Chip></td>
                     <td><Chip tone={ACCESS[e.access][1]}>{ACCESS[e.access][0]}</Chip></td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/hms/staff/people/${e.id}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-medium hover:bg-[#f4f6f8]"><ExternalLink className="size-4" /> Open</Link>
+                      <div className="flex items-center justify-end gap-2">
                         <Menu label={`Actions for ${e.name}`} items={[
+                          { label: "Open profile", onClick: () => router.push(`/hms/staff/people/${e.id}`) },
                           ...(e.access !== "linked" && e.status === "active" ? [{ label: e.access === "invited" ? "Resend invitation" : "Invite to staff app", onClick: () => { update((s) => { emp(s, e.id)!.access = "invited"; }, `Invitation sent to ${e.name}`); toast(`Invitation marked as sent to ${e.name}`); } }] : []),
                           e.status === "active" ? { label: "Mark inactive", onClick: () => setStatus(e.id, "inactive") } : { label: "Reactivate", onClick: () => { update((s) => { const x = emp(s, e.id)!; x.status = "active"; x.access = "not-invited"; }, `${e.name} reactivated`); } },
                           ...(e.status !== "former" ? [{ label: "Start offboarding", onClick: () => { update((s) => { emp(s, e.id)!.exit = { reason: "Resignation", lastDay: TODAY, clearance: { assets: false, dues: false, access: false } }; }, `Offboarding started for ${e.name}`); toast("Added to Team Operations › Offboarding"); }, danger: true }] : []),

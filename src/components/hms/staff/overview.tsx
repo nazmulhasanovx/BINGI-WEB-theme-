@@ -3,9 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AlertTriangle, ArrowLeftRight, CalendarDays, Check, ChevronRight, Clock, Hourglass, Plus, User, Users } from "lucide-react";
 import { TODAY, fmt, fmtShort, fmtStamp, useHrm, type Dept, type Employee } from "@/lib/hrm/store";
-import { addEmployee, pendingCounts } from "@/lib/hrm/actions";
-import { useHrmMode } from "@/lib/hrm/mode";
-import { EasyTeam } from "./easy";
+import { addEmployee, decideLeave, decideRequest } from "@/lib/hrm/actions";
 import { StaffFrame, DateBox, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Field, Input, Select, Table } from "./ui";
 
@@ -23,19 +21,19 @@ export function useDay(date: string) {
   return { active, recs, present, leave, absent, notMarked, late };
 }
 
-/** /hms/staff — Easy mode shows the simple team screen, Full mode the HR overview. */
+/** /hms/staff — Today. (The Easy / Full switch was removed on 22 Nov: one HR for everyone.) */
 export function StaffHome() {
-  const { mode } = useHrmMode();
-  return mode === "easy" ? <EasyTeam /> : <OverviewPage />;
+  return <OverviewPage />;
 }
 
 export function OverviewPage() {
-  const { st } = useHrm();
+  const { st, update } = useHrm();
+  const toast = useToast();
+  const [allReq, setAllReq] = useState(false);
   const [date, setDate] = useState(TODAY);
   const [q, setQ] = useState("");
   const [add, setAdd] = useState(false);
   const d = useDay(date);
-  const pc = pendingCounts(st);
   const duty = (Object.keys(REQUIRED) as Dept[]).map((dept) => {
     const assigned = d.active.filter((e) => e.dept === dept && ["Morning", "Evening", "Night"].includes(st.roster.cells[e.id]?.[date] ?? "")).length;
     const req = REQUIRED[dept]!;
@@ -47,12 +45,16 @@ export function OverviewPage() {
     ...st.employees.flatMap((e) => e.docs.filter((x) => x.expires && x.expires >= date).map((x) => ({ name: e.name, text: `Document renewal on ${fmt(x.expires!)}`, date: x.expires!, href: `/hms/staff/people/${e.id}` }))),
   ].filter((u) => !q || u.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   const total = st.employees.filter((e) => e.status !== "former").length;
-  const approvals = [
-    { icon: CalendarDays, label: "Leave requests", n: pc.leave, href: "/hms/staff/leave" },
-    { icon: Clock, label: "Attendance corrections", n: pc.corrections, href: "/hms/staff/operations" },
-    { icon: Hourglass, label: "Overtime requests", n: pc.overtime, href: "/hms/staff/operations" },
-    { icon: ArrowLeftRight, label: "Shift swap", n: pc.swap, href: "/hms/staff/operations" },
+  // One inbox for everything waiting on a manager: leave, attendance corrections, overtime, shift swaps.
+  const name = (id: string) => st.employees.find((e) => e.id === id)?.name ?? id;
+  const inbox = [
+    ...st.leaves.filter((l) => l.status === "pending").map((l) => ({ id: l.id, kind: "leave" as const, icon: CalendarDays, who: name(l.emp), what: /leave/i.test(l.type) ? l.type : `${l.type} leave`, when: `${fmt(l.from)}${l.to !== l.from ? ` – ${fmt(l.to)}` : ""} · ${l.days} day${l.days === 1 ? "" : "s"}`, at: l.requested })),
+    ...st.requests.filter((r) => r.status === "pending").map((r) => ({ id: r.id, kind: "req" as const, icon: r.kind === "Overtime" ? Hourglass : r.kind === "Shift swap" ? ArrowLeftRight : Clock, who: name(r.emp), what: r.kind, when: r.details, at: r.date })),
   ];
+  const decide = (x: (typeof inbox)[number], ok: boolean) => {
+    update((s) => (x.kind === "leave" ? decideLeave(s, x.id, ok) : decideRequest(s, x.id, ok)), `${x.what} for ${x.who} ${ok ? "approved" : "rejected"}`);
+    toast(`${x.what} ${ok ? "approved" : "rejected"} · ${x.who}`);
+  };
   const mode = st.settings.attendance;
   return (
     <StaffFrame tab="overview" search={q} onSearch={setQ} action={<Btn kind="primary" onClick={() => setAdd(true)}><Plus className="size-[18px]" /> Add staff</Btn>} right={<DateBox value={date} onChange={setDate} label={fmt(date)} />}>
@@ -62,7 +64,7 @@ export function OverviewPage() {
         <Kpi icon={<CalendarDays className="size-6 text-[#1d4ed8]" />} bg="bg-[#e7effd]" label="On leave" value={d.leave} href="/hms/staff/leave" />
         <Kpi icon={<AlertTriangle className="size-6 text-[#c47f12]" />} bg="bg-[#fdf3df]" label="Needs attention" value={d.absent + d.notMarked} href="/hms/staff/attendance" />
       </div>
-      <p className="mt-2.5 text-[14px] text-[#4d5664]">{d.active.length} active staff · Includes {d.late} late arrival{d.late === 1 ? "" : "s"}</p>
+      <p className="mt-2.5 text-[14px] text-[#4d5664]">{d.active.length} active staff · {d.late} late · Attendance: {mode === "machine" ? "machine (ZKT)" : mode === "manual" ? "entered by managers" : "not tracked"} · <Link href="/hms/staff/settings?s=attendance" className="font-medium text-[#b11c29] hover:underline">Change</Link></p>
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
@@ -92,26 +94,30 @@ export function OverviewPage() {
           </Card>
         </div>
         <div className="space-y-4">
-          <Card title="Pending approvals" right={<Link href="/hms/staff/operations" className="text-[15px] font-medium text-[#b11c29]">View all</Link>}>
-            <ul className="divide-y divide-[#e3e7ec]">
-              {approvals.map((a) => (
-                <li key={a.label}>
-                  <Link href={a.href} className="flex items-center gap-3 py-2 text-[15px] hover:text-[#b11c29]">
-                    <span className="grid size-8 place-items-center rounded-lg bg-[#ffe7e4] text-[#b11c29]"><a.icon className="size-[18px]" /></span>
-                    <span className="flex-1">{a.label}</span>
-                    <Chip tone={a.n ? "red" : "gray"}>{a.n}</Chip>
-                    <ChevronRight className="size-4" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <Card title={`Waiting for you${inbox.length ? ` · ${inbox.length}` : ""}`}>
+            {inbox.length === 0 ? <p className="text-[14.5px] text-[#4d5664]">Nothing to approve. Leave, corrections, overtime and shift swaps show up here.</p> : (
+              <ul className="divide-y divide-[#e3e7ec]" aria-label="Requests waiting">
+                {(allReq ? inbox : inbox.slice(0, 5)).map((x) => (
+                  <li key={x.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#ffe7e4] text-[#b11c29]"><x.icon className="size-[18px]" /></span>
+                    <span className="min-w-0 flex-1 basis-[150px]"><span className="block truncate text-[15px] font-semibold">{x.who}</span><span className="block truncate text-[13.5px] text-[#4d5664]"><span className="font-medium text-[#0f1720]">{x.what}</span> · {x.when}</span></span>
+                    <span className="flex gap-1.5">
+                      <button onClick={() => decide(x, false)} aria-label={`Reject ${x.what} for ${x.who}`} className="h-9 rounded-lg border border-[#d3d8df] px-3 text-[14px] font-semibold hover:bg-[#f4f6f8]">Reject</button>
+                      <button onClick={() => decide(x, true)} aria-label={`Approve ${x.what} for ${x.who}`} className="h-9 rounded-lg bg-[#0f1720] px-3 text-[14px] font-semibold text-white hover:bg-black">Approve</button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {inbox.length > 5 && <button onClick={() => setAllReq(!allReq)} className="mt-2 text-[14.5px] font-semibold text-[#b11c29]">{allReq ? "Show less" : `Show all ${inbox.length}`}</button>}
+            <Link href="/hms/staff/operations" className="mt-3 block text-[13.5px] text-[#4d5664] hover:text-[#b11c29]">Past requests → Tools › Team operations</Link>
           </Card>
-          <Card>
-            <p className="text-[12.5px] font-medium uppercase tracking-wider text-[#4d5664]">Property setting</p>
-            <p className="mt-1 flex items-center gap-2 text-[19px] font-semibold">Attendance method <Chip tone="red">{mode === "machine" ? "Machine" : mode === "manual" ? "Manual" : "No attendance"}</Chip></p>
-            <p className="mt-1.5 text-[14.5px] text-[#4d5664]">{mode === "manual" ? "Daily attendance is entered by authorised managers." : mode === "machine" ? "Check-in and check-out come from the ZKT device." : "Daily attendance is not tracked for this property."}</p>
-            <p className="mt-1 text-[14px] text-[#4d5664]">Available methods: Machine · Manual · No attendance</p>
-            <Link href="/hms/staff/settings?s=attendance" className="mt-2 inline-flex items-center gap-1 text-[15px] font-medium text-[#b11c29]">Manage attendance settings <ChevronRight className="size-4" /></Link>
+          <Card title="Quick actions">
+            <div className="grid gap-2">
+              <Link href="/hms/staff/attendance" className="flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] px-3.5 text-[15px] font-medium hover:bg-[#f4f6f8]"><Check className="size-[18px] text-[#1c7d45]" />Mark today’s attendance</Link>
+              <Link href="/hms/staff/schedule" className="flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] px-3.5 text-[15px] font-medium hover:bg-[#f4f6f8]"><CalendarDays className="size-[18px] text-[#1d4ed8]" />Plan this week’s shifts</Link>
+              <Link href="/hms/staff/payroll" className="flex h-11 items-center gap-2.5 rounded-xl border border-[#d3d8df] px-3.5 text-[15px] font-medium hover:bg-[#f4f6f8]"><Users className="size-[18px] text-[#b11c29]" />Prepare this month’s pay</Link>
+            </div>
           </Card>
           <Card title="Recent activity">
             <ul className="space-y-2.5">

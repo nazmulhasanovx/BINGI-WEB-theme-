@@ -8,8 +8,10 @@ with sync_playwright() as p:
   pg.goto(B+"/hms"); pg.evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('hms-property','azure-bay')")
   pg.goto(B+"/hms/staff"); pg.wait_for_timeout(1200)
   for x in pg.locator("[data-news-popup]").get_by_role("button",name="Later").all(): x.click()
-  tab=pg.get_by_role("navigation", name="Team & HR").get_by_role("link", name="Department views")
-  t("HRM has Department views tab", tab.count()>=1)
+  # 22 Nov: Department views moved from the tab row to the Tools menu (and Settings › Users & roles).
+  pg.get_by_role("button", name="Tools").click(); pg.wait_for_timeout(150)
+  tab=pg.get_by_role("menuitem", name=re.compile("^Department views"))
+  t("HRM Tools has Department views", tab.count()>=1)
   tab.first.click(); pg.wait_for_url("**/staff/views"); pg.wait_for_timeout(800)
   opts=pg.get_by_role("listbox", name="Department views").get_by_role("option")
   t("10 department views", opts.count()==10)

@@ -93,7 +93,7 @@ export function DeptViewsPage() {
                     {GROUPS.map((g) => (
                       <div key={g}>
                         <p className="mb-1.5 text-[12.5px] font-semibold text-hms-muted">{g}</p>
-                        <div className="grid gap-1.5 sm:grid-cols-2">
+                        <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
                           {MODULES.filter((m) => m.group === g).map((m) => {
                             const on = shown.has(m.id); const lv = levelOf(v, m.id, s.roles); const fixed = m.id === "dashboard" || v.id === "owner";
                             return (
