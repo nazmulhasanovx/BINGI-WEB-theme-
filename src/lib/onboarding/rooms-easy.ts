@@ -11,7 +11,7 @@ export const STAY: { id: CoreType; preset: PresetSlug; bn: string; en: string; s
   { id: "COTTAGE", preset: "cottage", bn: "কটেজ", en: "Cottages", subBn: "আলাদা ছোট ঘর", subEn: "Standalone cottages", prefix: "C", where: "zone" },
   { id: "VILLA", preset: "villa", bn: "ভিলা", en: "Villas", subBn: "বড় আলাদা বাড়ি", subEn: "Private villas", prefix: "V", where: "zone" },
   { id: "APARTMENT", preset: "apartment", bn: "ফ্ল্যাট / অ্যাপার্টমেন্ট", en: "Flats / apartments", subBn: "রান্নাঘরসহ ফ্ল্যাট", subEn: "Flats with a kitchen", prefix: "A", where: "floor" },
-  { id: "OTHER", preset: "custom", bn: "অন্য কিছু", en: "Something else", subBn: "তাঁবু, বোট, পড…", subEn: "Tents, boats, pods…", prefix: "U", where: "zone" },
+  { id: "OTHER", preset: "custom", bn: "নিজের ধরন", en: "Custom", subBn: "হাউসবোট, তাঁবু, ট্রি-হাউস বা নিজের নাম", subEn: "Houseboat, tent, treehouse or your own name", prefix: "U", where: "zone" },
 ];
 export const SUGGEST: Record<string, CoreType[]> = {
   hotel: ["ROOM"], resort: ["ROOM", "COTTAGE", "VILLA"], "guest-house": ["ROOM"], homestay: ["APARTMENT"], "serviced-apartment": ["APARTMENT"],

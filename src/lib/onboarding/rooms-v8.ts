@@ -104,7 +104,43 @@ export const ZONE_NUMBERS = 100;
 export const FLOOR_NUMBERS = 50;
 const BN = "০১২৩৪৫৬৭৮৯";
 const bnNum = (n: number | string) => String(n).replace(/\d/g, (x) => BN[+x]);
-export const isZoneCore = (c: string) => STAY.find((s) => s.id === c)?.where === "zone";
+/** Zone/block kind or floor kind. The custom kind (OTHER) follows the owner's choice. */
+export const isZoneCore = (c: string, d?: Pick<Draft, "place">) => (c === "OTHER" && d?.place.custom ? d.place.custom.where === "zone" : STAY.find((s) => s.id === c)?.where === "zone");
+/** Owner's code for a kind: prefix + digits. Defaults = U1 (custom), C1 (cottage), V1 (villa), A101 (flat), 101 (room). */
+export function codeOf(d: Pick<Draft, "place">, core: string) {
+  const st = STAY.find((s) => s.id === core);
+  const c = d.place.codes?.[core as keyof NonNullable<Draft["place"]["codes"]>];
+  return { prefix: c ? c.prefix : st?.prefix ?? "", digits: c?.digits ?? 1 };
+}
+/** Clean a typed prefix: letters, digits and dash, upper case, up to 6. */
+export const cleanPrefix = (v: string) => v.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 6);
+/** First and last code of one place, for labels like "K1–K100". */
+export function codeRange(d: Pick<Draft, "place">, core: string) {
+  const { prefix, digits } = codeOf(d, core);
+  return isZoneCore(core, d) ? `${prefix}${"1".padStart(digits, "0")}–${prefix}${String(ZONE_NUMBERS).padStart(digits, "0")}` : `${prefix}101–${prefix}150`;
+}
+/** Quick picks inside the Custom card (#6): each fills the name, areas or levels, the code and the nearest standard kind. */
+export const CUSTOM_PRESETS: { id: string; en: string; bn: string; where: "zone" | "floor"; prefix: string; closest: "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT" }[] = [
+  { id: "bungalow", en: "Bungalow / duplex", bn: "বাংলো / ডুপ্লেক্স", where: "zone", prefix: "BG", closest: "VILLA" },
+  { id: "cabin", en: "Cabin", bn: "কেবিন", where: "zone", prefix: "CB", closest: "COTTAGE" },
+  { id: "treehouse", en: "Treehouse", bn: "ট্রি-হাউস", where: "zone", prefix: "TH", closest: "COTTAGE" },
+  { id: "glamping", en: "Tent / glamping", bn: "তাঁবু / গ্ল্যাম্পিং", where: "zone", prefix: "T", closest: "COTTAGE" },
+  { id: "houseboat", en: "Houseboat", bn: "হাউসবোট", where: "zone", prefix: "HB", closest: "ROOM" },
+  { id: "capsule", en: "Capsule / pod", bn: "ক্যাপসুল / পড", where: "floor", prefix: "P", closest: "ROOM" },
+  { id: "holiday-home", en: "Holiday home", bn: "হলিডে হোম", where: "zone", prefix: "H", closest: "VILLA" },
+];
+/** STAY list with the custom kind named as the owner named it (labels only). */
+export const stayOf = (d: Pick<Draft, "place">) => STAY.map((s) => (s.id === "OTHER" && d.place.custom?.name?.trim() ? { ...s, bn: d.place.custom.name.trim(), en: d.place.custom.name.trim(), own: true } : s));
+/** English label of a kind in a sentence: the owner's own name stays as typed. */
+export const kOne = (s: { en: string; own?: boolean }) => (s.own ? s.en : s.en.replace(/s$/, "").toLowerCase());
+export const kMany = (s: { en: string; own?: boolean }) => (s.own ? s.en : s.en.toLowerCase());
+/** What the owner calls a kind (the custom kind shows its own name). */
+export function kindName(d: Pick<Draft, "place">, core: string, bn: boolean, plural = true) {
+  if (core === "OTHER" && d.place.custom?.name?.trim()) return d.place.custom.name.trim();
+  const st = STAY.find((s) => s.id === core);
+  if (!st) return bn ? "রুম" : plural ? "Rooms" : "Room";
+  return bn ? st.bn : plural ? st.en : st.en.replace(/s$/, "");
+}
 export const zoneDefault = (d: Pick<Draft, "place">, i: number, bn: boolean) =>
   d.place.zoneStyle === "block" ? (bn ? `ব্লক ${bnNum(i)}` : `Block ${i}`) : (bn ? `জোন ${bnNum(i)}` : `Zone ${i}`);
 export const zoneName = (d: Pick<Draft, "place">, i: number, bn: boolean) => d.place.zoneNames[i - 1]?.trim() || zoneDefault(d, i, bn);
@@ -119,8 +155,8 @@ export function levelName(style: "floor" | "level", L: number, bn: boolean) {
 export const floorsOf = (d: Draft, b: string) => d.place.bFloors?.[b] ?? Math.max(1, ...d.floors);
 export function configFrom8(d: Draft, prev: Config): Config {
   const nodes: LocNode[] = [];
-  const floorKinds = d.stay.some((s) => !isZoneCore(s));
-  const zoneKinds = d.stay.some((s) => isZoneCore(s));
+  const floorKinds = d.stay.some((s) => !isZoneCore(s, d));
+  const zoneKinds = d.stay.some((s) => isZoneCore(s, d));
   if (floorKinds) {
     const bs = d.buildings.length ? d.buildings : ["main"];
     for (const b of bs) {
@@ -138,21 +174,25 @@ export function configFrom8(d: Draft, prev: Config): Config {
   const base = prev.configured ? prev : emptyConfig();
   return { ...base, configured: true, version: prev.version + 1, savedAt: new Date().toISOString(), enabled: d.stay as CoreType[], nodes };
 }
-/** Ready numbers for one place: floors 101…150 (G01…, B101…), zones C1…C100 with the zone in the full code (Z1-C1). */
-export function numbersFor(c: Config, leaf: LocNode, core: CoreType, ground: "G" | "0"): { local: string; code: string }[] {
+/** Ready numbers for one place: floors 101…150 (G01…, B101…), zones 1…100 with the owner's prefix and digits
+ *  (C1, K01, PO001); the zone sits in the full code (Z1-C1) so the same short number can live in two zones. */
+export function numbersFor(c: Config, leaf: LocNode, core: CoreType, ground: "G" | "0", code?: { prefix: string; digits: number }): { local: string; code: string }[] {
   const st = STAY.find((s) => s.id === core)!;
+  const prefix = code ? code.prefix : st.prefix;
+  const digits = code?.digits ?? 1;
   const out: { local: string; code: string }[] = [];
   if (leaf.kind === "FLOOR" || leaf.kind === "LEVEL") {
     const b = c.nodes.find((n) => n.id === leaf.parent);
     const L = leaf.level ?? 0;
+    const floorPrefix = code ? code.prefix : core === "APARTMENT" ? st.prefix : "";
     for (let i = 1; i <= FLOOR_NUMBERS; i++) {
       const two = String(i).padStart(2, "0");
       const no = L > 0 ? `${L}${two}` : L === 0 ? (ground === "G" ? `G${two}` : String(i).padStart(3, "0")) : `B${-L}${two}`;
-      const local = (core === "APARTMENT" ? st.prefix : "") + no;
+      const local = floorPrefix + no;
       out.push({ local, code: b?.code ? `${b.code}-${local}` : local });
     }
   } else {
-    for (let i = 1; i <= ZONE_NUMBERS; i++) { const local = `${st.prefix}${i}`; out.push({ local, code: `${leaf.code}-${local}` }); }
+    for (let i = 1; i <= ZONE_NUMBERS; i++) { const local = `${prefix}${String(i).padStart(digits, "0")}`; out.push({ local, code: `${leaf.code}-${local}` }); }
   }
   return out;
 }

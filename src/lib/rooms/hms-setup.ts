@@ -91,4 +91,4 @@ export function useHmsSetup(h: Hotel, st: RoomsState, tax: { vat: number; servic
   return { d, edit };
 }
 
-export const zoneKinds = (d: Draft) => d.stay.some((s) => isZoneCore(s));
+export const zoneKinds = (d: Draft) => d.stay.some((s) => isZoneCore(s, d));

@@ -53,8 +53,13 @@ export type Draft = {
   tagline?: string; cover?: string; social?: { facebook?: string; instagram?: string }; nearby?: { name: string; time: string; mode: "walk" | "drive" }[];
   /** v8.1 locations (21 Nov feedback #3): floors named Floor N or Level N, plus ground and basements 1–3;
    *  spread-out units sit in Zone 1–50 or Block 1–50, each renameable. */
-  place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[]; bNames?: Record<string, string>; bFloors?: Record<string, number> };
+  place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[]; bNames?: Record<string, string>; bFloors?: Record<string, number>;
+    /** Room-number code per kind (22 Nov #4/#5/#7): owner's prefix + digits (zone kinds: K1 / K01 / PO001; floor kinds: prefix + 101). */
+    codes?: Partial<Record<CodeKind, { prefix: string; digits: number }>>;
+    /** The owner's own kind (the "Custom" card = core OTHER): name guests see, areas or levels, and the nearest standard kind for marketplace search. */
+    custom?: { name: string; where: "zone" | "floor"; closest: "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT"; preset?: string } };
 };
+export type CodeKind = "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT" | "OTHER";
 export type TypeRow = {
   key: string; core: "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT" | "OTHER"; on: boolean; name: string; kind: string; bed: string; guests: number; price: number;
   bedrooms?: number; bathrooms?: number; size?: number; amen: string[];

@@ -8,7 +8,7 @@ def t(m,c): print(("PASS " if c else "FAIL ")+m); c or F.append(m)
 def walk(b, W, en=True, kind="resort"):
   pg=b.new_page(viewport={"width":W,"height":900 if W>500 else 844}); errs=[]; pg.on("pageerror",lambda e:errs.append(str(e))); pg.on("dialog",lambda d:d.accept())
   T=lambda bn,eng: eng if en else bn
-  NXT=re.compile(T("পরের ধাপ","^Next"))
+  NXT=re.compile(T("পরের ধাপ|নিয়ে এগোন","^Next|^Continue with"))
   bad=[]; shots=[0]
   def snap(n):
     shots[0]+=1; pg.screenshot(path=f"/tmp/ob8/{W}-{'en' if en else 'bn'}-{shots[0]:02d}-{n}.png", full_page=True)
@@ -83,9 +83,12 @@ def walk(b, W, en=True, kind="resort"):
     fb=pg.locator("main:visible").first.inner_text()
     t(tag+"form: payout after BinGi fee shown", re.search("you get|আপনি পাবেন", fb) is not None and re.search("Marketplace −|মার্কেটপ্লেস −", fb) is not None)
     pg.get_by_role("button",name=re.compile("Select numbers|নম্বর বাছাই করুন")).first.click(); pg.wait_for_timeout(250)
-    pg.get_by_role("button",name=re.compile("view numbers|নম্বর দেখুন")).first.click(); pg.wait_for_timeout(250)
+    ch=pg.get_by_role("button",name=re.compile("choose numbers|নম্বর বাছুন"))
+    if ch.count(): ch.first.click(); pg.wait_for_timeout(250)   # several places; one place opens its numbers straight away
     pg.get_by_role("button",name=re.compile(r"\+(5|৫)")).click(); pg.get_by_role("button",name=re.compile("^(Done|ঠিক আছে)$")).click(); pg.wait_for_timeout(200)
-    snap("places-"+cat[:6]); pg.get_by_role("button",name=re.compile("Save numbers|নম্বর সেভ")).click(); pg.wait_for_timeout(200)
+    snap("places-"+cat[:6])
+    sv=pg.get_by_role("button",name=re.compile("Save numbers|নম্বর সেভ"))
+    if sv.count(): sv.click(); pg.wait_for_timeout(200)
     snap("form-"+cat[:6]); pg.get_by_role("button",name=re.compile(r"^(Save room type ·|সেভ করুন ·)")).last.click(); pg.wait_for_timeout(350)
   add_type("rooms|রুম", "Deluxe|ডিলাক্স")
   t(tag+"rooms: 5 rooms after one type", re.search(r"(Total rooms|মোট রুম)\s*(5|৫)\b", pg.locator("main:visible").first.inner_text()) is not None)
@@ -99,7 +102,7 @@ def walk(b, W, en=True, kind="resort"):
   nx()
   t(tag+"booking rules", bool(re.search("Booking rules|বুকিংয়ের নিয়ম", h1())))
   rb=pg.locator("main:visible").first.inner_text()
-  t(tag+"part banner on first page of part", re.search("Part 4 of 6|ধাপ ৪ / ৬", rb, re.I) is not None)
+  t(tag+"no part banner (sidebar / top bar name the part)", re.search("Part 4 of 6|ধাপ ৪ / ৬", rb, re.I) is None)
   t(tag+"rules: no Fri–Sat here (it is per room type)", "Higher price on Fri" not in rb and "শুক্র–শনি দাম একটু বেশি" not in rb)
   t(tag+"rules: children + pets", re.search("Children|বাচ্চা", rb) is not None and re.search("Pets|পোষা প্রাণী", rb) is not None)
   nx(); nx(); nx()  # rules, tools, team

@@ -312,25 +312,36 @@ export function placeName(p: LocNode, c: { nodes: LocNode[] }, lang: "bn" | "en"
 }
 
 /** Tap numbers on one floor / zone (live HMS: "3rd Floor Rooms — select multiple rooms at once"). */
-export function NumberSheet({ place, name, list, taken, picks, onClose, label: show = (x) => x.code }: { place: LocNode; name: string; list: { local: string; code: string }[]; taken: Set<string>; picks: Pick[]; onClose: (p: Pick[]) => void; label?: (x: { local: string; code: string }) => string }) {
+export function NumberSheet({ place, name, list, taken, picks, onClose, label: show = (x) => x.code, start, codeHint, onCode, custom }: { place: LocNode; name: string; list: { local: string; code: string }[]; taken: Set<string>; picks: Pick[]; onClose: (p: Pick[]) => void; label?: (x: { local: string; code: string }) => string;
+  /** Show this many first, the rest behind "Show more" (22 Nov #4: small places don't need 100 boxes). */ start?: number;
+  /** "Codes: K1–K100 · Change" line and the jump to the code setting. */ codeHint?: string; onCode?: () => void;
+  /** Lets the owner add a code that is not in the list (a cottage name, KDF1). */ custom?: (local: string) => { local: string; code: string } }) {
   const { t, lang } = useL();
   const [sel, setSel] = useState<Pick[]>(picks);
   const [q, setQ] = useState("");
+  const [all, setAll] = useState(!start);
   const here = sel.filter((x) => x.node === place.id).length;
-  const shown = list.filter((x) => show(x).toLowerCase().includes(q.toLowerCase()));
+  const extra = sel.filter((x) => x.node === place.id && !list.some((l) => l.code === x.code)).map((x) => ({ local: x.local, code: x.code }));
+  const pool = [...extra, ...list];
+  const match = pool.filter((x) => show(x).toLowerCase().includes(q.toLowerCase()));
+  const shown = q || all ? match : match.slice(0, start);
+  const own = q.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
+  const canAdd = !!custom && own.length > 0 && !pool.some((x) => show(x).toUpperCase() === own);
+  const add = () => { if (!custom || !canAdd) return; const c = custom(own); if (taken.has(c.code.toUpperCase())) return; setSel([...sel, { node: place.id, local: c.local, code: c.code }]); setQ(""); };
   const nextFree = (n: number) => { const add: Pick[] = []; for (const x of list) { if (add.length >= n) break; if (!taken.has(x.code.toUpperCase()) && !sel.some((s) => s.code === x.code)) add.push({ node: place.id, local: x.local, code: x.code }); } setSel([...sel, ...add]); };
   return createPortal(
     <div className="bingi-ui fixed inset-0 z-50 flex items-end justify-center bg-[#0f1720]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => onClose(sel)}>
       <div role="dialog" aria-modal="true" aria-label={name} onClick={(e) => e.stopPropagation()} className="onb-in flex max-h-[92dvh] w-full max-w-[680px] flex-col rounded-t-xl bg-white shadow-2xl sm:rounded-xl">
         <div className="flex items-start justify-between gap-3 border-b border-[#e9edf2] px-5 py-4">
-          <div><h2 className="text-[18px] font-semibold">{name}</h2><p className="text-[13.5px] text-[#4d5664]">{t("একসাথে অনেকগুলো চাপুন", "Tap several at once")}</p></div>
+          <div><h2 className="text-[18px] font-semibold">{name}</h2><p className="text-[13.5px] text-[#4d5664]">{codeHint ? <>{t("কোড", "Codes")} <span className="font-mono text-[#0f1720]">{codeHint}</span>{onCode && <> · <button onClick={onCode} className="font-semibold text-[#b11c29] hover:underline">{t("বদলান", "Change")}</button></>}</> : t("একসাথে অনেকগুলো চাপুন", "Tap several at once")}</p></div>
           <button onClick={() => onClose(sel)} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#c6ccd4]"><X className="size-5" /></button>
         </div>
         <div className="flex flex-wrap items-center gap-2 px-5 pt-4">
-          <input aria-label={t("নম্বর খুঁজুন", "Search numbers")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("নম্বর খুঁজুন", "Search")} className={field + " h-11 min-w-0 flex-1 basis-[160px] text-[15px]"} />
+          <input aria-label={t("নম্বর খুঁজুন", "Search numbers")} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder={custom ? t("খুঁজুন বা নিজের কোড লিখুন", "Search or type your own code") : t("নম্বর খুঁজুন", "Search")} className={field + " h-11 min-w-0 flex-1 basis-[160px] text-[15px]"} />
           {[5, 10].map((n) => <Ghost key={n} onClick={() => nextFree(n)} className="h-11">+{num(n, lang)} {t("পরপর", "in a row")}</Ghost>)}
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-y-auto p-5 sm:grid-cols-5">
+        {canAdd && <div className="px-5 pt-3"><button onClick={add} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-[#9aa0ac] px-3.5 text-[14px] font-semibold hover:border-[#0f1720]">+ {t(`"${own}" যোগ করুন`, `Add "${own}"`)}</button></div>}
+        <div className="grid min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto p-5 sm:grid-cols-5">
           {shown.map((x) => {
             const used = taken.has(x.code.toUpperCase());
             const on = sel.some((s) => s.code === x.code);
@@ -339,6 +350,7 @@ export function NumberSheet({ place, name, list, taken, picks, onClose, label: s
                 className={clsx("h-12 rounded-xl font-mono text-[15px] font-semibold transition-colors", used ? "cursor-not-allowed bg-[#e3e7ec] text-[#a3a8b4] line-through" : on ? "bg-[#b11c29] text-white " : "bg-[#e9edf2] hover:bg-[#ffe7e4]")}>{show(x)}</button>
             );
           })}
+          {!q && !all && match.length > shown.length && <button onClick={() => setAll(true)} className="col-span-3 h-11 rounded-xl text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3] sm:col-span-5">{t(`আরও দেখুন (${num(match.length - shown.length, lang)})`, `Show more (${match.length - shown.length})`)}</button>}
         </div>
         <div className="flex items-center gap-2 border-t border-[#e9edf2] px-5 py-3.5">
           <span className="text-[14px] text-[#4d5664]">{t(`এখানে ${num(here, lang)}টা বাছাই`, `${here} picked here`)}</span>

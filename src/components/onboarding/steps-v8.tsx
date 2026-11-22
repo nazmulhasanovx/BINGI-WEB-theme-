@@ -9,12 +9,15 @@ import { money } from "../hms/rooms/parts";
 import { Chip, Q, Section, Tile, field, label } from "./shell";
 
 // ---------- 1.5 Contact ----------
+/** Types where a star rating and a short pitch matter on day one. */
+const BIG = new Set(["hotel", "resort", "motel", "lodge"]);
 const NATIONS: [string, string][] = [["Bangladeshi", "বাংলাদেশি"], ["Indian", "ভারতীয়"], ["Other", "অন্য"]];
 export function Contact({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
-  const [more, setMore] = useState(!!(d.contact.business || d.contact.year || d.contact.stars || d.contact.website || d.contact.about));
   const c = d.contact;
+  const big = BIG.has(d.propertyType);
+  const [more, setMore] = useState(!!(c.business || c.year || c.website || d.social?.facebook || d.social?.instagram || (!big && (c.stars || c.about))));
   const set = (p: Partial<Draft["contact"]>) => edit((x) => { x.contact = { ...x.contact, ...p }; });
   return (
     <Q title={t("যোগাযোগ", "Contact")} sub={t("গেস্ট আর BinGi এই নম্বর ও ইমেইলে যোগাযোগ করবে।", "Guests and BinGi reach you on this number and email.")}>
@@ -31,18 +34,25 @@ export function Contact({ d }: { d: Draft }) {
         <div><span className={label}>{t("জাতীয়তা", "Nationality")}</span><div className="mt-1.5 flex flex-wrap gap-2">{NATIONS.map(([en, bn]) => <Chip key={en} on={c.nationality === en} onClick={() => set({ nationality: en })}>{t(bn, en)}</Chip>)}</div></div>
       </div>
       </Section>
-      <Section n={2} title={t("ব্যবসার তথ্য", "Business details")} hint={t("সব ঐচ্ছিক — ব্যবসার নাম, স্টার, সোশ্যাল, পরিচিতি", "All optional — business name, stars, social, about")} action={<button onClick={() => setMore((m) => !m)} aria-expanded={more} className="h-9 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]">{more ? t("লুকান", "Hide") : t("যোগ করুন", "Add")}</button>}>
+      {/* 22 Nov (#1): hotels and resorts see star rating + a one-line "about" open (both optional); the rest sits under
+          "More details". Homes, flats and guest houses keep it folded — stars and a business name rarely apply. */}
+      <Section n={2} title={t("ব্যবসার তথ্য", "Business details")} hint={t("সব ঐচ্ছিক — ফাঁকা রাখলেও চলবে, পরে HMS Settings-এ বদলানো যায়", "All optional — leave blank if you like, change later in HMS Settings")}>
+        {big && <div className="grid gap-4">
+          <div><span className={label}>{t("স্টার রেটিং", "Star rating")} <span className="font-normal text-[#4d5664]">({t("ঐচ্ছিক", "optional")})</span></span><div className="mt-1.5 flex flex-wrap gap-2"><Chip on={!c.stars} onClick={() => set({ stars: 0 })}>{t("নেই", "None")}</Chip>{[1, 2, 3, 4, 5].map((n) => <Chip key={n} on={c.stars === n} onClick={() => set({ stars: n })}>{num(n, lang)}★</Chip>)}</div></div>
+          <div><label htmlFor="c-about" className={label}>{t("এক লাইনে property", "Your property in one line")} <span className="font-normal text-[#4d5664]">({t("ঐচ্ছিক", "optional")})</span></label><input id="c-about" maxLength={160} value={c.about} onChange={(e) => set({ about: e.target.value })} placeholder={t("যেমন: সমুদ্রের ধারে শান্ত পরিবারিক হোটেল", "e.g. A calm family hotel by the sea")} className={field + " mt-1.5"} /></div>
+        </div>}
         {more ? (
-          <div className="onb-in grid gap-4 sm:grid-cols-2">
+          <div className={clsx("onb-in grid gap-4 sm:grid-cols-2", big && "mt-4 border-t border-[#e5e8ec] pt-4")}>
             <div><label htmlFor="c-biz" className={label}>{t("ব্যবসার নাম", "Business name")}</label><input id="c-biz" value={c.business} onChange={(e) => set({ business: e.target.value })} placeholder={t("ট্রেড লাইসেন্সের নাম", "As on the trade licence")} className={field + " mt-1.5"} /></div>
             <div><label htmlFor="c-year" className={label}>{t("চালু হয়েছে কোন সালে", "Year established")}</label><input id="c-year" inputMode="numeric" maxLength={4} value={c.year} onChange={(e) => set({ year: e.target.value.replace(/\D/g, "") })} placeholder="2015" className={field + " mt-1.5"} /></div>
-            <div><span className={label}>{t("স্টার রেটিং", "Star rating")}</span><div className="mt-1.5 flex flex-wrap gap-2"><Chip on={!c.stars} onClick={() => set({ stars: 0 })}>{t("নেই", "None")}</Chip>{[1, 2, 3, 4, 5].map((n) => <Chip key={n} on={c.stars === n} onClick={() => set({ stars: n })}>{num(n, lang)}★</Chip>)}</div></div>
+            {!big && <div><span className={label}>{t("স্টার রেটিং", "Star rating")}</span><div className="mt-1.5 flex flex-wrap gap-2"><Chip on={!c.stars} onClick={() => set({ stars: 0 })}>{t("নেই", "None")}</Chip>{[1, 2, 3, 4, 5].map((n) => <Chip key={n} on={c.stars === n} onClick={() => set({ stars: n })}>{num(n, lang)}★</Chip>)}</div></div>}
             <div><label htmlFor="c-web" className={label}>{t("ওয়েবসাইট", "Website")}</label><input id="c-web" value={c.website} onChange={(e) => set({ website: e.target.value })} placeholder="https://" className={field + " mt-1.5"} /></div>
             <div><label htmlFor="c-fb" className={label}>Facebook</label><input id="c-fb" value={d.social?.facebook ?? ""} onChange={(e) => edit((x) => { x.social = { ...x.social, facebook: e.target.value }; })} placeholder="facebook.com/yourhotel" className={field + " mt-1.5"} /></div>
             <div><label htmlFor="c-ig" className={label}>Instagram</label><input id="c-ig" value={d.social?.instagram ?? ""} onChange={(e) => edit((x) => { x.social = { ...x.social, instagram: e.target.value }; })} placeholder="instagram.com/yourhotel" className={field + " mt-1.5"} /></div>
-            <div className="sm:col-span-2"><label htmlFor="c-about" className={label}>{t("Property সম্পর্কে", "About the property")}</label><textarea id="c-about" rows={3} maxLength={500} value={c.about} onChange={(e) => set({ about: e.target.value })} className={field + " mt-1.5 h-auto py-2.5"} /></div>
+            {!big && <div className="sm:col-span-2"><label htmlFor="c-about" className={label}>{t("Property সম্পর্কে", "About the property")}</label><textarea id="c-about" rows={3} maxLength={500} value={c.about} onChange={(e) => set({ about: e.target.value })} className={field + " mt-1.5 h-auto py-2.5"} /></div>}
           </div>
-        ) : <p className="text-[14px] text-[#4d5664]">{c.business || c.website ? [c.business, c.website].filter(Boolean).join(" · ") : t("পরে HMS-এর সেটিংসেও দেওয়া যায়।", "You can also add these later in HMS settings.")}</p>}
+        ) : null}
+        <button onClick={() => setMore((m) => !m)} aria-expanded={more} className={clsx("text-[14px] font-semibold text-[#b11c29] hover:underline", (big || more) && "mt-4")}>{more ? t("কম দেখান", "Show less") : big ? t("+ আরও তথ্য (ব্যবসার নাম, সোশ্যাল)", "+ More details (business name, social)") : t("+ যোগ করুন (ব্যবসার নাম, স্টার, সোশ্যাল, পরিচিতি)", "+ Add (business name, stars, social, about)")}</button>
       </Section>
       </div>
     </Q>

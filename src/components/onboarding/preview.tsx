@@ -17,7 +17,6 @@ const TIP: Partial<Record<StepId, [string, string]>> = {
   "2.1": ["কাগজ এখন না থাকলে পরে দিন। যাচাই শেষ হলে অনলাইন বুকিং খোলে।", "No papers now? Add them later. Online booking opens after verification."],
   "2.3": ["বেশিরভাগ property নিজেই ১০ মিনিটে সেটআপ করে।", "Most properties finish on their own in about 10 minutes."],
   "2.4": ["আগে সেটআপ করলে এখন কোনো টাকা লাগে না।", "Setting up first costs nothing now."],
-  "3.1": ["তলা আর জায়গা ঠিক থাকলে রুম নম্বর আপনা-আপনি তৈরি হয়।", "With the right floors and zones, room numbers are made for you."],
   "3.2": ["দাম পরে HMS-এর রেট ক্যালেন্ডারে দিন অনুযায়ী বদলানো যায়।", "You can change prices by date later in the HMS rates calendar."],
   "4.1": ["চেক-ইন/আউটের সময় পরে ড্যাশবোর্ড থেকে বদলানো যায়।", "You can change check-in/out times later in the dashboard."],
   "4.2": ["যা চালান না বন্ধ রাখুন — মেনু ছোট থাকবে। পরে যেকোনো সময় চালু করা যায়।", "Turn off what you don't run — a shorter menu. Turn on anytime."],
@@ -44,7 +43,7 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
   const accent = ACCENT[theme] ?? "#b11c29";
   const near = (d.nearby ?? []).filter((x) => x.name.trim());
   const step = stepOf(d.step);
-  const ring = (ids: StepId[]) => (ids.includes(step) ? "rounded-lg ring-2 ring-inset ring-[#b11c29]/45 p-1 -m-1" : "");
+  const ring = (ids: StepId[]) => (ids.includes(step) ? "rounded-lg bg-[#f4f6f8] ring-1 ring-inset ring-[#0f1720]/12 p-1 -m-1" : "");
   return (
     <div className="space-y-4">
       <p className="text-[13px] font-semibold text-[#4d5664]">{t("আপনার ওয়েবসাইট", "Your website")} <span className="font-normal">· {t("নমুনা, পাবলিক নয়", "sample, not public")}</span></p>

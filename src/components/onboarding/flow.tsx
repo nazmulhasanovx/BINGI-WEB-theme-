@@ -111,14 +111,17 @@ function Flow({ d }: { d: Draft }) {
         aside={d.step === "2.2" || d.step === "6.1" || d.step === "3.3" || (d.step === "3.2" && formOpen) ? undefined : <GuestPreview d={d} cats={rooms.st.categories.filter((c) => !c.archived)} units={counts.total} />}
         footer={<>
           <div ref={setSlot} hidden={!formOpen} />
+          {!formOpen && d.step === "2.2" && <PlanLine d={d} made={counts.total} />}
           {!formOpen && <Foot back={back}>
             {later[d.step] && <Later onClick={later[d.step]} />}
-            {d.step === "6.1" ? <Primary onClick={submit}>{t("জমা দিন", "Submit")} <Check className="size-[18px]" /></Primary> : <Next onClick={cont} />}
+            {d.step === "6.1" ? <Primary onClick={submit}>{t("জমা দিন", "Submit")} <Check className="size-[18px]" /></Primary>
+              : d.step === "2.2" ? <Next onClick={cont}>{t(`${PLANS[d.planPicked ? d.plan : recommend(d)].label} নিয়ে এগোন`, `Continue with ${PLANS[d.planPicked ? d.plan : recommend(d)].label}`)}</Next>
+              : <Next onClick={cont} />}
           </Foot>}
         </>}>
         <div>
           {tried && <Errors list={d.step === "6.1" ? required : errs} />}
-          <div key={d.step + lang} className="onb-in"><PartIntro step={stepOf(d.step)} />{body[stepOf(d.step)]}</div>
+          <div key={d.step + lang} className="onb-in">{body[stepOf(d.step)]}</div>
         </div>
       </Card>
     </Canvas>
@@ -136,13 +139,15 @@ const PART_LINE: [string, string][] = [
   ["সব মিলিয়ে দেখে জমা দিন", "Check everything and submit"],
 ];
 /** Airbnb-style "Part N of 6" banner on the first page of each part. No extra click. */
-function PartIntro({ step }: { step: StepId }) {
+/** Not shown since 22 Nov (#3): the sidebar (desktop) and the top bar (phone) already name the part. Kept for reference. */
+export function PartIntro({ step }: { step: StepId }) {
   const { t, lang } = useL();
   const k = sectionOf(step);
   if (SECTIONS[k].steps[0] !== step) return null;
   const Icon = PART_ICON[k];
   return (
-    <div className="mb-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#fff1f1] to-[#fdf7f2] px-4 py-3 ring-1 ring-[#f6dada]">
+    // 22 Nov (#3): only on small screens — on desktop the sidebar already shows the part.
+    <div className="mb-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#fff1f1] to-[#fdf7f2] px-4 py-3 ring-1 ring-[#f6dada] lg:hidden">
       <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#b11c29] shadow-sm"><Icon className="size-5" aria-hidden /></span>
       <span className="min-w-0"><span className="block text-[12.5px] font-semibold uppercase tracking-[0.06em] text-[#9b1c26]">{t(`ধাপ ${num(k + 1, lang)} / ${num(SECTIONS.length, lang)}`, `Part ${k + 1} of ${SECTIONS.length}`)} · {t(SECTIONS[k].bn, SECTIONS[k].label)}</span>
         <span className="block text-[14px] text-[#4d5664]">{t(...PART_LINE[k])}</span></span>
@@ -810,3 +815,22 @@ function Done({ d, onEdit }: { d: Draft; onEdit: (s: StepId) => void }) {
     </Canvas>
   );
 }
+
+/** Plan step (22 Nov, #2): one live line above the button instead of a confirm popup. Rooms here are only an estimate
+ *  (the bill follows the rooms added later) and nothing is charged in the trial; the real confirm is at the first bill.
+ *  Activation is on the first bill after the trial (billing rule B9 — proposed, waiting for Nazmul's OK). */
+function PlanLine({ d, made }: { d: Draft; made: number }) {
+  const { t, lang } = useL();
+  const pick = d.planPicked ? d.plan : recommend(d);
+  const rooms = made || d.units;
+  const q = quote(pick, rooms, d.cycle);
+  const per = d.cycle === 1 ? t("মাসে", "month") : t(`${num(d.cycle, lang)} মাসে`, `${d.cycle} months`);
+  const parts = [
+    PLANS[pick].label,
+    made ? t(`${num(rooms, lang)}টা রুম`, `${rooms} ${rooms === 1 ? "room" : "rooms"}`) : t(`প্রায় ${num(rooms, lang)}টা রুম`, `about ${rooms} ${rooms === 1 ? "room" : "rooms"}`),
+    t(`${num(TRIAL_DAYS, lang)} দিন ফ্রি, তারপর ৳${num(q.sub, lang)}/${per}`, `${TRIAL_DAYS} days free, then ৳${new Intl.NumberFormat("en-IN").format(q.sub)}/${per}`),
+    q.activation ? t(`অ্যাক্টিভেশন ৳${num(q.activation, lang)} প্রথম বিলে`, `Activation ৳${new Intl.NumberFormat("en-IN").format(q.activation)} on the first bill`) : t("অ্যাক্টিভেশন নেই", "No activation fee"),
+  ];
+  return <p role="status" aria-label={t("আপনার বাছাই", "Your choice")} className="mb-2.5 rounded-xl bg-[#f4f6f8] px-3.5 py-2 text-center text-[13.5px] text-[#3a414c]">{parts.map((x, i) => <span key={i}>{i > 0 && <span className="px-1.5 text-[#9aa0ac]">·</span>}{i === 0 ? <b className="font-semibold text-[#0f1720]">{x}</b> : x}</span>)}</p>;
+}
+

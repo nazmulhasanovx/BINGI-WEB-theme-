@@ -123,7 +123,7 @@ export function Ghost({ children, className, ...p }: React.ButtonHTMLAttributes<
 export function Tile({ on, onClick, title, sub, icon, badge, price, disabled, locked, role = "button", big, children }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; price?: { main: string; sub?: string; free?: boolean }; disabled?: boolean; locked?: boolean; role?: "button" | "radio"; big?: boolean; children?: ReactNode }) {
   const radio = role === "radio";
   return (
-    <div className={clsx("rounded-2xl border transition-[border-color,box-shadow,background-color] duration-200", on ? "border-[#b11c29] bg-[#fffafa] shadow-[inset_0_0_0_1px_#b11c29,0_10px_24px_-18px_rgb(177_28_41/0.5)]" : "border-[#d3d8df] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.04)] hover:border-[#9aa0ac] hover:shadow-[0_8px_20px_-16px_rgb(15_23_32/0.35)]", disabled && "opacity-50")}>
+    <div className={clsx("rounded-2xl border transition-[border-color,box-shadow,background-color] duration-200", on ? "border-[#b11c29] bg-[#fffafa] shadow-[0_8px_20px_-18px_rgb(177_28_41/0.45)]" : "border-[#d3d8df] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.04)] hover:border-[#9aa0ac] hover:shadow-[0_8px_20px_-16px_rgb(15_23_32/0.35)]", disabled && "opacity-50")}>
       <button type="button" role={radio ? "radio" : undefined} aria-checked={radio ? on : undefined} aria-pressed={radio ? undefined : on} aria-disabled={locked || undefined}
         onClick={locked ? undefined : onClick} disabled={disabled}
         className={clsx("flex w-full items-center gap-3.5 px-4 text-left", big ? "min-h-[76px] py-3.5" : "min-h-[60px] py-3")}>

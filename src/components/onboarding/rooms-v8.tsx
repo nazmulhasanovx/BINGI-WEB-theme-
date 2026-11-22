@@ -15,7 +15,7 @@ import { AMENITIES, type CoreType } from "@/lib/rooms/catalog";
 import { nowStamp, uid, type Category, type Config, type LocNode, type MealMode, type Pick, type useRooms } from "@/lib/rooms/store";
 import { PLANS, SetupCtx, num, quote, recommend, useL, useSetupEdit, type Draft, type StepId } from "@/lib/onboarding/store";
 import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/rooms-easy";
-import { BN_NAME, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, configFrom8, floorsOf, isZoneCore, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
+import { BN_NAME, CUSTOM_PRESETS, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, cleanPrefix, codeOf, configFrom8, stayOf, kOne, kMany, floorsOf, isZoneCore, kindName, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
 import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
 import { TYPE_META } from "./types";
@@ -45,8 +45,11 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
   const [more, setMore] = useState(d.stay.some((s) => !fits.includes(s as CoreType)));
   const usedCore = new Set(st.units.filter((u) => u.status !== "archived").map((u) => u.core));
   const usedNode = new Set(st.units.filter((u) => u.status !== "archived").map((u) => u.node));
-  const floorKinds = d.stay.some((s) => !isZoneCore(s));
-  const zoneKinds = d.stay.some((s) => isZoneCore(s));
+  const floorKinds = d.stay.some((s) => !isZoneCore(s, d));
+  const zoneKinds = d.stay.some((s) => isZoneCore(s, d));
+  // Small places (a home, a flat, one villa) see their one building as a line; Change opens it (#3).
+  const small = SMALL.has(d.propertyType) && (d.buildings.length <= 1) && !d.place.basements && Math.max(1, ...d.floors) <= 2;
+  const [openB, setOpenB] = useState(!small);
   const top = Math.max(0, ...d.floors);
   const ground = d.floors.includes(0);
   const usedLevels = st.config.nodes.filter((n) => usedNode.has(n.id) && n.kind !== "ZONE").map((n) => n.level ?? 0);
@@ -68,35 +71,38 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
   const sample = (L: number) => (L > 0 ? `${L}01` : L === 0 ? (d.ground === "G" ? "G01" : "001") : `B${-L}01`);
   return (
     <section>
-      {head && <Head title={t("কোথায় আছে?", "Where are they?")} sub={t("আপনার property-র ধরন দেখে আগেই সাজানো। মিলিয়ে নিন, দরকার হলে বদলান।", "Set up from your property type. Check it and change what's different.")} />}
+      {head && <Head title={t("কোথায় আছে?", "Where are they?")} />}
       <div className="mt-6 space-y-4">
-        <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")} hint={t("আপনার property-র ধরন দেখে আগেই বাছাই করা", "Already picked from your property type")}>
-          {PT && (
-            <div className="mb-4 flex items-center gap-3 rounded-xl bg-[#0f1720] px-4 py-3 text-white">
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/10"><PT.icon className="size-5" aria-hidden /></span>
-              <span className="min-w-0 flex-1"><span className="block text-[12.5px] text-white/65">{t("আপনার property", "Your property")}</span><span className="block text-[16px] font-semibold">{t(PT.bn, PT.en)}</span></span>
-              {goStep && <button onClick={() => goStep("1.1")} className="h-9 rounded-full bg-white/10 px-3.5 text-[13.5px] font-semibold hover:bg-white/20">{t("বদলান", "Change")}</button>}
-            </div>
-          )}
+        <Card id="where-kinds" n={1} title={t("কী ভাড়া দেন", "What you rent")}
+          hint={PT ? t(`${PT.bn} হিসেবে আগেই বাছাই করা`, `Picked for a ${PT.en.toLowerCase()}`) : undefined}
+          action={PT && goStep ? <button onClick={() => goStep("1.1")} className="h-9 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]">{t("ধরন বদলান", "Change type")}</button> : undefined}>
           <div className="grid gap-2.5 sm:grid-cols-3">
             {shown.map((s) => {
               const on = d.stay.includes(s.id);
               const I = STAY_ICON[s.id];
               const lock = on && usedCore.has(s.id);
-              return <Tile key={s.id} on={on} disabled={lock} onClick={() => edit((x) => { x.stay = on ? x.stay.filter((y) => y !== s.id) : [...x.stay, s.id]; if (!isZoneCore(s.id) && !x.floors.length) x.floors = [1]; })} icon={<I className="size-5" />} title={t(s.bn, s.en)} sub={lock ? t("রুম আছে — বাদ দেওয়া যাবে না", "Has rooms — can't remove") : isZoneCore(s.id) ? t("জোন বা ব্লকে", "In zones or blocks") : t("বিল্ডিংয়ের তলায়", "On building floors")} />;
+              const custom = s.id === "OTHER";
+              return <Tile key={s.id} on={on} disabled={lock} onClick={() => edit((x) => { x.stay = on ? x.stay.filter((y) => y !== s.id) : [...x.stay, s.id]; if (custom && !on && !x.place.custom) x.place.custom = { name: "", where: "zone", closest: "COTTAGE" }; if (!isZoneCore(s.id, x) && !x.floors.length) x.floors = [1]; })} icon={<I className="size-5" />}
+                title={custom && d.place.custom?.name?.trim() ? d.place.custom.name.trim() : t(s.bn, s.en)} sub={lock ? t("রুম আছে — বাদ দেওয়া যাবে না", "Has rooms — can't remove") : custom && !on ? t("নিজের নাম দিন", "Your own name") : undefined} />;
             })}
           </div>
           {!more && <button onClick={() => setMore(true)} className="mt-3 text-[14.5px] font-semibold text-[#b11c29]">+ {t("আরও ধরন", "More kinds")}</button>}
+          {d.stay.includes("OTHER") && <CustomKind d={d} locked={usedCore.has("OTHER")} />}
         </Card>
 
         {floorKinds && (
-          <Card id="where-building" n={2} title={t("বিল্ডিং ও তলা", "Building & floors")} hint={t("উত্তর দিন — রুম নম্বর তলা দেখে নিজে থেকেই তৈরি হবে", "Answer these — room numbers are made from the floor")}>
+          <Card id="where-building" n={2} title={t("বিল্ডিং ও তলা", "Building & floors")} hint={t("রুম নম্বর তলা দেখে তৈরি হয়", "Room numbers come from the floor")}>
+            {!openB ? (
+              <div className="flex items-center gap-3 rounded-xl border border-[#e3e7ec] px-4 py-3">
+                <Building2 className="size-5 shrink-0 text-[#b11c29]" aria-hidden />
+                <p className="min-w-0 flex-1 text-[15px]"><b className="font-semibold">{d.place.bNames?.[bs[0]]?.trim() || t(BUILDINGS[0].bn, BUILDINGS[0].en)}</b> · {t(`${num(Math.max(1, ...d.floors), lang)} তলা`, `${Math.max(1, ...d.floors)} ${Math.max(1, ...d.floors) === 1 ? "floor" : "floors"}`)}{ground ? t(" + গ্রাউন্ড", " + ground") : ""}</p>
+                <button onClick={() => setOpenB(true)} className="h-9 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]">{t("বদলান", "Change")}</button>
+              </div>
+            ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]">
               <div className="space-y-5">
                 <div>
-                  <p className="text-[15px] font-semibold">{t("কয়টা বিল্ডিং, কয় তলায় রুম?", "Your buildings and their floors")}</p>
-                  <p className="text-[13px] text-[#4d5664]">{t("বেশিরভাগ property-র একটাই বিল্ডিং। নাম আপনার মতো দিন।", "Most properties have one building. Name it the way you call it.")}</p>
-                  <ul className="mt-2.5 space-y-2">
+                  <ul className="space-y-2">
                     {bs.map((b, idx) => {
                       const B = BUILDINGS.find((x) => x.id === b) ?? BUILDINGS[0];
                       const usedHere = st.config.nodes.filter((n) => n.parent === `b-${b}` && usedNode.has(n.id) && (n.level ?? 0) > 0).map((n) => n.level ?? 0);
@@ -118,10 +124,10 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
                   {bs.length < BUILDINGS.length && <button onClick={() => edit((x) => { const cur = x.buildings.length ? x.buildings : ["main"]; const nx = BUILDINGS.find((y) => !cur.includes(y.id)); if (nx) { x.buildings = [...cur, nx.id]; x.place.bFloors = { ...x.place.bFloors, [nx.id]: 1 }; } })} className="mt-2 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[#b11c29]"><Plus className="size-4" />{t("আরেকটা বিল্ডিং", "Another building")}</button>}
                 </div>
                 <div className="divide-y divide-[#e9edf2] rounded-xl border border-[#e3e7ec]">
-                  <Line title={t("নিচতলায় (গ্রাউন্ড ফ্লোর) রুম আছে?", "Rooms on the ground floor?")} sub={ground ? t(`নম্বর: ${d.ground === "G" ? "G01, G02, G03…" : "001, 002, 003…"}`, `Numbers: ${d.ground === "G" ? "G01, G02, G03…" : "001, 002, 003…"}`) : t("না", "No")}>
+                  <Line title={t("নিচতলায় (গ্রাউন্ড ফ্লোর) রুম আছে?", "Rooms on the ground floor?")} sub={ground ? t(`নম্বর: ${d.ground === "G" ? "G01, G02, G03…" : "001, 002, 003…"}`, `Numbers: ${d.ground === "G" ? "G01, G02, G03…" : "001, 002, 003…"}`) : undefined}>
                     <Switch on={ground} disabled={usedLevels.includes(0)} label={t("গ্রাউন্ডে রুম", "Rooms on ground")} set={(v) => setGround(v)} />
                   </Line>
-                  <Line title={t("বেসমেন্টে রুম আছে?", "Rooms in a basement?")} sub={d.place.basements ? t(`নম্বর: B101, B102…${d.place.basements > 1 ? " · B201…" : ""}`, `Numbers: B101, B102…${d.place.basements > 1 ? " · B201…" : ""}`) : t("না — বেশিরভাগ property-তে থাকে না", "No — most properties don't")}>
+                  <Line title={t("বেসমেন্টে রুম আছে?", "Rooms in a basement?")} sub={d.place.basements ? t(`নম্বর: B101, B102…${d.place.basements > 1 ? " · B201…" : ""}`, `Numbers: B101, B102…${d.place.basements > 1 ? " · B201…" : ""}`) : undefined}>
                     <span className="flex items-center gap-3">
                       {d.place.basements > 0 && <Stepper label={t("বেসমেন্ট", "Basements")} value={d.place.basements} set={(n) => edit((x) => { x.place.basements = Math.max(n, minBase, 1); })} min={Math.max(1, minBase)} max={3} />}
                       <Switch on={d.place.basements > 0} disabled={minBase > 0} label={t("বেসমেন্টে রুম", "Rooms in basement")} set={(v) => edit((x) => { x.place.basements = v ? 1 : 0; })} />
@@ -158,11 +164,12 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
                 {bs.length > 3 && <p className="mt-1 text-center text-[12px] text-[#5b6270]">+{num(bs.length - 3, lang)} {t("বিল্ডিং", "more")}</p>}
               </div>
             </div>
+            )}
           </Card>
         )}
 
         {zoneKinds && (
-          <Card id="where-zones" n={floorKinds ? 3 : 2} title={t("কটেজ / ভিলা কোথায়", "Where the cottages / villas are")} hint={t("জোনের নিজের নাম দিন — নম্বর প্রতিটা জোনে আলাদা", "Name each zone — numbers are per zone")}>
+          <Card id="where-zones" n={floorKinds ? 3 : 2} title={t(`${d.stay.filter((x) => isZoneCore(x, d)).map((x) => kindName(d, x, true)).join(" / ")} কোথায়`, `Where the ${d.stay.filter((x) => isZoneCore(x, d)).map((x) => (x === "OTHER" && d.place.custom?.name?.trim() ? kindName(d, x, false) : kindName(d, x, false).toLowerCase())).join(" / ")} are`)} hint={t("প্রতিটা জোনের নিজের নাম দিন", "Give each zone its own name")}>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
               <Pills size="sm" label={t("জোন না ব্লক", "Zone or block")} value={d.place.zoneStyle} onChange={(v) => edit((x) => { x.place.zoneStyle = v; })} items={[{ v: "zone", label: t("জোন", "Zones") }, { v: "block", label: t("ব্লক", "Blocks") }]} />
               <span className="flex items-center gap-3"><span className="text-[14.5px] text-[#4d5664]">{t("কয়টা?", "How many?")}</span><Stepper label={t("জোন", "Zones")} value={d.place.zoneCount} set={(n) => edit((x) => { x.place.zoneCount = Math.max(n, minZones); })} min={minZones} max={MAX_ZONES} /></span>
@@ -178,11 +185,73 @@ export function Place({ d, st, goStep, head = true }: { d: Draft; st: Rooms["st"
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-[13.5px] text-[#4d5664]">{t("প্রতিটা জোনে নম্বর:", "Numbers in each zone:")} <b className="font-mono text-[#0f1720]">{d.stay.filter(isZoneCore).map((s) => `${STAY.find((x) => x.id === s)!.prefix}1–${STAY.find((x) => x.id === s)!.prefix}100`).join(" · ")}</b></p>
+
           </Card>
         )}
+        <Card id="where-codes" n={1 + (floorKinds ? 1 : 0) + (zoneKinds ? 1 : 0) + 1} title={t("রুম নম্বর", "Room numbers")} hint={t("আপনার নিজের অক্ষর দিন, যেমন K1 বা PO001", "Use your own letters, like K1 or PO001")}>
+          <CodeRows d={d} />
+        </Card>
       </div>
     </section>
+  );
+}
+/** Types where the place is usually one small building (#3). */
+const SMALL = new Set(["homestay", "vacation-rental", "guest-house"]);
+
+/** Owner's code per kind (#4, #5, #7): prefix + digits, with a live preview. The same setting is reachable from the number pickers. */
+export function CodeRows({ d, only }: { d: Draft; only?: CoreType }) {
+  const edit = useSetupEdit();
+  const { t } = useL();
+  const bn = useL().lang === "bn";
+  const kinds = (only ? [only] : (d.stay as CoreType[]));
+  const set = (k: CoreType, p: Partial<{ prefix: string; digits: number }>) => edit((x) => { const cur = codeOf(x, k); x.place.codes = { ...x.place.codes, [k]: { ...cur, ...p } }; });
+  return (
+    <ul className="divide-y divide-[#eef0f3] rounded-xl border border-[#e3e7ec]">
+      {kinds.map((k) => {
+        const c = codeOf(d, k);
+        const zone = isZoneCore(k, d);
+        const sample = zone ? [1, 2, 3].map((i) => `${c.prefix}${String(i).padStart(c.digits, "0")}`) : ["101", "102", "201"].map((n) => `${c.prefix}${n}`);
+        return (
+          <li key={k} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+            <span className="min-w-[110px] flex-1 text-[15px] font-semibold">{kindName(d, k, bn)}</span>
+            <label className="flex items-center gap-2 text-[13.5px] text-[#4d5664]">{t("অক্ষর", "Letters")}
+              <input aria-label={t(`${kindName(d, k, true)}-এর কোড`, `${kindName(d, k, false)} code letters`)} value={c.prefix} placeholder="—" onChange={(e) => set(k, { prefix: cleanPrefix(e.target.value) })} className="h-9 w-[84px] rounded-lg border border-[#d3d8df] px-2 text-center font-mono text-[15px] font-semibold uppercase outline-none focus:border-[#0f1720]" /></label>
+            {zone && <Pills size="sm" label={t("অঙ্ক", "Digits")} value={c.digits} onChange={(v) => set(k, { digits: v })} items={[{ v: 1, label: "1" }, { v: 2, label: "01" }, { v: 3, label: "001" }]} />}
+            <span className="font-mono text-[13.5px] text-[#0f1720]" aria-live="polite">{sample.join(", ")}…</span>
+          </li>
+        );
+      })}
+      <li className="px-4 py-2 text-[12.5px] text-[#5b6270]">{t("আগে বাছাই করা নম্বর বদলাবে না — নতুন নম্বর নতুন কোডে আসবে।", "Numbers you already picked keep their code; new ones use the new letters.")}</li>
+    </ul>
+  );
+}
+
+/** The owner's own kind (#7): quick picks (#6), name, areas or levels, nearest standard kind (marketplace search). */
+function CustomKind({ d, locked }: { d: Draft; locked: boolean }) {
+  const edit = useSetupEdit();
+  const { t } = useL();
+  const c = d.place.custom ?? { name: "", where: "zone" as const, closest: "COTTAGE" as const };
+  const set = (p: Partial<NonNullable<Draft["place"]["custom"]>>) => edit((x) => { x.place.custom = { ...(x.place.custom ?? c), ...p }; if (p.where === "floor" && !x.floors.length) x.floors = [1]; });
+  return (
+    <div className="onb-in mt-4 space-y-4 rounded-xl bg-[#f7f8fa] p-4" aria-label={t("নিজের ধরন", "Custom kind")} role="group">
+      <div>
+        <p className="text-[13px] font-semibold text-[#4d5664]">{t("দ্রুত বাছাই", "Quick pick")}</p>
+        <div className="mt-1.5 flex flex-wrap gap-2">
+          {CUSTOM_PRESETS.map((p) => <Chip key={p.id} on={c.preset === p.id} onClick={() => edit((x) => { x.place.custom = { name: p.en, where: p.where, closest: p.closest, preset: p.id }; x.place.codes = { ...x.place.codes, OTHER: { prefix: p.prefix, digits: codeOf(x, "OTHER").digits } }; if (p.where === "floor" && !x.floors.length) x.floors = [1]; })}>{t(p.bn, p.en)}</Chip>)}
+        </div>
+      </div>
+      <div className="grid gap-4">
+        <label className="block sm:max-w-[420px]"><span className="text-[14px] font-semibold">{t("নাম (গেস্ট যা দেখবে)", "Name guests see")}</span>
+          <input value={c.name} onChange={(e) => set({ name: e.target.value.slice(0, 30), preset: undefined })} placeholder={t("যেমন: BINGI HOUSE", "e.g. BINGI HOUSE")} aria-label={t("নিজের ধরনের নাম", "Custom kind name")} className={field + " mt-1.5"} /></label>
+        <div><span className="text-[14px] font-semibold">{t("কীভাবে সাজানো", "Laid out in")}</span>
+          <div className="mt-1.5"><Pills label={t("সাজানো", "Layout")} value={c.where} onChange={(v) => !locked && set({ where: v })} items={[{ v: "zone", label: t("জোন / ব্লকে", "Zones / blocks") }, { v: "floor", label: t("তলা / লেভেলে", "Floors / levels") }]} /></div>
+          {locked && <p className="mt-1 text-[12.5px] text-[#5b6270]">{t("রুম আছে — এখন বদলানো যাবে না", "Has rooms — can't change now")}</p>}
+        </div>
+      </div>
+      <div><span className="text-[14px] font-semibold">{t("সবচেয়ে কাছের ধরন", "Closest to")}</span> <span className="text-[13px] text-[#5b6270]">{t("— মার্কেটপ্লেসে গেস্ট এই ফিল্টারে খুঁজে পাবে", "— guests find you under this filter on the marketplace")}</span>
+        <div className="mt-1.5 flex flex-wrap gap-2">{(["ROOM", "COTTAGE", "VILLA", "APARTMENT"] as const).map((k) => <Chip key={k} on={c.closest === k} onClick={() => set({ closest: k })}>{t(STAY.find((x) => x.id === k)!.bn, STAY.find((x) => x.id === k)!.en)}</Chip>)}</div>
+      </div>
+    </div>
   );
 }
 /** Guest total (VAT + service) and what the owner gets after the BinGi booking fee of the chosen plan, per channel.
@@ -231,8 +300,8 @@ function ranges(list: string[]) {
   }
   return out.join(", ");
 }
-function Head({ title, sub }: { title: string; sub: string }) {
-  return <div><h1 className="text-[26px] font-semibold leading-tight tracking-[-0.01em] sm:text-[30px]">{title}</h1><p className="mt-1.5 text-[15.5px] text-[#4d5664]">{sub}</p></div>;
+function Head({ title, sub }: { title: string; sub?: string }) {
+  return <div><h1 className="text-[26px] font-semibold leading-tight tracking-[-0.01em] sm:text-[30px]">{title}</h1>{sub && <p className="mt-1.5 text-[15.5px] text-[#4d5664]">{sub}</p>}</div>;
 }
 function Line({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return <div className="flex items-center gap-3 px-4 py-3"><div className="min-w-0 flex-1"><p className="text-[15px] font-semibold">{title}</p>{sub && <p className="text-[13px] text-[#4d5664]">{sub}</p>}</div>{children}</div>;
@@ -267,7 +336,8 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
   const st = rooms.st;
   const cats = liveCats(st);
   const live = st.units.filter((u) => u.status !== "archived");
-  const kinds = STAY.filter((s) => d.stay.includes(s.id));
+  const kinds = stayOf(d).filter((s) => d.stay.includes(s.id));
+  const own = (k: { id: string }) => k.id === "OTHER" && !!d.place.custom?.name?.trim();
   const start = (core: CoreType) => { setPick(false); setForm(blank(core)); };
   const editCat = (c: Category) => setForm(formOf(c, st));
   const remove = (c: Category) => {
@@ -281,7 +351,7 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
       {kinds.map((k) => { const I = STAY_ICON[k.id]; const n = live.filter((u) => u.core === k.id).length; return (
         <button key={k.id} onClick={() => start(k.id)} className="group relative flex flex-col items-start gap-2.5 rounded-2xl border border-[#d3d8df] bg-white p-4 text-left shadow-[0_1px_2px_rgb(15_23_32/0.04)] transition-[border-color,box-shadow] hover:border-[#b11c29] hover:shadow-[0_10px_24px_-18px_rgb(177_28_41/0.5)]">
           <span className="grid size-11 place-items-center rounded-xl bg-[#fdecea] text-[#b11c29]"><I className="size-5" /></span>
-          <span><span className="block text-[15.5px] font-semibold">{t(`${k.bn} যোগ করুন`, `Add ${k.en.toLowerCase()}`)}</span><span className="text-[13px] text-[#4d5664]">{n ? t(`${num(n, lang)}টা আছে`, `${n} added`) : t(k.subBn, k.subEn)}</span></span>
+          <span><span className="block text-[15.5px] font-semibold">{t(`${k.bn} যোগ করুন`, `Add ${kMany(k)}`)}</span><span className="text-[13px] text-[#4d5664]">{n ? t(`${num(n, lang)}টা আছে`, `${n} added`) : own(k) ? t("আপনার নিজের ধরন", "Your own kind") : t(k.subBn, k.subEn)}</span></span>
           <span className="absolute right-3.5 top-3.5 grid size-8 place-items-center rounded-full bg-[#f4f6f8] text-[#b11c29] transition-transform group-hover:rotate-90"><Plus className="size-4" /></span>
         </button>); })}
     </div>
@@ -321,7 +391,7 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
                         {c.amenities.length > 0 && <span>{t(`${num(c.amenities.length, lang)}টা সুবিধা`, `${c.amenities.length} amenities`)}</span>}
                         {meals.length > 0 && <span>{t("খাবারসহ", "Meals included")}</span>}
                       </p>
-                      <p className="mt-2 text-[13px] font-semibold text-[#2b3340]">{t(`${num(us.length, lang)}টা ${STAY.find((x) => x.id === c.core)?.bn ?? "রুম"}`, `${us.length} ${us.length === 1 ? (STAY.find((x) => x.id === c.core)?.en ?? "Rooms").replace(/s$/, "").toLowerCase() : (STAY.find((x) => x.id === c.core)?.en ?? "rooms").toLowerCase()}`)}</p>
+                      <p className="mt-2 text-[13px] font-semibold text-[#2b3340]">{t(`${num(us.length, lang)}টা ${stayOf(d).find((x) => x.id === c.core)?.bn ?? "রুম"}`, `${us.length} ${us.length === 1 ? (stayOf(d).find((x) => x.id === c.core)?.en ?? "Rooms").replace(/s$/, "").toLowerCase() : (stayOf(d).find((x) => x.id === c.core)?.en ?? "rooms").toLowerCase()}`)}</p>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">{groups.map((n) => <span key={n.id} className="inline-flex items-center gap-1.5 rounded-lg bg-[#f4f6f8] px-2.5 py-1 text-[12.5px]"><span className="font-semibold text-[#2b3340]">{placeLabel(d, config, n, lang === "bn")}</span><span className="font-mono text-[#4d5664]">{ranges(us.filter((u) => u.node === n.id).map((u) => u.local))}</span></span>)}</div>
                     </div>
                     <div className="w-full shrink-0 border-t border-[#f0f2f5] pt-3 text-left sm:w-auto sm:border-0 sm:pt-0 sm:text-right">
@@ -366,7 +436,7 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
   const [conf, setConf] = useState<string[]>([]);
   const [touched, setTouched] = useState({ amen: !!f.id, meals: !!f.id });
   const p = (x: Partial<Form>) => { if (x.amen) setTouched((o) => ({ ...o, amen: true })); if (x.meals || x.mealPrices) setTouched((o) => ({ ...o, meals: true })); set({ ...f, ...x }); };
-  const stay = STAY.find((s) => s.id === f.core)!;
+  const stay = stayOf(d).find((s) => s.id === f.core)!;
   const presets = TYPE_PRESETS.filter((x) => x.core === f.core);
   const price = Number(f.price) || 0;
   const wk = Number(f.weekend) || 0;
@@ -414,7 +484,7 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
     <div className="flex flex-wrap items-center gap-3">
       <span className="hidden text-[14px] text-[#4d5664] sm:inline">{name ? <b className="font-semibold text-[#0f1720]">{nm(name, t)}</b> : t("নতুন ধরন", "New type")}{price > 0 ? ` · ৳${num(money(price), lang)}/${t("রাত", "night")}` : ""}</span>
       <Ghost onClick={close} className="ml-auto h-11">{t("বাতিল", "Cancel")}</Ghost>
-      <Primary onClick={save}>{t(`সেভ করুন · ${num(f.picks.length, lang)}টা ${stay.bn}`, `Save room type · ${f.picks.length} ${f.picks.length === 1 ? stay.en.replace(/s$/, "").toLowerCase() : stay.en.toLowerCase()}`)}</Primary>
+      <Primary onClick={save}>{t(`সেভ করুন · ${num(f.picks.length, lang)}টা ${stay.bn}`, `Save room type · ${f.picks.length} ${f.picks.length === 1 ? kOne(stay) : kMany(stay)}`)}</Primary>
     </div>
   );
   const sections: [string, string, boolean][] = [
@@ -433,7 +503,7 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
         <div className="flex items-center gap-3.5">
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff1f0] text-[#b11c29]"><I className="size-6" aria-hidden /></span>
           <div>
-            <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${stay.en.replace(/s$/, "").toLowerCase()}`)}</h1>
+            <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${kOne(stay)}`)}</h1>
             <p className="mt-0.5 text-[14.5px] text-[#4d5664]">{t("এক পেজেই পুরো ধরন — ক্যাটাগরি বাছলে বাকিটা বসে যায়।", "The whole type on one page — pick a category and the rest fills in.")}</p>
           </div>
         </div>
@@ -474,13 +544,13 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
             <p className="mt-3 text-[12.5px] text-[#5b6270]">{t("ঈদ, পূজা, সিজন বা বিশেষ দিনের দাম পরে HMS → ছাড় ও রেট থেকে।", "Eid, puja, season and special-date prices: later in HMS → Discounts & Rates.")}</p>
           </Card>
 
-          <Card id="acc-numbers" n={3} title={t("রুম নম্বর", "Room numbers")} hint={isZoneCore(f.core) ? t("জোন বাছুন, তারপর নম্বর", "Pick a zone, then the numbers") : t("তলা বাছুন, তারপর নম্বর", "Pick a floor, then the numbers")}
+          <Card id="acc-numbers" n={3} title={t("রুম নম্বর", "Room numbers")} hint={isZoneCore(f.core, d) ? t("জোন বাছুন, তারপর নম্বর", "Pick a zone, then the numbers") : t("তলা বাছুন, তারপর নম্বর", "Pick a floor, then the numbers")}
             action={f.picks.length > 0 && <button onClick={() => setSheet(true)} className="inline-flex h-9 items-center gap-1 rounded-full px-3 text-[14px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]"><Pencil className="size-3.5" />{t("বদলান", "Change")}</button>}>
             {f.picks.length === 0 ? (
               <button onClick={() => setSheet(true)} className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-[#efb7b1] bg-[#fffaf9] px-4 py-6 text-center transition-colors hover:bg-[#fff4f3]">
                 <span className="grid size-11 place-items-center rounded-full bg-white text-[#b11c29] shadow-sm"><Plus className="size-5" /></span>
                 <span className="text-[15.5px] font-semibold text-[#b11c29]">{t("নম্বর বাছাই করুন", "Select numbers")}</span>
-                <span className="text-[13px] text-[#4d5664]">{isZoneCore(f.core) ? t("যেমন: বাগান → C1, C2, C3", "e.g. Garden → C1, C2, C3") : t("যেমন: ফ্লোর ১ → 101, 102, 104", "e.g. Floor 1 → 101, 102, 104")}</span>
+                <span className="text-[13px] text-[#4d5664]">{(() => { const c = codeOf(d, f.core); const n = (i: number) => `${c.prefix}${String(i).padStart(c.digits, "0")}`; return isZoneCore(f.core, d) ? t(`যেমন: বাগান → ${n(1)}, ${n(2)}, ${n(3)}`, `e.g. Garden → ${n(1)}, ${n(2)}, ${n(3)}`) : t(`যেমন: ফ্লোর ১ → ${c.prefix}101, ${c.prefix}102`, `e.g. Floor 1 → ${c.prefix}101, ${c.prefix}102`); })()}</span>
               </button>
             ) : (
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -544,7 +614,7 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
                 <p className={clsx("text-[16.5px] font-semibold", !name && "text-[#5b6270]")}>{name ? nm(name, t) : t("ধরনের নাম", "Type name")}</p>
                 <p className="flex flex-wrap gap-x-3 text-[13px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(f.guests, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === f.bed)?.bn ?? f.bed, BEDS.find((b) => b.id === f.bed)?.en ?? f.bed)}</span></p>
                 <p className="border-t border-[#e9edf2] pt-2 text-[13px] text-[#4d5664]">{price ? <><b className="text-[18px] text-[#0f1720]">৳{num(money(final), lang)}</b> /{t("রাত", "night")}</> : t("দাম দিন", "Add a price")}</p>
-                <p className="text-[13px] text-[#4d5664]">{t(`${num(f.picks.length, lang)}টা ${stay.bn}`, `${f.picks.length} ${stay.en.toLowerCase()}`)}</p>
+                <p className="text-[13px] text-[#4d5664]">{t(`${num(f.picks.length, lang)}টা ${stay.bn}`, `${f.picks.length} ${kMany(stay)}`)}</p>
               </div>
             </div>
             <nav aria-label={t("অংশগুলো", "Sections")} className="rounded-2xl border border-[#e3e7ec] bg-white p-2">
@@ -587,27 +657,32 @@ function PlacesSheet({ d, rooms, f, config, onClose }: { d: Draft; rooms: Rooms;
   const { t, lang } = useL();
   const bn = lang === "bn";
   const [sel, setSel] = useState<Pick[]>(f.picks);
-  const [open, setOpen] = useState<LocNode | null>(null);
-  const zone = isZoneCore(f.core);
+  const zone = isZoneCore(f.core, d);
   const places = config.nodes.filter((n) => n.active && (zone ? n.kind === "ZONE" : n.kind === "FLOOR" || n.kind === "LEVEL"));
+  // One place only: skip this list and open its numbers straight away (#5).
+  const [open, setOpen] = useState<LocNode | null>(places.length === 1 ? places[0] : null);
+  const [codes, setCodes] = useState(false);
+  const code = codeOf(d, f.core);
   const taken = new Set(rooms.st.units.filter((u) => u.status !== "archived" && u.category !== f.id).map((u) => u.code.toUpperCase()));
+  const list = (n: LocNode) => numbersFor(config, n, f.core, d.ground, code);
   return createPortal(
     <div className="bingi-ui fixed inset-0 z-50 flex items-end justify-center bg-[#0f1720]/15 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => onClose(sel)}>
       <div role="dialog" aria-modal="true" aria-label={t("নম্বর বাছাই করুন", "Select numbers")} onClick={(e) => e.stopPropagation()} className="onb-in flex max-h-[92dvh] w-full max-w-[760px] flex-col rounded-t-xl bg-white shadow-2xl sm:rounded-xl">
         <div className="flex items-start justify-between gap-3 border-b border-[#e9edf2] px-5 py-4">
-          <div><h2 className="text-[18px] font-semibold">{t("নম্বর বাছাই করুন", "Select numbers")}</h2><p className="text-[13.5px] text-[#4d5664]">{zone ? t("আগে জোন, তারপর নম্বর।", "Choose a zone first, then the numbers.") : t("আগে তলা, তারপর নম্বর।", "Choose a floor first, then the numbers.")}</p></div>
+          <div><h2 className="text-[18px] font-semibold">{t("নম্বর বাছাই করুন", "Select numbers")}</h2><p className="text-[13.5px] text-[#4d5664]">{zone ? t("আগে জোন, তারপর নম্বর।", "Choose a zone first, then the numbers.") : t("আগে তলা, তারপর নম্বর।", "Choose a floor first, then the numbers.")}
+            {" "}<button onClick={() => setCodes(!codes)} aria-expanded={codes} className="font-semibold text-[#b11c29] hover:underline">{t("কোড বদলান", "Change code")}</button></p></div>
           <button onClick={() => onClose(sel)} aria-label={t("বন্ধ করুন", "Close")} className="grid size-9 place-items-center rounded-full border border-[#c6ccd4]"><X className="size-5" /></button>
         </div>
+        {codes && <div className="border-b border-[#e9edf2] px-5 py-3"><CodeRows d={d} only={f.core} /></div>}
         <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto p-5 sm:grid-cols-2">
           {places.map((n) => {
-            const list = numbersFor(config, n, f.core, d.ground);
-            const free = list.filter((x) => !taken.has(x.code.toUpperCase())).length;
+            const l = list(n);
             const here = sel.filter((x) => x.node === n.id);
             return (
               <div key={n.id} className="rounded-xl border border-[#e3e7ec] p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0"><p className="truncate text-[16px] font-semibold">{placeLabel(d, config, n, bn)}</p><p className="text-[13px] text-[#4d5664]">{t(`${num(free, lang)}টা খালি`, `${free} available`)}</p></div>
-                  <button onClick={() => setOpen(n)} aria-label={t(`${placeLabel(d, config, n, true)} — নম্বর দেখুন`, `${placeLabel(d, config, n, false)} — view numbers`)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-dashed border-[#efb7b1] px-3 text-[13.5px] font-semibold text-[#b11c29] hover:bg-[#fff4f3]"><Plus className="size-3.5" />{t("নম্বর দেখুন", "View")}</button>
+                  <div className="min-w-0"><p className="truncate text-[16px] font-semibold">{placeLabel(d, config, n, bn)}</p><p className="font-mono text-[13px] text-[#4d5664]">{l[0]?.local}–{l.at(-1)?.local}</p></div>
+                  <button onClick={() => setOpen(n)} aria-label={t(`${placeLabel(d, config, n, true)} — নম্বর বাছুন`, `${placeLabel(d, config, n, false)} — choose numbers`)} className="inline-flex h-9 shrink-0 items-center rounded-full border border-[#c6ccd4] px-3.5 text-[13.5px] font-semibold text-[#0f1720] hover:border-[#0f1720]">{t("নম্বর বাছুন", "Choose numbers")}</button>
                 </div>
                 <div className="mt-3 flex min-h-[28px] flex-wrap gap-1.5">
                   {here.length ? here.map((x) => <span key={x.code} className="inline-flex items-center gap-1 rounded-full bg-[#fff1f0] py-0.5 pl-2.5 pr-1 font-mono text-[12.5px] font-semibold text-[#8e1621]">{x.local}<button onClick={() => setSel(sel.filter((y) => y.code !== x.code))} aria-label={t(`${x.local} বাদ দিন`, `Remove ${x.local}`)} className="grid size-5 place-items-center rounded-full hover:bg-white"><X className="size-3" /></button></span>)
@@ -624,7 +699,8 @@ function PlacesSheet({ d, rooms, f, config, onClose }: { d: Draft; rooms: Rooms;
           <Primary onClick={() => onClose(sel)} className="h-10">{t("নম্বর সেভ করুন", "Save numbers")}</Primary>
         </div>
       </div>
-      {open && <NumberSheet place={open} name={placeLabel(d, config, open, bn)} list={numbersFor(config, open, f.core, d.ground)} taken={taken} picks={sel} onClose={(p) => { setSel(p); setOpen(null); }} label={(x) => x.local} />}
+      {open && <NumberSheet place={open} name={placeLabel(d, config, open, bn)} list={list(open)} taken={taken} picks={sel} start={Math.max(12, Math.min(50, d.units + 5))} codeHint={`${list(open)[0]?.local}–${list(open).at(-1)?.local}`} onCode={() => { setOpen(null); setCodes(true); }}
+        onClose={(p) => { setSel(p); setOpen(null); if (places.length === 1) onClose(p); }} label={(x) => x.local} custom={(local) => ({ local, code: `${open.code ?? open.id}-${local}` })} />}
     </div>,
     document.body,
   );
