@@ -104,6 +104,41 @@ function Auth() {
   );
 }
 
+/** Before the first question: what the setup covers, how long it takes, what to keep at hand. */
+function Welcome({ onStart, onBack }: { onStart: () => void; onBack?: () => void }) {
+  const { t, lang } = useL();
+  const keep: [string, string][] = [["মালিকের NID (দুই পাশ)", "Owner's NID (both sides)"], ["রুমের তালিকা আর দাম", "Your room list and prices"], ["ট্রেড লাইসেন্স — না থাকলে পরে", "Trade licence — later is fine"]];
+  return (
+    <main className="mx-auto max-w-[880px] px-4 pb-12 pt-6 sm:px-6">
+      <div className="onb-in overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05),0_20px_50px_-30px_rgb(16_24_40/0.25)] ring-1 ring-[#e8e9ee]">
+        <div className="bg-gradient-to-br from-[#fff1f1] via-white to-[#fdf7f2] px-6 py-8 sm:px-10">
+          <span className="grid size-14 place-items-center rounded-2xl bg-white shadow-sm ring-1 ring-[#f6dada]"><Image src="/brand/bingi-hms-mark.svg" alt="" width={28} height={28} /></span>
+          <h1 className="mt-5 text-[28px] font-semibold leading-tight sm:text-[32px]">{t("স্বাগতম! চলুন আপনার property সাজাই", "Welcome! Let's set up your property")}</h1>
+          <p className="mt-2 max-w-[560px] text-[16px] text-[#4d5664]">{t("৬টা অংশ, প্রায় ১০ মিনিট। সব আপনা-আপনি সেভ হয় — যেকোনো সময় থেমে পরে চালিয়ে যান।", "6 short parts, about 10 minutes. Everything saves as you go — stop anytime and continue later.")}</p>
+        </div>
+        <div className="grid gap-8 px-6 py-7 sm:grid-cols-[minmax(0,1fr)_260px] sm:px-10">
+          <ol className="space-y-3">
+            {SECTIONS.map((x, i) => (
+              <li key={x.id} className="flex items-center gap-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#0f1720] text-[13px] font-semibold text-white">{num(i + 1, lang)}</span>
+                <span className="text-[15.5px] font-semibold">{t(x.bn, x.label)}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="rounded-xl bg-[#f4f6f8] p-4">
+            <p className="text-[14px] font-semibold">{t("হাতের কাছে রাখুন", "Keep at hand")}</p>
+            <ul className="mt-2 space-y-2 text-[14px] text-[#4d5664]">{keep.map(([bn, en]) => <li key={en} className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#1c7d45]" />{t(bn, en)}</li>)}</ul>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 border-t border-[#eef0f3] px-6 py-4 sm:px-10">
+          {onBack && <Ghost onClick={onBack}>{t("আমার property", "My properties")}</Ghost>}
+          <Primary onClick={onStart} className="ml-auto">{t("শুরু করুন", "Let's start")}<ArrowRight className="size-[18px]" /></Primary>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function GoogleMark() {
   return <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z" /><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1 .7-2.4 1.1-4 1.1-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z" /><path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z" /><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z" /></svg>;
 }
@@ -112,6 +147,7 @@ function MyProperties() {
   const { st, update } = useOnboarding();
   const { t, lang } = useL();
   const router = useRouter();
+  const [welcome, setWelcome] = useState(false);
   const start = () => {
     const d = newDraft(st.drafts.length);
     d.phone = st.phone;
@@ -119,11 +155,12 @@ function MyProperties() {
     router.push("/onboarding/flow");
   };
   const open = (id: string, submitted: boolean) => { update((s) => { s.current = id; }); router.push(submitted ? "/onboarding/status" : "/onboarding/flow"); };
+  if (welcome || st.drafts.length === 0) return <Welcome onStart={start} onBack={st.drafts.length ? () => setWelcome(false) : undefined} />;
   return (
     <main className="mx-auto max-w-[760px] px-4 pb-10 pt-4 sm:px-6">
       <h1 className="text-[30px] font-semibold">{t("আমার property", "My properties")}</h1>
       <p className="mt-1 text-[15.5px] text-[#4d5664]">{t("প্রতিটা property-র আলাদা সেটআপ।", "Each property has its own setup.")} · {num(st.phone, lang)}</p>
-      <button onClick={start} className="mt-6 flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-white p-5 text-left transition-shadow hover:shadow-[0_14px_30px_-18px_rgb(200_35_46/0.5)]">
+      <button onClick={() => setWelcome(true)} className="mt-6 flex w-full items-center gap-4 rounded-xl border border-dashed border-[#efb7b1] bg-white p-5 text-left transition-shadow hover:shadow-[0_14px_30px_-18px_rgb(200_35_46/0.5)]">
         <span className="grid size-14 place-items-center rounded-xl bg-[#b11c29] text-white"><Plus className="size-7" /></span>
         <span><span className="block text-[19px] font-semibold">{t("নতুন property যোগ করুন", "Add a new property")}</span><span className="text-[14.5px] text-[#4d5664]">{t("প্রায় ৮–১০ মিনিট", "About 8–10 minutes")}</span></span>
         <ArrowRight className="ml-auto size-6 text-[#b11c29]" />

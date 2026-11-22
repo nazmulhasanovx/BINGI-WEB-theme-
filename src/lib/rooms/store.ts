@@ -27,6 +27,8 @@ export type Category = {
   bed: string; maxAdults: number; maxChildren: number; sizeSqft?: number; bedrooms?: number;
   bathrooms?: number;
   amenities: string[]; video?: string; baseRate: number; photo?: string; created: string;
+  /** Friday–Saturday price per night (Bangladesh weekend). Empty = same as baseRate. Season / holiday prices live in Discounts & Rates. */
+  weekendRate?: number;
   /** Backend rule: BinGi (Superadmin) approves a category before its units can be published. */
   approval: "pending" | "approved";
   archived?: boolean;

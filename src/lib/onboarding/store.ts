@@ -53,7 +53,7 @@ export type Draft = {
   tagline?: string; cover?: string; social?: { facebook?: string; instagram?: string }; nearby?: { name: string; time: string; mode: "walk" | "drive" }[];
   /** v8.1 locations (21 Nov feedback #3): floors named Floor N or Level N, plus ground and basements 1–3;
    *  spread-out units sit in Zone 1–50 or Block 1–50, each renameable. */
-  place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[] };
+  place: { floorStyle: "floor" | "level"; basements: number; zoneStyle: "zone" | "block"; zoneCount: number; zoneNames: string[]; bNames?: Record<string, string>; bFloors?: Record<string, number> };
 };
 export type TypeRow = {
   key: string; core: "ROOM" | "COTTAGE" | "VILLA" | "APARTMENT" | "OTHER"; on: boolean; name: string; kind: string; bed: string; guests: number; price: number;
@@ -129,7 +129,8 @@ export const PLANS: Record<PlanId, PlanInfo> = {
 };
 /** Which plan a module needs (public pricing page). */
 export const MODULE_PLAN: Record<string, PlanId> = { frontdesk: "starter", housekeeping: "business", restaurant: "business", accounts: "business", services: "business", staff: "ultra", inventory: "ultra" };
-export const MIN_BILLED = 10;
+/** Billing starts from 1 room (Nazmul, 22 Nov 2026 — was 10). */
+export const MIN_BILLED = 1;
 export const CYCLE_OFF: Record<Cycle, number> = { 1: 0, 6: 0.1, 12: 0.25 };
 export const TRIAL_DAYS = 7;
 const CYCLE_RATE: Record<number, Record<Cycle, number>> = { 25: { 1: 25, 6: 23, 12: 19 }, 70: { 1: 70, 6: 63, 12: 53 }, 116: { 1: 116, 6: 105, 12: 87 } };

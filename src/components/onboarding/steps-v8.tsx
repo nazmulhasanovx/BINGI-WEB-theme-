@@ -110,7 +110,7 @@ export function SetupHelp({ d }: { d: Draft }) {
   return (
     <Q title={t("সেটআপে সাহায্য", "Setup help")} sub={t("বেশিরভাগ property নিজেই সেটআপ করে। চাইলে আমরা করে দিই।", "Most properties set up on their own. We can do it for you.")}>
       <div role="radiogroup" aria-label={t("সেটআপে সাহায্য", "Setup help")} className="grid gap-2.5">
-        {HELP.map((h) => <Tile key={h.id} role="radio" big on={d.help === h.id} onClick={() => edit((x) => { x.help = h.id; })} icon={<h.icon className="size-6" />} title={t(h.bn, h.en)} sub={t(h.subBn, h.subEn)} badge={h.price ? `৳${num(money(h.price), lang)}` : t("ফ্রি", "Free")} />)}
+        {HELP.map((h) => <Tile key={h.id} role="radio" big on={d.help === h.id} onClick={() => edit((x) => { x.help = h.id; })} icon={<h.icon className="size-6" />} title={t(h.bn, h.en)} sub={t(h.subBn, h.subEn)} price={h.price ? { main: `৳${num(money(h.price), lang)}`, sub: t("একবার", "one time") } : { main: t("ফ্রি", "Free"), sub: t("সাথেই আছে", "included"), free: true }} />)}
       </div>
       <p className="mt-3 text-[12.5px] text-[#4d5664]">{t("দাম এখনকার HMS অনুযায়ী (একবার)।", "Prices as in the current HMS (one time).")}</p>
     </Q>

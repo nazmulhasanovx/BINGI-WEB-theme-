@@ -2,16 +2,23 @@
 // Left sidebar (host-extranet style): property, % complete, the 6 parts with their steps and what is done.
 import clsx from "clsx";
 import { useState } from "react";
-import { BedDouble, Building2, CalendarCheck, Check, ChevronDown, Circle, CircleDot, Send, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
+import { BedDouble, Building2, CalendarCheck, Check, ChevronDown, Circle, CircleDot, Send, ShieldCheck, UserRound, Wallet, type LucideIcon } from "lucide-react";
 
 const ICON: Record<string, LucideIcon> = { s1: Building2, s2: ShieldCheck, s3: BedDouble, s4: CalendarCheck, s5: Wallet, s6: Send };
 import { ORDER, SECTIONS, STEP_TITLE, minutesLeft, num, sectionOf, stepOf, useL, type Check as C, type Draft, type StepId } from "@/lib/onboarding/store";
 
-/** A step is done when the owner has moved past it (or, for required data, when the check passes). */
-function stepDone(d: Draft, s: StepId, cs: C[]) {
+/** A step is done only after the owner has opened it and moved on — and, for required data, the check passes. Nothing is ticked in advance. */
+export function stepDone(d: Draft, s: StepId, cs: C[]) {
+  const here = stepOf(d.step);
+  const furthest = Math.max(...d.seen.map((x) => ORDER.indexOf(x)));
+  const left = d.seen.includes(s) && s !== here && ORDER.indexOf(s) < Math.max(furthest, ORDER.indexOf(here));
+  if (!left) return false;
   const req = cs.find((c) => c.step === s && c.level === "required");
-  if (req) return req.ok;
-  return d.seen.includes(s) && ORDER.indexOf(s) < ORDER.indexOf(stepOf(d.step));
+  return req ? req.ok : true;
+}
+/** Progress bar: share of pages finished — 0% on the first page. */
+export function progressOf(d: Draft, cs: C[]) {
+  return Math.round((ORDER.filter((s) => stepDone(d, s, cs)).length / ORDER.length) * 100);
 }
 
 export function Sidebar({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number; go: (s: StepId) => void }) {
@@ -25,7 +32,12 @@ export function Sidebar({ d, cs, pct, go }: { d: Draft; cs: C[]; pct: number; go
         <span className="text-[13px] font-semibold tabular-nums">{num(pct, lang)}%</span>
       </div>
       <p className="mt-1.5 text-[12.5px] text-[#4d5664]">{t(`বাকি প্রায় ${num(minutesLeft(d.step), lang)} মিনিট`, `About ${minutesLeft(d.step)} min left`)}</p>
-      <ol className="mt-5 space-y-1">
+      <p className="mt-5 flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14.5px]">
+        <span className="relative grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f4ec] text-[#1c7d45]"><UserRound className="size-[17px]" strokeWidth={1.9} aria-hidden /><span className="absolute -bottom-1 -right-1 grid size-[15px] place-items-center rounded-full bg-[#1c7d45] text-white ring-2 ring-white"><Check className="size-2.5" strokeWidth={3.5} /></span></span>
+        <span className="min-w-0 flex-1"><span className="block">{t("অ্যাকাউন্ট", "Account")}</span>{d.phone && <span className="block truncate text-[12px] text-[#4d5664]">{num(d.phone, lang)} · {t("যাচাই হয়েছে", "verified")}</span>}</span>
+        <span className="text-[12px] font-medium text-[#1c7d45]">{t("হয়েছে", "Done")}</span>
+      </p>
+      <ol className="mt-1 space-y-1">
         {SECTIONS.map((s, i) => {
           const cur = sectionOf(d.step) === i;
           const done = s.steps.every((x) => stepDone(d, x, cs));

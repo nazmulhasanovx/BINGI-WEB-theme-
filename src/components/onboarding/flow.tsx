@@ -10,7 +10,7 @@ import {
   BedDouble, Bike, CalendarDays, Boxes, Brush, Building, Building2, Car, Castle, Check, CircleAlert, Coffee, Dumbbell, FileUp, Home, House, Landmark, MapPin,
   PartyPopper, Plus, Shirt, Sparkles, Tent, TreePalm, UsersRound, Utensils, Wallet, Waves, Wine, Bus, BookOpen, Banknote, Smartphone, Lock,
   CircleCheck, Clock, FileText, IdCard, Receipt, Scale, ShieldCheck, Globe, CalendarCheck, ImageIcon,
-  ClipboardList, Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby, Store,
+  ChevronRight, ClipboardList, Wifi, Zap, ConciergeBell, BellRing, Cctv, ArrowUpDown, Umbrella, Trees, Presentation, Flame, Moon, Baby, Store,
 } from "lucide-react";
 import {
   CYCLE_OFF, EXTRAS, MIN_BILLED, MODULE_PLAN, ORDER, PLANS, SECTIONS, STAFF, sectionOf, TRIAL_DAYS, checks, hotelOf, nowIso, stepOf, num, planRank, quote, recommend, score, useL, useOnboarding, validPhone,
@@ -21,7 +21,7 @@ import { useRooms } from "@/lib/rooms/store";
 import { MASTER_LIST, PLAN_ORDER } from "@/themes/manifest";
 import { setProperty } from "../hms/property";
 import { money } from "../hms/rooms/parts";
-import { MobileSteps, Sidebar } from "./sidebar";
+import { MobileSteps, Sidebar, progressOf } from "./sidebar";
 import { GuestPreview } from "./preview";
 import { AddressSheet } from "./address";
 import { FormSlot } from "./rooms-easy";
@@ -68,7 +68,7 @@ function Flow({ d }: { d: Draft }) {
   const errs = [...errorsFor(d, counts.total, t), ...blocked.map((b) => t(`"${b}"-এ রুম আছে — আগে রুমগুলো বাদ দিন।`, `"${b}" has rooms — remove them first.`))];
   const firstTheme = themesFor(d)[0]?.id;
   const cs = checks(d, counts);
-  const pct = score(cs);
+  const pct = progressOf(d, cs);
   const cont = () => {
     if (errs.length) { setTried(true); return; }
     if (d.step === "3.1") rooms.update((s) => { s.config = configFrom8(d, s.config); }, "Accommodation locations set up from onboarding presets");
@@ -87,7 +87,7 @@ function Flow({ d }: { d: Draft }) {
     setDone(true);
   };
 
-  if (done) return <Done d={d} />;
+  if (done) return <Done d={d} onEdit={(s) => { setDone(false); go(s); }} />;
 
   const body: Record<StepId, ReactNode> = {
     "1.1": <PropertyType d={d} />, "1.2": <Name d={d} />, "1.3": <Address d={d} />, "1.4": <Extras d={d} />, "1.5": <Contact d={d} />,
@@ -185,7 +185,6 @@ function errorsFor(d: Draft, units: number, t: (bn: string, en: string) => strin
 function PropertyType({ d }: { d: Draft }) {
   const { edit } = useOnboarding();
   const { t } = useL();
-  const [more, setMore] = useState(!TYPES.find((x) => x.slug === d.propertyType)?.main && !!d.propertyType);
   // Presets: the type pre-fills what you rent, floors and zones (owner only confirms later).
   const FLOORS: Record<string, number> = { hotel: 4, resort: 2, "guest-house": 2, homestay: 1, "serviced-apartment": 8, motel: 1, hostel: 2, "vacation-rental": 1, lodge: 1, other: 2 };
   const pick = (slug: string) => edit((x) => {
@@ -198,13 +197,12 @@ function PropertyType({ d }: { d: Draft }) {
       x.types = []; x.extras = [];
     }
   });
-  const list = TYPES.filter((x) => x.main || more);
+  const list = TYPES; // all types at once (22 Nov: no "More types")
   return (
     <Q title={t("আপনি কী ধরনের property চালান?", "What kind of property do you run?")} why={t("ধরন দেখে আমরা রুম, ওয়েবসাইট আর প্ল্যান আগে থেকে সাজিয়ে দিই। পরে বদলানো যায়।", "We pre-fill rooms, website and plan from this. You can change it later.")}>
       <div role="radiogroup" aria-label={t("Property-র ধরন", "Property type")} className="grid gap-3 sm:grid-cols-2">
         {list.map((p) => <Tile key={p.slug} big role="radio" on={d.propertyType === p.slug} onClick={() => pick(p.slug)} icon={<p.icon className="size-6" />} title={t(p.bn, p.en)} sub={t(p.subBn, p.subEn)} />)}
       </div>
-      {!more && <button onClick={() => setMore(true)} className="mt-3 block text-[15px] font-semibold text-[#b11c29]">+ {t("আরও ধরন দেখুন", "More types")}</button>}
       <p className="mt-5 flex w-fit items-center gap-1.5 rounded-full bg-[#e9edf2] px-3 py-1.5 text-[13.5px] text-[#4d5664]"><MapPin className="size-4" aria-hidden /> {t("বাংলাদেশ · টাকা (৳)", "Bangladesh · Taka (৳)")}</p>
     </Q>
   );
@@ -359,7 +357,7 @@ function BookingRules({ d }: { d: Draft }) {
       <div className="space-y-4">
         <Section n={1} title={t("চেক-ইন ও চেক-আউট", "Check-in & check-out")} hint={t("গেস্ট কখন আসবে আর কখন যাবে", "When guests arrive and leave")}><Times d={d} /></Section>
         <Section n={2} title={t("বাতিল ও থাকার নিয়ম", "Cancellation & house rules")} hint={t("বাতিল, বাচ্চা আর পোষা প্রাণী", "Cancellation, children and pets")}><Policy d={d} /></Section>
-        <Section n={3} title={t("দামের নিয়ম", "Price rules")} hint={t("ঐচ্ছিক — না দিলে সব দিন এক দাম", "Optional — without these every day has the same price")}><Rates d={d} /></Section>
+        <Section n={3} title={t("থাকার নিয়ম", "Stay rules")} hint={t("ঐচ্ছিক — কমপক্ষে কত রাত", "Optional — minimum nights")}><Rates d={d} /></Section>
         <Section n={4} title={t("কর, মুদ্রা ও ভাষা", "Tax, currency & language")} hint={t("বাংলাদেশের জন্য আগেই বসানো", "Already set for Bangladesh")}><Region d={d} /></Section>
       </div>
     </Q>
@@ -373,9 +371,7 @@ function Rates({ d }: { d: Draft }) {
   return (
     <div>
       <div className="space-y-3">
-        <Toggle on={r.weekendPct > 0} onClick={() => set((x) => { x.weekendPct = x.weekendPct > 0 ? 0 : 10; })} icon={<CalendarDays className="size-5" />} title={t("শুক্র–শনি দাম একটু বেশি", "Higher price on Fri–Sat")}>
-          {r.weekendPct > 0 && <div className="mt-3 flex flex-wrap gap-2">{[10, 15, 20, 30].map((p) => <Chip key={p} on={r.weekendPct === p} onClick={() => set((x) => { x.weekendPct = p; })}>+{num(p, lang)}%</Chip>)}</div>}
-        </Toggle>
+        <p className="rounded-xl bg-[#f4f6f8] px-4 py-3 text-[13.5px] text-[#4d5664]">{t("শুক্র–শনির দাম প্রতিটা রুমের ধরনে আলাদা করে দেওয়া হয় (রুম অংশে)।", "Fri–Sat prices are set per room type (in Rooms).")}</p>
         <Toggle on={r.minStay > 1} onClick={() => set((x) => { x.minStay = x.minStay > 1 ? 1 : 2; })} icon={<BedDouble className="size-5" />} title={t("কমপক্ষে কত রাত থাকতে হবে", "Minimum nights")}>
           {r.minStay > 1 && <div className="mt-3"><Stepper label={t("রাত", "Nights")} value={r.minStay} set={(n) => set((x) => { x.minStay = n; })} min={1} max={14} /></div>}
         </Toggle>
@@ -715,17 +711,40 @@ function Ring({ v, lang }: { v: number; lang: "bn" | "en" }) {
   );
 }
 
+/** Check that draws in + one brand-coloured confetti burst. Runs once per property (sessionStorage); reduced motion: static check. */
+function Celebrate({ id }: { id: string }) {
+  const [burst] = useState(() => { try { const k = `bingi-onb-cheered-${id}`; if (sessionStorage.getItem(k)) return false; sessionStorage.setItem(k, "1"); return true; } catch { return true; } });
+  const colors = ["#b11c29", "#e5484d", "#f5a524", "#1c7d45", "#0f1720", "#fbd9d5"];
+  const bits = Array.from({ length: 26 }, (_, i) => {
+    const a = (i / 26) * Math.PI * 2 + (i % 3) * 0.3, r = 90 + (i * 37) % 80;
+    return { dx: Math.round(Math.cos(a) * r), dy: Math.round(Math.sin(a) * r * 0.8 + 60), rot: (i * 47) % 360, c: colors[i % colors.length], w: i % 3 === 0 ? 10 : 7, delay: (i % 5) * 30 };
+  });
+  return (
+    <span className="relative mx-auto block size-20">
+      {burst && bits.map((b, i) => <span key={i} aria-hidden className="onb-burst pointer-events-none absolute left-1/2 top-1/2 block rounded-[2px]" style={{ width: b.w, height: b.w * 0.55, marginLeft: -b.w / 2, background: b.c, animationDelay: `${180 + b.delay}ms`, ["--dx" as string]: `${b.dx}px`, ["--dy" as string]: `${b.dy}px`, ["--r" as string]: `${b.rot}deg` }} />)}
+      <span className="onb-ring absolute inset-0 grid place-items-center rounded-full bg-[#e9f7ef] ring-8 ring-[#e9f7ef]/50">
+        <svg viewBox="0 0 40 40" className="size-11" aria-hidden><circle cx="20" cy="20" r="18" fill="#1c7d45" /><path className="onb-draw" d="M12 20.5l5.5 5.5L28.5 15" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </span>
+    </span>
+  );
+}
+
 /** What a professional website still needs. "Go public" stays locked until the required ones are done and BinGi approves. */
-function WebsiteReady({ d }: { d: Draft }) {
+function WebsiteReady({ d, onEdit }: { d: Draft; onEdit: (s: StepId) => void }) {
   const { t, lang } = useL();
+  const router = useRouter();
+  // Each row opens the page where it is fixed.
+  const at = (s: StepId) => () => onEdit(s);
+  const hms = (href: string) => () => { setProperty(d.slug); router.push(href); };
+  const nid = !!(d.docs?.nidFront && d.docs?.nidBack);
   const items = [
-    { ok: !!d.name.trim(), bn: "নাম ও ঠিকানা", en: "Name and address", need: true },
-    { ok: !!d.cover, bn: "কভার ছবি", en: "Cover photo", need: true },
-    { ok: !!d.tagline?.trim(), bn: "এক লাইনে পরিচিতি", en: "One-line introduction", need: true },
-    { ok: false, bn: "প্রতিটা রুম টাইপে অন্তত ৫টা ছবি (HMS → রুম)", en: "At least 5 photos per room type (HMS → Rooms)", need: true },
-    { ok: !!(d.docs?.nidFront && d.docs?.nidBack), bn: "কাগজপত্র (NID) জমা", en: "Documents (NID) sent", need: true },
-    { ok: (d.nearby ?? []).some((x) => x.name.trim()), bn: "আশপাশের জায়গা", en: "Nearby places", need: false },
-    { ok: !!(d.social?.facebook || d.social?.instagram), bn: "Facebook / Instagram লিংক", en: "Facebook / Instagram link", need: false },
+    { ok: !!d.name.trim(), bn: "নাম ও ঠিকানা", en: "Name and address", need: true, go: at("1.3") },
+    { ok: !!d.cover, bn: "কভার ছবি", en: "Cover photo", need: true, go: at("1.2") },
+    { ok: !!d.tagline?.trim(), bn: "এক লাইনে পরিচিতি", en: "One-line introduction", need: true, go: at("1.2") },
+    { ok: false, bn: "প্রতিটা রুম টাইপে অন্তত ৫টা ছবি", en: "At least 5 photos per room type", need: true, go: hms("/hms/rooms"), where: ["HMS → রুম", "HMS → Rooms"] as [string, string] },
+    { ok: nid, bn: "কাগজপত্র (NID) জমা", en: "Documents (NID) sent", need: true, go: at("2.1"), note: !nid && d.docs?.later ? ["পরে দেবেন বলেছেন · এখনই দিন", "You chose later · send now"] as [string, string] : undefined },
+    { ok: (d.nearby ?? []).some((x) => x.name.trim()), bn: "আশপাশের জায়গা", en: "Nearby places", need: false, go: at("1.3") },
+    { ok: !!(d.social?.facebook || d.social?.instagram), bn: "Facebook / Instagram লিংক", en: "Facebook / Instagram link", need: false, go: at("1.5") },
   ];
   const done = items.filter((x) => x.ok).length;
   return (
@@ -734,10 +753,15 @@ function WebsiteReady({ d }: { d: Draft }) {
       <p className="mt-1 text-[13.5px] text-[#4d5664]">{t("দরকারি সবগুলো হলে আর BinGi অনুমোদন দিলে ওয়েবসাইট পাবলিক করা যাবে।", "You can make the website public once the required items are done and BinGi approves.")}</p>
       <ul className="mt-3 space-y-2">
         {items.map((x) => (
-          <li key={x.en} className="flex items-center gap-2.5 text-[14.5px]">
-            {x.ok ? <CircleCheck className="size-[18px] shrink-0 text-[#1c7d45]" /> : <span className="size-[18px] shrink-0 rounded-full border-2 border-[#c6ccd4]" aria-hidden />}
-            <span className={x.ok ? "text-[#4d5664] line-through decoration-[#c6ccd4]" : ""}>{t(x.bn, x.en)}</span>
-            <span className="ml-auto text-[12px] text-[#5b6270]">{x.need ? t("দরকারি", "Required") : t("ঐচ্ছিক", "Optional")}</span>
+          <li key={x.en}>
+            <button onClick={x.go} className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left text-[14.5px] hover:bg-[#f4f6f8]">
+              {x.ok ? <CircleCheck className="size-[18px] shrink-0 text-[#1c7d45]" /> : <span className="size-[18px] shrink-0 rounded-full border-2 border-[#c6ccd4]" aria-hidden />}
+              <span className="min-w-0"><span className={x.ok ? "text-[#4d5664] line-through decoration-[#c6ccd4]" : ""}>{t(x.bn, x.en)}</span>
+                {x.where && <span className="ml-1.5 text-[12.5px] text-[#5b6270]">· {t(...x.where)}</span>}
+                {x.note && <span className="block text-[12.5px] font-medium text-[#8a5300]">{t(...x.note)}</span>}</span>
+              <span className="ml-auto shrink-0 text-[12px] text-[#5b6270]">{x.need ? t("দরকারি", "Required") : t("ঐচ্ছিক", "Optional")}</span>
+              {!x.ok && <ChevronRight className="size-4 shrink-0 text-[#b11c29] opacity-60 group-hover:opacity-100" aria-hidden />}
+            </button>
           </li>
         ))}
       </ul>
@@ -745,7 +769,7 @@ function WebsiteReady({ d }: { d: Draft }) {
     </section>
   );
 }
-function Done({ d }: { d: Draft }) {
+function Done({ d, onEdit }: { d: Draft; onEdit: (s: StepId) => void }) {
   const { t, lang } = useL();
   const router = useRouter();
   const steps = [
@@ -758,11 +782,11 @@ function Done({ d }: { d: Draft }) {
       <Header title={d.name} />
       <main className="mx-auto max-w-[620px] px-4 py-12">
         <div className="text-center">
-          <span className="onb-in mx-auto grid size-16 place-items-center rounded-full bg-[#e9f7ef] text-[#1c7d45]"><CircleCheck className="size-9" /></span>
-          <h1 className="mt-5 text-[28px] font-semibold leading-tight">{t("সেটআপ জমা হয়েছে", "Setup submitted")}</h1>
+          <Celebrate id={d.id} />
+          <h1 className="onb-rise mt-5 text-[28px] font-semibold leading-tight" style={{ animationDelay: "380ms" }}>{t("অভিনন্দন! সেটআপ জমা হয়েছে 🎉", "Congratulations! Setup submitted 🎉")}</h1>
           <p className="mx-auto mt-3 max-w-[460px] text-[16px] leading-relaxed text-[#4d5664]">{t(`${d.name || "আপনার property"} এখন সেটআপ মোডে। BinGi যাচাই করছে — এর মধ্যে HMS ব্যবহার শুরু করুন।`, `${d.name || "Your property"} is in setup mode. BinGi is reviewing — start using HMS meanwhile.`)}</p>
         </div>
-        <section className="mt-9 rounded-xl border border-[#e3e7ec] bg-white p-5">
+        <section className="onb-rise mt-9 rounded-xl border border-[#e3e7ec] bg-white p-5" style={{ animationDelay: "520ms" }}>
           <h2 className="text-[16px] font-semibold">{t("এরপর কী হবে", "What happens next")}</h2>
           <ol className="mt-4 space-y-4">
             {steps.map((s, i) => (
@@ -773,7 +797,7 @@ function Done({ d }: { d: Draft }) {
             ))}
           </ol>
         </section>
-        <WebsiteReady d={d} />
+        <WebsiteReady d={d} onEdit={onEdit} />
         <section className="mt-4 rounded-xl border border-[#e3e7ec] bg-white p-5">
           <h2 className="text-[16px] font-semibold">{t("ততক্ষণে যা করতে পারেন", "Meanwhile you can")}</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">

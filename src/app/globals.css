@@ -400,3 +400,14 @@ a.pano-label:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @keyframes onb-num { from { opacity: 0; transform: translateY(0.25em); } to { opacity: 1; transform: none; } }
 .onb-num { animation: onb-num 250ms cubic-bezier(.16,1,.3,1); }
 @media (prefers-reduced-motion: reduce) { .onb-num { animation: none; } }
+
+/* ---------- Onboarding "Setup submitted" celebration (22 Nov 2026): check draws in, one confetti burst. Off with reduced motion. ---------- */
+@keyframes onb-ring { from { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } to { transform: scale(1); } }
+.onb-ring { animation: onb-ring 520ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes onb-draw { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
+.onb-draw { stroke-dasharray: 48; animation: onb-draw 520ms 260ms cubic-bezier(.65,0,.35,1) both; }
+@keyframes onb-burst { 0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(.6); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1); } }
+.onb-burst { animation: onb-burst 1500ms cubic-bezier(.15,.7,.3,1) both; }
+@keyframes onb-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.onb-rise { animation: onb-rise 420ms cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .onb-ring, .onb-draw, .onb-rise { animation: none; stroke-dasharray: none; } .onb-burst { display: none; } }

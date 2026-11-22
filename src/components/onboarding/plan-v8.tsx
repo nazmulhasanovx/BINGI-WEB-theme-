@@ -4,16 +4,32 @@
 // per-room price, launch price struck subtly, fees, activation and includes · "Your total cost" breakdown
 // with a booking-fee estimate. Prices = the approved table (11 Nov 2026), from store.ts.
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BedDouble, Calculator, Check, CheckCheck, Minus, Percent, Plus, Sparkles } from "lucide-react";
-import { CYCLE_OFF, MIN_BILLED, PLANS, TRIAL_DAYS, num, planRank, quote, recommend, useL, useOnboarding, type Cycle, type Draft, type PlanId } from "@/lib/onboarding/store";
+import { CYCLE_OFF, PLANS, TRIAL_DAYS, num, planRank, quote, recommend, useL, useOnboarding, type Cycle, type Draft, type PlanId } from "@/lib/onboarding/store";
 import { money } from "../hms/rooms/parts";
 import { Pills } from "./shell";
 
 const ID: PlanId[] = ["starter", "business", "ultra"];
-/** Number that fades in when it changes (Telegram-like, no layout jump). */
+/** Number that counts from the old value to the new one (~450 ms, ease-out), like the public calculator. Reduced motion: jumps. */
 function N({ v, lang }: { v: number; lang: "bn" | "en" }) {
-  return <span key={v} className="onb-num inline-block tabular-nums">{num(money(v), lang)}</span>;
+  const [shown, setShown] = useState(v);
+  const from = useRef(v);
+  useEffect(() => {
+    const start = from.current;
+    if (start === v) return;
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { from.current = v; setShown(v); return; }
+    let raf = 0; const t0 = performance.now();
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - k, 3);
+      const cur = Math.round(start + (v - start) * e);
+      from.current = cur; setShown(cur);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [v]);
+  return <span className="inline-block tabular-nums">{num(money(shown), lang)}</span>;
 }
 
 export function PlanV8({ d, units: made }: { d: Draft; units: number }) {
@@ -53,8 +69,7 @@ export function PlanV8({ d, units: made }: { d: Draft; units: number }) {
           )}
         </div>
         <p className="text-center text-[13px] text-[#4d5664]" aria-live="polite">
-          {rooms < MIN_BILLED ? t(`সর্বনিম্ন বিলিং ${num(MIN_BILLED, lang)} রুম — দাম ${num(MIN_BILLED, lang)} রুম ধরে`, `Minimum billing is ${MIN_BILLED} rooms — prices shown for ${MIN_BILLED}`)
-            : made ? t("রুম অংশে যতগুলো রুম যোগ করেছেন, ততগুলোর বিল।", "Billed on the rooms you added.") : t("আসল বিল হবে রুম অংশে যতগুলো রুম যোগ করবেন ততগুলোর।", "The real bill follows the rooms you add later.")}
+          {made ? t("রুম অংশে যতগুলো রুম যোগ করেছেন, ততগুলোর বিল।", "Billed on the rooms you added.") : t("আসল বিল হবে রুম অংশে যতগুলো রুম যোগ করবেন ততগুলোর।", "The real bill follows the rooms you add later.")}
         </p>
       </div>
 
@@ -86,7 +101,7 @@ export function PlanV8({ d, units: made }: { d: Draft; units: number }) {
                 {on ? <><Check className="size-4" strokeWidth={3} />{t("বাছাই করা হয়েছে", "Selected")}</> : t(`${P.label} বাছাই করুন`, `Choose ${P.label}`)}
               </button>
               <ul className="mt-4 space-y-2.5 text-[14px] text-[#2b3340]">
-                <li className="flex items-start gap-3"><BedDouble className="mt-0.5 size-[18px] shrink-0 text-[#b11c29]" />{d.cycle === 1 ? t(`${num(q.billed, lang)} রুম · ৳${num(money(q.sub), lang)}/মাস`, `${q.billed} rooms · ৳${money(q.sub)}/month`) : t(`${num(q.billed, lang)} রুম · ${num(d.cycle, lang)} মাসে ৳${num(money(q.sub), lang)}`, `${q.billed} rooms · ৳${money(q.sub)} for ${d.cycle} months`)}</li>
+                <li className="flex items-start gap-3"><BedDouble className="mt-0.5 size-[18px] shrink-0 text-[#b11c29]" />{d.cycle === 1 ? t(`${num(q.billed, lang)} রুম · ৳${num(money(q.sub), lang)}/মাস`, `${q.billed} ${q.billed === 1 ? "room" : "rooms"} · ৳${money(q.sub)}/month`) : t(`${num(q.billed, lang)} রুম · ${num(d.cycle, lang)} মাসে ৳${num(money(q.sub), lang)}`, `${q.billed} ${q.billed === 1 ? "room" : "rooms"} · ৳${money(q.sub)} for ${d.cycle} months`)}</li>
                 <li className="flex items-start gap-3"><Percent className="mt-0.5 size-[18px] shrink-0 text-[#b11c29]" />{t(`বুকিং ফি: মার্কেটপ্লেস ${num(P.fees[0], lang)}% · ওয়েব ${num(P.fees[1], lang)}% · ওয়াক-ইন ${num(P.fees[2], lang)}%`, `Booking fees: Marketplace ${P.fees[0]}% · Web ${P.fees[1]}% · Walk-in ${P.fees[2]}%`)}</li>
                 <li className="flex items-start gap-3"><Sparkles className="mt-0.5 size-[18px] shrink-0 text-[#b11c29]" /><Activation p={p} /></li>
               </ul>
@@ -104,7 +119,7 @@ export function PlanV8({ d, units: made }: { d: Draft; units: number }) {
         <span className="text-[14px] font-semibold text-[#b11c29]">{t("উপরে সাহায্য → কল", "Help above → call")}</span>
       </div>
 
-      <Cost d={d} pick={pick} rooms={rooms} />
+      <Cost d={d} pick={pick} rooms={rooms} made={made} setRooms={setRooms} />
     </section>
   );
 }
@@ -134,7 +149,7 @@ function Row({ label, sub, children, strong, minus }: { label: React.ReactNode; 
 }
 
 /** "What will I actually pay?" — first bill for the chosen plan + a booking-fee estimate. */
-function Cost({ d, pick, rooms }: { d: Draft; pick: PlanId; rooms: number }) {
+function Cost({ d, pick, rooms, made, setRooms }: { d: Draft; pick: PlanId; rooms: number; made: number; setRooms: (n: number) => void }) {
   const { edit } = useOnboarding();
   const { t, lang } = useL();
   const [web, setWeb] = useState(0);
@@ -151,9 +166,21 @@ function Cost({ d, pick, rooms }: { d: Draft; pick: PlanId; rooms: number }) {
         <h2 id="cost-h" className="flex items-center gap-2 text-[18px] font-semibold tracking-tight"><Calculator className="size-5 text-[#b11c29]" aria-hidden />{t("আপনার মোট খরচ", "Your total cost")}</h2>
         <Pills tone="brand" label={t("প্ল্যান", "Plan")} value={pick} onChange={(p) => edit((x) => { x.plan = p; x.planPicked = true; })} items={ID.map((p) => ({ v: p, label: PLANS[p].label }))} />
       </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <Pills size="sm" label={t("বিলিং", "Billing")} value={d.cycle} onChange={(c) => edit((x) => { x.cycle = c; })}
+          items={([1, 6, 12] as Cycle[]).map((c) => ({ v: c, label: c === 1 ? t("মাসিক", "Monthly") : t(`${num(c, lang)} মাস`, `${c} mo`), sub: CYCLE_OFF[c] ? `−${num(CYCLE_OFF[c] * 100, lang)}%` : undefined }))} />
+        <div className="flex items-center gap-1 rounded-full border border-[#e3e7ec] bg-[#f4f6f8] py-1 pl-3 pr-1">
+          <span className="flex items-center gap-1.5 text-[13.5px] font-medium"><BedDouble className="size-4 text-[#b11c29]" aria-hidden />{t("রুম", "Rooms")}</span>
+          {made ? <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-2 text-[14.5px] font-semibold tabular-nums">{num(made, lang)}</span> : <>
+            <button onClick={() => setRooms(rooms - 1)} disabled={rooms <= 1} className="grid size-8 place-items-center rounded-full hover:bg-white disabled:opacity-40" aria-label={t("কম রুম", "Fewer rooms")}><Minus className="size-3.5" /></button>
+            <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-2 text-[14.5px] font-semibold tabular-nums" aria-live="polite">{num(rooms, lang)}</span>
+            <button onClick={() => setRooms(rooms + 1)} className="grid size-8 place-items-center rounded-full hover:bg-white" aria-label={t("বেশি রুম", "More rooms")}><Plus className="size-3.5" /></button>
+          </>}
+        </div>
+      </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         <div className="divide-y divide-[#e3e7ec] rounded-2xl bg-[#f4f6f8] px-4 sm:px-5">
-          <Row label={t("সাবস্ক্রিপশন", "Subscription")} sub={t(`${num(q.billed, lang)} রুম × ৳${num(P.perUnit, lang)} × ${num(d.cycle, lang)} মাস`, `${q.billed} rooms × ৳${P.perUnit} × ${d.cycle} ${d.cycle === 1 ? "month" : "months"}`)}>{tk(q.gross)}</Row>
+          <Row label={t("সাবস্ক্রিপশন", "Subscription")} sub={t(`${num(q.billed, lang)} রুম × ৳${num(P.perUnit, lang)} × ${num(d.cycle, lang)} মাস`, `${q.billed} ${q.billed === 1 ? "room" : "rooms"} × ৳${P.perUnit} × ${d.cycle} ${d.cycle === 1 ? "month" : "months"}`)}>{tk(q.gross)}</Row>
           {q.off > 0 && <Row minus label={t(`${num(d.cycle, lang)} মাসের ছাড়`, `${d.cycle}-month discount`)} sub={t(`রুম প্রতি ৳${num(P.perUnit, lang)} → ৳${num(rate, lang)}`, `৳${P.perUnit} → ৳${rate} per room`)}>−{tk(q.off)}</Row>}
           <Row label={t("অ্যাক্টিভেশন (একবার)", "Activation (one-time)")} sub={P.activationRegular ? <Activation p={pick} /> : undefined}>{P.activation ? tk(P.activation) : <span className="text-[#5b6270]">{t("নেই", "None")}</span>}</Row>
           <Row strong label={t("প্রথম বিল", "First bill")} sub={t(`ট্রায়ালের পরে · এখন কোনো VAT যোগ হয় না`, "After the trial · no VAT added for now")}>{tk(q.total)}</Row>

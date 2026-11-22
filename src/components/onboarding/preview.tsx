@@ -44,7 +44,7 @@ export function GuestPreview({ d, cats, units }: { d: Draft; cats: Category[]; u
   const accent = ACCENT[theme] ?? "#b11c29";
   const near = (d.nearby ?? []).filter((x) => x.name.trim());
   const step = stepOf(d.step);
-  const ring = (ids: StepId[]) => (ids.includes(step) ? "rounded-lg outline outline-2 outline-offset-[3px] outline-[#b11c29]/50" : "");
+  const ring = (ids: StepId[]) => (ids.includes(step) ? "rounded-lg ring-2 ring-inset ring-[#b11c29]/45 p-1 -m-1" : "");
   return (
     <div className="space-y-4">
       <p className="text-[13px] font-semibold text-[#4d5664]">{t("আপনার ওয়েবসাইট", "Your website")} <span className="font-normal">· {t("নমুনা, পাবলিক নয়", "sample, not public")}</span></p>

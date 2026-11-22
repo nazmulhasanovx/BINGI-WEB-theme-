@@ -28,10 +28,11 @@ export function draftFromConfig(h: Hotel, st: RoomsState, vat: number, sc: numbe
   const fl = c.nodes.filter(isFloor);
   const zs = c.nodes.filter(isZone).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
   const levels = [...new Set(fl.map((n) => n.level ?? 0))];
+  const ids = blds.map((b, i) => BUILDINGS.find((x) => x.code === b.code)?.id ?? BUILDINGS[Math.min(i, BUILDINGS.length - 1)].id);
   return {
     ...d, slug: h.slug, name: h.name, propertyType: type,
     stay: c.configured && c.enabled.length ? [...c.enabled] : [...(FITS[type] ?? ["ROOM"])],
-    buildings: blds.length ? blds.map((b, i) => BUILDINGS.find((x) => x.code === b.code)?.id ?? BUILDINGS[Math.min(i, BUILDINGS.length - 1)].id) : ["main"],
+    buildings: blds.length ? ids : ["main"],
     floors: levels.filter((l) => l >= 0).length ? levels.filter((l) => l >= 0) : [1],
     place: {
       ...emptyPlace(),
@@ -40,6 +41,8 @@ export function draftFromConfig(h: Hotel, st: RoomsState, vat: number, sc: numbe
       zoneStyle: zs.some((z) => z.code.startsWith("BL")) ? "block" : "zone",
       zoneCount: Math.max(1, zs.length || 2),
       zoneNames: zs.map((z) => z.name),
+      bNames: Object.fromEntries(blds.map((b, i) => [ids[i], b.name])),
+      bFloors: Object.fromEntries(blds.map((b, i) => [ids[i], Math.max(1, ...fl.filter((f) => f.parent === b.id).map((f) => f.level ?? 0))])),
     },
     policy: { ...d.policy, vat, sc },
   };
@@ -67,7 +70,7 @@ export function mergeSetup(d: Draft, prev: Config, usedNodes: Set<string>): Conf
   const nodes: LocNode[] = next.nodes.map((n) => {
     const old = byId.get(ids.get(n.id) ?? "");
     // a matched building keeps its own name and code; a matched floor keeps its name while the naming style is the same
-    const keep = old && (isBuilding(n) ? { name: old.name, code: old.code } : isFloor(n) && old.kind === n.kind ? { name: old.name } : {});
+    const keep = old && (isBuilding(n) ? { code: old.code } : isFloor(n) && old.kind === n.kind ? { name: old.name } : {});
     return { ...n, ...keep, id: ids.get(n.id) ?? n.id, parent: n.parent ? ids.get(n.parent) ?? n.parent : undefined };
   });
   const kept = new Set(nodes.map((n) => n.id));

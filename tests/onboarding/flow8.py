@@ -32,7 +32,12 @@ def walk(b, W, en=True, kind="resort"):
   pg.locator("#ph").fill("12345"); pg.get_by_role("button",name=re.compile("Send code|কোড পাঠান")).click(); t(tag+"bad phone blocked", pg.locator("#otp").count()==0)
   pg.locator("#ph").fill("01712345678"); pg.get_by_role("button",name=re.compile("Send code|কোড পাঠান")).click(); pg.wait_for_timeout(300)
   pg.locator("#otp").fill("123456"); pg.get_by_role("button",name=re.compile("Verify|যাচাই")).click(); pg.wait_for_timeout(600)
-  pg.get_by_role("button",name=re.compile("Add a new property|নতুন")).first.click(); pg.wait_for_timeout(1000)
+  # welcome (first property): parts + what to keep at hand, then start
+  t(tag+"welcome before property type", pg.get_by_role("button",name=re.compile("Let's start|শুরু করুন")).count()==1); snap("welcome")
+  pg.get_by_role("button",name=re.compile("Let's start|শুরু করুন")).click(); pg.wait_for_timeout(1000)
+  sb=pg.locator("body").inner_text()
+  t(tag+"progress 0% on first page", re.search(r"\b(0|০)%", sb) is not None)
+  t(tag+"all property types shown (no More types)", "More types" not in sb and "আরও ধরন দেখুন" not in sb and pg.locator("main:visible [role=radio]").count()>=8)
   # 1.1 type (once)
   pg.get_by_role("radio",name=re.compile({"resort":"Resort|রিসোর্ট","hotel":"^Hotel|^হোটেল"}[kind])).first.click(); nx()
   pg.locator("#pname").fill("Hill View "+kind.title()); nx()
@@ -64,19 +69,24 @@ def walk(b, W, en=True, kind="resort"):
   nx()
   # 3.2 add rooms: live "Add New Room" pattern
   def add_type(kind_label, cat, n=5):
-    more=pg.get_by_role("button",name=re.compile("Add another type|আরেকটা ধরন"))
-    if more.count(): more.first.click(); pg.wait_for_timeout(250)
-    tiles=pg.locator("main:visible").get_by_role("button",name=re.compile(r"^(Add (rooms|cottages|villas|flats)|(রুম|কটেজ|ভিলা|ফ্ল্যাট).* যোগ করুন)"))
-    if tiles.count()>1: tiles.filter(has_text=re.compile(kind_label)).first.click()
-    elif tiles.count()==1: tiles.first.click()
+    if pg.get_by_text(re.compile("Add another type:|আরেকটা ধরন যোগ করুন:")).count():
+      pg.locator("main:visible").get_by_role("button",name=re.compile(rf"^({kind_label})$",re.I)).first.click()
+    else:
+      tiles=pg.locator("main:visible").get_by_role("button",name=re.compile(r"^(Add (rooms|cottages|villas|flats)|(রুম|কটেজ|ভিলা|ফ্ল্যাট).* যোগ করুন)"))
+      if tiles.count()>1: tiles.filter(has_text=re.compile(kind_label)).first.click()
+      elif tiles.count()==1: tiles.first.click()
     pg.wait_for_timeout(250)
     pg.locator("main:visible button[aria-pressed]").filter(has_text=re.compile(cat)).first.click()
-    t(tag+f"form: price prefilled ({cat})", pg.locator("#acc-price-in").input_value()!="")
+    t(tag+f"form: name follows category ({cat})", pg.locator("#acc-title").input_value()!="")
+    t(tag+"form: no price breakdown before a price", re.search("Guest pays \\(|গেস্ট দেবে \\(", pg.locator("main:visible").first.inner_text()) is None)
+    pg.locator("#acc-price-in").fill("4500")
+    fb=pg.locator("main:visible").first.inner_text()
+    t(tag+"form: payout after BinGi fee shown", re.search("you get|আপনি পাবেন", fb) is not None and re.search("Marketplace −|মার্কেটপ্লেস −", fb) is not None)
     pg.get_by_role("button",name=re.compile("Select numbers|নম্বর বাছাই করুন")).first.click(); pg.wait_for_timeout(250)
     pg.get_by_role("button",name=re.compile("view numbers|নম্বর দেখুন")).first.click(); pg.wait_for_timeout(250)
     pg.get_by_role("button",name=re.compile(r"\+(5|৫)")).click(); pg.get_by_role("button",name=re.compile("^(Done|ঠিক আছে)$")).click(); pg.wait_for_timeout(200)
     snap("places-"+cat[:6]); pg.get_by_role("button",name=re.compile("Save numbers|নম্বর সেভ")).click(); pg.wait_for_timeout(200)
-    snap("form-"+cat[:6]); pg.get_by_role("button",name=re.compile(r"^(Add (room|cottage|villa|flat).*|.+ যোগ করুন)$")).last.click(); pg.wait_for_timeout(350)
+    snap("form-"+cat[:6]); pg.get_by_role("button",name=re.compile(r"^(Save room type ·|সেভ করুন ·)")).last.click(); pg.wait_for_timeout(350)
   add_type("rooms|রুম", "Deluxe|ডিলাক্স")
   t(tag+"rooms: 5 rooms after one type", re.search(r"(Total rooms|মোট রুম)\s*(5|৫)\b", pg.locator("main:visible").first.inner_text()) is not None)
   if kind=="resort":
@@ -90,6 +100,7 @@ def walk(b, W, en=True, kind="resort"):
   t(tag+"booking rules", bool(re.search("Booking rules|বুকিংয়ের নিয়ম", h1())))
   rb=pg.locator("main:visible").first.inner_text()
   t(tag+"part banner on first page of part", re.search("Part 4 of 6|ধাপ ৪ / ৬", rb, re.I) is not None)
+  t(tag+"rules: no Fri–Sat here (it is per room type)", "Higher price on Fri" not in rb and "শুক্র–শনি দাম একটু বেশি" not in rb)
   t(tag+"rules: children + pets", re.search("Children|বাচ্চা", rb) is not None and re.search("Pets|পোষা প্রাণী", rb) is not None)
   nx(); nx(); nx()  # rules, tools, team
   nx(); nx()  # payments, website

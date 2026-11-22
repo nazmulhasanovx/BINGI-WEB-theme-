@@ -120,7 +120,7 @@ export function Ghost({ children, className, ...p }: React.ButtonHTMLAttributes<
 }
 
 /** Option row/tile — form-style mark (radio for one choice, checkbox for many). */
-export function Tile({ on, onClick, title, sub, icon, badge, disabled, locked, role = "button", big, children }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; disabled?: boolean; locked?: boolean; role?: "button" | "radio"; big?: boolean; children?: ReactNode }) {
+export function Tile({ on, onClick, title, sub, icon, badge, price, disabled, locked, role = "button", big, children }: { on: boolean; onClick: () => void; title: string; sub?: string; icon?: ReactNode; badge?: string; price?: { main: string; sub?: string; free?: boolean }; disabled?: boolean; locked?: boolean; role?: "button" | "radio"; big?: boolean; children?: ReactNode }) {
   const radio = role === "radio";
   return (
     <div className={clsx("rounded-2xl border transition-[border-color,box-shadow,background-color] duration-200", on ? "border-[#b11c29] bg-[#fffafa] shadow-[inset_0_0_0_1px_#b11c29,0_10px_24px_-18px_rgb(177_28_41/0.5)]" : "border-[#d3d8df] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.04)] hover:border-[#9aa0ac] hover:shadow-[0_8px_20px_-16px_rgb(15_23_32/0.35)]", disabled && "opacity-50")}>
@@ -132,6 +132,7 @@ export function Tile({ on, onClick, title, sub, icon, badge, disabled, locked, r
           <span className="flex flex-wrap items-center gap-2 text-[15.5px] font-semibold leading-snug">{title}{badge && <span className="rounded bg-[#e9edf2] px-1.5 py-0.5 text-[11.5px] font-medium text-[#4d5664]">{badge}</span>}</span>
           {sub && <span className="mt-0.5 block text-[13.5px] leading-snug text-[#4d5664]">{sub}</span>}
         </span>
+        {price && <span className="shrink-0 text-right"><span className={clsx("block text-[20px] font-semibold leading-none tracking-tight tabular-nums", price.free ? "text-[#1c7d45]" : "text-[#0f1720]")}>{price.main}</span>{price.sub && <span className="mt-1 block text-[12px] text-[#5b6270]">{price.sub}</span>}</span>}
         <span aria-hidden className={clsx("grid size-5 shrink-0 place-items-center border-2 transition-colors", radio ? "rounded-full" : "rounded", on ? "border-[#b11c29] bg-[#b11c29] text-white" : "border-[#b8bdc7] bg-white")}>{on && (radio ? <span className="size-2 rounded-full bg-white" /> : <Check className="size-3.5" strokeWidth={3} />)}</span>
       </button>
       {on && children && <div className="onb-in border-t border-[#e3e7ec] px-4 pb-4 pt-3">{children}</div>}

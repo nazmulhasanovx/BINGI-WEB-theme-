@@ -115,17 +115,20 @@ export function levelName(style: "floor" | "level", L: number, bn: boolean) {
   return style === "level" ? (bn ? `লেভেল ${bnNum(L)}` : `Level ${L}`) : (bn ? `ফ্লোর ${bnNum(L)}` : `Floor ${L}`);
 }
 /** Draft presets → accommodation locations (same records the live backend creates). Ids are stable so units stay attached. */
+/** Top floor of one building (each building can have its own number of floors). */
+export const floorsOf = (d: Draft, b: string) => d.place.bFloors?.[b] ?? Math.max(1, ...d.floors);
 export function configFrom8(d: Draft, prev: Config): Config {
   const nodes: LocNode[] = [];
   const floorKinds = d.stay.some((s) => !isZoneCore(s));
   const zoneKinds = d.stay.some((s) => isZoneCore(s));
   if (floorKinds) {
     const bs = d.buildings.length ? d.buildings : ["main"];
-    const levels = [...Array.from({ length: d.place.basements }, (_, i) => -(d.place.basements - i)), ...[...d.floors].sort((a, z) => a - z)];
     for (const b of bs) {
       const B = BUILDINGS.find((x) => x.id === b) ?? BUILDINGS[0];
       const bid = `b-${b}`;
-      nodes.push({ id: bid, kind: b.startsWith("T") ? "TOWER" : "BUILDING", name: B.en, code: bs.length > 1 ? B.code || "M" : B.code, active: true });
+      const top = floorsOf(d, b);
+      const levels = [...Array.from({ length: d.place.basements }, (_, i) => -(d.place.basements - i)), ...(d.floors.includes(0) ? [0] : []), ...Array.from({ length: top }, (_, i) => i + 1)];
+      nodes.push({ id: bid, kind: b.startsWith("T") ? "TOWER" : "BUILDING", name: d.place.bNames?.[b]?.trim() || B.en, code: bs.length > 1 ? B.code || "M" : B.code, active: true });
       for (const L of levels) nodes.push({ id: `${bid}-f${L}`, kind: d.place.floorStyle === "level" ? "LEVEL" : "FLOOR", name: levelName(d.place.floorStyle, L, false), code: L < 0 ? `B${-L}` : L === 0 ? "G" : `F${L}`, parent: bid, level: L, active: true });
     }
   }
