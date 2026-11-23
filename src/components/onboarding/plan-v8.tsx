@@ -12,13 +12,14 @@ import { Pills } from "./shell";
 
 const ID: PlanId[] = ["starter", "business", "ultra"];
 /** Number that counts from the old value to the new one (~450 ms, ease-out), like the public calculator. Reduced motion: jumps. */
+const reduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 function N({ v, lang }: { v: number; lang: "bn" | "en" }) {
   const [shown, setShown] = useState(v);
   const from = useRef(v);
   useEffect(() => {
     const start = from.current;
     if (start === v) return;
-    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { from.current = v; setShown(v); return; }
+    if (reduced()) { from.current = v; return; } // shown below as v directly
     let raf = 0; const t0 = performance.now();
     const tick = (now: number) => {
       const k = Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - k, 3);
@@ -29,7 +30,7 @@ function N({ v, lang }: { v: number; lang: "bn" | "en" }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [v]);
-  return <span className="inline-block tabular-nums">{num(money(shown), lang)}</span>;
+  return <span className="inline-block tabular-nums">{num(money(reduced() ? v : shown), lang)}</span>;
 }
 
 export function PlanV8({ d, units: made }: { d: Draft; units: number }) {

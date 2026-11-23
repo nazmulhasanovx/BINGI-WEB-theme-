@@ -408,7 +408,7 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
                       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[17px] font-semibold leading-snug">{nm(c.name, t)}
                         {drafts[c.id] ? <span className="rounded-md bg-[#fdf6e7] px-1.5 py-0.5 text-[12px] font-semibold text-[#7a4a0b]">{t("সেভ হয়নি এমন পরিবর্তন", "Unsaved changes")}</span>
                           : <span className="inline-flex items-center gap-1 rounded-md bg-[#e8f5ee] px-1.5 py-0.5 text-[12px] font-semibold text-[#17643a]"><Check className="size-3" strokeWidth={3} />{t("তৈরি", "Ready")}</span>}
-                        {!(c.photos?.length) && <span className="rounded-md bg-[#f0f2f5] px-1.5 py-0.5 text-[12px] font-medium text-[#4d5664]">{t("ছবি নেই", "No photos yet")}</span>}</p>
+                        {!(c.photos?.length || c.photo) && <span className="rounded-md bg-[#f0f2f5] px-1.5 py-0.5 text-[12px] font-medium text-[#4d5664]">{t("ছবি নেই", "No photos yet")}</span>}</p>
                       <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[13.5px] text-[#4d5664]">
                         <span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{t(`${num(c.maxAdults, lang)} জন${c.maxChildren ? ` + ${num(c.maxChildren, lang)} বাচ্চা` : ""}`, `${c.maxAdults} adults${c.maxChildren ? ` + ${c.maxChildren} children` : ""}`)}</span>
                         <span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span>

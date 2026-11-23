@@ -220,13 +220,13 @@ export function BrandingPage() {
 function BrandWhere() {
   const { h, s } = useS();
   const logo = s.branding.logo;
-  const L = ({ dark }: { dark?: boolean }) => logo ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={logo} alt="" className="h-6 max-w-[90px] object-contain" /> : <span className={clsx("text-[12px] font-bold", dark ? "text-white" : "text-hms-ink")}>{h.name}</span>;
+  const L = (dark?: boolean) => logo ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={logo} alt="" className="h-6 max-w-[90px] object-contain" /> : <span className={clsx("text-[12px] font-bold", dark ? "text-white" : "text-hms-ink")}>{h.name}</span>;
   return (
     <Card title="Where it shows" className="mt-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-white p-3"><L /><div className="mt-3 space-y-1.5"><div className="h-1.5 w-3/4 rounded bg-[#e9edf2]" /><div className="h-1.5 w-1/2 rounded bg-[#e9edf2]" /><div className="h-1.5 w-2/3 rounded bg-[#e9edf2]" /></div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Invoices & confirmations</figcaption></figure>
-        <figure><div className="h-[110px] overflow-hidden rounded-xl border border-hms-line bg-gradient-to-br from-[#4b5563] to-[#111827] p-3"><div className="flex items-center justify-between"><L dark /><span className="h-1.5 w-12 rounded bg-white/40" /></div><div className="mt-6 h-2 w-2/3 rounded bg-white/70" /></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Website header</figcaption></figure>
-        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-[#fdf8ef] p-3"><div className="flex justify-center"><L /></div><div className="mt-3 space-y-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex justify-between"><span className="h-1.5 w-1/2 rounded bg-[#e8dccb]" /><span className="h-1.5 w-8 rounded bg-[#e8dccb]" /></div>)}</div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Receipts & menus</figcaption></figure>
+        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-white p-3">{L()}<div className="mt-3 space-y-1.5"><div className="h-1.5 w-3/4 rounded bg-[#e9edf2]" /><div className="h-1.5 w-1/2 rounded bg-[#e9edf2]" /><div className="h-1.5 w-2/3 rounded bg-[#e9edf2]" /></div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Invoices & confirmations</figcaption></figure>
+        <figure><div className="h-[110px] overflow-hidden rounded-xl border border-hms-line bg-gradient-to-br from-[#4b5563] to-[#111827] p-3"><div className="flex items-center justify-between">{L(true)}<span className="h-1.5 w-12 rounded bg-white/40" /></div><div className="mt-6 h-2 w-2/3 rounded bg-white/70" /></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Website header</figcaption></figure>
+        <figure><div className="h-[110px] rounded-xl border border-hms-line bg-[#fdf8ef] p-3"><div className="flex justify-center">{L()}</div><div className="mt-3 space-y-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex justify-between"><span className="h-1.5 w-1/2 rounded bg-[#e8dccb]" /><span className="h-1.5 w-8 rounded bg-[#e8dccb]" /></div>)}</div></div><figcaption className="mt-1.5 text-[12.5px] text-hms-muted">Receipts & menus</figcaption></figure>
       </div>
     </Card>
   );

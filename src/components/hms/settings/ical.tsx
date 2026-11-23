@@ -146,7 +146,7 @@ function IcalSheet({ h, unitId, name, type, code, onClose }: { h: Hotel; unitId:
 
           <section>
             <p className="text-[15px] font-semibold"><span className="mr-2 inline-grid size-6 place-items-center rounded-full bg-hms-ink text-[12px] text-white">2</span>Other sites → BinGi</p>
-            <p className="mt-1 text-[13px] text-hms-muted">Paste each site's export link. Their bookings will close this room in BinGi.</p>
+            <p className="mt-1 text-[13px] text-hms-muted">Paste each site&apos;s export link. Their bookings will close this room in BinGi.</p>
             {list.length > 0 && <ul className="mt-3 divide-y divide-hms-line rounded-xl border border-hms-line">
               {list.map((f) => (
                 <li key={f.id} className="flex items-center gap-3 px-3.5 py-3">
