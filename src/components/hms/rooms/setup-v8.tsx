@@ -100,7 +100,7 @@ function AddInner({ type, category }: { type: string | null; category: string | 
   const { d, edit } = useHmsSetup(h, rooms.st, s.tax);
   const host = useHost(edit);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
-  const [open, setOpen] = useState(!!(category || (type && CORES.includes(type.toUpperCase() as CoreType))));
+  const [open, setOpen] = useState(false); // the room-type form is a panel now: the page frame stays as it is
   const core = type && CORES.includes(type.toUpperCase() as CoreType) ? (type.toUpperCase() as CoreType) : undefined;
   const cat = category ? rooms.st.categories.find((c) => c.id === category) : undefined;
   if (!rooms.st.config.configured) return (

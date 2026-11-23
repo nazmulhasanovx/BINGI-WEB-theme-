@@ -70,7 +70,7 @@ with sync_playwright() as p:
     tiles=pg.locator("main:visible").get_by_role("button",name=re.compile("BINGI HOUSE"))
     t(tag+"#7 add-rooms shows own kind", tiles.count()>=1)
     tiles.first.click(); pg.wait_for_timeout(300)
-    pg.locator("main:visible button[aria-pressed]").first.click()
+    pg.locator("[data-acc-panel] button[aria-pressed]").first.click()
     pg.locator("#acc-title").fill("Boat Suite"); pg.locator("#acc-price-in").fill("5000")
     pg.get_by_role("button",name=re.compile("Select numbers")).first.click(); pg.wait_for_timeout(250)
     sheet=pg.get_by_role("dialog",name="Select numbers")
@@ -87,7 +87,7 @@ with sync_playwright() as p:
     ns.get_by_role("button",name="Done").click(); pg.wait_for_timeout(200)
     t(tag+"#4 own code in the zone", sheet.inner_text().count("PEARL1")>=1)
     sheet.get_by_role("button",name="Save numbers").click(); pg.wait_for_timeout(200)
-    pg.get_by_role("button",name=re.compile(r"^Save room type ·")).last.click(); pg.wait_for_timeout(400)
+    pg.get_by_role("button",name=re.compile(r"^Save ·")).last.click(); pg.wait_for_timeout(400)
     units=pg.evaluate("Object.keys(localStorage).filter(k=>k.includes('rooms')).map(k=>localStorage.getItem(k)).join('')")
     t(tag+"#4 saved unit keeps the own code", "PEARL1" in units)
     # ---- home/flat: #1 folded, #3 one-line building

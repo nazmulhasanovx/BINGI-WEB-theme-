@@ -8,7 +8,7 @@
 //   3.3 Review.
 // Saved as the same records the live backend uses: locations → accommodation category → draft unit batch.
 import clsx from "clsx";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { BedDouble, Building2, Check, ChevronRight, Hash, ImagePlus, Pencil, Plus, ShieldCheck, Trash2, Trees, UsersRound, X } from "lucide-react";
 import { AMENITIES, type CoreType } from "@/lib/rooms/catalog";
@@ -18,7 +18,7 @@ import { BEDS, BUILDINGS, MAX_FLOOR, ROOM_KINDS, STAY } from "@/lib/onboarding/r
 import { BN_NAME, CUSTOM_PRESETS, FITS, MAX_ZONES, ROOM_TOP, TYPE_PRESETS, cleanPrefix, codeOf, configFrom8, stayOf, kOne, kMany, floorsOf, isZoneCore, kindName, levelName, numbersFor, zoneDefault, zoneName } from "@/lib/onboarding/rooms-v8";
 import { money } from "../hms/rooms/parts";
 import { PropertyPreview } from "../rooms/property-preview";
-import { AM_BN, AM_ICON, FormSlot, NumberSheet, STAY_ICON } from "./rooms-easy";
+import { AM_BN, AM_ICON, NumberSheet, STAY_ICON } from "./rooms-easy";
 import { TYPE_META } from "./types";
 import { Chip, Errors, Ghost, Pills, Primary, Stepper, Tile, field } from "./shell";
 
@@ -303,12 +303,49 @@ const blank = (core: CoreType): Form => ({ core, title: "", category: "", kind: 
 export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true }: { d: Draft; rooms: Rooms; onForm: (open: boolean) => void; start?: { core?: CoreType; cat?: string }; onClose?: () => void; head?: boolean }) {
   const { t, lang } = useL();
   const host = useContext(SetupCtx);
-  const [form, setFormState] = useState<Form | null>(() => {
-    if (first?.cat) { const c = rooms.st.categories.find((x) => x.id === first.cat); if (c) return formOf(c, rooms.st); }
-    return first?.core ? blank(first.core) : null;
+  // One type at a time in a panel over the list (23 Nov 2026). Unsaved changes are kept as a draft per type.
+  void onForm;
+  const dkey = `bingi-acc-draft:${d.slug || d.id}`;
+  const readDrafts = (): Record<string, Form> => { try { return JSON.parse(localStorage.getItem(dkey) || "{}"); } catch { return {}; } };
+  const keyOf = (f: Form) => f.id ?? `new:${f.core}`;
+  // Lazy init (the setup screens render only after the local store has hydrated).
+  const init = (() => {
+    if (typeof window === "undefined") return { f: null as Form | null, kept: false, base: "" };
+    const c = first?.cat ? rooms.st.categories.find((x) => x.id === first.cat) : undefined;
+    const f0 = c ? formOf(c, rooms.st) : first?.core ? blank(first.core) : null;
+    if (!f0) return { f: null, kept: false, base: "" };
+    const kept = readDrafts()[keyOf(f0)];
+    return { f: kept ?? f0, kept: !!kept, base: JSON.stringify(f0) };
   });
+  const [boot] = useState(init);
+  const base = useRef(boot.base);
+  const [drafts, setDrafts] = useState<Record<string, Form>>(() => (typeof window === "undefined" ? {} : readDrafts()));
+  const [restored, setRestored] = useState(boot.kept);
+  const [form, setFormState] = useState<Form | null>(boot.f);
+  const openForm = (f0: Form) => {
+    base.current = JSON.stringify(f0);
+    const kept = readDrafts()[keyOf(f0)];
+    setRestored(!!kept);
+    setFormState(kept ?? f0);
+  };
+  const writeDraft = (k: string, f: Form | null) => {
+    try { const all = readDrafts(); if (f) all[k] = f; else delete all[k]; localStorage.setItem(dkey, JSON.stringify(all)); setDrafts(all); } catch { /* private mode: no draft */ }
+  };
+  const editForm = (f: Form) => { setFormState(f); writeDraft(keyOf(f), JSON.stringify(f) === base.current ? null : f); };
+  const closePanel = () => { if (onClose) return onClose(); setFormState(null); setRestored(false); };
+  const setForm = (f: Form | null) => (f ? openForm(f) : closePanel());
   const [pick, setPick] = useState(false);
-  const setForm = (f: Form | null) => { if (!f && onClose) return onClose(); setFormState(f); onForm(!!f); };
+  // Phone back button closes the panel (one history entry while it is open).
+  const open = !!form;
+  useEffect(() => {
+    if (!open) return;
+    let popped = false;
+    try { history.pushState({ ...(history.state ?? {}), accPanel: true }, ""); } catch { /* ignore */ }
+    const onPop = () => { popped = true; closePanel(); };
+    window.addEventListener("popstate", onPop);
+    return () => { window.removeEventListener("popstate", onPop); if (!popped && history.state?.accPanel) history.back(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   const st = rooms.st;
   const cats = liveCats(st);
   const live = st.units.filter((u) => u.status !== "archived");
@@ -320,8 +357,15 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
     if (!window.confirm(t(`"${c.name}" আর এর সব রুম মুছে ফেলবেন?`, `Remove "${c.name}" and its rooms?`))) return;
     rooms.update((s) => { s.categories = s.categories.filter((x) => x.id !== c.id); s.units = s.units.filter((u) => u.category !== c.id); }, `Room type ${c.name} removed in onboarding`);
   };
-  if (form) return <AccForm d={d} rooms={rooms} f={form} set={setFormState} close={() => setForm(null)} />;
+  const order = cats.map((c) => c.id);
+  const nextOf = (f: Form) => { const i = f.id ? order.indexOf(f.id) : -1; return i >= 0 ? cats[i + 1] : undefined; };
+  const panel = form && createPortal(
+    <AccForm key={keyOf(form)} d={d} rooms={rooms} f={form} set={editForm} close={closePanel} restored={restored} next={nextOf(form)}
+      onDiscard={() => { writeDraft(keyOf(form), null); setRestored(false); setFormState(JSON.parse(base.current)); }}
+      onSaved={(saved, goNext) => { writeDraft(keyOf(form), null); if (!form.id) writeDraft(saved, null); const n = goNext ? nextOf(form) : undefined; if (n) { const nf = formOf(n, rooms.st); openForm(nf); } else closePanel(); }} />,
+    document.body);
   const config = st.config;
+  const newDrafts = kinds.filter((k) => drafts[`new:${k.id}`]);
   const kindTiles = (
     <div className="grid gap-2.5 sm:grid-cols-3">
       {kinds.map((k) => { const I = STAY_ICON[k.id]; const n = live.filter((u) => u.core === k.id).length; return (
@@ -335,6 +379,7 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
   return (
     <section>
       {head && <Head title={t("রুম যোগ করুন", "Add your rooms")} sub={t("একটা একটা করে ধরন যোগ করুন — এক পেজেই দাম, নম্বর, সুবিধা।", "Add one type at a time — price, numbers and amenities on one page.")} />}
+      {newDrafts.length > 0 && <div className="mt-4">{newDrafts.map((k) => <div key={k.id} className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl border border-[#f1dfb8] bg-[#fffbf2] px-4 py-3 text-[14.5px]"><span><b className="font-semibold">{t("অসমাপ্ত:", "Unfinished:")}</b> {drafts[`new:${k.id}`].title.trim() || drafts[`new:${k.id}`].category || t(`নতুন ${k.bn}`, `New ${kOne(k)}`)}</span><button onClick={() => start(k.id)} className="ml-auto inline-flex h-9 items-center rounded-lg border border-[#d3d8df] bg-white px-3.5 text-[14px] font-semibold hover:border-[#0f1720]">{t("চালিয়ে যান", "Continue")}</button></div>)}</div>}
       {cats.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-[#efb7b1] bg-gradient-to-b from-[#fffaf9] to-white p-6 text-center sm:p-8">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-[#b11c29] shadow-sm"><BedDouble className="size-7" /></span>
@@ -360,7 +405,10 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
                     <span className="relative grid size-[72px] shrink-0 place-items-center overflow-hidden rounded-xl text-white" style={{ background: `linear-gradient(150deg, ${color}, ${color}cc)` }}><I className="size-7" aria-hidden />
                       {(c.photos?.length ?? 0) > 0 && <span className="absolute bottom-1 rounded bg-black/40 px-1 text-[10.5px]">{num(c.photos!.length, lang)} {t("ছবি", "photos")}</span>}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[17px] font-semibold leading-snug">{nm(c.name, t)}</p>
+                      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[17px] font-semibold leading-snug">{nm(c.name, t)}
+                        {drafts[c.id] ? <span className="rounded-md bg-[#fdf6e7] px-1.5 py-0.5 text-[12px] font-semibold text-[#7a4a0b]">{t("সেভ হয়নি এমন পরিবর্তন", "Unsaved changes")}</span>
+                          : <span className="inline-flex items-center gap-1 rounded-md bg-[#e8f5ee] px-1.5 py-0.5 text-[12px] font-semibold text-[#17643a]"><Check className="size-3" strokeWidth={3} />{t("তৈরি", "Ready")}</span>}
+                        {!(c.photos?.length) && <span className="rounded-md bg-[#f0f2f5] px-1.5 py-0.5 text-[12px] font-medium text-[#4d5664]">{t("ছবি নেই", "No photos yet")}</span>}</p>
                       <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[13.5px] text-[#4d5664]">
                         <span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{t(`${num(c.maxAdults, lang)} জন${c.maxChildren ? ` + ${num(c.maxChildren, lang)} বাচ্চা` : ""}`, `${c.maxAdults} adults${c.maxChildren ? ` + ${c.maxChildren} children` : ""}`)}</span>
                         <span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === c.bed)?.bn ?? c.bed, BEDS.find((b) => b.id === c.bed)?.en ?? c.bed)}</span>
@@ -380,7 +428,7 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
                   <div className="flex items-center gap-2 border-t border-[#f0f2f5] bg-[#fafbfc] px-4 py-2.5">
                     {c.approval !== "approved" && <span className="text-[12.5px] text-[#4d5664]">{t("BinGi অনুমোদনের অপেক্ষায়", "Waiting for BinGi approval")}</span>}
                     <span className="ml-auto flex gap-2">
-                      <button onClick={() => editCat(c)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d3d8df] bg-white px-3.5 text-[14px] font-semibold text-[#0f1720] hover:border-[#0f1720]"><Pencil className="size-3.5" />{t("বদলান", "Edit")}</button>
+                      <button onClick={() => editCat(c)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d3d8df] bg-white px-3.5 text-[14px] font-semibold text-[#0f1720] hover:border-[#0f1720]"><Pencil className="size-3.5" />{drafts[c.id] ? t("চালিয়ে যান", "Continue") : t("বদলান", "Edit")}</button>
                       {!host && <button onClick={() => remove(c)} aria-label={t(`${c.name} মুছুন`, `Remove ${c.name}`)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d3d8df] bg-white px-3 text-[14px] font-semibold text-[#8e1621] hover:border-[#8e1621]"><Trash2 className="size-4" /><span className="hidden sm:inline">{t("মুছুন", "Delete")}</span></button>}
                     </span>
                   </div>
@@ -396,13 +444,13 @@ export function AddRooms({ d, rooms, onForm, start: first, onClose, head = true 
           ) : <div className="onb-in mt-3">{kindTiles}<button onClick={() => setPick(false)} className="mt-2 text-[14px] font-semibold text-[#4d5664] underline underline-offset-4">{t("বাতিল", "Cancel")}</button></div>}
         </>
       )}
-
+      {panel}
     </section>
   );
 }
 
 const MEALS: ["breakfast" | "lunch" | "dinner", string, string][] = [["breakfast", "নাস্তা", "Breakfast"], ["lunch", "দুপুরের খাবার", "Lunch"], ["dinner", "রাতের খাবার", "Dinner"]];
-function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form; set: (f: Form) => void; close: () => void }) {
+function AccForm({ d, rooms, f, set, close, onSaved, restored, onDiscard, next }: { d: Draft; rooms: Rooms; f: Form; set: (f: Form) => void; close: () => void; onSaved: (id: string, next: boolean) => void; restored: boolean; onDiscard: () => void; next?: Category }) {
   const { t, lang } = useL();
   const host = useContext(SetupCtx);
   const [tried, setTried] = useState(false);
@@ -427,8 +475,21 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
   ].filter(Boolean);
   // a category fills bed, guests and kind; the name follows the category until the owner types their own
   const applyPreset = (x: (typeof TYPE_PRESETS)[number]) => p({ category: x.name, title: f.title && f.title !== f.category ? f.title : x.name, kind: x.kind, bed: x.bed, guests: x.guests });
-  const save = () => {
-    if (errs.length) { setTried(true); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  const body = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  // Panel housekeeping: lock the page behind, focus the panel, Esc closes (not while a number sheet is open).
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    const o = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    box.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector("[data-acc-sheet]")) close(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = o; window.removeEventListener("keydown", onKey); prev?.focus?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const save = (goNext = false) => {
+    if (errs.length) { setTried(true); body.current?.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const r = rooms.st;
     const id = f.id ?? uid("cat");
     const prev = r.categories.find((c) => c.id === id);
@@ -447,7 +508,7 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
       for (const x of f.picks) if (!s.units.some((u) => u.category === id && u.code.toUpperCase() === x.code.toUpperCase()))
         s.units.push({ id: uid("u"), code: x.code.toUpperCase(), local: x.local.toUpperCase(), node: x.node, category: id, core: f.core, preset: stay.preset, status: host ? host.unitStatus(cat.approval === "approved") : "draft", video: "inherit", created: nowStamp() });
     }, `${f.picks.length} ${f.core.toLowerCase()} units saved${host ? (cat.approval === "approved" ? " and published" : " as draft (type waits for approval)") : " as draft"} · ${name}`);
-    close();
+    onSaved(id, goNext);
   };
   const tog = (a: string) => p({ amen: f.amen.includes(a) ? f.amen.filter((x) => x !== a) : [...f.amen, a] });
   const chip = (a: string) => { const I = AM_ICON[a]; const on = f.amen.includes(a); return <Chip key={a} on={on} onClick={() => tog(a)}>{I && !on && <I className="size-4" aria-hidden />}{t(AM_BN[a] ?? a, a)}</Chip>; };
@@ -455,12 +516,12 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
   const config = rooms.st.config.configured ? rooms.st.config : configFrom8(d, rooms.st.config);
   const byNode = (n: string) => f.picks.filter((x) => x.node === n);
   const I = STAY_ICON[f.core];
-  const { slot } = useContext(FormSlot);
   const bar = (
-    <div className="flex flex-wrap items-center gap-3">
-      <span className="hidden text-[14px] text-[#4d5664] sm:inline">{name ? <b className="font-semibold text-[#0f1720]">{nm(name, t)}</b> : t("নতুন ধরন", "New type")}{price > 0 ? ` · ৳${num(money(price), lang)}/${t("রাত", "night")}` : ""}</span>
-      <Ghost onClick={close} className="ml-auto h-11">{t("বাতিল", "Cancel")}</Ghost>
-      <Primary onClick={save}>{t(`সেভ করুন · ${num(f.picks.length, lang)}টা ${stay.bn}`, `Save room type · ${f.picks.length} ${f.picks.length === 1 ? kOne(stay) : kMany(stay)}`)}</Primary>
+    <div className="flex items-center gap-2 sm:gap-3">
+      <span className="hidden min-w-0 truncate text-[14px] text-[#4d5664] md:inline">{name ? <b className="font-semibold text-[#0f1720]">{nm(name, t)}</b> : t("নতুন ধরন", "New type")}{price > 0 ? ` · ৳${num(money(price), lang)}/${t("রাত", "night")}` : ""}</span>
+      <Ghost onClick={close} className="ml-auto h-11 max-sm:hidden">{t("বন্ধ করুন", "Close")}</Ghost>
+      {next && <Ghost onClick={() => save(true)} title={t(`সেভ করে ${nm(next.name, t)} খুলুন`, `Save and open ${next.name}`)} className="ml-auto h-11 px-3 sm:ml-0">{t("সেভ, পরেরটা", "Save & next")}<ChevronRight className="size-4" /></Ghost>}
+      <Primary onClick={() => save()} className={clsx("h-11 px-4 sm:px-5", !next && "ml-auto sm:ml-0")}>{t(`সেভ · ${num(f.picks.length, lang)}টা ${stay.bn}`, `Save · ${f.picks.length} ${f.picks.length === 1 ? kOne(stay) : kMany(stay)}`)}</Primary>
     </div>
   );
   const sections: [string, string, boolean][] = [
@@ -472,23 +533,59 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
     ["acc-meals", t("খাবার", "Meals"), touched.meals],
   ];
   const final = Math.round(price * (1 + vat / 100 + sc / 100));
-  const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // Scroll only the panel body (scrollIntoView would also scroll the panel box itself and hide its header).
+  const jump = (id: string) => { const el = document.getElementById(id), root = body.current; if (!el || !root) return; root.scrollTo({ top: el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop - 12, behavior: "smooth" }); };
+  const [at, setAt] = useState("acc-basic");
+  useEffect(() => {
+    const root = body.current;
+    if (!root) return;
+    const io = new IntersectionObserver((es) => { const v = es.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]; if (v) setAt(v.target.id); }, { root, rootMargin: "0px 0px -60% 0px" });
+    sections.forEach(([id]) => { const el = document.getElementById(id); if (el) io.observe(el); });
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const chips = useRef<HTMLElement>(null);
+  useEffect(() => { const n = chips.current, c = n?.querySelector<HTMLElement>("[aria-current]"); if (n && c) n.scrollTo({ left: c.offsetLeft - 16, behavior: "smooth" }); }, [at]);
+  const title = f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${kOne(stay)}`);
   return (
-    <section>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3.5">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff1f0] text-[#b11c29]"><I className="size-6" aria-hidden /></span>
-          <div>
-            <h1 className="text-[24px] font-semibold leading-tight sm:text-[28px]">{f.id ? t(`${nm(name, t)} বদলান`, `Edit ${name}`) : t(`নতুন ${stay.bn}`, `New ${kOne(stay)}`)}</h1>
-            <p className="mt-0.5 text-[14.5px] text-[#4d5664]">{t("এক পেজেই পুরো ধরন — ক্যাটাগরি বাছলে বাকিটা বসে যায়।", "The whole type on one page — pick a category and the rest fills in.")}</p>
+    <div className="bingi-ui fixed inset-0 z-40 flex sm:items-center sm:justify-center sm:p-[4vh]" data-acc-panel>
+      <div aria-hidden onClick={close} className="acc-fade absolute inset-0 bg-[#e9edf2]/55 backdrop-blur-[2px] sm:backdrop-blur-[10px]" />
+      <div ref={box} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="acc-h" className="acc-pop relative flex h-full w-full flex-col overflow-hidden bg-[#f7f8fa] outline-none sm:h-[92vh] sm:max-w-[1120px] sm:rounded-[28px] sm:border sm:border-white sm:shadow-[0_40px_90px_-30px_rgb(15_23_32/0.38)]">
+        <header className="flex items-center gap-3 border-b border-[#e3e7ec] bg-white px-4 py-3 sm:px-6 sm:py-4">
+          <button onClick={close} className="-ml-1 inline-flex h-10 items-center gap-1 rounded-lg px-2 text-[14.5px] font-semibold text-[#2b3340] hover:bg-[#f4f6f8] sm:hidden" aria-label={t("ধরনগুলোতে ফিরুন", "Back to room types")}><ChevronRight className="size-4 rotate-180" />{t("ধরন", "Types")}</button>
+          <span className="hidden size-11 shrink-0 place-items-center rounded-2xl bg-[#fff1f0] text-[#b11c29] sm:grid"><I className="size-[22px]" aria-hidden /></span>
+          <div className="min-w-0 flex-1">
+            <h2 id="acc-h" className="truncate text-[18px] font-semibold leading-tight sm:text-[22px]">{title}</h2>
+            <p className="truncate text-[13px] text-[#4d5664]">{t("নিজে নিজে ড্রাফট হিসেবে থাকে · সেভ করলে রুম যোগ হবে", "Kept as a draft as you type · Save adds the rooms")}</p>
           </div>
-        </div>
-      </div>
-      {tried && <div className="mt-4"><Errors list={errs} /></div>}
-      {conf.length > 0 && <div className="mt-4"><Errors list={[t("কিছুই সেভ হয়নি:", "Nothing was saved:"), ...conf]} /></div>}
-
-      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-6">
-        <div className="space-y-4">
+          <button onClick={close} aria-label={t("বন্ধ করুন", "Close")} className="hidden size-10 place-items-center rounded-full text-[#4d5664] hover:bg-[#f4f6f8] hover:text-[#0f1720] sm:grid"><X className="size-5" /></button>
+        </header>
+        <nav ref={chips} aria-label={t("অংশগুলো", "Sections")} className="flex gap-1.5 overflow-x-auto border-b border-[#e3e7ec] bg-white px-4 py-2 lg:hidden">
+          {sections.map(([id, lab, ok]) => <button key={id} onClick={() => jump(id)} aria-current={at === id ? "true" : undefined} className={clsx("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold", at === id ? "bg-[#0f1720] text-white" : "bg-[#f0f2f5] text-[#2b3340]")}>{ok && <Check className="size-3" strokeWidth={3} />}{lab}</button>)}
+        </nav>
+        <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-7 lg:py-6">
+        <aside className="hidden lg:block">
+          <div className="sticky top-0 space-y-3">
+            <nav aria-label={t("অংশগুলো", "Sections")} className="rounded-2xl border border-[#e3e7ec] bg-white p-2">
+              {sections.map(([id, lab, ok], i) => (
+                <button key={id} onClick={() => jump(id)} aria-current={at === id ? "true" : undefined} className={clsx("flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[14px]", at === id ? "bg-[#f0f2f5] font-semibold" : "hover:bg-[#f4f6f8]")}>
+                  <span className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", ok ? "bg-[#1c7d45] text-white" : "bg-[#e9edf2] text-[#4d5664]")}>{ok ? <Check className="size-3" strokeWidth={3} /> : num(i + 1, lang)}</span>{lab}
+                </button>
+              ))}
+            </nav>
+            <div className="rounded-2xl border border-[#e3e7ec] bg-white p-4">
+              <p className={clsx("text-[15.5px] font-semibold", !name && "text-[#5b6270]")}>{name ? nm(name, t) : t("ধরনের নাম", "Type name")}</p>
+              <p className="mt-1 flex flex-wrap gap-x-3 text-[13px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(f.guests, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === f.bed)?.bn ?? f.bed, BEDS.find((b) => b.id === f.bed)?.en ?? f.bed)}</span></p>
+              <p className="mt-2 border-t border-[#e9edf2] pt-2 text-[13px] text-[#4d5664]">{price ? <><b className="text-[17px] text-[#0f1720]">৳{num(money(final), lang)}</b> /{t("রাত, গেস্ট দেবে", "night, guest pays")}</> : t("দাম দিন", "Add a price")}</p>
+              <p className="text-[13px] text-[#4d5664]">{t(`${num(f.picks.length, lang)}টা ${stay.bn}`, `${f.picks.length} ${f.picks.length === 1 ? kOne(stay) : kMany(stay)}`)}</p>
+            </div>
+          </div>
+        </aside>
+        <div className="min-w-0 space-y-4">
+      {restored && <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#f1dfb8] bg-[#fffbf2] px-4 py-3 text-[14px]"><span>{t("আগের সেভ না করা পরিবর্তন ফিরিয়ে আনা হয়েছে।", "Your unsaved changes from last time are back.")}</span><button onClick={onDiscard} className="ml-auto font-semibold text-[#8e1621] underline underline-offset-4">{t("বাদ দিন", "Discard them")}</button></div>}
+      {tried && <Errors list={errs} />}
+      {conf.length > 0 && <Errors list={[t("কিছুই সেভ হয়নি:", "Nothing was saved:"), ...conf]} />}
           <Card id="acc-basic" n={1} title={t("মূল তথ্য", "Basic information")} hint={t("ক্যাটাগরি বাছলে নাম, বেড আর অতিথি বসে যায় — দরকার হলে বদলান", "A category fills the name, bed and guests — change anything")}>
             <div className="space-y-5">
               <Field label={t("ক্যাটাগরি", "Category")} req><div className="flex flex-wrap gap-2">{presets.map((x) => <Chip key={x.key} on={f.category === x.name} onClick={() => applyPreset(x)}>{nm(x.name, t)}</Chip>)}</div></Field>
@@ -582,31 +679,12 @@ function AccForm({ d, rooms, f, set, close }: { d: Draft; rooms: Rooms; f: Form;
           </Card>
         </div>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-[88px] space-y-3">
-            <div className="overflow-hidden rounded-2xl border border-[#e3e7ec] bg-white">
-              <div className="grid aspect-[16/9] place-items-center bg-gradient-to-br from-[#fff1f0] to-[#e9edf2] text-[#b11c29]"><I className="size-10" strokeWidth={1.5} /></div>
-              <div className="space-y-1.5 p-4">
-                <p className={clsx("text-[16.5px] font-semibold", !name && "text-[#5b6270]")}>{name ? nm(name, t) : t("ধরনের নাম", "Type name")}</p>
-                <p className="flex flex-wrap gap-x-3 text-[13px] text-[#4d5664]"><span className="inline-flex items-center gap-1"><UsersRound className="size-3.5" />{num(f.guests, lang)}</span><span className="inline-flex items-center gap-1"><BedDouble className="size-3.5" />{t(BEDS.find((b) => b.id === f.bed)?.bn ?? f.bed, BEDS.find((b) => b.id === f.bed)?.en ?? f.bed)}</span></p>
-                <p className="border-t border-[#e9edf2] pt-2 text-[13px] text-[#4d5664]">{price ? <><b className="text-[18px] text-[#0f1720]">৳{num(money(final), lang)}</b> /{t("রাত", "night")}</> : t("দাম দিন", "Add a price")}</p>
-                <p className="text-[13px] text-[#4d5664]">{t(`${num(f.picks.length, lang)}টা ${stay.bn}`, `${f.picks.length} ${kMany(stay)}`)}</p>
-              </div>
-            </div>
-            <nav aria-label={t("অংশগুলো", "Sections")} className="rounded-2xl border border-[#e3e7ec] bg-white p-2">
-              {sections.map(([id, lab, ok], i) => (
-                <button key={id} onClick={() => jump(id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[14px] hover:bg-[#f4f6f8]">
-                  <span className={clsx("grid size-5 place-items-center rounded-full text-[11px] font-semibold", ok ? "bg-[#1c7d45] text-white" : "bg-[#e9edf2] text-[#4d5664]")}>{ok ? <Check className="size-3" strokeWidth={3} /> : num(i + 1, lang)}</span>{lab}
-                </button>
-              ))}
-            </nav>
+        </div>
           </div>
-        </aside>
+        <footer className="border-t border-[#e3e7ec] bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-6">{bar}</footer>
       </div>
-
-      {slot ? createPortal(bar, slot) : <div className="mt-8">{bar}</div>}
-      {sheet && <PlacesSheet d={d} rooms={rooms} f={f} config={config} onClose={(picks) => { p({ picks }); setSheet(false); }} />}
-    </section>
+      {sheet && createPortal(<div data-acc-sheet><PlacesSheet d={d} rooms={rooms} f={f} config={config} onClose={(picks) => { p({ picks }); setSheet(false); }} /></div>, document.body)}
+    </div>
   );
 }
 function Card({ id, n, title, hint, action, children }: { id: string; n: number; title: string; hint?: string; action?: React.ReactNode; children: React.ReactNode }) {
