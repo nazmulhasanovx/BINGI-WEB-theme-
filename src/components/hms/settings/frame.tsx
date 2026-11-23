@@ -1,5 +1,5 @@
 "use client";
-// HMS Settings — same two-pane frame as the live HMS and Website Management: grouped list on the left, one page on the right.
+// HMS Settings — same two-pane frame as the live HMS and Website: grouped list on the left, one page on the right.
 // Cleaned from the live 25 items to 17: duplicates merged (Appearance + Personal preferences + Activity widget → My preferences;
 // Notification rules + Guest messaging → Guest messages; Invoices + Contract + Confirmation letters → Invoices & documents;
 // Booking channels + Website & marketplace → Website & channels). Billing lives here only.

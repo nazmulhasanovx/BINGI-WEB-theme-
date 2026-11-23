@@ -2,7 +2,7 @@
 import { can } from "@/lib/plan";
 // HMS Dashboard (operating property). Layout from Nazmul's reference (10 Nov 2026):
 // greeting → 4 KPIs → Today's priorities + Website & booking → Arriving today + plan card.
-// Data: rooms come from the Rooms store, staff from the HRM store, website from Website Management.
+// Data: rooms come from the Rooms store, staff from the HRM store, website from Website.
 // Priorities read every module (Bookings, Payments, Restaurant, Chat, Expenses, Communication) — each line
 // only shows when there is something to do. Demo data in the prototype (header shows "Prototype · demo data").
 import Link from "next/link";

@@ -68,8 +68,8 @@ with sync_playwright() as p:
     t(f"{prop} refunds tab ({n_rf}) = dashboard ({rf_d})", n_rf==rf_d)
     if PLANS[prop]!="starter":
       go(prop,"/hms/operations"); ov=kpi("Waiting approval"); t(f"{prop} Expenses waiting ({ov}) = dashboard ({ex_d})", ov==ex_d)
-    if PLANS[prop]!="ultra":  # Communication Center is Ultra (Modules, Plans & Roles v1): no dead-end alert below Ultra
-      t(f"{prop} no failed-message alert without Communication Center", fl_d==0 and fl_b==0); continue
+    if PLANS[prop]!="ultra":  # Messaging is Ultra (Modules, Plans & Roles v1): no dead-end alert below Ultra
+      t(f"{prop} no failed-message alert without Messaging", fl_d==0 and fl_b==0); continue
     go(prop,"/hms/communication?tab=history"); pg.get_by_label("Status").select_option("failed"); pg.wait_for_timeout(250)
     nf=0 if "No messages match" in pg.inner_text("main") else pg.locator("main ul li").count()
     t(f"{prop} failed messages in history ({nf}) = dashboard ({fl_d})", nf==fl_d)

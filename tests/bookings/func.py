@@ -75,7 +75,7 @@ with sync_playwright() as p:
   pg.get_by_role("tab",name=re.compile("^Meals & services")).click(); pg.wait_for_timeout(300)
   t("meals scheduled on booking", "Scheduled" in M() and "Laundry Service" in M())
   pg.goto(B+"/hms/other-services/orders"); pg.wait_for_timeout(1300)
-  t("service order created in Other Services", newcode in M())
+  t("service order created in Services", newcode in M())
   # double booking
   pg.goto(B+f"/hms/bookings/new?room={room}&from=2026-11-12"); pg.wait_for_timeout(1300)
   t("taken room not offered", pg.get_by_role("button",name=f"Room {room}",exact=True).count()==0 and "was left out" in M())

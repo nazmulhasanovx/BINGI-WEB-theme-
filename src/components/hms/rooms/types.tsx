@@ -262,7 +262,7 @@ function RoomTypeDrawer({ st, c, state, onClose, onUnit }: { st: RoomsState; c: 
             {[["Base", p.base], [`Service (${tax.service}%)`, p.service], [`VAT (${tax.vat}%)`, p.vat]].map(([l, v]) => <div key={l as string} className="rounded-xl bg-[#f4f6f8] px-3 py-2.5"><dt className="text-[12.5px] text-[#4d5664]">{l}</dt><dd className="text-[15px] font-semibold tabular-nums">৳{money(v as number)}</dd></div>)}
             <div className="rounded-xl bg-[#ffe7e4] px-3 py-2.5"><dt className="text-[12.5px] font-medium text-[#8e1621]">Guest pays / night</dt><dd className="text-[15px] font-bold text-[#8e1621] tabular-nums">৳{money(p.total)}</dd></div>
           </dl>
-          <p className="mt-2 text-[12.5px] text-[#4d5664]">VAT is on base + service charge. Each booking keeps the price it was made with.{own ? ` ${own} room${own > 1 ? "s have" : " has"} its own price and keep${own > 1 ? "" : "s"} it.` : ""} Prices for single dates are in <Link href="/hms/discounts" className="font-semibold text-[#b11c29]">Discounts &amp; Rates</Link>.</p>
+          <p className="mt-2 text-[12.5px] text-[#4d5664]">VAT is on base + service charge. Each booking keeps the price it was made with.{own ? ` ${own} room${own > 1 ? "s have" : " has"} its own price and keep${own > 1 ? "" : "s"} it.` : ""} Prices for single dates are in <Link href="/hms/discounts" className="font-semibold text-[#b11c29]">Rates &amp; Discounts</Link>.</p>
         </section>
 
         <section className={box} aria-labelledby="rt-nums">

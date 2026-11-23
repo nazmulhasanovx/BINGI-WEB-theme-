@@ -1,7 +1,7 @@
 "use client";
 import { can } from "@/lib/plan";
 // Meals & other services for a booking — the same picker in New booking (step 3) and on the booking page.
-// Meals are held on the booking and sent to the kitchen on the day; services become real Other Services orders.
+// Meals are held on the booking and sent to the kitchen on the day; services become real Services orders.
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { Coffee, Minus, Plus, Search, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
@@ -95,7 +95,7 @@ export function ExtrasPicker({ h, from, to, room, onMeals, onServices }: { h: Ho
         <label className="flex h-10 min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-hms-line bg-white px-3 focus-within:border-hms-ink sm:max-w-[260px]"><Search className="size-4 text-hms-muted" /><span className="sr-only">Search</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tab === "meals" ? "Search menu" : "Search services"} className="min-w-0 flex-1 bg-transparent text-[14px] outline-none" /></label>
       </div>
       {tab === "meals" && !canMeals && <p className="mt-3 rounded-xl bg-[#f4f6f8] px-4 py-6 text-center text-[14px] text-hms-muted">Restaurant &amp; Bar is part of Ultra.</p>}
-      {tab === "services" && !canSvc && <p className="mt-3 rounded-xl bg-[#f4f6f8] px-4 py-6 text-center text-[14px] text-hms-muted">Other Services is part of Business and above.</p>}
+      {tab === "services" && !canSvc && <p className="mt-3 rounded-xl bg-[#f4f6f8] px-4 py-6 text-center text-[14px] text-hms-muted">Services is part of Business and above.</p>}
 
       {tab === "meals" && canMeals && <>
         <div className="no-scrollbar mt-3 flex gap-1.5 overflow-x-auto">

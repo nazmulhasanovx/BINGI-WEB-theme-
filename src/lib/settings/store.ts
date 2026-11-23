@@ -10,11 +10,11 @@ export type PayKind = "cash" | "mfs" | "bank" | "gateway";
 export type PayMethodRow = { id: string; name: string; kind: PayKind; account: string; enabled: boolean; atProperty: boolean; onWebsite: boolean; upcoming?: boolean };
 export type Perm = "none" | "view" | "edit";
 /** Role areas (Modules, Plans & Roles v1, 22 Nov 2026). "Money" is split: Desk money = Payments + Cashbox (front desk takes money);
- *  Office money = Finance + Expenses. Rates = Discounts & Rates. Billing is Owner only (Accountant can view). */
+ *  Office money = Finance + Expenses. Rates = Rates & Discounts. Billing is Owner only (Accountant can view). */
 export const AREAS = ["Bookings", "Rooms & housekeeping", "Guests", "Restaurant", "Inventory", "Staff", "Desk money", "Office money", "Rates", "Reports", "Website", "Settings"] as const;
 export type Area = (typeof AREAS)[number];
 export type Role = { id: string; name: string; locked?: boolean; perms: Record<Area, Perm> };
-/** Automatic messages (edited in Communication Center). New ids are merged into saved settings on read. */
+/** Automatic messages (edited in Messaging). New ids are merged into saved settings on read. */
 export const DEFAULT_RULES: MsgRule[] = [
   { id: "confirm", group: "Booking", label: "Booking confirmed", when: "A booking is made or confirmed", to: "Guest", email: true, sms: true, whatsapp: false },
   { id: "pending", group: "Booking", label: "Booking request received", when: "A website request waits for the hotel", to: "Guest", email: true, sms: false, whatsapp: false },

@@ -1,6 +1,6 @@
 "use client";
 import { can } from "@/lib/plan";
-// Other Services — v1 = Nazmul's 16 desktop screens (10 Nov 2026): catalog, orders (charge to booking / cash sale), categories.
+// Services — v1 = Nazmul's 16 desktop screens (10 Nov 2026): catalog, orders (charge to booking / cash sale), categories.
 // v2 (11 Nov 2026) adds what a large hotel or resort needs to RUN services, not just charge them:
 //   work status (requested → confirmed → assigned → in progress → done) · assignment to staff (HRM) and resources
 //   (cars, spa rooms…) · time slots with capacity (no double booking) · units, variants, child price · service charge

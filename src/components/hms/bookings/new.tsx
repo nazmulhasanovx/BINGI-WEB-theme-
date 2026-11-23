@@ -350,7 +350,7 @@ export function NewBookingPage() {
             </Card>
             <Card title={`On this booking${meals.length + services.length ? ` · ${tk(mealsTotal + svcTotal)}` : ""}`}>
               <ExtrasList meals={meals} services={services} onRemoveMeal={(id) => setMeals(meals.filter((m) => m.id !== id))} onRemoveService={(id) => setServices(services.filter((s) => s.id !== id))} />
-              <p className="mt-2 text-[12.5px] text-hms-muted">Meals go to the kitchen on their day; services show in Other Services on their date.</p>
+              <p className="mt-2 text-[12.5px] text-hms-muted">Meals go to the kitchen on their day; services show in Services on their date.</p>
             </Card>
           </>}
 

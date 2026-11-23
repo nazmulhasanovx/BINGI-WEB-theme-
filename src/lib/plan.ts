@@ -11,7 +11,7 @@ export type Feature =
 export const MIN_PLAN: Record<Feature, Hotel["plan"]> = {
   housekeeping: "business", restaurant: "business", restaurantFull: "ultra", qrOrdering: "business",
   expenses: "business", services: "business", hrm: "ultra", inventory: "ultra", diningPage: "ultra",
-  // Modules, Plans & Roles v1 (22 Nov 2026): Cashbox + Room board from Business, Communication Center on Ultra.
+  // Modules, Plans & Roles v1 (22 Nov 2026): Cashbox + Room board from Business, Messaging on Ultra.
   cashbox: "business", communication: "ultra", roomBoard: "business",
   // HR by plan (23 Nov 2026): Business = Team (staff list, add/edit, call); Ultra = full HR (attendance, schedule, leave, payroll…).
   team: "business",

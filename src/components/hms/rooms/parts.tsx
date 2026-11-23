@@ -25,8 +25,10 @@ export function useTitle() {
   const { st } = useRooms(h);
   const en = st.config.enabled;
   const nonRoomData = st.categories.some((c) => c.core !== "ROOM") || st.units.some((u) => u.core !== "ROOM");
-  void en; void nonRoomData;
-  return "Room / Accommodation"; // one name for every property type (product decision, Nov 2026)
+  // Sidebar names (23 Nov 2026, founder): "Rooms" for room-only properties, "Accommodations" once cottages, villas,
+  // apartments or other kinds are enabled or exist.
+  const nonRoomOn = en.some((k) => k !== "ROOM");
+  return !st.config.configured || nonRoomOn || nonRoomData ? "Accommodations" : "Rooms";
 }
 
 let toastText: string | null = null;

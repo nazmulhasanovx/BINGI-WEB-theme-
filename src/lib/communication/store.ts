@@ -1,8 +1,8 @@
 "use client";
-// Communication Center (live HMS): SMS / email credits, credit purchases, message history and delivery.
+// Messaging (live HMS): SMS / email credits, credit purchases, message history and delivery.
 // Owns: purchases and the message log. Credits left = bought − used (never stored twice).
 // Rules (which event sends what) live in Settings data (messages.rules) and the texts in Bookings settings;
-// Communication Center is the one screen that edits them (D1). Credit packs are paid from the hotel's BinGi
+// Messaging is the one screen that edits them (D1). Credit packs are paid from the hotel's BinGi
 // balance, so their cost shows in Finance as "SMS & email".
 // Prototype: nothing is really sent — every row is a demo record. Production: message_log, credit_purchases.
 import { useCallback, useSyncExternalStore } from "react";

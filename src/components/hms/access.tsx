@@ -40,7 +40,7 @@ const TEXT: Record<string, string> = {
 };
 
 /** Plan-page titles match each module's own gate (Meals is "Restaurant & Bar" there). */
-const TITLE: Record<string, string> = { meals: "Restaurant & Bar", operations: "Expenses", "other-services": "Other Services", communication: "Communication Center" };
+const TITLE: Record<string, string> = { meals: "Restaurant & Bar", operations: "Expenses", "other-services": "Services", communication: "Messaging" };
 
 /** Wraps every HMS page: a module outside the plan shows the plan page (Owner, Manager), outside the role shows "no access". */
 export function AccessGuard({ children }: { children: ReactNode }) {

@@ -24,7 +24,7 @@ async def T(name, fn, pg, ctx):
 async def nav_all(pg, ctx):
     await fresh(pg); n=0
     for x in ["Theme & Style","Homepage","Pages & Menu","Photos","Rooms","Services & Dining","Offers","Reviews","Contact & Policies","Booking Engine","Inquiries","Google & Sharing","Domain","Languages","Online On/Off","Publish","Overview"]:
-        await pg.get_by_role("complementary", name="Website Management").get_by_role("link", name=x, exact=True).click(); await pg.wait_for_timeout(250); n+=1
+        await pg.get_by_role("complementary", name="Website").get_by_role("link", name=x, exact=True).click(); await pg.wait_for_timeout(250); n+=1
     return n==17
 async def draft_not_live(pg, ctx):
     await fresh(pg, page="homepage")

@@ -32,7 +32,7 @@ export function useExtras(b: Booking) {
       if (o.cancelled || o.method !== "booking" || o.booking?.code !== b.code) continue;
       const name = svc.st.services.find((s) => s.id === o.service)?.name ?? "Service";
       svcOrders.push({ id: o.id, name, qty: o.qty, when: o.when === "now" ? o.created : `${o.when.date}T${o.when.time}`, total: orderTotal(o), status: o.payment === "Paid" ? "Paid" : STATUS_LABEL[statusOf(o) as WorkStatus] ?? "Booked", paid: o.payment === "Paid" });
-      if (o.payment === "Unpaid") lines.push({ label: name, amount: orderTotal(o), from: `Other Services · ${o.id}` });
+      if (o.payment === "Unpaid") lines.push({ label: name, amount: orderTotal(o), from: `Services · ${o.id}` });
     }
     if (b.unit && b.status === "Checked in") for (const o of r.m.st.orders) if (o.pay === "room" && o.room === b.unit && o.status !== "cancelled" && o.status !== "declined" && (o.at ?? "").slice(0, 10) >= b.from) lines.push({ label: `Restaurant ${o.no}`, amount: mealBill(o).total, from: "Restaurant & Bar · charged to room" });
     return { lines, svcOrders, total: lines.reduce((s, l) => s + l.amount, 0), settle: () => svc.settleBooking(b.code) };
@@ -340,7 +340,7 @@ export function DatesView({ b, onBack, onClose, onDone, priceOn }: ViewProps & {
         <Row k="Room bill" v={`${tk(before)} → ${tk(after)}`} />
         <Row strong k="Difference" v={`${after - before >= 0 ? "+" : "−"}${tk(Math.abs(after - before))}`} tone={after > before ? "text-[#b42318]" : "text-[#16693a]"} />
       </div>
-      <Hint>New nights use the price from Discounts &amp; Rates.</Hint>
+      <Hint>New nights use the price from Rates &amp; Discounts.</Hint>
       {err && <Err>{err}</Err>}
     </ActionSheet>
   );

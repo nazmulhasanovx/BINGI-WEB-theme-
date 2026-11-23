@@ -46,7 +46,7 @@ export function WebsiteModule({ page }: { page: string }) {
 function InnerNav({ active }: { active: string }) {
   const groups = [...new Set(WM_PAGES.map((p) => p.group))];
   return (
-    <aside className="no-scrollbar hidden w-[212px] shrink-0 overflow-y-auto border-r border-hms-line bg-hms-nav px-2.5 py-3 lg:block" aria-label="Website Management">
+    <aside className="no-scrollbar hidden w-[212px] shrink-0 overflow-y-auto border-r border-hms-line bg-hms-nav px-2.5 py-3 lg:block" aria-label="Website">
       {groups.map((g) => (
         <div key={g || "top"} className={g && g !== "Publish" ? "mt-2.5" : g === "Publish" ? "mt-2.5 border-t border-hms-line pt-2.5" : ""}>
           {g && g !== "Publish" && <p className="px-3 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g}</p>}
@@ -76,7 +76,7 @@ function PhoneNav({ active }: { active: string }) {
   const ref = useRef<HTMLAnchorElement>(null);
   useEffect(() => { ref.current?.scrollIntoView({ block: "nearest", inline: "center" }); }, [active]);
   return (
-    <nav aria-label="Website Management pages" className="no-scrollbar flex shrink-0 gap-1.5 overflow-x-auto border-b border-hms-line bg-white px-4 py-2 lg:hidden">
+    <nav aria-label="Website pages" className="no-scrollbar flex shrink-0 gap-1.5 overflow-x-auto border-b border-hms-line bg-white px-4 py-2 lg:hidden">
       {WM_PAGES.map((p) => {
         const on = p.id === active;
         const Icon = p.icon;

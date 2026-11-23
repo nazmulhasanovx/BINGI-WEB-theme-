@@ -86,7 +86,7 @@ function useNotes(): Note[] {
     }
     if (hasServices(h)) {
       const sched = svc.st.orders.filter((o) => !o.cancelled && o.when !== "now").length;
-      if (sched) out.push({ id: "svc", icon: Sparkles, tone: "bg-[#e5f5ec] text-[#1c7d45]", title: `${sched} scheduled service order${sched > 1 ? "s" : ""}`, sub: "Check times in Other Services", href: "/hms/other-services/orders" });
+      if (sched) out.push({ id: "svc", icon: Sparkles, tone: "bg-[#e5f5ec] text-[#1c7d45]", title: `${sched} scheduled service order${sched > 1 ? "s" : ""}`, sub: "Check times in Services", href: "/hms/other-services/orders" });
     }
     return out;
   }, [g.rows, g.reviews, inv.items, svc.st.orders, hrm, h, bk.list, chat.unread, ex.st.expenses, comm.st.log, rest.m.st.orders, web]);

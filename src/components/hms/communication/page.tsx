@@ -1,5 +1,5 @@
 "use client";
-// Communication Center (live HMS: Dashboard, Delivery Policy, Notification Events, Credits, Purchase Credits,
+// Messaging (live HMS: Dashboard, Delivery Policy, Notification Events, Credits, Purchase Credits,
 // History, Delivery Reports). Six tabs here; Credits and Purchase are one tab. Automatic-message rules and texts are
 // edited only here (D1). Prototype: nothing is really sent; WhatsApp is not connected.
 import Link from "next/link";
@@ -45,7 +45,7 @@ export function CommunicationPage() {
   return (
     <div className="h-full overflow-y-auto"><div className="hms-page">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Communication Center</h1><p className="text-[14.5px] text-hms-muted">Automatic emails and SMS to guests and your team, credits and delivery.</p></div>
+        <div className="min-w-0"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Messaging</h1><p className="text-[14.5px] text-hms-muted">Automatic emails and SMS to guests and your team, credits and delivery.</p></div>
         <span className="rounded-full bg-hms-amber-soft px-3 py-1 text-[12.5px] font-semibold text-hms-amber">Prototype · nothing is really sent</span>
       </div>
       <div role="tablist" aria-label="Communication" className="-mx-1 mt-4 flex gap-1 overflow-x-auto border-b border-hms-line px-1">

@@ -227,7 +227,7 @@ function Calendar() {
           ))}
         </div>
       </div>
-      <p className="border-t border-hms-line px-4 py-2.5 text-[12.5px] text-hms-muted">Prices are per night before VAT &amp; service, from Discounts &amp; Rates. Tap an empty day to book — or drag across days. Drag a booking to move it; drag its right edge to change check-out.</p>
+      <p className="border-t border-hms-line px-4 py-2.5 text-[12.5px] text-hms-muted">Prices are per night before VAT &amp; service, from Rates &amp; Discounts. Tap an empty day to book — or drag across days. Drag a booking to move it; drag its right edge to change check-out.</p>
     </section>
   );
 }

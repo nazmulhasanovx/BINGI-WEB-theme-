@@ -40,7 +40,7 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
   if (!hasServices(h)) return (
     <div className="h-full overflow-y-auto"><div className="mx-auto max-w-[720px] p-6"><div className="mt-10 rounded-2xl border border-hms-line bg-white p-8 text-center">
       <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-hms-coral-soft text-hms-red"><Lock className="size-7" /></span>
-      <h1 className="mt-4 text-[22px] font-bold">Other Services is part of Business</h1>
+      <h1 className="mt-4 text-[22px] font-bold">Services is part of Business</h1>
       <p className="mx-auto mt-2 max-w-[440px] text-[14.5px] text-hms-muted">Sell airport transfers, laundry, extra beds and experiences, and charge them to the guest’s booking. {h.name} is on the Starter plan.</p>
       <Link href="/hms/billing" className={clsx(btnPrimary, "mt-5")}>See Business plan</Link>
     </div></div></div>
@@ -66,14 +66,14 @@ function Frame({ tab, children }: { tab: Tab; children: ReactNode }) {
     <C.Provider value={{ svc, open: setO, act, toast: setToast }}>
       <div className="h-full overflow-y-auto"><div className="hms-page">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Other Services</h1><p className="flex flex-wrap items-center gap-x-2 text-[14px] text-hms-muted">Sell, schedule and deliver guest services.<Link href="/hms/other-services/setup#roles" className="inline-flex items-center gap-1 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664] hover:text-hms-ink"><UserRound className="size-3.5" aria-hidden />{ROLE_LABEL[svc.role]}</Link></p></div>
+          <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Services</h1><p className="flex flex-wrap items-center gap-x-2 text-[14px] text-hms-muted">Sell, schedule and deliver guest services.<Link href="/hms/other-services/setup#roles" className="inline-flex items-center gap-1 rounded-md bg-hms-hover px-2 py-0.5 text-[12.5px] font-semibold text-[#4d5664] hover:text-hms-ink"><UserRound className="size-3.5" aria-hidden />{ROLE_LABEL[svc.role]}</Link></p></div>
           <div className="flex flex-wrap gap-2">
             {CAN.catalog(svc.role) && tab === "catalog" && <button onClick={() => setO({ k: "service" })} className={btnLine}><Plus className="size-4" />Add Service</button>}
             {CAN.create(svc.role) && <button onClick={() => setO({ k: "order" })} className={btnPrimary}><Plus className="size-4" />New Service Order</button>}
             <button onClick={() => setToast("Up to date")} aria-label="Refresh" className={btnIcon}><RefreshCw className="size-4" /></button>
           </div>
         </div>
-        <nav aria-label="Other Services sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
+        <nav aria-label="Services sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
           {TABS.map((t) => { const n = t.id === "today" ? svc.st.orders.filter((x) => !x.cancelled && x.status === "requested").length : 0; return <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}><t.icon className="size-4" />{t.label}{n > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-[#b11c29] px-1.5 text-[11.5px] text-white">{n}<span className="sr-only"> new requests</span></span>}</Link>; })}
         </nav>
         <div key={tab} className="hms-page-in mt-5">{children}</div>

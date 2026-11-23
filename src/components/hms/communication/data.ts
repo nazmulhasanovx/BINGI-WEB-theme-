@@ -1,5 +1,5 @@
 "use client";
-// Communication data for any screen (Communication Center, Finance, Chat, Dashboard).
+// Communication data for any screen (Messaging, Finance, Chat, Dashboard).
 import { useMemo } from "react";
 import { useBookings } from "@/lib/bookings/store";
 import { useGuestNames } from "@/lib/guests/store";

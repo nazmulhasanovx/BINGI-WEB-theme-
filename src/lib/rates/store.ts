@@ -1,5 +1,5 @@
 "use client";
-// Discounts & Rates (11 Nov 2026) — one calendar for the whole property's prices, plus discount campaigns.
+// Rates & Discounts (11 Nov 2026) — one calendar for the whole property's prices, plus discount campaigns.
 // Price of a night, most specific wins:
 //   room date override (Advanced) → category date override → category weekend price (Fri/Sat) → category base price
 //   For a room without its own date price: category price for that night + the room's premium (room rate − base).

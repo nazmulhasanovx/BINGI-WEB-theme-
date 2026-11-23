@@ -27,7 +27,7 @@ export type Category = {
   bed: string; maxAdults: number; maxChildren: number; sizeSqft?: number; bedrooms?: number;
   bathrooms?: number;
   amenities: string[]; video?: string; baseRate: number; photo?: string; created: string;
-  /** Friday–Saturday price per night (Bangladesh weekend). Empty = same as baseRate. Season / holiday prices live in Discounts & Rates. */
+  /** Friday–Saturday price per night (Bangladesh weekend). Empty = same as baseRate. Season / holiday prices live in Rates & Discounts. */
   weekendRate?: number;
   /** Backend rule: BinGi (Superadmin) approves a category before its units can be published. */
   approval: "pending" | "approved";
@@ -123,7 +123,7 @@ export const HOTEL_TAX = { vat: 15, service: 10 };
 /** Is the room out of order on any night in [from, to)? */
 export const oooOn = (u: { ooo?: Unit["ooo"] }, from: string, to: string) => !!u.ooo && u.ooo.since.slice(0, 10) < to && (!u.ooo.until || u.ooo.until > from);
 export const taxOf = (c: Category) => (c.syncTax === false ? { vat: c.vat ?? 0, service: c.service ?? 0 } : HOTEL_TAX);
-/** Guest price for one night: base + service charge + VAT (VAT on base + service, as in Discounts & Rates). */
+/** Guest price for one night: base + service charge + VAT (VAT on base + service, as in Rates & Discounts). */
 export function priceBreak(base: number, t: { vat: number; service: number }) {
   const service = base * t.service / 100, vat = (base + service) * t.vat / 100;
   return { base, service, vat, total: base + service + vat };

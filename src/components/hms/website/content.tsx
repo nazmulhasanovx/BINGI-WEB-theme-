@@ -177,10 +177,10 @@ export function ServicesPage() {
   return (
     <>
       <PageHead title="Services & Dining" desc="Extras guests can see and add." />
-      <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ v: "services", label: `Other Services (${hotel.services.length})` }, { v: "dining", label: `Meals & Dining (${hotel.outlets.length})` }]} /></div>
+      <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ v: "services", label: `Services (${hotel.services.length})` }, { v: "dining", label: `Meals & Dining (${hotel.outlets.length})` }]} /></div>
       {tab === "services" ? (
-        <Card pad={false} title="Other Services" action={<SourceLink href="/hms/other-services" label="Edit in Other Services" />}>
-          {hotel.services.length === 0 && <Empty icon={<Plus className="size-6" />} title="No services yet" desc="Add pickup, breakfast or tours in Other Services. Guests can then add them to a booking." />}
+        <Card pad={false} title="Services" action={<SourceLink href="/hms/other-services" label="Edit in Services" />}>
+          {hotel.services.length === 0 && <Empty icon={<Plus className="size-6" />} title="No services yet" desc="Add pickup, breakfast or tours in Services. Guests can then add them to a booking." />}
           {hotel.services.map((s) => (
             <div key={s.id} className="flex items-center gap-4 border-b border-hms-line px-5 py-3 last:border-b-0">
               <span className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-hms-hover">{s.photo && <Image src={s.photo} alt="" fill sizes="44px" className="object-cover" />}</span>

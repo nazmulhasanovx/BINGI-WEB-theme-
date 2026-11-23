@@ -11,7 +11,7 @@ with sync_playwright() as p:
   pg.goto(B+"/hms/billing"); pg.wait_for_timeout(1500)
   for x in pg.locator("[data-news-popup]").get_by_role("button",name="Later").all(): x.click()
   main=pg.inner_text("main")
-  t("sidebar Billing & Subscription opens its own page", pg.get_by_role("link",name="Billing & Subscription").first.get_attribute("href")=="/hms/billing")
+  t("sidebar Plan & Billing opens its own page", pg.get_by_role("link",name="Plan & Billing").first.get_attribute("href")=="/hms/billing")
   t("not in Settings list any more", pg.goto(B+"/hms/settings/overview") and pg.wait_for_timeout(1200) is None and pg.locator("aside[aria-label=Settings] a[href='/hms/settings/billing']").count()==0)
   pg.goto(B+"/hms/settings/billing"); pg.wait_for_timeout(1500)
   t("old settings link lands on billing", pg.url.endswith("/hms/billing"))

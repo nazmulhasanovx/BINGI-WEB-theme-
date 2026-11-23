@@ -614,7 +614,7 @@ function AccForm({ d, rooms, f, set, close, onSaved, restored, onDiscard, next }
             </div>
             {price > 0 ? <PriceBreak d={d} rows={[[t("রবি–বৃহস্পতি", "Sun–Thu"), price], ...(wkOn && wk > 0 ? [[t("শুক্র–শনি", "Fri–Sat"), wk] as [string, number]] : [])]} />
               : <p className="mt-4 rounded-xl bg-[#f4f6f8] px-4 py-3 text-[13.5px] text-[#4d5664]">{t("দাম দিলে দেখাবে: গেস্ট মোট কত দেবে আর BinGi ফি কেটে আপনি কত পাবেন।", "Enter a price to see what the guest pays and what you get after BinGi fees.")}</p>}
-            <p className="mt-3 text-[12.5px] text-[#5b6270]">{t("ঈদ, পূজা, সিজন বা বিশেষ দিনের দাম পরে HMS → ছাড় ও রেট থেকে।", "Eid, puja, season and special-date prices: later in HMS → Discounts & Rates.")}</p>
+            <p className="mt-3 text-[12.5px] text-[#5b6270]">{t("ঈদ, পূজা, সিজন বা বিশেষ দিনের দাম পরে HMS → ছাড় ও রেট থেকে।", "Eid, puja, season and special-date prices: later in HMS → Rates & Discounts.")}</p>
           </Card>
 
           <Card id="acc-numbers" n={3} title={t("রুম নম্বর", "Room numbers")} hint={isZoneCore(f.core, d) ? t("জোন বাছুন, তারপর নম্বর", "Pick a zone, then the numbers") : t("তলা বাছুন, তারপর নম্বর", "Pick a floor, then the numbers")}

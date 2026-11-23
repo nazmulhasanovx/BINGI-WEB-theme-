@@ -3,9 +3,9 @@
 // Rules kept from the project:
 //   • booking status, payment status and room state (out of order) are separate fields — never mixed
 //   • a room can hold one active booking per night (Confirmed / Checked in); cancelled and no-show free it
-//   • prices come from Discounts & Rates (room price per night + automatic deals); VAT/service from the room type
+//   • prices come from Rates & Discounts (room price per night + automatic deals); VAT/service from the room type
 //   • cash taken here is posted to the main Cashbox
-// Every other module (Dashboard, Guests, Rooms, Cashbox, Other Services, Restaurant) reads stays from here via useStays().
+// Every other module (Dashboard, Guests, Rooms, Cashbox, Services, Restaurant) reads stays from here via useStays().
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { Hotel } from "@/lib/types";
 import { TODAY, oooOn, taxOf, useRooms, type Category, type RoomsState, type Unit } from "@/lib/rooms/store";
@@ -70,7 +70,7 @@ export type Booking = {
   charges?: Charge[];
   /** Security deposit — held, not part of the bill. Returned, or used to pay the bill. */
   deposit?: { amount: number; method: PayMethod; at: string; settled?: { returned: number; used: number; at: string } };
-  /** Price before VAT/service for each night (from Discounts & Rates when booked). */
+  /** Price before VAT/service for each night (from Rates & Discounts when booked). */
   nights: Night[]; tax: { service: number; vat: number };
   /** Discount on room charges (before VAT/service). */
   discount: number;

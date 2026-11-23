@@ -1,4 +1,4 @@
-// Website Management — everything an owner needs to run the hotel website, grouped like iOS Settings.
+// Website — everything an owner needs to run the hotel website, grouped like iOS Settings.
 // Each page maps to something the themes actually show (see technology/website-management.md).
 import {
   BedDouble, CalendarRange, Eye, Globe2, Image as ImageIcon, Inbox, Info, Languages, LayoutTemplate, ListTree, Palette, Power, Search, Sparkles, Star, Tag, Link2,

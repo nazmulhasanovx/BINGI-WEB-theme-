@@ -1,5 +1,5 @@
 "use client";
-// Discounts & Rates — one place for every price: a month calendar per room category (Easy) and a
+// Rates & Discounts — one place for every price: a month calendar per room category (Easy) and a
 // category → room grid for the whole property (Advanced), plus discount campaigns. Rules: src/lib/rates/store.ts.
 import Link from "next/link";
 import clsx from "clsx";
@@ -22,8 +22,8 @@ const shiftMonth = (ym: string, k: number) => { const d = new Date(Date.UTC(Numb
 function Frame({ tab, children, rt, toast }: { tab: "calendar" | "discounts"; children: ReactNode; rt: Rates; toast: string }) {
   return (
     <div className="h-full overflow-y-auto"><div className="hms-page">
-      <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Discounts &amp; Rates</h1><p className="text-[14px] text-hms-muted">Set every night&apos;s price from one calendar, and run discounts on top.</p></div>
-      <nav aria-label="Discounts & Rates sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
+      <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Rates &amp; Discounts</h1><p className="text-[14px] text-hms-muted">Set every night&apos;s price from one calendar, and run discounts on top.</p></div>
+      <nav aria-label="Rates & Discounts sections" className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-hms-line">
         {([["calendar", "Rates calendar", "/hms/discounts"], ["discounts", `Discounts · ${rt.st.campaigns.filter((c) => campaignState(c) === "active").length} active`, "/hms/discounts/campaigns"]] as const).map(([id, l, href]) => (
           <Link key={id} href={href} aria-current={tab === id ? "page" : undefined} className={clsx("-mb-px shrink-0 border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold", tab === id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{l}</Link>
         ))}

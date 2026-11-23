@@ -111,7 +111,7 @@ with sync_playwright() as p:
   check("v1 archived not in order list", "Sunset Picnic" not in dlg(pg).get_by_label("Service",exact=True).inner_text())
   pg.keyboard.press("Escape")
   pg.evaluate("localStorage.setItem('hms-property','mistwood')"); pg.goto(B+"/hms/other-services"); pg.wait_for_timeout(800)
-  check("v1 Starter sees Business lock", "Other Services is part of Business" in pg.locator("main").inner_text())
+  check("v1 Starter sees Business lock", "Services is part of Business" in pg.locator("main").inner_text())
   pg.evaluate("localStorage.setItem('hms-property','azure-bay')")
   # 14 v1 migration
   pg.evaluate("""()=>{localStorage.removeItem('bingi-services-v2-azure-bay');localStorage.setItem('bingi-services-v1-azure-bay',JSON.stringify({v:1,cashboxOpen:true,next:2000,categories:[{id:'t',name:'Transport',slug:'transport'}],services:[{id:'s1',name:'Airport Transfer',category:'t',duration:'45 min',price:700,description:''}],orders:[{id:'OSO-1999',service:'s1',qty:1,unitPrice:700,method:'cash',walkIn:{name:'Old',phone:''},when:'now',payment:'Paid',created:'2026-11-09T10:00'}]}))}""")

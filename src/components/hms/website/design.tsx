@@ -21,12 +21,12 @@ const SOURCE_LINK: Record<string, { href: string; label: string }> = {
   rooms: { href: "/hms/rooms", label: "Rooms" },
   reviews: { href: "/hms/guests/reviews", label: "Guest Reviews" },
   offers: { href: "/hms/discounts", label: "Discounts" },
-  services: { href: "/hms/other-services", label: "Other Services" },
+  services: { href: "/hms/other-services", label: "Services" },
   facilities: { href: "/hms/website/info", label: "Property Info" },
   nearby: { href: "/hms/website/info", label: "Property Info" },
   host: { href: "/hms/website/info", label: "Property Info" },
   gallery: { href: "/hms/website/reviews", label: "Gallery" },
-  outlets: { href: "/hms/meals", label: "Meals" },
+  outlets: { href: "/hms/meals", label: "Restaurant & Bar" },
   contact: { href: "/hms/website/info", label: "Property Info" },
 };
 

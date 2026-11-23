@@ -38,7 +38,7 @@ with sync_playwright() as p:
   pg.get_by_role("button",name="Demo: guest replies").click(); pg.wait_for_timeout(300); t("guest reply shows", "Thanks! See you soon." in pg.inner_text("main"))
   # settings page now links
   pg.goto(B+"/hms/settings/messages"); pg.wait_for_timeout(1300)
-  t("settings links to Communication + Chat", pg.get_by_role("link",name="Open Communication Center").count()==1 and pg.get_by_role("link",name="Open Chat").count()==1 and "1 quick replies" in pg.inner_text("main"))
+  t("settings links to Communication + Chat", pg.get_by_role("link",name="Open Messaging").count()==1 and pg.get_by_role("link",name="Open Chat").count()==1 and "1 quick replies" in pg.inner_text("main"))
   # booking → chat link
   code="BK-2405"
   pg.goto(B+f"/hms/chat?b={code}"); pg.wait_for_timeout(1500); t("chat?b opens booking thread", code in pg.locator("main header").first.inner_text()); print(code)

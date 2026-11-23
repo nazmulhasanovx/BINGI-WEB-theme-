@@ -1,5 +1,5 @@
 "use client";
-// Settings › Billing & plan (sidebar "Billing & Subscription"): current plan, this month's running bill, how the month-end
+// Settings › Billing & plan (sidebar "Plan & Billing"): current plan, this month's running bill, how the month-end
 // bill arrives (timeline), auto-pay, bills history with invoice PDF, and plan / cycle change requests.
 // Prototype: no money moves. Prices come from the one plan table (same as the public pricing page).
 import Link from "next/link";
@@ -31,7 +31,7 @@ function invoiceDoc(h: { name: string; address?: string }, inv: Invoice) {
 <p class="demo">Prototype bill — no money moved.</p></body></html>`;
 }
 
-/** Sidebar "Billing & Subscription" opens this page on its own (not inside Settings). */
+/** Sidebar "Plan & Billing" opens this page on its own (not inside Settings). */
 export function BillingRoute() {
   return <div className="h-full overflow-y-auto bg-[#f4f5f7]"><div className="hms-page hms-page-in"><BillingPage /></div></div>;
 }
@@ -76,7 +76,7 @@ export function BillingPage() {
 
   return (
     <div className="mx-auto max-w-[780px]">
-      <h1 className="text-[28px] font-bold tracking-[-0.02em]">Billing</h1>
+      <h1 className="text-[28px] font-bold tracking-[-0.02em]">Plan &amp; Billing</h1>
 
       {/* summary — the one place with the plan, the next bill and Pay */}
       <section aria-label="Pay" className="mt-5 overflow-hidden rounded-[22px] bg-white shadow-[0_1px_2px_rgb(15_23_32/0.06),0_12px_32px_-18px_rgb(15_23_32/0.25)] ring-1 ring-black/[0.04]">

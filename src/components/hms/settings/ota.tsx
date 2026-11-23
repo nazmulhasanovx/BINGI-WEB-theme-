@@ -124,7 +124,7 @@ function OtaSetupSheet({ h, ota, start, onClose, onSave, onRemove }: { h: Hotel;
               <thead className="bg-[#f7f8fa] text-left text-[12px] text-hms-muted"><tr><th className="px-3 py-2 font-medium">Room</th><th className="px-3 py-2 text-right font-medium">BinGi price</th><th className="px-3 py-2 text-right font-medium">On {ota}</th><th className="px-3 py-2 text-right font-medium">Guest pays (VAT {vat}% + service {sc}%)</th></tr></thead>
               <tbody>{cats.filter((c) => c.baseRate > 0 && d.rooms[c.id]?.on).slice(0, 4).map((c) => { const o = Math.round(c.baseRate * (1 + d.markup / 100)); return <tr key={c.id} className="border-t border-hms-line tabular-nums"><td className="px-3 py-2.5 font-medium">{c.name}</td><td className="px-3 py-2.5 text-right">{tk(c.baseRate)}</td><td className="px-3 py-2.5 text-right font-semibold">{tk(o)}</td><td className="px-3 py-2.5 text-right">{tk(o * (1 + vat / 100 + sc / 100))}</td></tr>; })}</tbody>
             </table> : <p className="mt-4 text-[13.5px] text-hms-muted">Add prices to your room types to see the OTA price.</p>}
-            <p className="mt-2 text-[12.5px] text-hms-muted">Offers and season prices from Discounts & Rates follow the same rule.</p>
+            <p className="mt-2 text-[12.5px] text-hms-muted">Offers and season prices from Rates & Discounts follow the same rule.</p>
           </div>}
 
           {step === 3 && <div>

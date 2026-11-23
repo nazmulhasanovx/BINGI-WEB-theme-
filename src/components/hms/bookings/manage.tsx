@@ -413,7 +413,7 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
             <div className="mt-2 flex flex-wrap gap-2"><button onClick={() => copy(m)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy</button>{g?.phone && <a href={wa(m)} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><MessageCircle className="size-4" />WhatsApp</a>}</div>
           </div>
         ))}
-        <p className="text-[12.5px] text-hms-muted">WhatsApp opens on this device. Edit these texts and automatic email / SMS in <Link href="/hms/communication?tab=auto" className="underline underline-offset-2">Communication Center</Link> · <Link href={`/hms/chat?b=${b.code}`} className="font-semibold text-hms-red underline underline-offset-2">Chat with guest</Link></p>
+        <p className="text-[12.5px] text-hms-muted">WhatsApp opens on this device. Edit these texts and automatic email / SMS in <Link href="/hms/communication?tab=auto" className="underline underline-offset-2">Messaging</Link> · <Link href={`/hms/chat?b=${b.code}`} className="font-semibold text-hms-red underline underline-offset-2">Chat with guest</Link></p>
       </Box>
     </div>
   );

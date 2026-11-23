@@ -95,9 +95,9 @@ with sync_playwright() as p:
   fr=pg.evaluate("[...document.querySelectorAll('iframe[aria-hidden]')].map(f=>f.contentDocument.body.innerText).join(' ')")
   t("registration card has agreement", "No smoking in rooms." in fr)
   pg.wait_for_timeout(1500)
-  # messages: one home is Communication Center (texts) + Chat (quick replies) — D1 / D6
+  # messages: one home is Messaging (texts) + Chat (quick replies) — D1 / D6
   pg.goto(B+"/hms/settings/messages"); pg.wait_for_timeout(900)
-  t("messages page links to Communication + Chat", pg.get_by_role("link",name="Open Communication Center").count()==1 and pg.get_by_role("link",name="Open Chat").count()==1)
+  t("messages page links to Communication + Chat", pg.get_by_role("link",name="Open Messaging").count()==1 and pg.get_by_role("link",name="Open Chat").count()==1)
   pg.goto(B+"/hms/communication?tab=auto"); pg.wait_for_timeout(1200)
   pg.get_by_role("button",name="Edit text for Booking confirmed").click(); pg.locator("#tpl").fill("Hi {guest}, see you on {from}. {code}"); pg.get_by_role("button",name="Save text").click(); pg.wait_for_timeout(400)
   bks=pg.evaluate("(()=>{const k=Object.keys(localStorage).find(k=>k.includes('bookings')&&k.includes('azure'));return JSON.parse(localStorage.getItem(k)).settings})()")
@@ -131,7 +131,7 @@ with sync_playwright() as p:
   pg.get_by_role("button",name="Show all").click()
   # billing single home
   pg.goto(B+"/hms"); pg.wait_for_timeout(1000)
-  t("sidebar billing → own page", pg.get_by_role("link",name="Billing & Subscription").first.get_attribute("href")=="/hms/billing")
+  t("sidebar billing → own page", pg.get_by_role("link",name="Plan & Billing").first.get_attribute("href")=="/hms/billing")
   pg.goto(B+"/hms/settings/billing"); pg.wait_for_timeout(1200)
   t("old settings billing link redirects", pg.url.endswith("/hms/billing"))
   # mobile

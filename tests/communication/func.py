@@ -49,6 +49,6 @@ with sync_playwright() as p:
     t("retry clears failed", "Sent again" in pg.inner_text("body"))
   pg.goto(B+"/hms/communication?tab=report"); pg.wait_for_timeout(1300); t("report table", pg.locator("main table tbody tr").count()>0)
   pg.evaluate("localStorage.setItem('hms-property','sea-pearl')"); pg.goto(B+"/hms/communication?tab=credits"); pg.wait_for_timeout(1300)
-  t("business: Communication Center is Ultra (plan page)", "is part of Ultra" in pg.inner_text("main"))  # (only one demo property is on Ultra, so per-property isolation is covered by the store tests)
+  t("business: Messaging is Ultra (plan page)", "is part of Ultra" in pg.inner_text("main"))  # (only one demo property is on Ultra, so per-property isolation is covered by the store tests)
   b.close(); print(errs[:3]); t("no page errors", not errs)
 print("FAILED:",F) if F else print("ALL PASS")

@@ -1,5 +1,5 @@
 "use client";
-// Small HMS UI kit used by Website Management (same look as the live HMS: white cards, cool-gray canvas, coral actions).
+// Small HMS UI kit used by Website (same look as the live HMS: white cards, cool-gray canvas, coral actions).
 import Link from "next/link";
 import clsx from "clsx";
 import { ArrowUpRight, Lock } from "lucide-react";

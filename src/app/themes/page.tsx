@@ -12,7 +12,7 @@ export default function Index() {
       <ul className="mt-8 space-y-3">
         <li>
           <Link className="block rounded-2xl border-2 border-brand bg-surface p-4 font-semibold shadow-card" href="/hms/website/overview">
-            /hms/website <span className="font-normal text-muted">— HMS · Website Management (manage any property, any theme)</span>
+            /hms/website <span className="font-normal text-muted">— HMS · Website (manage any property, any theme)</span>
           </Link>
         </li>
         <li>

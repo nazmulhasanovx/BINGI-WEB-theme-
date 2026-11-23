@@ -1,5 +1,5 @@
 "use client";
-// Theme Store (paid aesthetic/3D themes) inside Website Management › Theme & Style.
+// Theme Store (paid aesthetic/3D themes) inside Website › Theme & Style.
 // Plan: claude/design/Paid_Themes_Plan_v2.md. Prototype: licences live in this browser and NO money moves.
 // Production: HMS billing add-on line + theme_licences; invoice only after payment success.
 import Image from "next/image";

@@ -31,49 +31,60 @@ import { useAppServiceWorker } from "@/lib/app-mode";
 import { setViewAs, useViewAs } from "@/lib/hrm/views";
 import { useBilling, monthName, dShort } from "@/lib/billing/store";
 import { useRooms } from "@/lib/rooms/store";
+import { can } from "@/lib/plan";
+import { useTitle } from "./rooms/parts";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
 const GROUPS: { label: string; items: Item[] }[] = [
   {
-    label: "Daily operations",
+    label: "Daily work",
     items: [
       { id: "dashboard", label: "Dashboard", icon: LayoutGrid, href: "/hms" },
       { id: "bookings", label: "Bookings", icon: CalendarCheck, href: "/hms/bookings" },
-      { id: "rooms", label: "Room / Accommodation", icon: BedDouble, href: "/hms/rooms" },
+      { id: "rooms", label: "Rooms", icon: BedDouble, href: "/hms/rooms" },
       { id: "housekeeping", label: "Housekeeping", icon: Brush, href: "/hms/housekeeping" },
       { id: "guests", label: "Guests", icon: UserPlus, href: "/hms/guests" },
       { id: "chat", label: "Chat", icon: MessageSquare, href: "/hms/chat" },
-      { id: "meals", label: "Meals", icon: ChefHat, href: "/hms/meals" },
+      { id: "meals", label: "Restaurant & Bar", icon: ChefHat, href: "/hms/meals" },
     ],
   },
   {
-    label: "Property & team",
+    label: "Team & property",
     items: [
-      { id: "staff", label: "Staff", icon: Users, href: "/hms/staff" },
+      { id: "staff", label: "Team", icon: Users, href: "/hms/staff" },
       { id: "inventory", label: "Inventory", icon: Boxes, href: "/hms/inventory" },
-      { id: "other-services", label: "Other Services", icon: Sparkles, href: "/hms/other-services" },
+      { id: "other-services", label: "Services", icon: Sparkles, href: "/hms/other-services" },
     ],
   },
   {
-    label: "Money & pricing",
+    label: "Money",
     items: [
-      { id: "discounts", label: "Discounts & Rates", icon: Tag, href: "/hms/discounts" },
+      { id: "discounts", label: "Rates & Discounts", icon: Tag, href: "/hms/discounts" },
       { id: "payments", label: "Payments", icon: CreditCard, href: "/hms/payments" },
       { id: "cashbox", label: "Cashbox", icon: Wallet, href: "/hms/cashbox" },
       { id: "finance", label: "Finance", icon: Landmark, href: "/hms/finance" },
       { id: "operations", label: "Expenses", icon: Activity, href: "/hms/operations" },
-      { id: "billing", label: "Billing & Subscription", icon: ReceiptText, href: "/hms/billing" },
+      { id: "billing", label: "Plan & Billing", icon: ReceiptText, href: "/hms/billing" },
     ],
   },
   {
-    label: "Reports & online",
+    label: "Online & reports",
     items: [
       { id: "reports", label: "Reports", icon: FileText, href: "/hms/reports" },
-      { id: "communication", label: "Communication Center", icon: Send, href: "/hms/communication" },
-      { id: "website", label: "Website Management", icon: Globe, href: "/hms/website/overview" },
+      { id: "communication", label: "Messaging", icon: Send, href: "/hms/communication" },
+      { id: "website", label: "Website", icon: Globe, href: "/hms/website/overview" },
     ],
   },
 ];
+/** Names that depend on the property (23 Nov 2026 sidebar names): Rooms → "Accommodations" when cottages, villas or
+ *  apartments exist; Team → "Team & HR" on plans with the full HR. */
+export function useNavLabel() {
+  const h = useProperty();
+  const rooms = useTitle();
+  const fullHr = can(h, "hrm");
+  return (id: string, label: string) => (id === "rooms" ? rooms : id === "staff" ? (fullHr ? "Team & HR" : "Team") : label);
+}
+
 export const ALL_ITEMS = [...GROUPS.flatMap((g) => g.items), { id: "settings", label: "Settings", icon: Settings, href: "/hms/settings" }];
 
 /** Everything ⌘K can open: modules + their main sub-pages. */
@@ -252,13 +263,14 @@ function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: bo
 const TABS = ["dashboard", "bookings", "rooms", "guests"];
 function TabBar({ activeId, onMore }: { activeId: string; onMore: () => void }) {
   const { show } = useShown();
+  const name = useNavLabel();
   const items = [...TABS.filter(show), ...ALL_ITEMS.map((i) => i.id).filter((id) => show(id) && !TABS.includes(id))].slice(0, 4).map((id) => ALL_ITEMS.find((i) => i.id === id)!);
   const inMore = !TABS.includes(activeId);
   return (
     <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-hms-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       {items.map((i) => (
         <Link key={i.id} href={i.href} aria-current={activeId === i.id ? "page" : undefined} className={clsx("flex h-[60px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", activeId === i.id ? "text-hms-red" : "text-hms-muted")}>
-          <i.icon className="size-[22px]" strokeWidth={activeId === i.id ? 2.2 : 1.75} />{i.label}
+          <i.icon className="size-[22px]" strokeWidth={activeId === i.id ? 2.2 : 1.75} />{name(i.id, i.label)}
         </Link>
       ))}
       <button onClick={onMore} aria-label="More — all modules" className={clsx("flex h-[60px] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", inMore ? "text-hms-red" : "text-hms-muted")}>
@@ -288,10 +300,11 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
 
 function NavItem({ item, active, collapsed, big, locked }: { item: Item; active: boolean; collapsed: boolean; big?: boolean; locked?: boolean }) {
   const Icon = item.icon;
+  const label = useNavLabel()(item.id, item.label);
   return (
     <Link
       href={item.href}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
       className={clsx(
         "group flex items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150",
@@ -301,7 +314,7 @@ function NavItem({ item, active, collapsed, big, locked }: { item: Item; active:
       )}
     >
       <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
       {!collapsed && locked ? <Lock aria-label={`Not in your plan`} className={clsx("size-3.5 shrink-0", active ? "text-white/80" : "text-hms-muted")} /> : null}
       {!collapsed && item.id === "chat" ? <ChatBadge active={active} /> : null}
       {!collapsed && item.id === "meals" ? <MealsBadge active={active} /> : null}
@@ -405,6 +418,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
 }
 
 function useCrumbs(path: string): { label: string; href?: string }[] {
+  const name = useNavLabel();
   if (path.startsWith("/hms/settings")) {
     const id = path.split("/")[3] ?? "overview";
     const page = S_PAGES.find((p) => p.id === id);
@@ -413,12 +427,12 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   if (path.startsWith("/hms/website")) {
     const id = path.split("/")[3] ?? "overview";
     const page = WM_PAGES.find((p) => p.id === id);
-    return [{ label: "Website Management", href: "/hms/website/overview" }, { label: page?.label ?? "Overview" }];
+    return [{ label: "Website", href: "/hms/website/overview" }, { label: page?.label ?? "Overview" }];
   }
   if (path.startsWith("/hms/rooms")) {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { categories: "Room types", numbers: "Room numbers", configuration: "Setup", setup: "Edit setup", new: "Add room type" };
-    return [{ label: "Room / Accommodation", href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+    return [{ label: name("rooms", "Rooms"), href: seg ? "/hms/rooms" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/meals/")) {
     const seg = path.split("/")[3];
@@ -438,12 +452,12 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
   if (path.startsWith("/hms/design-system")) return [{ label: "Design system" }];
   if (path.startsWith("/hms/discounts")) {
     const seg = path.split("/")[3];
-    return [{ label: "Discounts & Rates", href: seg ? "/hms/discounts" : undefined }, ...(seg ? [{ label: seg === "campaigns" ? "Discounts" : seg }] : [])];
+    return [{ label: "Rates & Discounts", href: seg ? "/hms/discounts" : undefined }, ...(seg ? [{ label: seg === "campaigns" ? "Discounts" : seg }] : [])];
   }
   if (path.startsWith("/hms/other-services")) {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { orders: "Orders", categories: "Setup", catalog: "Service Catalog", reports: "Reports", setup: "Setup" };
-    return [{ label: "Other Services", href: seg ? "/hms/other-services" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
+    return [{ label: "Services", href: seg ? "/hms/other-services" : undefined }, ...(seg ? [{ label: names[seg] ?? seg }] : [])];
   }
   if (path.startsWith("/hms/inventory")) {
     const seg = path.split("/")[3];
@@ -458,8 +472,8 @@ function useCrumbs(path: string): { label: string; href?: string }[] {
     const seg = path.split("/")[3];
     const names: Record<string, string> = { people: "People", attendance: "Attendance", schedule: "Schedule", views: "Department views", leave: "Leave", payroll: "Payroll & Benefits", hiring: "Hiring", operations: "Team Operations", settings: "Reports & Settings" };
     const sub = path.split("/")[4];
-    return [{ label: "Staff", href: "/hms/staff" }, { label: names[seg] ?? "Overview", href: sub ? `/hms/staff/${seg}` : undefined }, ...(sub ? [{ label: decodeURIComponent(sub) }] : [])];
+    return [{ label: name("staff", "Team"), href: "/hms/staff" }, { label: names[seg] ?? "Overview", href: sub ? `/hms/staff/${seg}` : undefined }, ...(sub ? [{ label: decodeURIComponent(sub) }] : [])];
   }
   const item = ALL_ITEMS.find((i) => i.href === path);
-  return [{ label: item?.label ?? "Dashboard" }];
+  return [{ label: item ? name(item.id, item.label) : "Dashboard" }];
 }

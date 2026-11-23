@@ -38,7 +38,7 @@ with sync_playwright() as p:
     acc=re.search(r"Accepted:[^\n]*", txt)
     t(f"[{W}] website policies: booking request only ({acc and acc.group(0)})", acc is not None and "Booking request" in acc.group(0) and "advance" not in acc.group(0))
     pg.goto(B+"/hms/website/booking"); pg.wait_for_timeout(1500)
-    t(f"[{W}] Website Management points to Settings", pg.get_by_role("link", name="Change in Settings").count()==1)
+    t(f"[{W}] Website points to Settings", pg.get_by_role("link", name="Change in Settings").count()==1)
     t(f"[{W}] no sideways scroll", pg.evaluate("document.documentElement.scrollWidth<=innerWidth+1"))
     t(f"[{W}] no page errors", not errs); errs and print(errs[:2])
     pg.close()

@@ -212,7 +212,7 @@ export function BrandingPage() {
           : <div className="flex items-center gap-4 pt-4"><div className="flex-1"><p className="text-[14.5px] font-medium text-hms-muted">Restaurant logo</p></div><PlanLock plan="Ultra" /></div>}
       </Card>
       <BrandWhere />
-      <p className="mt-3 text-[13px] text-hms-muted">Website colours and fonts: <Go href="/hms/website/design">Website Management</Go></p>
+      <p className="mt-3 text-[13px] text-hms-muted">Website colours and fonts: <Go href="/hms/website/design">Website</Go></p>
     </>
   );
 }
@@ -326,7 +326,7 @@ export function TaxesPage() {
               <Field label="VAT"><Num label="VAT" value={t.vat} onChange={(n) => f.setD({ ...t, vat: Math.min(100, n) })} suffix="%" /></Field>
               <Field label="Service charge"><Num label="Service charge" value={t.service} onChange={(n) => f.setD({ ...t, service: Math.min(100, n) })} suffix="%" /></Field>
             </Grid>
-            <p className="mt-3 text-[13px] text-hms-muted">Rooms use these. Restaurant and Other Services set their own in <Link href="/hms/meals/settings" className="text-hms-blue underline underline-offset-2">Restaurant</Link> and <Link href="/hms/other-services/setup" className="text-hms-blue underline underline-offset-2">Other Services</Link>.</p>
+            <p className="mt-3 text-[13px] text-hms-muted">Rooms use these. Restaurant and Services set their own in <Link href="/hms/meals/settings" className="text-hms-blue underline underline-offset-2">Restaurant</Link> and <Link href="/hms/other-services/setup" className="text-hms-blue underline underline-offset-2">Services</Link>.</p>
             {own.length > 0 && <p className="mt-1 text-[13px] text-hms-muted">{own.length} room type{own.length > 1 ? "s use their" : " uses its"} own rate: {own.map((c) => c.name).join(", ")} · <Link href="/hms/rooms" className="text-hms-blue underline underline-offset-2">Rooms</Link></p>}
           </Card>
           <Card title="Price limits">
@@ -516,7 +516,7 @@ export function MessagesPage() {
       <PageHead title="Guest messages" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Automatic emails & SMS" desc={`${on} of ${s.messages.rules.length} messages are on. Rules, texts, credits and delivery are managed in one place.`}>
-          <Link href="/hms/communication?tab=auto" className="inline-flex h-10 items-center rounded-lg border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Open Communication Center</Link>
+          <Link href="/hms/communication?tab=auto" className="inline-flex h-10 items-center rounded-lg border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Open Messaging</Link>
         </Card>
         <Card title="Chat replies" desc={`${s.messages.shortcuts.length} quick replies, payment note and location for guest chat.`}>
           <Link href="/hms/chat" className="inline-flex h-10 items-center rounded-lg border border-hms-line px-4 text-[14px] font-semibold hover:bg-hms-hover">Open Chat</Link>

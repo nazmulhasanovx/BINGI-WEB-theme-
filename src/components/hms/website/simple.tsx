@@ -1,5 +1,5 @@
 "use client";
-// The 6 pages of Website Management. Simple first: one job per page, tabs instead of more pages.
+// The 6 pages of Website. Simple first: one job per page, tabs instead of more pages.
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";

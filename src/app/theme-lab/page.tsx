@@ -22,7 +22,7 @@ export default function ThemeLab() {
       <p className="mt-4 text-sm font-semibold text-muted">Web Themes · GRAND</p>
       <h1 className="mt-1 text-3xl font-bold md:text-4xl">10 colour themes</h1>
       <p className="mt-2 max-w-2xl text-muted">
-        The hotel picks one in HMS → Website Management → Theme & Appearance. <b>Brand</b> is the chosen colour (logo tile, accents).
+        The hotel picks one in HMS → Website → Theme & Appearance. <b>Brand</b> is the chosen colour (logo tile, accents).
         <b> Action</b> is derived automatically so white button text always passes WCAG AA (4.5:1).
       </p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

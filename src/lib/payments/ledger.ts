@@ -1,5 +1,5 @@
 // Payments — one read-only ledger of guest money. Nothing is stored here: every row is read from the module that
-// owns it (Bookings payments, Restaurant & Bar paid bills, Other Services cash sales / refunds), so money is never
+// owns it (Bookings payments, Restaurant & Bar paid bills, Services cash sales / refunds), so money is never
 // counted twice. Room-charged restaurant bills and booking-charged services are paid on the booking bill, so they
 // appear once — as the booking payment. Production: a `payments` view over bookings_payments, fb_payments, svc_payments.
 import type { Booking, PayMethod as BkMethod } from "@/lib/bookings/store";

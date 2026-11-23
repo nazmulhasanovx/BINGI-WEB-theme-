@@ -245,7 +245,7 @@ with sync_playwright() as p:
     check("T16 other property untouched", len(state(pg)["units"]) > 30 if state(pg) else False)
 
     # T18 titles
-    for slug, want in [("sea-pearl", "Room / Accommodation"), ("mistwood", "Room / Accommodation"), ("wave-bunk", "Room / Accommodation")]:
+    for slug, want in [("sea-pearl", "Rooms"), ("mistwood", "Rooms"), ("wave-bunk", "Rooms")]:
         pg.evaluate(f"localStorage.setItem('hms-property','{slug}')"); pg.goto(B + "/hms/rooms/numbers"); pg.wait_for_timeout(300)
         check(f"T18 title {slug} = {want}", pg.locator("h1").first.inner_text() == want)
     t = pg.inner_text("main")
