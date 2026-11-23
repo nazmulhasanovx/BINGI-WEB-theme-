@@ -6,6 +6,7 @@ import { TODAY, fmt, fmtShort, fmtStamp, useHrm, type Dept, type Employee } from
 import { addEmployee, decideLeave, decideRequest } from "@/lib/hrm/actions";
 import { StaffFrame, DateBox, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Field, Input, Select, Table } from "./ui";
+import { HrmGate } from "./plan";
 
 export const REQUIRED: Partial<Record<Dept, number>> = { Housekeeping: 6, "Front Office": 4, Kitchen: 4, Maintenance: 2, Security: 4 };
 
@@ -22,7 +23,7 @@ export function useDay(date: string) {
 }
 
 /** /hms/staff — Today. (The Easy / Full switch was removed on 22 Nov: one HR for everyone.) */
-export function StaffHome() {
+function StaffHomeFull() {
   return <OverviewPage />;
 }
 
@@ -175,4 +176,8 @@ export function AddStaff({ onClose, initial }: { onClose: () => void; initial?: 
       </div>
     </Drawer>
   );
+}
+
+export function StaffHome() {
+  return <HrmGate easy><StaffHomeFull /></HrmGate>;
 }

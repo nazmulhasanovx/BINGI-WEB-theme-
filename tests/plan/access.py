@@ -30,7 +30,7 @@ with sync_playwright() as p:
   # --- Business owner: Ultra modules locked ---
   go("sea-pearl"); n = nav(pg)
   locks = pg.get_by_role("navigation", name="HMS").first.get_by_label("Not in your plan").count()
-  t("business: 3 locks (Staff, Inventory, Communication)", locks == 3, locks)
+  t("business: 2 locks (Inventory, Communication) — Staff is Team on Business", locks == 2, locks)
   for m in ["Housekeeping", "Meals", "Cashbox", "Expenses", "Other Services"]:
     t(f"business shows {m}", any(x.startswith(m) for x in n), n)
   t("business: no upgrade card", pg.get_by_role("link", name=re.compile("See Business")).count() == 0)
@@ -65,7 +65,7 @@ with sync_playwright() as p:
   go("sea-pearl", "/hms/billing", view="finance")
   t("accountant: billing view only", pg.get_by_role("status", name="View only").count() == 1)
   go("sea-pearl", view="management"); n = nav(pg)
-  t("manager: sees locks", pg.get_by_role("navigation", name="HMS").first.get_by_label("Not in your plan").count() == 3)
+  t("manager: sees locks", pg.get_by_role("navigation", name="HMS").first.get_by_label("Not in your plan").count() == 2)
   t("manager: no Billing", "Billing & Subscription" not in n, n)
   t("manager: plan dashboard", pg.get_by_role("heading", name="Today's priorities").count() == 1)
   go("azure-bay", view="store"); n = nav(pg)

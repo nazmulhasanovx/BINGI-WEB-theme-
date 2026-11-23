@@ -8,12 +8,13 @@ import { TODAY, emp, fmt, fmtStamp, gross, money, monthLabel, payStatus, useHrm,
 import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { AddStaff } from "./overview";
 import { Btn, Card, Chip, Drawer, Empty, Field, FilterChips, Input, Menu, Pager, Person, Pills, Select, Table, useQuery, type Tone } from "./ui";
+import { HrmGate } from "./plan";
 
 const ACCESS: Record<Employee["access"], [string, Tone]> = { linked: ["Linked", "gray"], invited: ["Invited", "blue"], "not-invited": ["Not invited", "gray"], disabled: ["Disabled", "gray"] };
 const STATUS: Record<Employee["status"], [string, Tone]> = { active: ["Active", "green"], inactive: ["Inactive", "red"], former: ["Former", "gray"] };
 const PER = 7;
 
-export function PeoplePage() {
+function PeoplePageFull() {
   const { st, update } = useHrm();
   const toast = useToast();
   const qq = useQuery("q");
@@ -108,7 +109,7 @@ export function PeoplePage() {
 
 /* ================= Employee workspace (HRM-10) ================= */
 type ETab = "profile" | "work" | "attendance" | "pay" | "assets" | "reviews" | "joining" | "history";
-export function EmployeePage({ id }: { id: string }) {
+function EmployeePageFull({ id }: { id: string }) {
   const { st } = useHrm();
   const router = useRouter();
   const [find, setFind] = useState("");
@@ -322,4 +323,12 @@ function EditEmployee({ e, onClose }: { e: Employee; onClose: () => void }) {
       <p className="mt-2 text-[14px] text-[#4d5664]">Gross: BDT {money(f.basic + f.house + f.food + f.transport)} — applies from the next payroll run.</p>
     </Drawer>
   );
+}
+
+export function PeoplePage() {
+  return <HrmGate easy><PeoplePageFull /></HrmGate>;
+}
+
+export function EmployeePage({ id }: { id: string }) {
+  return <HrmGate><EmployeePageFull id={id} /></HrmGate>;
 }

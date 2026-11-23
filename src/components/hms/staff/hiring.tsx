@@ -8,6 +8,7 @@ import { TODAY, addDays, fmt, money, useHrm, type Candidate, type Dept, type Job
 import { confirmJoining } from "@/lib/hrm/actions";
 import { FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Area, Avatar, Btn, Card, Chip, Drawer, Empty, Field, FilterChips, Input, Menu, Person, Select, Table, useQuery, type Tone } from "./ui";
+import { HrmGate } from "./plan";
 
 const STAGES: Stage[] = ["applied", "shortlisted", "interview", "offer", "joining"];
 const STAGE_LABEL: Record<Stage, [string, Tone]> = { applied: ["Applied", "gray"], shortlisted: ["Shortlisted", "blue"], interview: ["Interview", "purple"], offer: ["Offer", "amber"], joining: ["Joining", "green"], rejected: ["Rejected", "red"] };
@@ -175,7 +176,7 @@ function AddCandidate({ onClose }: { onClose: () => void }) {
 
 /* ================= HRM-12 Candidate workspace ================= */
 type CTab = "profile" | "interview" | "offer" | "joining";
-export function CandidatePage({ id }: { id: string }) {
+function CandidatePageFull({ id }: { id: string }) {
   const { st, update } = useHrm();
   const toast = useToast();
   const c = st.candidates.find((x) => x.id === id);
@@ -332,4 +333,8 @@ function OfferC({ c }: { c: Candidate }) {
       </div>
     </Card>
   );
+}
+
+export function CandidatePage({ id }: { id: string }) {
+  return <HrmGate><CandidatePageFull id={id} /></HrmGate>;
 }

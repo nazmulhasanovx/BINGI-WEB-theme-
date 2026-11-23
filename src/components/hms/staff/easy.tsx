@@ -1,28 +1,17 @@
 "use client";
-// HRM Easy mode — for small properties: one screen with the team, add / edit a person, call them.
-// Uses the same HRM store as Full mode, so anything added here shows up in attendance, roster and payroll.
+// Team — the HR of the Business plan (23 Nov 2026): one screen with the team, add / edit a person, call them.
+// Same HRM store as the full HR on Ultra, so moving up keeps everyone; attendance, roster and payroll start from this list.
 import Link from "next/link";
 import { useState } from "react";
 import clsx from "clsx";
 import { MoreHorizontal, Pencil, Phone, Plus, Search, UserMinus, UserRound, Users } from "lucide-react";
 import { TODAY, fmt, useHrm, type Dept, type Employee } from "@/lib/hrm/store";
 import { addEmployee } from "@/lib/hrm/actions";
-import { useHrmMode, type HrmMode } from "@/lib/hrm/mode";
 import { useProperty } from "../property";
-import { useToast } from "./Frame";
+import { ToastHost, useToast } from "./Frame";
+import { useAccess } from "../access";
+import { BILLING_HREF } from "@/lib/plan";
 import { Avatar, Btn, Chip, Drawer, Field, Input, Select } from "./ui";
-
-/** Easy / Full switch shown at the top of Team & HR in both modes. */
-export function ModeSwitch({ className }: { className?: string }) {
-  const { mode, setMode } = useHrmMode();
-  return (
-    <div role="radiogroup" aria-label="Team & HR view" className={clsx("inline-flex h-10 rounded-xl border border-[#d3d8df] bg-white p-1", className)}>
-      {([["easy", "Easy"], ["full", "Full HR"]] as [HrmMode, string][]).map(([m, l]) => (
-        <button key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={clsx("whitespace-nowrap rounded-lg px-3 text-[14px] sm:px-3.5 font-semibold transition-colors", mode === m ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:text-[#0f1720]")}>{l}</button>
-      ))}
-    </div>
-  );
-}
 
 const ROLES: Record<Dept, string[]> = {
   "Front Office": ["Receptionist", "Front Office Manager", "Night Auditor"],
@@ -42,6 +31,8 @@ export function EasyTeam() {
   const [q, setQ] = useState("");
   const [show, setShow] = useState<"active" | "inactive">("active");
   const [edit, setEdit] = useState<Employee | "new" | null>(null);
+  const { roleId } = useAccess();
+  const seesLocks = roleId === "owner" || roleId === "manager";
   const team = st.employees.filter((e) => e.status !== "former");
   const list = team
     .filter((e) => (show === "active" ? e.status === "active" : e.status === "inactive"))
@@ -59,7 +50,6 @@ export function EasyTeam() {
             <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <ModeSwitch />
             <Btn kind="primary" onClick={() => setEdit("new")}><Plus className="size-[18px]" /> Add team member</Btn>
           </div>
         </div>
@@ -95,11 +85,15 @@ export function EasyTeam() {
           </ul>
         )}
 
-        <p className="mt-6 text-[14px] text-[#4d5664]">
-          Need attendance, shifts, leave or payroll? Switch to <b>Full HR</b> at the top — your team stays the same.
-        </p>
+        {seesLocks && (
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#e3e7ec] bg-white px-5 py-4">
+            <div className="min-w-0 flex-1"><p className="text-[15px] font-semibold">Attendance, shifts, leave and payroll</p><p className="mt-0.5 text-[14px] text-[#4d5664]">Part of Ultra. Your team stays the same when you move up.</p></div>
+            <Link href={BILLING_HREF} className="inline-flex h-10 items-center rounded-xl border border-[#d3d8df] bg-white px-4 text-[14.5px] font-semibold hover:bg-[#f4f6f8]">See Ultra</Link>
+          </div>
+        )}
       </div>
       {edit && <MemberForm initial={edit === "new" ? undefined : edit} onClose={() => setEdit(null)} />}
+      <ToastHost />
     </div>
   );
 }
@@ -127,7 +121,6 @@ function Row({ e, onEdit }: { e: Employee; onEdit: () => void }) {
             {e.status === "active"
               ? <button onClick={() => setStatus("inactive", `${e.name} marked as not working`)} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14.5px] hover:bg-[#f4f6f8]"><UserMinus className="size-4" aria-hidden /> Mark not working</button>
               : <button onClick={() => setStatus("active", `${e.name} is working again`)} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14.5px] hover:bg-[#f4f6f8]"><UserRound className="size-4" aria-hidden /> Mark working again</button>}
-            <Link href={`/hms/staff/people/${e.id}`} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-[#f4f6f8]"><Users className="size-4" aria-hidden /> Open full profile</Link>
           </div>
         )}
       </div>

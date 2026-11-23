@@ -5,6 +5,8 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ChevronDown, Filter, Search, Wrench } from "lucide-react";
 import { useProperty } from "../property";
 import { useHrm } from "@/lib/hrm/store";
+import { can } from "@/lib/plan";
+import { PlanGate } from "../plan-gate";
 import { Menu, Toast } from "./ui";
 
 export type StaffTab = "overview" | "people" | "attendance" | "schedule" | "views" | "leave" | "payroll" | "hiring" | "operations" | "settings";
@@ -31,6 +33,11 @@ const showToast = (t: string | null) => { toastText = t; toastSubs.forEach((f) =
 const subToast = (f: () => void) => { toastSubs.add(f); return () => { toastSubs.delete(f); }; };
 const hideToast = () => showToast(null);
 export const useToast = () => showToast as (t: string) => void;
+/** Toast outlet for HR screens drawn outside StaffFrame (Team on Business). */
+export function ToastHost() {
+  const toast = useSyncExternalStore(subToast, () => toastText, () => null);
+  return toast ? <Toast key={toast} text={toast} onDone={hideToast} /> : null;
+}
 
 export function StaffFrame({
   tab, action, search, onSearch, searchPlaceholder = "Search staff (name, ID, department)", right, children, hideSearch, searchFocus, onSubmit, filters, activeFilters = 0, onClearFilters,
@@ -53,17 +60,21 @@ export function StaffFrame({
     a.click();
     setToast("staff.csv downloaded");
   };
+  // HR by plan: below Ultra only Department views (a Settings tool) opens here; every other HR page is the Ultra plan page.
+  const full = can(hotel, "hrm");
+  if (!full && tab !== "views") return <PlanGate h={hotel} f="hrm" title="Full HR" text="Attendance, schedules, leave, payroll, hiring and HR reports. Your team list stays in Team — moving up keeps everyone." />;
   return (
     <>
       <div className="h-full overflow-y-auto bg-[#f4f6f8]">
         <div className="hms-page">
+          {!full && <Link href="/hms/staff" className="mb-2 inline-flex items-center gap-1 text-[14px] font-semibold text-[#4d5664] hover:text-[#0f1720]">‹ Team</Link>}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">Team &amp; HR</h1>
+              <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{full ? <>Team &amp; HR</> : "Department views"}</h1>
               <p className="mt-0.5 text-[16px] text-[#4d5664]">{hotel.name}</p>
             </div>
             <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap sm:gap-2.5">
-              <div className="relative">
+              {full && <div className="relative">
                 <button onClick={() => setMore((m) => !m)} aria-expanded={more} aria-haspopup="menu" aria-label="Tools" className={clsx("inline-flex h-10 items-center gap-2 rounded-xl border bg-white px-3 text-[14.5px] font-medium hover:bg-[#f4f6f8] sm:px-4", inMore ? "border-[#b11c29] text-[#b11c29]" : "border-[#d3d8df]")}><Wrench className="size-[18px]" /><span className="hidden sm:inline">{inMore ? MORE.find((m) => m.id === tab)!.label : "Tools"}</span><ChevronDown className="size-4" /></button>
                 {more && (
                   <div role="menu" aria-label="HR tools" className="hms-pop absolute right-0 top-full z-40 mt-1.5 w-[290px] rounded-xl border border-[#e3e7ec] bg-white p-1.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]" onMouseLeave={() => setMore(false)}>
@@ -74,17 +85,17 @@ export function StaffFrame({
                     ))}
                   </div>
                 )}
-              </div>
+              </div>}
               {action}
               <Menu label="More actions" items={[{ label: "Export staff (CSV)", onClick: exportCsv }, { label: "Reset demo data", onClick: () => { reset(); setToast("Demo data reset"); } , danger: true }]} />
             </div>
           </div>
 
-          <nav className="no-scrollbar mt-4 flex items-end gap-1 overflow-x-auto border-b border-hms-line sm:overflow-visible" aria-label="Team & HR">
+          {full && <nav className="no-scrollbar mt-4 flex items-end gap-1 overflow-x-auto border-b border-hms-line sm:overflow-visible" aria-label="Team & HR">
             {MAIN.map((t) => (
               <Link key={t.id} href={t.href} aria-current={tab === t.id ? "page" : undefined} className={clsx("-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-1 text-[14.5px] font-semibold transition-colors", tab === t.id ? "border-hms-red text-hms-ink" : "border-transparent text-hms-muted hover:text-hms-ink")}>{t.label}</Link>
             ))}
-          </nav>
+          </nav>}
 
           {!hideSearch && (
             <div className="mt-4 flex flex-wrap items-center gap-3">

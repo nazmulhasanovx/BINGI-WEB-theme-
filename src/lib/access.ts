@@ -13,7 +13,7 @@ export type Access = "edit" | "view" | "locked" | "hidden";
 
 /** Sidebar module → the plan feature it needs. Modules not listed are in every plan. */
 export const MODULE_FEATURE: Partial<Record<string, Feature>> = {
-  housekeeping: "housekeeping", meals: "restaurant", staff: "hrm", inventory: "inventory", "other-services": "services",
+  housekeeping: "housekeeping", meals: "restaurant", staff: "team", inventory: "inventory", "other-services": "services",
   cashbox: "cashbox", operations: "expenses", communication: "communication",
 };
 /** Sub-pages that need more than their module (Room board needs Business). */

@@ -2,6 +2,7 @@
 // HRM UI kit — matches design-ref/hrm (Team & HR screens).
 import clsx from "clsx";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, MoreHorizontal, X } from "lucide-react";
 import { initials } from "@/lib/hrm/store";
 
@@ -147,17 +148,20 @@ export function Drawer({ title, onClose, children, footer, wide }: { title: Reac
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
   }, [onClose]);
-  return (
-    <div className="hms-fade fixed inset-0 z-[70] flex justify-end bg-[#1b2136]/25" onClick={onClose}>
+  // Portal to <body>: inside the HMS main area the drawer sat under the phone tab bar (Add / Save hidden).
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="bingi-ui hms-fade fixed inset-0 z-[70] flex justify-end bg-[#1b2136]/25" onClick={onClose}>
       <aside role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : undefined} className={clsx("hms-drawer-r flex h-full w-full flex-col bg-white shadow-2xl", wide ? "max-w-[620px]" : "max-w-[460px]")} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#e3e7ec] px-6 py-4">
           <h2 className="text-[20px] font-semibold">{title}</h2>
           <button aria-label="Close" onClick={onClose} className="grid size-9 place-items-center rounded-lg hover:bg-[#e9edf2]"><X className="size-5" /></button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-[#e3e7ec] px-6 py-4">{footer}</div>}
+        {footer && <div className="flex justify-end gap-2 border-t border-[#e3e7ec] px-6 py-4 pb-[max(16px,env(safe-area-inset-bottom))]">{footer}</div>}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

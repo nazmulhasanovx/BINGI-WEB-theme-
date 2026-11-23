@@ -8,6 +8,7 @@ import { TODAY, emp, fmt, gross, lineNet, money, monthLabel, payStatus, runPaySt
 import { prepareRun, recordPayment } from "@/lib/hrm/actions";
 import { DateBox, FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Input, Menu, Person, Select, Table, useQuery, type Tone } from "./ui";
+import { HrmGate } from "./plan";
 
 const PS_TONE = (s: string): Tone => (s === "Paid" ? "green" : s === "Unpaid" ? "red" : "amber");
 const RUN_ST: Record<PayrollRun["status"], [string, Tone]> = { draft: ["Draft", "gray"], reviewed: ["Reviewed", "blue"], approved: ["Approved", "green"] };
@@ -194,7 +195,7 @@ function Benefits() {
 
 /* ================= HRM-11 Payroll workspace ================= */
 const STEPS = ["Prepare", "Review", "Approve", "Payment"];
-export function PayrollRunPage({ id }: { id: string }) {
+function PayrollRunPageFull({ id }: { id: string }) {
   const { st, update } = useHrm();
   const toast = useToast();
   const [q, setQ] = useState("");
@@ -346,4 +347,8 @@ function PayDrawer({ run, empId, onClose }: { run: PayrollRun; empId: string; on
       <p className="text-[13.5px] text-[#4d5664]">This records a payment made outside BinGi (cash, bank, bKash). No money is sent from here.</p>
     </Drawer>
   );
+}
+
+export function PayrollRunPage({ id }: { id: string }) {
+  return <HrmGate><PayrollRunPageFull id={id} /></HrmGate>;
 }
