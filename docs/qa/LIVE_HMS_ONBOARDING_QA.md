@@ -18,11 +18,12 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 | Session / entry | ❌ P0 — Continue from *My properties* fails "Unauthenticated" |
 | Accommodation categories | ❌ **P0 — only the first room type saves; every next type (cottage, villa, apartment, even a 2nd room type) fails** |
 | Category details | ⚠️ Works for the first type; fees shown at Starter rates on Ultra; duplicate unit codes across blocks |
+| Subscription checkout | ❌ P0 — checkout says Ultra but URL is `PLAN_ENTERPRISE`; payment blocked by KYC after the flow offered "Subscribe now" |
 | Plan / payment | ⚠️ "Pay per room" headline but package prices; default = Subscribe now; online-payment copy misses the BinGi balance → payout model |
 | Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
 | Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
 
-Count: **3 × P0 · 16 × P1 · 16 × P2**
+Count: **5 × P0 · 18 × P1 · 16 × P2** (updated after the checkout run — section 2b)
 
 ---
 
@@ -114,6 +115,36 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 
 ---
 
+## 2b. Checkout & session run (24 Nov, after "test freely on the testing server")
+
+### P0-04 · Checkout sells a different plan than the one shown
+- **Steps:** 2.4 Start → Subscribe now → Go to checkout.
+- **Seen:** page says **BinGi Ultra · BDT 3,500**, URL is `/onboarding/subscription-checkout?plan=PLAN_ENTERPRISE&return_to=onboarding`.
+- **Impact:** the gateway order may be created for Enterprise while the owner agreed to Ultra.
+- **Expected:** one plan id end to end; checkout shows plan, rooms, period and per-room price.
+
+### P0-05 · Payment blocked by KYC at the very end
+- **Steps:** checkout → **Continue to secure payment**.
+- **Seen:** red bar "Complete hotel KYC verification to access this HMS module." — no gateway, no way forward.
+- **Why it's P0:** the flow pre-selects *Subscribe now* and lets Documents be "Do it later", then refuses payment.
+- **Expected (pick one, founder):** (a) allow subscription payment before KYC (KYC gates online *guest* payments only), or (b) hide/disable *Subscribe now* until documents are approved and say why on 2.4.
+
+### P1-17 · Checkout summary wrong for a monthly plan
+- "BinGi Ultra · **One-time activation** · BDT 3,500" — it is a monthly subscription; no room count, no period, no per-room line.
+- "Owner: —" empty in Billing contact.
+- Expected (22 Nov pricing): `Ultra · 5 rooms × ৳116 = ৳580 / month` (or 6 / 12-month rate), setup help line, total.
+- "This HMS module" in the KYC message is developer wording.
+
+### P1-18 · "Save & exit" signs the owner out
+- **Seen:** Save & exit → `/login` ("Welcome back").
+- **Expected:** save → *My properties* (or HMS dashboard) while staying signed in.
+
+### More P2
+17. Resume lands on a different step each time (3.1 after reload on 3.2; 5.2 after reload on 2.4 checkout).
+18. Responsive check could not be done from the desktop browser (window is full-screen) — run on a phone or DevTools device mode.
+
+---
+
 ## 3. P1 — wrong or different from v8
 
 | ID | Step | Problem | Expected (v8 / decisions) |
@@ -122,7 +153,7 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 | P1-02 | 1.x – 5.x | Right column still shows **"What guests will see" website preview** | Removed on 23 Nov; 3.1 shows the live drawing only |
 | P1-03 | 1.4 Extras | Top list is **room** amenities (AC, bathtub, shampoo, hair dryer, King bed…); Wi-Fi / Pool only via search | Property facilities first: Free Wi-Fi, Parking, Power backup, 24-h desk, Restaurant, Room service, CCTV, Elevator, Breakfast, Airport transfer + Resort: Pool, Beach, Garden |
 | P1-04 | 1.4 Extras | Search "wifi" finds nothing (item is "Wi-Fi") | Ignore hyphens/spaces/case |
-| P1-05 | 2.2 Plan | Headline **"Pay per room. Nothing hidden"** but prices are **packages** (Starter ৳500 up to 30 rooms; Ultra 30/50/100/200 = ৳3,500 / 4,999 / 7,999 / 14,999) | One model. 11 Nov / 22 Nov decision = per room per month, min 1 room — **founder to confirm which is live** |
+| P1-05 | 2.2 Plan | Headline **"Pay per room. Nothing hidden"** but prices are **packages** (Starter ৳500 up to 30 rooms; Ultra 30/50/100/200 = ৳3,500 / 4,999 / 7,999 / 14,999) | **FINAL (founder, 24 Nov): the 22 Nov model.** Per room per month — Starter ৳25 · Business ৳70 · Ultra ৳116 (6 mo 23/63/105 · 12 mo 19/53/87), **minimum 1 room**, capacity = purchased rooms (no 30/50/100/200 packages). Room count step = number of rooms, quote = rooms × price |
 | P1-06 | 2.4 Start | **"Subscribe now" pre-selected**, button "Go to checkout" | Default "Set up first"; trial / subscribe are options |
 | P1-07 | 3.1 Where | Resort pre-picks **only Rooms** although it says "Suggested for your property type" | Resort → Rooms + Cottages + Villas |
 | P1-08 | 3.2 Price table | On **Ultra**, fees shown as Website −1.5 % / Marketplace −12 % (Starter rates) → owner sees wrong earnings | Use the selected plan: Ultra 0.5 % / 4 % |
@@ -175,7 +206,7 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 
 | # | What | Why |
 |---|---|---|
-| 1 | Subscription **checkout page** | Opening it may create a payment order — needs founder OK |
+| 1 | Payment gateway page | Blocked by KYC (P0-05) |
 | 2 | **Phone** layout (390 px) | Next run |
 | 3 | Hotel, Guest house, Serviced apartment, Hostel, Home/flat, Lodge, Motel, Vacation rental, Other **as property type** (pre-picks, floors vs zones) | Each needs a new property; blocked on P0-03 for multi-type checks |
 | 4 | Submit + what happens after | Needs Terms acceptance by the owner |
