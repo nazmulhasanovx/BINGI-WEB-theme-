@@ -1,0 +1,151 @@
+================================================================
+ 12  ALL DOCUMENTS (PDF / PRINT / EXCEL) WE MUST MAKE - by module
+================================================================
+ Date: 25 Nov 2026. Based on: live HMS test (24 Nov) + prototype code
+ (repo bingi-web-theme-, branch feat/document-templates).
+
+ LIVE  = what hms.bingi.app has today
+ PROTO = what our prototype has today
+ SIZE  = A4 (guest / office paper) | 80mm (thermal printer) | XLS (Excel)
+ All A4 documents use the same Design setting: 6 templates, any colour,
+ English / বাংলা / Mix, text size, logo size (doc-kit.ts).
+
+ TOTAL: 54 documents | done on new kit: 1 (Invoice)
+
+----------------------------------------------------------------
+ A. BOOKINGS / FRONT DESK  (guest gets these)
+----------------------------------------------------------------
+ #  Document                         Size  LIVE                 PROTO      Order
+ 1  Invoice (final, at check-out)    A4    yes - poor           DONE v2      -
+ 2  Booking confirmation / proforma  A4    2 versions, wrong    yes          1
+                                           rate, Walk-in
+ 3  Money receipt (each advance /    A4/   no                   yes          2
+    payment)                         80mm
+ 4  Running bill / interim folio     A4    no (screen only)     no           2
+    (in-house guest asks for bill)
+ 5  Stay agreement / contract        A4    yes - other company  Settings     3
+                                           text (KeyHost)        tab only
+ 6  Guest registration card (GRC)    A4    no                   yes          3
+ 7  Refund receipt / credit note     A4    no                   partly       4
+ 8  Cancellation / no-show note      A4    no                   no           4
+    (fee kept, refund due)
+ 9  Security deposit receipt         A4/   no                   no           4
+    (held / returned / used)         80mm
+ 10 Company / group invoice          A4    no                   partly       5
+    (bill to company, many rooms)
+
+----------------------------------------------------------------
+ B. GUESTS / POLICE & LEGAL
+----------------------------------------------------------------
+ 11 Guest register (daily)           A4-L  no                   yes          6
+ 12 Form-C (foreign guests)          A4-L  no                   yes          6
+
+----------------------------------------------------------------
+ C. RESTAURANT & BAR
+----------------------------------------------------------------
+ 13 KOT - kitchen order ticket       80mm  yes                  yes          5
+ 14 Restaurant bill / receipt        80mm  preview opens print  yes          5
+ 15 Restaurant bill (A4, company)    A4    no                   no           7
+ 16 Charge-to-room slip (signed)     80mm  no                   no           7
+ 17 Meal / restaurant report         XLS+  Excel only           -            9
+                                     A4
+
+----------------------------------------------------------------
+ D. OTHER SERVICES
+----------------------------------------------------------------
+ 18 Service order receipt            80mm  no                   no           7
+ 19 Job sheet for staff / vendor     A4    no                   no           8
+    (pickup, spa, tour)
+
+----------------------------------------------------------------
+ E. PAYMENTS & CASHBOX
+----------------------------------------------------------------
+ 20 Payment receipt (from Payments)  A4/   no                   yes          2
+                                     80mm
+ 21 Cashbox day report (Z report:    A4    no                   no           5
+    opening, in/out by source,
+    expected, counted, difference,
+    signatures)
+ 22 Cash in / cash out voucher       80mm  no                   no           6
+ 23 Payments list                    XLS+  CSV, no BOM          yes          9
+                                     A4
+
+----------------------------------------------------------------
+ F. EXPENSES (Operations)
+----------------------------------------------------------------
+ 24 Expense voucher / payment slip   A4    no                   no           6
+ 25 Supplier bill payment receipt    A4    no                   no           7
+ 26 Expense list                     XLS+  no                   no           9
+                                     A4
+
+----------------------------------------------------------------
+ G. INVENTORY
+----------------------------------------------------------------
+ 27 Purchase order (to supplier)     A4    no                   print only   6
+ 28 Goods received note (GRN)        A4    no                   no           7
+ 29 Stock issue / transfer slip      A4    no                   no           8
+ 30 Stock count sheet (blank +       A4    no                   no           8
+    result)
+ 31 Stock / valuation report         XLS+  no                   no           9
+                                     A4
+
+----------------------------------------------------------------
+ H. HOUSEKEEPING
+----------------------------------------------------------------
+ 32 Daily room sheet for cleaners    A4    no                   no           7
+ 33 Maintenance work order           A4    no                   no           8
+ 34 Lost & found slip                A4    no                   no           10
+
+----------------------------------------------------------------
+ I. TEAM & HR
+----------------------------------------------------------------
+ 35 Payslip                          A4    no                   print only   6
+ 36 Payroll sheet (month)            XLS+  no                   no           8
+                                     A4
+ 37 Attendance report                XLS+  no                   no           9
+                                     A4
+ 38 Staff letters (appointment,      A4    no                   no           10
+    experience, salary certificate)
+
+----------------------------------------------------------------
+ J. FINANCE & BINGI
+----------------------------------------------------------------
+ 39 Monthly finance statement        A4+   yes - wrong sums,    yes          8
+                                     CSV   1 MB, slow
+ 40 Payout / settlement statement    A4    no                   no           8
+ 41 BinGi subscription invoice       A4    yes                  yes          7
+    (Plan & Billing)
+ 42 Commission + SMS cost statement  A4    no                   no           10
+
+----------------------------------------------------------------
+ K. REPORTS  (each = PDF + Excel, same numbers)
+----------------------------------------------------------------
+ 43 Daily collections (sample done)  A4-L+XLS  no            sample       5
+ 44 Daily sales summary              A4+XLS    yes - text money          9
+ 45 Master sales                     A4+XLS    yes                       9
+ 46 Sales register                   A4+XLS    PDF = demo data (P0)      5
+ 47 Dashboard summary                A4+XLS    yes                       9
+ 48 Revenue report                   A4+XLS    yes                       9
+ 49 Booking report                   A4+XLS    yes                       9
+ 50 Occupancy report                 A4+XLS    yes                       9
+ 51 Guest report                     A4+XLS    yes                       9
+ 52 Payment report                   A4+XLS    yes                       9
+ 53 Expense report                   A4+XLS    yes - rejected counted    9
+ 54 Night audit / day close report   A4        no                        6
+
+----------------------------------------------------------------
+ BUILD ORDER (one by one on the same kit)
+----------------------------------------------------------------
+  1  Booking confirmation (2)
+  2  Money receipt + running bill + Payments receipt (3, 4, 20)
+  3  Stay agreement + registration card (5, 6)
+  4  Refund / cancellation / deposit (7, 8, 9)
+  5  80mm kit: KOT, restaurant bill (13, 14) + Cashbox Z report (21)
+     + company invoice (10) + Sales register / Daily collections (43, 46)
+  6  Guest register, Form-C, night audit, PO, cash voucher, expense
+     voucher, payslip (11, 12, 54, 27, 22, 24, 35)
+  7  Rest of A4 slips (15, 16, 18, 25, 28, 32, 41)
+  8  Sheets and statements (19, 29, 30, 33, 36, 39, 40)
+  9  All reports PDF + Excel on one style (17, 23, 26, 31, 37, 44-53)
+  10 Later (34, 38, 42)
+================================================================
