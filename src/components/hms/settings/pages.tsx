@@ -10,7 +10,7 @@ import { useSettings, bookingOf, AREAS, type Settings, type Perm, type Role, typ
 import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
-import { invoiceHtml, regCardHtml } from "@/lib/bookings/docs";
+import { invoiceHtml, regCardHtml, withDocsDraft, DOC_TEMPLATES, DOC_ACCENTS, type DocDesign } from "@/lib/bookings/docs";
 import { useGuestNames } from "@/lib/guests/store";
 import { useRooms, priceBreak } from "@/lib/rooms/store";
 import { useHousekeeping } from "@/lib/housekeeping/store";
@@ -455,6 +455,19 @@ export function PaymentsPage() {
   );
 }
 
+/** Small drawing of each template for the picker (not a real document). */
+function TemplateThumb({ t, accent }: { t: DocDesign["template"]; accent: string }) {
+  const line = (w: string, extra = "") => <div className={clsx("h-[3px] rounded bg-[#dfe2e7]", extra)} style={{ width: w }} />;
+  return (
+    <div className="relative h-[92px] overflow-hidden rounded-lg border border-hms-line bg-white p-2.5" aria-hidden>
+      {t === "modern" && <div className="absolute inset-x-0 top-0 h-[4px]" style={{ background: accent }} />}
+      {t === "classic" ? <div className="flex flex-col items-center gap-1"><div className="size-4 rounded-full border-[1.5px]" style={{ borderColor: accent }} />{line("50%", "bg-[#b9bec7]")}{line("36%")}<div className="my-0.5 h-[3px] w-[40%] rounded" style={{ background: accent }} /></div>
+        : <div className="flex items-start justify-between"><div className="flex items-center gap-1.5"><div className={clsx("rounded-full border-[1.5px]", t === "compact" ? "size-3" : "size-4")} style={{ borderColor: accent }} /><div className="space-y-1">{line("34px", "bg-[#b9bec7]")}{line("26px")}</div></div><div className="h-[4px] w-[30%] rounded" style={{ background: accent }} /></div>}
+      <div className={clsx("space-y-[5px]", t === "compact" ? "mt-2" : "mt-3")}>{line("100%", "bg-[#c9cdd4]")}{line("100%")}{line("100%")}{t === "compact" && <>{line("100%")}{line("100%")}</>}<div className="ml-auto mt-1 h-[3px] w-1/3 rounded bg-[#9aa0aa]" /></div>
+    </div>
+  );
+}
+
 export function DocumentsPage() {
   const { h, s, save, toast } = useS();
   const bk = useBookings(h);
@@ -463,19 +476,44 @@ export function DocumentsPage() {
   const f = useDraft({ docs: s.docs, printers: s.printers }); const d = f.d.docs; const pr = f.d.printers;
   const setD = (patch: Partial<Settings["docs"]>) => f.setD({ ...f.d, docs: { ...d, ...patch } });
   const setC = (patch: Partial<Settings["docs"]["contract"]>) => setD({ contract: { ...d.contract, ...patch } });
-  const sample = bk.list.find((b) => b.status === "Checked in") ?? bk.list[0];
+  const ds: DocDesign = { template: "compact", accent: "#B11C29", logoSize: "M", lang: "en-bn", ...d.design };
+  const setDs = (patch: Partial<DocDesign>) => setD({ design: { ...ds, ...patch } });
+  const sample = bk.list.find((b) => b.status === "Checked out" && b.payments.length > 1) ?? bk.list.find((b) => b.status === "Checked in") ?? bk.list[0];
+  const preview = useMemo(() => (sample ? withDocsDraft(d, () => invoiceHtml(h, sample, names.get(sample.guestId), [])) : ""), [d, sample, h, names, s.branding.logo, s.profile]);
   const [pn, setPn] = useState(""); const [pk, setPk] = useState<Settings["printers"][number]["kind"]>("Receipt (80 mm)"); const [pw, setPw] = useState("Front desk");
   const doSave = () => { save((x) => { x.docs = d; x.printers = pr; }, "Invoices & documents updated"); toast("Saved"); };
   return (
     <>
       <PageHead title="Invoices & documents" actions={<Segmented value={tab} onChange={setTab} options={[{ v: "invoice", label: "Invoice" }, { v: "contract", label: "Stay agreement" }, { v: "printers", label: "Printers" }]} />} />
-      {tab === "invoice" && <div className="space-y-4">
-        <Card title="Invoice" action={sample && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(invoiceHtml(h, sample, names.get(sample.guestId), [])); }}><PrinterIcon className="size-4" />Preview</Btn>}>
+      {tab === "invoice" && <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+        <div className="space-y-4">
+        <Card title="Design" desc="One look for invoices, receipts, confirmations and registration cards.">
+          <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Template">
+            {DOC_TEMPLATES.map((t) => { const on = ds.template === t.v; return (
+              <button key={t.v} type="button" role="radio" aria-checked={on} onClick={() => setDs({ template: t.v })} className={clsx("rounded-xl border p-3 text-left transition", on ? "border-hms-coral ring-2 ring-hms-coral/20" : "border-hms-line hover:bg-hms-hover")}>
+                <TemplateThumb t={t.v} accent={ds.accent} />
+                <p className="mt-2 text-[14px] font-medium">{t.label}</p><p className="text-[12.5px] leading-snug text-hms-muted">{t.hint}</p>
+              </button>); })}
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><Field label="Colour">
+              <div className="flex flex-wrap items-center gap-2">
+                {DOC_ACCENTS.map((c) => <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={ds.accent === c} onClick={() => setDs({ accent: c })} className={clsx("size-7 rounded-full border-2", ds.accent === c ? "border-hms-ink" : "border-white ring-1 ring-hms-line")} style={{ background: c }} />)}
+                <label className="relative grid size-7 cursor-pointer place-items-center rounded-full border border-dashed border-hms-line text-[11px] text-hms-muted" title="Your brand colour">+<input type="color" value={ds.accent} onChange={(e) => setDs({ accent: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" aria-label="Your brand colour" /></label>
+                {!DOC_ACCENTS.includes(ds.accent) && <span className="inline-flex items-center gap-1.5 text-[13px] text-hms-muted"><span className="size-7 rounded-full border-2 border-hms-ink" style={{ background: ds.accent }} />Your colour {ds.accent.toUpperCase()}</span>}
+              </div>
+            </Field></div>
+            <Field label="Logo size"><Segmented value={ds.logoSize} onChange={(v) => setDs({ logoSize: v })} options={[{ v: "S", label: "Small" }, { v: "M", label: "Medium" }, { v: "L", label: "Large" }]} /></Field>
+            <Field label="Language"><Segmented value={ds.lang} onChange={(v) => setDs({ lang: v })} options={[{ v: "en", label: "English" }, { v: "en-bn", label: "English + বাংলা" }]} /></Field>
+          </div>
+          {!s.branding.logo && <p className="mt-4 rounded-lg bg-hms-hover px-3 py-2 text-[13px] text-hms-muted">No logo yet - documents show your initials. <Link href="/hms/settings/branding" className="text-hms-blue underline underline-offset-2">Upload your logo</Link></p>}
+        </Card>
+        <Card title="Invoice" action={sample && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(invoiceHtml(h, sample, names.get(sample.guestId), [])); }}><PrinterIcon className="size-4" />Print</Btn>}>
           <p className="mb-4 text-[13.5px] text-hms-muted">Name, address and BIN from <Link href="/hms/settings/profile" className="text-hms-blue underline underline-offset-2">Property profile</Link>; logo from <Link href="/hms/settings/branding" className="text-hms-blue underline underline-offset-2">Branding</Link>.</p>
           <Grid cols={3}>
             <Field label="Number starts with"><Input value={d.prefix} onChange={(e) => setD({ prefix: e.target.value.slice(0, 8) })} /></Field>
             <Field label="Paper"><Segmented value={d.paper} onChange={(v) => setD({ paper: v })} options={[{ v: "A4", label: "A4" }, { v: "Thermal", label: "Receipt printer" }]} /></Field>
-            <Field label="Logo on invoice"><Toggle label="Logo on invoice" on={d.showLogo} onChange={(v) => setD({ showLogo: v })} /></Field>
+            <Field label="Logo on documents"><Toggle label="Logo on documents" on={d.showLogo} onChange={(v) => setD({ showLogo: v })} /></Field>
           </Grid>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Terms (optional)" count={`${d.terms.length}/500`}><TextArea value={d.terms} maxLength={500} onChange={(e) => setD({ terms: e.target.value })} /></Field>
@@ -483,6 +521,13 @@ export function DocumentsPage() {
           </div>
         </Card>
         <p className="text-[13px] text-hms-muted">Confirmation and pre-arrival texts: <Go href="/hms/settings/messages">Guest messages</Go></p>
+        </div>
+        <div className="xl:sticky xl:top-4">
+          <div className="mb-2 flex items-center justify-between"><p className="text-[13px] font-medium text-hms-muted">Live preview · {sample ? sample.code : "sample"}</p>{f.dirty && <span className="text-[12.5px] text-hms-amber">Not saved yet</span>}</div>
+          <div className="overflow-hidden rounded-xl border border-hms-line bg-white shadow-sm" style={{ height: 622 }}>
+            {preview ? <iframe title="Invoice preview" srcDoc={preview} className="origin-top-left border-0" style={{ width: 794, height: 1123, transform: "scale(0.554)" }} /> : <p className="p-6 text-[13.5px] text-hms-muted">Make a booking to see a preview.</p>}
+          </div>
+        </div>
       </div>}
       {tab === "contract" && <Card title="Stay agreement" desc="Printed on the registration card for the guest to sign." action={sample && d.contract.on && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(regCardHtml(h, sample, names.get(sample.guestId))); }}><PrinterIcon className="size-4" />Preview</Btn>}>
         <ToggleRow title="Use a stay agreement" on={d.contract.on} onChange={(v) => setC({ on: v })} />
