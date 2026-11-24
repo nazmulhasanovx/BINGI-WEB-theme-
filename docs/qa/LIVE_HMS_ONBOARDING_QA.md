@@ -22,7 +22,7 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 | Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
 | Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
 
-Count: **3 × P0 · 14 × P1 · 16 × P2**
+Count: **3 × P0 · 16 × P1 · 16 × P2**
 
 ---
 
