@@ -1,0 +1,400 @@
+================================================================
+ BinGi HMS - Room / Accommodation QA + 1:1 design check
+ Site:     https://hms.bingi.app/dashboard/rooms (testing server)
+ Property: Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Date:     24 Nov 2026, 13:40 - 14:20
+ Tested:   Desktop Chrome 1568 px, Hotel admin role.
+ Compare:  BinGi HMS prototype (approved design, repo main) run
+           locally: /hms/rooms, /hms/rooms/numbers,
+           /hms/rooms/configuration, /hms/rooms/new.
+ Cross-checked with: Bookings (API /api/bookings), Housekeeping,
+           API /api/rooms, /api/accommodations/tonight,
+           /api/accommodations/configuration.
+ Follows:  BinGi_HMS_Bookings_Deep_QA_2026-11-24.txt
+================================================================
+
+HOW TO READ
+  P0 = blocker, wrong room state, or money / double-booking risk.
+  P1 = wrong, risky, or different from approved design.
+  P2 = polish.
+  Each item: WHERE / HAPPENS / IMPACT / EXPECTED / FIX (BE = backend,
+  FE = frontend).
+
+TOTAL: 5 x P0 | 10 x P1 | 9 x P2 | + design gaps per screen (section E)
+
+ROOT CAUSE IN ONE LINE
+  Room state lives in TWO places that disagree:
+   (1) legacy rooms table  (/api/rooms  -> status RESERVED/OCCUPIED/
+       DIRTY/HOLD per room number), and
+   (2) new accommodations engine (/api/accommodations/* -> units,
+       categories, "tonight" state).
+  Screens read from different places, so the same room shows
+  different truth on different screens. Most items below come from
+  this. Fix the source of truth first, then the screens.
+
+
+================================================================
+ A. FLOW MAP (what exists today)
+================================================================
+ Room / Accommodation
+  |- Room types   (cards; KPI row; filters; Edit; "See rooms")
+  |    '- Edit  -> OLD "Edit Room" drawer  (legacy /api/rooms)  -> 422
+  |- Room numbers (floor groups; status chips; unit panel)
+  |    '- unit panel -> Mark out of order / Reservation schedule /
+  |                     Unit history / Readiness / Edit room type
+  |- Setup        (property, platform status, history)
+  '- Add room type -> /rooms/new list (new engine)
+       |- Edit (per type) -> 5-step "Add room / accommodation"
+       |                     wizard from step 1 (not an edit)
+       '- Add numbers to an existing room / Done
+
+ Property numbers today (published only):
+   29 rooms in 7 types, 5 floors. 17 draft apartment units.
+   Tonight: 19 available (clean), 3 dirty, 6 booked, 1 out of order.
+   (UI and API agree on these counts - see section F for the rooms
+   the counts are WRONG about.)
+
+
+================================================================
+ B. P0 - FIX FIRST
+================================================================
+
+[P0-01] Rooms shown "Booked tonight / Guest in room" with NO guest
+  WHERE    Room numbers: 101, 102 (also 208, 209). Room types card
+           "Fully booked tonight" for the 101-105 type.
+  HAPPENS  101 and 102 have no checked-in booking for tonight.
+           Opening 101 -> Reservation schedule says: "Unit is marked
+           occupied, but no matching current checked-in canonical
+           owner was found ... Handoff review is incomplete."
+           102 is held by WBK-2026-000043 (stay 2-3 Nov, never
+           checked out). 208 by WBK-000064 (4-5 Nov), 209 by
+           WBK-000010 (9-10 Sep). 101: legacy status OCCUPIED, no
+           booking at all.
+  IMPACT   4 sellable rooms are blocked from sale every night. The
+           count "Booked tonight 6" is really 2 (103, 104).
+  EXPECTED Booked tonight = rooms with a booking that covers tonight.
+  FIX      BE: derive "booked/occupied" only from bookings, never
+           from a stored room status. One-time cleanup of legacy
+           OCCUPIED flags. FE: if a room has an "orphan" state,
+           show "Needs review" with a one-click "Release room".
+
+[P0-02] Overdue in-house guests are invisible (no "Overdue check-out")
+  WHERE    Room numbers, Room types, Housekeeping, API
+           /api/accommodations/tonight (overdue_checkout = 0 for all).
+  HAPPENS  5 bookings are still CHECKED_IN after their check-out date:
+             WBK-000077 room 104  out 20 Nov
+             WBK-000064 room 208  out 5 Nov
+             WBK-000043 room 102  out 3 Nov
+             WBK-000011 room 206  out 12 Sep
+             WBK-000010 room 209  out 10 Sep
+           No screen flags any of them.
+  IMPACT   Front desk never sees who must leave or be extended; room
+           charges for extra nights are never posted (money leak);
+           rooms stay blocked or are double-sold (P0-03).
+  EXPECTED Prototype: "Due out" / "Overdue" chip on the room and a
+           red count on the KPI row; Dashboard "Departures" includes
+           overdue.
+  FIX      BE: compute overdue_checkout = status CHECKED_IN and
+           check_out < business date. FE: red "Overdue check-out"
+           chip + filter; Night audit should list them.
+
+[P0-03] Room 206 shown "Available" while a guest is checked in
+  WHERE    Room numbers 206 = "Available / Room clean". Room types
+           card "2 of 4 available" counts it.
+  HAPPENS  WBK-2026-000011 is CHECKED_IN on 206 (never checked out).
+           Legacy /api/rooms says 206 AVAILABLE, so the screen sells
+           it. In the Bookings test, "Move room" also offered 206.
+           Room 104 has TWO checked-in bookings at the same time
+           (WBK-000077 and WBK-000079).
+  IMPACT   Double booking / two guests given the same room.
+  EXPECTED A room with a CHECKED_IN booking is never "Available".
+  FIX      BE: availability must check CHECKED_IN bookings (and
+           block check-in to a room that already has a checked-in
+           guest). Same rule for Move room and New booking.
+
+[P0-04] Editing ANY room type fails (422) - price ৳16 cannot be fixed
+  WHERE    Room types -> Edit (opens "Edit Room" drawer) -> Update Room.
+  HAPPENS  Tested on Deluxe (৳16 -> ৳16,000) and on Premium Room with
+           NO change. Both: POST /api/rooms/RM-HTL000001-xxx -> 422
+           "The selected bed is invalid. (and 5-6 more errors)".
+           Rejected values: bed "Twin Bed"; amenities free_wifi,
+           free_parking, fitness_center, swimming_pool, 24_7_security,
+           room_service. The form offers exactly these values.
+           The error is shown with a browser alert() popup.
+  IMPACT   Hotel cannot change price, photos, amenities or meals of
+           any existing room type. Deluxe stays on sale at ৳16/night.
+  EXPECTED Save works; validation lists match the form options.
+  FIX      BE: align validation enums with the bed/amenity master
+           list (or accept stored legacy values). FE: replace
+           alert() with inline field errors (alert also freezes the
+           browser tab - we lost the tab once while testing).
+
+[P0-05] Out-of-order state comes from two places that disagree
+  WHERE    Room numbers / Room types vs Housekeeping > Maintenance.
+  HAPPENS  a) Room 202 = "Not for sale / Maintenance" (legacy HOLD),
+              but its panel says "This room has no open maintenance
+              report. Review it in Housekeeping." Housekeeping shows
+              Room blocks 0 and no ticket for 202. There is no button
+              anywhere to release 202.
+           b) Room 207 has an OPEN, URGENT maintenance ticket
+              (mnt_dsz2mpsrwn "ggg", target 9 Nov, overdue) with room
+              block Off -> 207 shows "Available / Room clean" and has
+              a confirmed booking (WBK-000080, 26-28 Nov).
+           c) Room types card for 312 shows badge "Out of order"; 312
+              is only dirty.
+  IMPACT   One room is lost from sale forever; another is sold with an
+           urgent open fault; staff see three different answers.
+  EXPECTED One source: an OOO block always has a maintenance record,
+           shows on the room with reason + expected back date, and
+           has "Release". An urgent open ticket shows a warning on
+           the room even when not blocked.
+  FIX      BE: migrate legacy HOLD to a maintenance block record (or
+           clear it). FE: 202 panel gets "Release room"; card badge
+           must use the same OOO field as the room list.
+
+
+================================================================
+ C. P1
+================================================================
+
+[P1-01] Room types are titled by bed type, not by name
+  WHERE    Room types cards, Room numbers chips, unit panel "Category".
+  HAPPENS  All 7 cards say "Twin" (one "Single"). Real names exist in
+           the API: Premium Room, Standard Room, Premium Deluxe,
+           Executive Suite, Suite, Suite, Deluxe. The Add room type
+           page DOES show the real names.
+  EXPECTED Prototype: card title = type name (e.g. "Deluxe Garden
+           View"), bed shown as a detail line.
+  FIX      FE: title = category name; bed type in the meta row.
+
+[P1-02] "Edit" on the Add room type page opens an ADD wizard
+  WHERE    /rooms/new -> Premium Room -> Edit.
+  HAPPENS  Goes to /rooms/new?classic=1&category=... titled "Add room
+           / accommodation", step 1 "What are you adding?". Nothing
+           pre-filled. Breadcrumb "Add room type".
+  EXPECTED Prototype: Edit opens the room-type panel with this type's
+           price, numbers, photos, amenities, meals filled in.
+  FIX      FE: edit route that loads the category; title "Edit
+           <name>".
+
+[P1-03] "Waiting for BinGi approval" on rooms that are already sold
+  WHERE    /rooms/new list (all 7 published types), Setup "Platform
+           status: Adding inventory off · Selling off · Public stays
+           off", configuration setup_status "draft".
+  HAPPENS  The same types are bookable and have 40+ bookings.
+  IMPACT   Owner thinks rooms are not live; support tickets.
+  EXPECTED Published types show "Live"; only new types show "Waiting
+           for approval".
+  FIX      BE: mark migrated published categories approved; Setup
+           status from real selling state.
+
+[P1-04] "with service + VAT" shows the same number as the base price
+  WHERE    Every card and unit panel ("৳20,000 /night · ৳20,000 with
+           service + VAT").
+  HAPPENS  Hotel VAT 0 % and service 0 % (price_terms). The line
+           repeats the price and suggests tax is included.
+  EXPECTED Prototype: line only when VAT/service > 0 ("৳15,180 with
+           service + VAT"); otherwise hide or "No VAT / service".
+  FIX      FE condition on rates > 0.
+
+[P1-05] Duplicate room numbers allowed across types
+  WHERE    Room numbers > "No location": draft apartment "Tow bad
+           room" units 102 and 104.
+  HAPPENS  102 and 104 already exist as published rooms (1st Floor).
+  IMPACT   When drafts are published, two "102"s - wrong check-in,
+           wrong housekeeping, wrong bills.
+  FIX      BE: unique door number per property (or per building);
+           FE: inline "102 already used" on entry; block Publish.
+
+[P1-06] Two room types with the same name "Suite"
+  WHERE    Add room type page: "Suite" ৳41,000 (401-405) and "Suite"
+           ৳60,000 (501-505).
+  FIX      BE: unique type name per property; FE warning on save.
+
+[P1-07] Booking state and cleaning state are merged into one chip
+  WHERE    Room numbers chips.
+  HAPPENS  Occupied rooms always show "Guest in room" (cleaning state
+           hidden); dirty rooms show "Not Ready · Cleaning" in place
+           of occupancy.
+  EXPECTED Core rule + prototype: two separate lines - occupancy
+           ("Booked tonight" / "Available") and readiness ("Room
+           clean" / "Needs cleaning" / "Being cleaned").
+  FIX      FE: render both fields; never replace one with the other.
+
+[P1-08] Floors / locations do not match Setup
+  WHERE    Setup: "Main building · 1 floor", "Locations: No saved
+           locations", "Numbering: No saved rule".
+           Room numbers: 1st-5th Floor groups.
+           Housekeeping floor filter: 10th, 20th, 40th, 96th Floor
+           (none have rooms).
+  EXPECTED One building/floor list used by Setup drawing, Room
+           numbers groups and Housekeeping filter.
+  FIX      BE: migrate legacy floors into locations; remove ghost
+           floors. FE: read floors from one endpoint.
+
+[P1-09] Reservation schedule panel is written for developers
+  WHERE    Room numbers -> unit -> Reservation schedule.
+  HAPPENS  Title "Reservation schedule · LEGACY-RN-33"; text like
+           "explicit assignments", "canonical owner", "legacy
+           mapping", "Unassigned category demand"; says "Deluxe ·
+           ROOM · draft" for a published room.
+  EXPECTED Plain list: date, guest, booking code, status; title
+           "Room 101 · schedule".
+  FIX      FE copy + use door number, not internal id.
+
+[P1-10] "Rooms in use: 46" counts 17 not-bookable drafts
+  WHERE    Room types banner, Room numbers sub-line.
+  IMPACT   If billing is per room, the hotel may be charged for
+           rooms it cannot sell. Prototype counts published only
+           ("24 rooms in use").
+  FIX      Confirm billing rule; show "29 live · 17 draft".
+
+
+================================================================
+ D. P2
+================================================================
+[P2-01] Mark out of order is offered on an occupied room (101) with
+        only a small note. Add confirm: "Guest in room until <date>.
+        Move guest first?".
+[P2-02] Status filter on Room numbers lists 11 raw backend states in
+        lowercase (available, reserved, occupied, dirty, cleaning,
+        inspection, maintenance, out of order, out of service,
+        blocked, hold). Prototype: Available / Booked / Needs
+        cleaning / Out of order / Draft.
+[P2-03] "Available tonight" = 19 on screen, API summary available =
+        22 (includes dirty). Use one definition and label it
+        ("Ready to sell tonight").
+[P2-04] Data shown without sanity check: every type "520 sq ft";
+        ৳60,000 suite "Up to 1 guest · Double Bed"; draft apartment
+        "32 sq ft, 4 beds, 2 guests"; Deluxe description says
+        "28sqm/302 sq-ft" while size field says 520. The "Is this
+        price right?" hint exists on /rooms/new - add the same
+        hint for size/guests mismatch and show it on the cards too.
+[P2-05] /rooms/new list shows "No photos yet" on types that do have
+        photos (cards show them; Edit shows Photos 1/10).
+[P2-06] Housekeeping tasks show "Picked up" and "Not started" on the
+        same card.
+[P2-07] Card list for type 312 shows "Out of order" badge top-left but
+        no "x of y available" - other cards show both.
+[P2-08] Typo in test data name "Tow bad room" (should be "Two bed
+        room") - fine as test data, but the form has no spell/case
+        check; low priority.
+[P2-09] Room types "Edit" opens the OLD Edit Room drawer, while
+        /rooms/new uses the new engine. Two different editors for the
+        same thing - keep one (the prototype panel).
+
+
+================================================================
+ E. DESIGN 1:1 (live vs approved prototype)
+================================================================
+ E1. Room types tab
+   SAME : header, tabs, KPI row (4 tiles), search + 2 filters,
+          grid/list toggle, photo cards with "x of y available"
+          badge, price + Edit + ⋯.
+   DIFF : title = bed type (P1-01); "with service + VAT" line
+          (P1-04); extra green "Rooms in use 46 · Package limit"
+          banner and orange drafts banner (prototype: one quiet
+          sub-line); page name "Room / Accommodation" vs prototype
+          "Accommodations" (sidebar name per Sidebar_Names_v7).
+ E2. Room numbers tab
+   SAME : 4-figure status strip, search, type + published/draft
+          filters, floor groups, unit chips.
+   DIFF : two-line chip (occupancy + readiness) merged (P1-07);
+          group title "1st Floor" vs "Main Building › Floor 1";
+          extra raw status filter (P2-02); extra buttons "Publish all
+          drafts", "Export CSV", refresh, ⋯ (keep Publish; move CSV
+          and refresh into ⋯); missing "Archived" filter.
+ E3. Unit panel
+   SAME : status, code, door number, location, category, price,
+          staff note, Mark out of order, Edit room type.
+   DIFF : no "Release" for blocked room (P0-05); developer schedule
+          panel (P1-09); "In use — can be sold" + "Not for sale"
+          shown together.
+ E4. Setup tab
+   SAME : "Your property" card, live drawing, Edit setup, recent
+          changes.
+   DIFF : drawing shows 1 floor (prototype: building + floors +
+          zones); Locations and Numbering empty (P1-08); extra
+          "Platform status / Advanced" block that says Selling off
+          (P1-03).
+ E5. Add room type (/rooms/new)
+   SAME : KPI row (types, total rooms, lowest price + guest pays),
+          type list with Ready chip, price + guest pays, Edit, Done.
+   DIFF : no bed type and no "Floor 1  101-108" range chip on each
+          row; "No photos yet" (P2-05); "Waiting for BinGi approval"
+          on live types (P1-03); Edit opens add wizard (P1-02).
+ Screens: docs/qa/design-ref-rooms/prototype_r1..r5.png
+
+
+================================================================
+ F. MONEY / STATE CHECK (rooms vs bookings, tonight 24 Nov)
+================================================================
+ Room   Screen says            Truth from bookings           OK?
+ 101    Booked, guest in room  no booking                    NO (P0-01)
+ 102    Booked, guest in room  WBK-043 overdue since 3 Nov   NO (P0-02)
+ 103    Booked, guest in room  WBK-090 in house 24-26 Nov    yes
+ 104    Booked, guest in room  WBK-079 in house + WBK-077    NO (P0-03)
+                               overdue - 2 guests 1 room
+ 105    Needs cleaning         WBK-084 checked out           yes
+ 201    Needs cleaning         WBK-091 checked out           yes
+ 202    Out of order           no ticket, legacy HOLD        NO (P0-05)
+ 206    Available              WBK-011 still checked in      NO (P0-03)
+ 207    Available              urgent open fault ticket      RISK (P0-05)
+ 208    Booked                 WBK-064 overdue since 5 Nov   NO (P0-02)
+ 209    Booked                 WBK-010 overdue since 10 Sep  NO (P0-02)
+ 312    Needs cleaning (list)  WBK-083 checked out           yes
+        Out of order (card)                                  NO (P0-05c)
+ Deluxe type price ৳16/night - cannot be corrected (P0-04).
+ Overdue stays = unbilled nights. Not counted in revenue anywhere.
+
+
+================================================================
+ G. WORKS - KEEP
+================================================================
+ - KPI counts match the room list and API (29 / 19 / 6 / 1).
+ - Check-out from Bookings turns the room to "Needs cleaning" and
+   creates a Housekeeping checkout task (105, 201, 312) - badge 3
+   matches.
+ - Drafts are clearly marked "Draft · not bookable" and excluded
+   from Booked/Available counts.
+ - "Is this price right?" warning on ৳16 and ৳60,000 on /rooms/new.
+ - Mark out of order panel has "Expected back" and explains that
+   bookings are not moved automatically.
+ - Unit panel layout (code, door, location, price, staff note)
+   matches the prototype.
+
+
+================================================================
+ H. NOT TESTED YET
+================================================================
+ - Creating a NEW room type end to end (wizard steps 2-5) and
+   approval by Super Admin.
+ - Mark out of order -> release flow (did not block a real room).
+ - Publish all drafts (would publish duplicate 102/104 - P1-05).
+ - Photo upload / cover change, meal configuration save (blocked by
+   P0-04).
+ - Phone layout, staff roles (housekeeper / front desk view).
+ - Export CSV contents.
+
+
+================================================================
+ I. TEST DATA / CHANGES MADE
+================================================================
+ - No data changed. Both Edit saves were rejected (422).
+ - Bookings WBK-079..099 from the Bookings test are still on the
+   server (see Bookings Deep QA, section I).
+
+
+================================================================
+ J. SUGGESTED FIX ORDER
+================================================================
+ 1. P0-03 + P0-01 + P0-02  one source of truth for occupancy
+    (bookings), overdue check-out flag, clean legacy OCCUPIED.
+ 2. P0-04  room type save (enum mismatch) + inline errors.
+ 3. P0-05  OOO only from maintenance blocks; Release button.
+ 4. P1-01, P1-07  names on cards; two-line chips.
+ 5. P1-05, P1-06  unique door numbers / type names before anyone
+    presses "Publish all drafts".
+ 6. P1-02, P1-03, P1-08  edit route, approval status, floors.
+ 7. Rest of P1, then P2.
+================================================================
