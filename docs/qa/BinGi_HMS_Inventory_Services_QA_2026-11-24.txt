@@ -285,7 +285,9 @@ TOTAL
 ================================================================
   1. Staff roles (non-admin): approvals above limit, "Orders need
      approval", discount above front desk limit.
-  2. Charge to booking - this property has 0 bookings.
+  2. Charge to booking - not tested. (Correction 24 Nov: the property
+     has 25 bookings; booking search for "a" showed no result - check
+     search by name.)
   3. "Send to Accounts" (cost of goods) - would post to Accounts.
   4. CSV / PDF export.
   5. Edit / archive item, service, store.

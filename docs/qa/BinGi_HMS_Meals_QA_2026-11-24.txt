@@ -226,7 +226,9 @@ TOTAL: 3 x P0  |  7 x P1  |  18 x P2
 ================================================================
  NOT TESTED YET
 ================================================================
-  1. Room service / Post to room - property has 0 bookings.
+  1. Room service / Post to room - not tested. (Correction 24 Nov: the
+     property has 25 bookings; earlier I read the list while it was
+     still loading.)
   2. Delivery, split payment, void, refund.
   3. Kitchen ticket printing (KOT), QR appearance, Printing settings.
   4. Staff roles: approvals, discount above 10%.
