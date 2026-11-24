@@ -1,0 +1,379 @@
+================================================================
+ BinGi HMS - Bookings DEEP QA: 20 bookings, money, and 1:1 design
+ Site:     https://hms.bingi.app (testing server)
+ Property: Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Date:     24 Nov 2026, 12:56 - 13:40
+ Tested:   Desktop Chrome 1568 px, Hotel admin role.
+ Compare:  BinGi HMS prototype (approved design, repo main, commit
+           1a9f8d2) run locally and screenshot at the same size.
+ Follows:  BinGi_HMS_Bookings_QA_2026-11-24.txt (first round).
+================================================================
+
+HOW TO READ
+  P0 = blocker or money / double-booking risk. Fix first.
+  P1 = wrong, risky, or different from approved design.
+  P2 = polish.
+  "DESIGN" items = what must change so live = our design 1:1.
+
+TOTAL (new in this round): 4 x P0 | 12 x P1 | 12 x P2
+                           + 5 screens of design gaps (section F)
+
+
+================================================================
+ A. THE 20 TEST BOOKINGS (all made through the New booking screen)
+================================================================
+ #  Booking          Room     Stay           Source*   Total     Paid at booking
+ 1  WBK-2026-000080  207      26-28 Nov      Phone      37,500   11,250 cash (+ airport pickup 1,500)
+ 2  WBK-2026-000081  301      25-27 Nov      Agent      64,000   64,000 bKash
+ 3  WBK-2026-000082  401+402  27-29 Nov      Corporate 164,000        0
+ 4  WBK-2026-000083  312      24-25 Nov      Walk-in     5,555    5,555 cash (gave 6,000)
+ 5  WBK-2026-000084  105      24-26 Nov      Walk-in        32       16 cash
+ 6  WBK-2026-000085  203      30 Nov-3 Dec   Phone      60,000        0 (2 adults + 1 child)
+ 7  WBK-2026-000086  302      1-8 Dec        Walk-in   224,000   20,000 cash
+ 8  WBK-2026-000087  403      25-26 Nov      Agent      41,500        0 (+ LUX service 500)
+ 9  WBK-2026-000088  501      26-27 Nov      Corporate  60,000   60,000 cash
+10  WBK-2026-000089  204      28-30 Nov      Phone      38,000   11,400 bKash (discount 2,000)
+11  WBK-2026-000090  103      24-25 Nov      Walk-in        16        0
+12  WBK-2026-000091  201      24-25 Nov      Walk-in    20,000    5,000 cash
+13  WBK-2026-000092  303      2-4 Dec        Phone      64,000   10,000 bKash
+14  WBK-2026-000093  404      24-25 Nov      Agent      41,000        0
+15  WBK-2026-000094  502      28 Nov-1 Dec   Walk-in   180,000        0
+16  WBK-2026-000095  304      5-6 Dec        Phone      32,000        0 (4 adults blocked, made with 3)
+17  WBK-2026-000096  405      29-30 Nov      Walk-in    41,000        0
+18  WBK-2026-000097  503+504  1-3 Dec        Corporate 240,000  120,000 cash
+19  WBK-2026-000098  205      26-27 Nov      Walk-in    20,000   20,000 bKash
+20  WBK-2026-000099  505      10-12 Dec      Phone     120,000        0
+    TOTAL                                           14,52,603  3,27,221
+  * Source chosen in the form. Live saves / shows ALL of them as
+    "Walk-in" (see P1-01).
+
+ What happened after:
+  #4  checked in -> checked out (same day)                    Paid
+  #5  checked in -> +16 bKash -> checked out early (24th)      Paid
+  #11 checked in -> stay extended to 26 Nov (+16) -> 32 cash
+      (gave 50, change 18)                                     Paid, in house
+  #12 checked in -> +5,000 bKash, +10,000 cash -> minibar
+      charge 1,200 -> +1,200 bKash -> checked out              Paid 21,200
+  #13 cancelled (approve) -> refund 10,000 requested           Refund due
+  #14 no-show (approve)                                        Cancelled, fee 41,000
+  #8  early check-in (day before) -> blocked "available from
+      25 Nov 02:00 AM"                                         OK
+  #1  +10,000 cash   #3 +50,000 bKash   #6 +30,000 cash (gave 30,500)
+  #20 tried to take 130,000 on a 120,000 balance -> blocked
+
+
+================================================================
+ B. MONEY CHECK - my ledger vs the system
+================================================================
+  Taken today on bookings:  cash 2,71,953   bKash 1,61,616
+
+  Place                          System        My ledger    Result
+  Cashbox (drawer)               2,74,298      2,74,298     MATCH
+    of which Room Payment        2,71,953      2,71,953     MATCH
+  Reports > Collections today    4,35,914      4,35,914     MATCH
+    Cash / bKash                 2,72,780 /    2,72,780 /   MATCH
+                                 1,61,616      1,61,616
+  Reports > Room sales today    13,46,835     13,46,835     MATCH
+  Reports > Service sales            3,518         3,518    MATCH
+  Bookings > Outstanding         9,97,420      9,97,420     MATCH*
+  Payments > Balance due            997K       9,97,420     MATCH*
+  Reports > Outstanding due      9,98,721      9,97,420     +1,301  (P1-08)
+  No-show fee #14                  41,000 due on booking,
+                                   0 in list / Payments /
+                                   Reports ("Retained
+                                   cancellation fees 0")    MISMATCH (P1-07)
+  Finance > Hotel payable        6,11,148.84  should NOT
+                                 include front-desk cash    WRONG (P0-04)
+  * match only because the 41,000 no-show fee is left out everywhere.
+
+  Every payment in the booking matched: total, paid, balance, % paid,
+  change to return, "Due at the hotel", discount, advance 30% / 50%.
+
+
+================================================================
+ C. P0 - FIX FIRST
+================================================================
+
+[DEEP-P0-01] Rooms with guests inside are still sold (again, wider)
+  Rooms 102, 104, 206, 208, 209 have IN HOUSE guests (checkout
+  overdue). New booking still offers them for tonight.
+  Room 104 now has TWO in-house bookings (WBK-077 and WBK-079).
+  NEW in this round:
+  - Move room (#12) offers ONLY room 206 - which has an in-house
+    guest - and none of the really free rooms (203, 204, 205 ...).
+  - Room board shows 206 "Clean / Available".
+  (Same root cause as BKG-P0-01.)
+
+[DEEP-P0-02] Out-of-order room 202 is offered in New booking
+  Room board: 202 "Out of Order - Room blocked".
+  New booking tonight: Premium Room "5 of 5 free" incl. 202.
+  (Same as BKG-P0-03, confirmed again.)
+
+[DEEP-P0-03] Move room is broken
+  WHERE     Booking (in house) -> More -> Move room / Stay & room ->
+            Move / Upgrade Room
+  HAPPENS   - "Move room" in the More menu only switches the tab,
+              no panel opens (menu stays open).
+            - The panel lists one room (206, occupied) for every
+              room type filter; free rooms never appear.
+  EXPECTED  List free, clean rooms of the chosen type for the stay
+            dates; never an occupied or blocked room.
+
+[DEEP-P0-04] Finance treats front-desk cash as money BinGi owes
+  WHERE     Finance > Overview / Ledger
+  HAPPENS   Page says "Money guests paid online through BinGi".
+            But every cash and manual-bKash payment taken at the
+            desk creates:
+              Payment Collected  +30,000   (WBK-085, cash)
+              BinGi Commission    -3.00
+              Hotel Payable      +29,997
+            "Available balance 4,73,053.09 - Request payout".
+            The hotel could request a payout of cash it already
+            holds in its own drawer.
+            Also: Hotel payable 6,11,148.84 > collected 6,10,979.14
+            minus deductions (6,10,829.14) - 319.70 extra.
+  EXPECTED  Only money that reached BinGi (online gateway, BinGi
+            Marketplace) goes to Finance payable / payout.
+            Cash and the hotel's own bKash stay in Cashbox / hotel
+            accounts. No commission on walk-in / phone / cash.
+            (22 Nov decision "Payments via BinGi".)
+  FIX       BE: post to Finance only when payment channel = BinGi
+            gateway / marketplace. Fix payable arithmetic.
+
+
+================================================================
+ D. P1
+================================================================
+
+[DEEP-P1-01] Booking source is lost - every booking shows "Walk-in"
+  Chose Phone / Agent / Corporate. API received
+  source_channel = "phone" etc. Booking page, list and calendar all
+  show "Walk-in". Reports "Sales by source" therefore wrong.
+
+[DEEP-P1-02] "Cash received" looks filled but is empty
+  Advance 11,250 cash: field shows 11250 in grey (placeholder).
+  Confirm -> "Cash received must cover the payment being recorded."
+  EXPECTED  Pre-fill the real value (= amount), or show it empty.
+
+[DEEP-P1-03] Check-in without any ID
+  All 5 check-ins passed with "ID document: Not on file - Review".
+  Prototype blocks check-in until NID / passport is valid
+  (BD police register).
+
+[DEEP-P1-04] Actual check-in time not shown
+  Stay & room: "Actual Arrival - Time not recorded" right after
+  check-in at 13:21 (the check-in panel showed the time).
+
+[DEEP-P1-05] Cancelled booking shows two different balances
+  #13: header "Balance 0 - Fee 0 - refund due 10,000";
+  Payments tab "Balance Due BDT 54,000"; refund panel
+  "Available credit 0".
+
+[DEEP-P1-06] Refund cannot be finished by the hotel
+  Refund needs "Execute the approved refund in the existing Super
+  Admin refund workflow" (developer text shown to staff).
+  Refund methods only Cash Return / Bank Transfer - no bKash back,
+  though the guest paid by bKash.
+  The same admin who requests the cancel also approves it.
+
+[DEEP-P1-07] No-show is saved as "Cancelled", fee not tracked
+  #14 -> status "Cancelled" (not "No-show"); review reason shows
+  "Guest requested cancellation" (I wrote "did not arrive").
+  Fee 41,000 shows as balance on the booking page but is 0 in the
+  list, Payments, Reports. No-show allowed at 13:30 on arrival day.
+  EXPECTED  Status "No-show", allowed after the arrival day / night
+  audit, fee counted as receivable.
+
+[DEEP-P1-08] Outstanding differs between Reports and Bookings
+  Reports 9,98,721 vs Bookings / Payments 9,97,420 (diff 1,301).
+
+[DEEP-P1-09] Arrivals / Departures counts mean the wrong thing
+  "Arrivals today 2" lists guests already checked in.
+  "Departures 0" while 3 guests checked out today and 5 stays are
+  past checkout. Prototype: Arrivals = still to check in,
+  Departures = due out today (incl. overdue).
+
+[DEEP-P1-10] Early check-out keeps the full stay
+  #5 (24-26 Nov) checked out on the 24th: no prompt, still shows
+  "2 nights", full charge, no shorten / refund option.
+  (Room 105 was correctly released for 25-26.)
+
+[DEEP-P1-11] Reports count future stays as today's sales
+  "Daily sales today 13,51,576" = all bookings made today, incl.
+  stays in December. Hotel revenue should follow nights stayed;
+  keep "bookings made" as a separate number.
+  (Please confirm which basis you want.)
+
+[DEEP-P1-12] Calendar
+  - Rooms show as "LEGACY-RN-6 ... LEGACY-RN-33" instead of 101, 207.
+  - First load showed only 10 rooms; later all 29.
+  - 17 "Not bookable" apartments are listed first.
+  - Rooms with only a future booking show "Occupied" today.
+  - All bars the same colour and all say "Walk-in".
+
+
+================================================================
+ E. P2
+================================================================
+  1. Check in button shows on bookings 8+ days ahead (blocked only
+     after the panel opens). Show "Arrives 2 Dec".
+  2. Overpay blocked silently (Record Payment just disabled).
+     Say "Up to BDT 120,000".
+  3. bKash appears twice in every payment list - it is the same
+     account "01867734016 - Yeapas" listed two times.
+  4. Collect payment fails once if clicked while "Loading payment
+     methods..." - disable until loaded.
+  5. Add charge: categories Other / Late checkout / Damage / Room
+     extra. Prototype quick chips: Minibar, Laundry, Damage, Extra
+     bed, Room service, Other. Two-step "Review adjustment" needs
+     two clicks (first click while "Checking financial impact").
+  6. More menu stays open after choosing an item.
+  7. No extra-bed option when guests > capacity ("max 3").
+  8. "Average Transaction Tk. 22,586.635" (3 decimals).
+  9. Reports "Collections by method": Cash listed twice
+     (272,780 and 1,518).
+ 10. Developer words to staff: "snapshotted cancellation or
+     no-show fee", "Super Admin refund workflow", "CONFIRMED ·
+     Partial Paid", "1 Nights".
+ 11. Payments list shows method "Cash" for unpaid bookings.
+ 12. Room board "Total Rooms 46" counts 17 not-bookable apartments.
+
+
+================================================================
+ F. DESIGN 1:1 - what live must change to match our design
+    (prototype screenshots taken at 1568 px, same session)
+================================================================
+
+ F1. BOOKINGS LIST
+  Our design                                Live now
+  - Header: [Walk-in] [New booking] [...]   - [All dates] [New booking]
+  - KPI "In house 14 - 10 rooms free        - "In house 7" (no rooms
+    tonight"                                  free tonight line)
+  - Tabs All / Arrivals / In house /        - same names, different
+    Departures / Payment due                  meaning (P1-09)
+  - Room column: "105" + category           - "105" + "Twin" for all
+    "Deluxe Garden View"
+  - Source badge with icon and colour       - plain "Walk-in" text
+    (Walk-in, Website, Marketplace,
+    Booking.com, Agoda, Expedia, Phone)
+  - Row tags: Leaves today, Room dirty,     - only "Checkout overdue",
+    No room yet, VIP                          "Needs review"
+  - Status filter incl. On hold, No-show    - no On hold / No-show
+  - Today's work first (leaving today,      - newest booking first
+    arriving), then upcoming
+  - 25 rows + "Show more"                   - 25 rows, no Show more
+  - Money "৳45,540", lakh format ৳3,73,174  - "BDT 71,904" / "20,000"
+  - Dates "Sat 07 Nov - Tue 10 Nov"         - "Thu 26 Nov 2026 - Sat
+                                              28 Nov 2026"
+
+ F2. NEW BOOKING
+  - Sources: Walk-in, Phone, Website,       - Walk-in, Phone, Agent,
+    Marketplace, OTA, Agent, Corporate        Corporate only
+  - Room card: "2 adults + 1 child",        - "3 guests",
+    "Breakfast included", "Dinner           - "Breakfast + Lunch +
+    ৳1,200 / person" add-on chips             Dinner included" on all
+  - Summary "Total - Incl. VAT & service    - "Estimate - the server
+    charge", button "Next: Guest"             re-prices ..." , "Next"
+  - Breadcrumb "Bookings > New booking"     - "Reservations > New"
+  (4 steps, room chips, summary card, payment block = MATCH)
+
+ F3. BOOKING PAGE
+  - Title line "Room 105 · Deluxe Garden    - "Room 201 · Room ·"
+    View · dates · nights · guests"           (category lost)
+  - 7 tabs: Overview, Stay & room, Guest,   - 9 tabs: ... Guests, Bill
+    Meals & services, Bill & payments,        & folio, Payments,
+    Documents & messages, Activity            Meals & services,
+                                              Documents, Messages ...
+  - Bill: Room x nights, Service charge     - Bill & folio table + 6
+    10%, VAT 15%, Total; "Add a charge"       buttons (Add charge,
+    chips; Payments card; Security            Correct, Discount,
+    deposit (amount + method)                 Service, History,
+                                              Invoice); no deposit
+  - Check-in inline panel on the page,      - side drawer, ID optional
+    ID required
+  (Header buttons Check in/out, Payment, ... ; Total / Paid /
+   Balance strip = MATCH)
+
+ F4. CALENDAR
+  - Inside Bookings page (same header,      - separate page "Booking
+    view switch Table / Calendar / Room       Calendar", own KPI tiles,
+    board)                                    "Bookings > Booking
+                                              Calendar" breadcrumb
+  - Rooms grouped by category with          - flat list, apartments
+    "Deluxe Garden View · 8 rooms"            first, LEGACY-RN names
+  - Price + free row per category per day   - none
+    ("12,000 / 4 free", "Closed")
+  - "No room" lane for unassigned           - footer text only
+    bookings
+  - Bar colour by state: booked (blue),     - all pink; legend shows
+    in house (green), payment due dot,        Confirmed / In-house /
+    source icon                               Clean / Dirty / OOO
+  - Today column highlighted                - highlighted (MATCH)
+  - 7 / 14 / 30 days                        - 7 / 14 / 30 (MATCH)
+
+ F5. ROOM BOARD
+  - Title "Room board", inside Bookings     - "Room Overview" page,
+                                              breadcrumb "Table"
+  - Filter chips with counts: All rooms,    - KPI tiles Total / Clean /
+    Free, Arriving, In house, Leaving,        Occupied / Dirty / OOO
+    Out of order                              + 4 dropdown filters
+  - Grouped by category                     - not grouped
+  - Card: room no., state (Arriving /       - card: readiness chip,
+    In house / Leaving / Out of order),       category, "Floor not
+    guest name, "Until 13 Nov",               set", capacity, one
+    "Paid" or "৳30,360 due",                  status line
+    "Room dirty", OOO reason "AC repair"
+  - No long review sections                 - two long "arrival /
+                                              departure review"
+                                              blocks with technical
+                                              text on top
+  - Only sellable rooms                     - includes 17 apartments
+
+
+================================================================
+ G. WORKS - KEEP
+================================================================
+  - All money maths inside a booking: totals, advance %, discount,
+    change, balance, Partly paid / Paid labels.
+  - Cashbox posts every cash payment with booking number - exact.
+  - Collect payment: cash with change, bKash with reference.
+  - Extend stay: clear financial impact, reason, confirm tick.
+  - Add charge: preview of new total and balance before apply.
+  - Check-out blocked while balance or a pending order exists.
+  - Checked-out rooms turn Dirty on the Room board (Housekeeping
+    link works). Early-checkout room released for next night.
+  - Early check-in blocked with a clear time.
+  - Capacity check ("Too many guests for this choice (max 3)").
+  - Multi-room booking (2 rooms, one booking) works.
+  - Overpayment is blocked.
+
+
+================================================================
+ H. NOT TESTED YET
+================================================================
+  Group booking page, waitlist, day close (night audit), booking
+  reports page, online bookings arriving, staff roles, phone size,
+  printing confirmation / invoice PDF, Super Admin refund step.
+
+
+================================================================
+ I. TEST DATA LEFT (Pan Pacific Sonargaon, testing server)
+================================================================
+  20 bookings WBK-2026-000080 ... 000099 ("QA Guest 01-20",
+  phones 01700000101-120, emails qa01-20@example.com).
+  In house now: #11 (103). Checked out: #4, #5, #12.
+  Cancelled: #13 (refund request 10,000 pending), #14 (no-show).
+  Cashbox open, drawer 2,74,298 (all test). Day not closed.
+  Earlier: WBK-2026-000079 still in house in room 104.
+
+
+================================================================
+ J. SUGGESTED FIX ORDER
+================================================================
+  1. DEEP-P0-04 Finance / payout (money leaves BinGi wrongly)
+  2. DEEP-P0-01, -02, -03 one room-occupancy source; move room
+  3. P1-01 source saved; P1-07 no-show; P1-05/06 refund flow
+  4. P1-09 arrivals / departures; P1-12 calendar names & grouping
+  5. Section F design changes (list, calendar, room board first)
+  6. Remaining P1, then P2
+================================================================
