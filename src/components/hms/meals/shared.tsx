@@ -14,6 +14,7 @@ import { useCashboxData } from "../cashbox/pages";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { useOutlet } from "./frame";
 import { billHtml, kotHtml, printHtml } from "./print";
+import { restaurantBillA4Html } from "@/lib/bookings/docs";
 
 export function useToast() { const [t, setT] = useState(""); const show = (m: string) => { setT(m); setTimeout(() => setT((x) => (x === m ? "" : x)), 2800); }; return [t, show] as const; }
 
@@ -80,6 +81,7 @@ export function OrderSheet({ r, id, onClose, onDone, onPay }: { r: Restaurant; i
           <div className="flex flex-wrap gap-2">
             {o.pay === "unpaid" && !["cancelled", "declined", "approval"].includes(o.status) && <Link href={`/hms/meals/pos?order=${o.id}`} className={clsx(btnLine, "h-9 px-3")}><Plus className="size-4" aria-hidden />Add items</Link>}
             <button onClick={() => printHtml(billHtml(o, r.h.name, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print bill</button>
+            {!["cancelled", "declined"].includes(o.status) && <button onClick={() => { const name = window.prompt("A4 bill for a company — bill to (company name):", o.guest ?? ""); if (name?.trim()) printHtml(restaurantBillA4Html(r.h, { orders: [o], customer: { name: name.trim() }, placeName: r.placeName })); }} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />A4 bill (company)</button>}
             {!["cancelled", "declined", "served"].includes(o.status) && <button onClick={() => printHtml(kotHtml(o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>}
           </div>
           <dl className="space-y-1 text-[14px]">

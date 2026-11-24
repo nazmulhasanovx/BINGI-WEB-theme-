@@ -7,7 +7,7 @@ import { settingsOf } from "@/lib/settings/store";
 import { oooOn, type Unit } from "@/lib/rooms/store";
 import { bill as mealBill, type Order as MealOrder } from "@/lib/meals/seed";
 import { orderSub, orderTotal, slotOf, statusOf, type Order as SvcOrder } from "@/lib/services/store";
-import { bill, dueOf, totalOf, type Audit, type Booking } from "./store";
+import { bill, dueOf, roomRevenueOn, totalOf, type Audit, type Booking } from "./store";
 import { normaliseDesign, lang, docPage, header, esc, type DocDesign, type DocHotel, type LKey } from "./doc-kit";
 
 type X = ReturnType<typeof lang>;
@@ -151,16 +151,7 @@ export function nightAuditHtml(h: Hotel, date: string, inp: NightAuditInput) {
   const name = (b: Booking) => inp.guests?.get(b.guestId)?.name;
   // Occupancy
   const total = inp.units.length; const ooo = inp.units.filter((u) => oooOn(u, date, next)).length; const avail = Math.max(0, total - ooo);
-  const stayed = L.filter((b) => (b.status === "Checked in" || b.status === "Checked out") && b.nights.some((n) => n.date === date));
-  const sold = new Set(stayed.map((b) => b.unit || b.code)).size;
-  // Room revenue for the night: price after a pro-rata share of the booking discount, then service + VAT (same rule as the bill).
-  let rNet = 0, rSc = 0, rVat = 0;
-  for (const b of stayed) {
-    const n = b.nights.find((k) => k.date === date)!; const all = bill(b); const one = n.base + (b.mealPlan?.perNight ?? 0);
-    const share = all.rooms ? Math.round((all.discount * one) / all.rooms) : 0;
-    const r = bill({ nights: [n], tax: b.tax, discount: share, mealPlan: b.mealPlan });
-    rNet += r.base; rSc += r.service; rVat += r.vat;
-  }
+  const R = roomRevenueOn(L, date); const sold = R.sold; const rNet = R.net, rSc = R.service, rVat = R.vat;
   const arrivals = L.filter((b) => b.from === date && (b.status === "Checked in" || b.status === "Checked out")).length;
   const departures = L.filter((b) => b.status === "Checked out" && (b.checkedOutAt ?? "").startsWith(date)).length;
   const inHouse = L.filter((b) => b.status === "Checked in");
@@ -196,7 +187,7 @@ export function nightAuditHtml(h: Hotel, date: string, inp: NightAuditInput) {
   const outletRows = [...outlets.entries()].map(([k, o]) => rrow(`${x.t("fnb")} · ${esc(k)}`, o.net, o.sc, o.vat, o.total, cnt(x, o.n))).join("");
   const fnbT = [...outlets.values()].reduce((a, o) => ({ net: a.net + o.net, sc: a.sc + o.sc, vat: a.vat + o.vat, total: a.total + o.total }), { net: 0, sc: 0, vat: 0, total: 0 });
   const gNet = rNet + fnbT.net + s.net, gSc = rSc + fnbT.sc + s.sc, gVat = rVat + fnbT.vat + s.vat, gTot = rNet + rSc + rVat + fnbT.total + s.total + chTotal;
-  const rev = `<div class="sec"><div class="lab">${x.lb("revenue")} (৳)</div><table class="lines reg"><thead><tr><th style="width:40%">${x.lb("description")}</th><th class="r">${x.lb("net")}</th><th class="r">${x.lb("service")}</th><th class="r">${x.lb("vat")}</th><th class="r">${x.lb("total")}</th></tr></thead><tbody>
+  const rev = `<div class="sec"><div class="lab">${x.lb("revenue")} (৳)</div><table class="lines reg"><thead><tr><th style="width:40%">${x.lb("description")}</th><th class="r">${x.lb("net")}</th><th class="r">${x.lb("service")}</th><th class="r">${x.lb("vat")}</th><th class="r" style="width:17%">${x.lb("grossIncl")}</th></tr></thead><tbody>
 ${rrow(x.t("roomRev"), rNet, rSc, rVat, rNet + rSc + rVat, `${x.num(sold)} ${x.t("sold").toLowerCase()}`)}
 ${outletRows || (inp.meals ? rrow(x.t("fnb"), 0, 0, 0, 0) : "")}
 ${inp.services ? rrow(x.t("services"), s.net, s.sc, s.vat, s.total, cnt(x, s.n)) : ""}
@@ -272,7 +263,7 @@ ${T.other ? `<div><span>${x.t("extras")}</span><span class="nw">${x.money(T.othe
 const SERVICE_KEY: Record<string, LKey> = { dinein: "dineIn", room: "roomService", takeaway: "takeaway", delivery: "delivery" };
 
 /** Restaurant & bar bill on A4 for a company customer: one or many orders on one invoice. */
-export function restaurantBillA4Html(h: Hotel, inp: { orders: MealOrder[]; customer: BillParty; no?: string; date?: string; ref?: string }) {
+export function restaurantBillA4Html(h: Hotel, inp: { orders: MealOrder[]; customer: BillParty; no?: string; date?: string; ref?: string; placeName?: (o: MealOrder) => string }) {
   const { H, d, x, docs } = ctx(h);
   const orders = inp.orders.filter((o) => o.status !== "cancelled" && o.status !== "declined").sort((a, c) => a.at.localeCompare(c.at));
   const no = inp.no ?? `${docs.prefix}${orders.length === 1 ? orders[0].no : `${orders[0]?.no ?? ""}-${orders.length}`}`;
@@ -286,7 +277,7 @@ export function restaurantBillA4Html(h: Hotel, inp: { orders: MealOrder[]; custo
     else if (o.pay === "room" || o.method === "room") room = r.total;
     else if (o.pay === "paid") { paid = r.total; payRows.push(`<tr><td class="nw">${x.date(o.paidAt ?? o.at)}</td><td>${x.num(esc(o.no))}</td><td>${o.method ? x.method(METHOD_KEY[o.method] ?? o.method) : DASH}</td><td class="r">${x.plain(paid)}</td></tr>`); }
     T.paid += paid; T.room += room;
-    const where = [x.t(SERVICE_KEY[o.service] ?? "dineIn"), o.place ? esc(o.place) : "", o.room ? `${x.t("room")} ${x.num(esc(o.room))}` : ""].filter(Boolean).join(" · ");
+    const where = [x.t(SERVICE_KEY[o.service] ?? "dineIn"), o.service === "room" ? "" : inp.placeName ? esc(inp.placeName(o)) : o.place ? esc(o.place) : "", o.room ? `${x.t("room")} ${x.num(esc(o.room))}` : ""].filter(Boolean).join(" · ");
     const grp = `<tr class="grp"><td colspan="4">${x.t("order")} ${x.num(esc(o.no))} · ${x.date(o.at)}, ${x.time(o.at)} · ${esc(o.outlet)} · ${where}${room ? ` · ${x.t("toRoom")}` : ""}</td></tr>`;
     const ls = o.lines.map((l) => `<tr><td>${esc(l.name)}${l.size ? ` · ${esc(l.size)}` : ""}${l.note ? `<span class="sub">${esc(l.note)}</span>` : ""}</td><td class="c">${x.num(l.qty)}</td><td class="r">${x.plain(l.price)}</td><td class="r">${x.plain(l.price * l.qty)}</td></tr>`).join("");
     const extra = r.disc ? `<tr><td colspan="3" class="mut">${x.t("discount")}${o.discount?.reason ? ` · ${esc(o.discount.reason)}` : ""}</td><td class="r">− ${x.plain(r.disc)}</td></tr>` : "";

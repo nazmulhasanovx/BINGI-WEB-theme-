@@ -67,6 +67,7 @@ const L = {
   restaurantBill: ["Restaurant bill", "রেস্টুরেন্ট বিল"], order: ["Order", "অর্ডার"], item: ["Item", "আইটেম"], subtotal: ["Subtotal", "উপমোট"],
   toRoom: ["Charged to room bill", "কক্ষ বিলে যোগ হয়েছে"], dineIn: ["Dine-in", "ডাইন-ইন"], roomService: ["Room service", "রুম সার্ভিস"],
   takeaway: ["Takeaway", "টেকঅ্যাওয়ে"], delivery: ["Delivery", "ডেলিভারি"], table: ["Table", "টেবিল"], outlet: ["Outlet", "আউটলেট"], period: ["Period", "সময়কাল"],
+  grossIncl: ["Gross (incl. VAT/service)", "মোট (ভ্যাট ও সার্ভিসসহ)"],
 } as const;
 export type LKey = keyof typeof L;
 const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
