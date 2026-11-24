@@ -1,0 +1,291 @@
+================================================================
+ 01  ONBOARDING  -  Bugs / UI / UX problems
+================================================================
+ Site:    https://hms.bingi.app/onboarding  (testing server)
+ Tested:  24 Nov 2026, Desktop Chrome 1568 px
+ Props:   "QA Test Resort" (Resort, Ultra), "QA Test Hotel" (Hotel, Business)
+ Compare: onboarding v8 prototype (approved)
+ Source:  docs/qa/BinGi_HMS_Onboarding_QA_2026-11-24.txt
+          docs/qa/LIVE_HMS_ONBOARDING_QA.md
+
+ COUNT:   P0 x 5   |   P1 x 18   |   P2 x 18
+ IDs:     ONB-P0-xx / ONB-P1-xx / ONB-P2-xx
+
+
+----------------------------------------------------------------
+ FOUNDER DECISIONS - build to these (24 Nov)
+----------------------------------------------------------------
+ D1  PRICING = per room, per month. No packages.
+       Starter   ৳25  / room / month   (6 mo ৳23, 12 mo ৳19)
+       Business  ৳70  / room / month   (6 mo ৳63, 12 mo ৳53)
+       Ultra     ৳116 / room / month   (6 mo ৳105, 12 mo ৳87)
+       Minimum 1 room. Capacity = rooms bought.
+       Remove 30 / 50 / 100 / 200 room packages.
+ D2  Room types BEFORE KYC: unlimited drafts.
+       KYC only for website publish, online booking, payouts.
+ D3  Subscription BEFORE KYC: owner can pay BinGi subscription.
+       KYC only gates online guest payments.
+ D4  Restaurant on Business = limited, Ultra = full (live is correct).
+
+
+----------------------------------------------------------------
+ FLOW MAP - where each problem sits
+----------------------------------------------------------------
+
+  My properties
+     |
+     +--[Continue]--> X "Unauthenticated" ............... ONB-P0-01
+                         |
+                         +--[Try again]--> OTHER hotel ... ONB-P0-02
+
+  +------------------------------------------------------------+
+  | 1. YOUR PROPERTY                                           |
+  |    1.1 Type ............ star rating/about on wrong step   |  P2-01
+  |    1.2 Name                                                |
+  |    1.3 Address ......... city list no search/divisions     |  P2-02
+  |    1.4 Extras .......... ROOM amenities, not property      |  P1-03
+  |                          search "wifi" = nothing           |  P1-04
+  |                          same icon / "Conditionin-g"       |  P2-03
+  |    1.5 Contact                                             |
+  +------------------------------------------------------------+
+  | 2. PLAN & PAPERS                                           |
+  |    2.1 Documents                                           |
+  |    2.2 Plan ............ "per room" text, package prices   |  P1-05
+  |                          Ultra list = Business list        |  P2-04/05
+  |    2.3 Setup help                                          |
+  |    2.4 Start ........... "Subscribe now" pre-selected      |  P1-06
+  |         Checkout ....... wrong plan id in URL              |  P0-04
+  |                          blocked by KYC                    |  P0-05
+  |                          "one-time activation" summary     |  P1-17
+  |    2.5 Summary ......... "subscription ready" (it is not)  |  P2-07
+  +------------------------------------------------------------+
+  | 3. ROOMS                                                   |
+  |    3.1 Where they are .. Resort pre-picks only Rooms       |  P1-07
+  |    3.2 Add rooms ....... 2nd room type NEVER saves (403)   |  P0-03
+  |                          fees always at Starter %          |  P1-08
+  |                          same unit code in 2 blocks        |  P1-09
+  |                          panel box scrolls, error hidden   |  P1-10/11
+  |    3.3 Review .......... unsaved drafts not warned         |  P1-12
+  +------------------------------------------------------------+
+  | 4. BOOKING & TEAM ...... old tool names                    |  P2-15
+  +------------------------------------------------------------+
+  | 5. MONEY & WEBSITE                                         |
+  |    5.1 Payments ........ money flow / payout not explained |  P1-13
+  |    5.2 Website ......... wrong theme names, empty images   |  P1-14
+  |                          no "How guests book"              |  P1-15
+  +------------------------------------------------------------+
+  | 6. REVIEW & SUBMIT ..... finish allowed without Terms      |  P1-16
+  |                          raw "NOT_SUBMITTED", wrong ring % |  P2-16
+  +------------------------------------------------------------+
+  Any step: "Save & exit" signs the owner OUT ................ P1-18
+  Any step: progress % stuck at 0 in part 1 .................. P1-01
+  Any step: old website preview on the right ................. P1-02
+
+
+================================================================
+ P0  -  BLOCKERS (owner cannot finish)
+================================================================
+
+[ONB-P0-01] "Continue" from My properties fails
+  WHERE     /onboarding -> My properties -> pick a property -> Continue
+  HAPPENS   List loads, then "Could not load onboarding. Unauthenticated."
+  IMPACT    Owner who stopped half-way cannot come back.
+  EXPECTED  Opens the saved step. If session expired: sign in -> return
+            to the same property + step.
+  FIX       BE/FE: list call and load call use different auth (cookie vs
+            bearer, or scope). Use one session.
+
+[ONB-P0-02] "Try again" opens a DIFFERENT property
+  WHERE     Error screen of ONB-P0-01 -> Try again
+  HAPPENS   Opens /dashboard/setup-center of "Pan Pacific Sonargaon
+            Dhaka" (10/13 steps).
+  IMPACT    Owner may edit the wrong hotel.
+  EXPECTED  Retry the SAME property.
+  FIX       FE: keep property id on retry; never fall back to "last
+            used" property.
+  CHECK     Does that property belong to the same login? (phone on My
+            properties and account row differed)
+
+[ONB-P0-03] Only the FIRST room type can be saved
+  WHERE     3.2 Add rooms -> 2nd type -> Save
+            (Garden Cottage, Private Villa, 2-Bedroom Apartment, Suite,
+            Twin Room - all fail)
+  HAPPENS   POST /api/onboarding/accommodation-categories
+            403 {"code":"KYC_TRIAL_CATEGORY_LIMIT"}
+            UI shows a generic error above the fold.
+  IMPACT    Resort cannot add cottages/villas; hotel cannot add a 2nd
+            room type. Main job of onboarding is blocked.
+  EXPECTED  Decision D2: unlimited drafts before KYC.
+  FIX       BE: remove KYC_TRIAL_CATEGORY_LIMIT for onboarding drafts.
+            FE: map every API error code to a plain sentence.
+
+[ONB-P0-04] Checkout sells a different plan
+  WHERE     2.4 Start -> Subscribe now -> Go to checkout
+  HAPPENS   Page "BinGi Ultra - BDT 3,500" but URL
+            ?plan=PLAN_ENTERPRISE
+  IMPACT    Payment order may be made for Enterprise.
+  FIX       FE/BE: one plan id from plan step -> checkout -> payment;
+            checkout reads plan, rooms, period from one source.
+
+[ONB-P0-05] Payment blocked by KYC at the end
+  WHERE     Checkout -> Continue to secure payment
+  HAPPENS   "Complete hotel KYC verification to access this HMS module."
+            No way forward.
+  EXPECTED  Decision D3: subscription payable before KYC.
+  FIX       BE: allow subscription checkout without KYC.
+
+
+================================================================
+ P1  -  WRONG / DIFFERENT FROM v8
+================================================================
+
+[ONB-P1-01] Progress % stuck at 0% in part 1, then jumps
+            26 -> 32 -> 42 -> 47 -> 53.  EXPECTED: moves every step.
+
+[ONB-P1-02] Old "What guests will see" website preview on the right
+            (steps 1.x - 5.x). EXPECTED: removed (23 Nov); only 3.1
+            shows the live property drawing.
+
+[ONB-P1-03] 1.4 Extras shows ROOM amenities (AC, bathtub, shampoo,
+            hair dryer, King bed). EXPECTED property facilities first:
+            Free Wi-Fi, Parking, Power backup, 24-h front desk,
+            Restaurant, Room service, CCTV, Elevator, Breakfast,
+            Airport transfer. Resort adds Pool, Beach, Garden.
+            Room amenities belong in 3.2.
+
+[ONB-P1-04] Search "wifi" finds nothing (item "Wi-Fi").
+            FIX: ignore hyphens, spaces, letter case.
+
+[ONB-P1-05] 2.2 Plan: headline "Pay per room. Nothing hidden" but
+            package prices (Starter ৳500 up to 30 rooms; Ultra
+            30/50/100/200 = ৳3,500/4,999/7,999/14,999; Business "5 of
+            20 rooms in your package").
+            EXPECTED decision D1: room count x per-room price x period.
+            FIX BE + FE pricing model.
+
+[ONB-P1-06] 2.4 "Subscribe now" pre-selected.
+            EXPECTED default "Set up first".
+
+[ONB-P1-07] 3.1 Resort pre-picks only Rooms ("Suggested for your
+            property type"). EXPECTED Rooms + Cottages + Villas.
+
+[ONB-P1-08] 3.2 Booking fees always at Starter rate
+            (Website -1.5% / Marketplace -12%) on Business and Ultra.
+            EXPECTED Business 1% / 8%, Ultra 0.5% / 4%.
+
+[ONB-P1-09] Same unit code allowed in two blocks (C1-C100 / V1-V100 in
+            every block; C1 in "Lake Side" AND "Block 2").
+            EXPECTED unique per property (or block prefix - open
+            decision, e.g. "Z1-C1").
+
+[ONB-P1-10] 3.2 Panel box itself scrolls after failed Save
+            (scrollTop ~367 px, footer floats mid-panel).
+            EXPECTED only the body scrolls; header + footer fixed.
+
+[ONB-P1-11] 3.2 Save error is one generic line, above visible area,
+            no reason. EXPECTED clear reason at top of visible area.
+
+[ONB-P1-12] 3.3 Review does not warn about 4 unsaved drafts (Cottage,
+            Villa, Apartment, Suite). EXPECTED "4 types not saved -
+            finish or discard".
+
+[ONB-P1-13] 5.1 Payments does not explain money flow.
+            EXPECTED: Guest pays (SSLCommerz / EPS) -> BinGi balance ->
+            payout to owner on request. Mention Marketplace.
+
+[ONB-P1-14] 5.2 Website themes "Classic Stay / Compact Business / BinGi
+            Nest", empty thumbnails. EXPECTED NEST, CITY, ESCAPE, GRAND
+            with real previews; Resort -> ESCAPE first.
+
+[ONB-P1-15] 5.2 No "How guests book" choice.
+            EXPECTED Request only / Pay at hotel / Pay online.
+
+[ONB-P1-16] 6.1 "Everything needed to submit is done" while Terms &
+            Privacy not accepted. EXPECTED submit blocked until all 3
+            confirmations ticked.
+
+[ONB-P1-17] Checkout summary wrong: "BinGi Ultra - One-time activation
+            - BDT 3,500", no rooms / period / per-room line, "Owner: -"
+            empty, developer text "this HMS module".
+            EXPECTED e.g. "Ultra - 5 rooms x ৳116 = ৳580 / month
+            (+ setup help) = Total", owner filled.
+
+[ONB-P1-18] "Save & exit" signs the owner out (goes to /login).
+            EXPECTED Save -> My properties / dashboard, still signed in.
+
+
+================================================================
+ P2  -  POLISH
+================================================================
+  P2-01  1.1  Star rating + one-line "about" for hotel/resort/motel/
+              lodge should be on the Type step (now on 1.5 Contact).
+  P2-02  1.3  City list: no division labels, no search, Dhaka far down.
+  P2-03  1.4  All amenity icons the same sparkle; "Air Conditionin-g"
+              breaks mid-word.
+  P2-04  2.2  Ultra "Includes" list same as Business; Ultra extras only
+              in top box.
+  P2-05  2.2  Plan cards should say "Team" (Business) vs "Full HR"
+              (Ultra).
+  P2-06  2.4  With "Set up first", summary says "Monthly after trial".
+  P2-07  2.5  "Your subscription and setup service are ready" when
+              nothing was subscribed.
+  P2-08  2.4  Trial 30 days; ads say 7 days. (OPEN founder decision.)
+  P2-09  3.2  Panel ~58% wide; v8 = ~88% (max 1120 px).
+  P2-10  3.2  Cottage/villa/apartment forms say "Room numbers" and
+              placeholder "e.g. Ocean View Deluxe". Use the kind's word.
+  P2-11  3.2  Villa/apartment have no bedrooms / bathrooms fields.
+  P2-12  3.2  Row shows "Ready" and "Waiting for BinGi approval" together.
+  P2-13  3.2  "100 available" does not go down after picking numbers.
+  P2-14  All  Reload/resume lands on a different step (3.2 -> 3.1,
+              checkout -> 5.2).
+  P2-15  4.2  Old tool names (Staff & roles, Restaurant & meals, Other
+              services) -> Team, Restaurant & Bar, Services.
+  P2-16  6.1  Raw "NOT_SUBMITTED"; "Fix" on optional items; ring 71% vs
+              sidebar 89%; developer text "eligible legacy Room
+              inventory"; Money & website not ticked Done.
+  P2-17  Plan Changing property type later (Hotel -> Guest house):
+              helper still says "Hotel", "What you rent" not
+              re-suggested, parts 4-5 turn grey, no warning.
+  P2-18  Nav  No way back to My properties from onboarding; no way to
+              start a 2nd property.
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - 6 parts, v8 step names, sidebar with sub-steps, Save & exit, Help,
+    Bangla/English switch.
+  - Contact: verified mobile, optional business details.
+  - Documents: NID both sides, optional papers, "Do it later".
+  - Setup help with prices; Summary with "Change" links.
+  - Plan helper: Home/flat & Guest house -> Starter, Hotel -> Business,
+    Resort -> Ultra, Hotel group -> Custom.
+  - Hotel pre-picks Rooms + Apartments + More kinds; area guessed from
+    road text.
+  - 3.1 What you rent, Building & floors, Zones/Blocks, custom kind,
+    live property drawing, "Has rooms - can't remove".
+  - 3.2 one-type panel, presets, price breakdown, floor/zone number
+    picker, unfinished drafts kept.
+  - 4.x booking rules prefilled, tools per plan, team optional.
+  - 5.1 cash always on; bKash/Nagad/Rocket with number + instructions.
+  - Business shows "Restaurant (limited)" - correct.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  Payment gateway page (blocked by P0-05) | Phone 390 px |
+  More than 1 room type (blocked by P0-03) | Hostel, Motel, Serviced
+  apartment, Lodge, Vacation rental, Other | Submit + after submit.
+
+
+================================================================
+ FIX ORDER
+================================================================
+  1. P0-03 + P0-05   backend KYC rules (D2, D3)
+  2. P0-01 + P0-02   session / continue / retry
+  3. P0-04 + P1-17   checkout plan id + summary
+  4. P1-05 + P1-08   pricing model + fees per plan
+  5. P1-18, P1-16, P1-12   exit / submit / review guards
+  6. Rest of P1, then P2
+================================================================

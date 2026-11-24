@@ -1,0 +1,194 @@
+================================================================
+ 09  MONEY  -  Cashbox, Payments, Finance, Reports
+     Bugs / UI / UX problems  (cross-module money check)
+================================================================
+ Site:    https://hms.bingi.app/dashboard/{cashbox, payments, finance,
+          reports}  (testing server)
+ Prop:    Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Tested:  24 Nov 2026. Money checked by hand against my own ledger of
+          20 test bookings + services + meals + expenses.
+ Source:  Bookings Deep QA (sections B, C, D, E), Operations QA (A, B),
+          Meals QA, Inventory/Services QA.
+ Related: 02_Bookings, 05_Meals, 07_Other_Services, 08_Operations
+
+ COUNT:   P0 x 3   |   P1 x 6   |   P2 x 5
+ IDs:     MON-P0-xx / MON-P1-xx / MON-P2-xx
+
+
+----------------------------------------------------------------
+ HOW MONEY SHOULD FLOW  (22 Nov decision "Payments via BinGi")
+----------------------------------------------------------------
+
+   GUEST PAYS
+      |
+      +-- cash at desk ------------> CASHBOX (hotel drawer)
+      |                                  ^   |
+      |                                  |   +--> cash expenses out
+      |                                  |
+      +-- hotel's own bKash/Nagad -> HOTEL ACCOUNT (Payments list)
+      |
+      +-- online gateway (EPS /  --> BINGI BALANCE --> FINANCE
+          SSLCommerz) or BinGi          (commission)    payable +
+          Marketplace                                   payout request
+
+   TODAY: cash + manual bKash ALSO go to FINANCE payable with
+          commission -> hotel can request a payout of cash it already
+          holds  (MON-P0-01)
+
+
+----------------------------------------------------------------
+ MONEY CHECK  -  system vs my ledger (24 Nov)
+----------------------------------------------------------------
+ Taken on bookings today: cash 2,71,953 | bKash 1,61,616
+
+ Place                         System        My ledger    Result
+ ----------------------------  ------------  -----------  ---------
+ Cashbox (after bookings)        2,74,298      2,74,298   MATCH
+   of which Room Payment         2,71,953      2,71,953   MATCH
+ Reports > Collections today     4,35,914      4,35,914   MATCH
+   Cash / bKash      2,72,780 / 1,61,616  same           MATCH
+ Reports > Room sales today     13,46,835     13,46,835   MATCH
+ Reports > Service sales            3,518         3,518   MATCH
+ Bookings > Outstanding          9,97,420      9,97,420   MATCH*
+ Payments > Balance due             997K      9,97,420    MATCH*
+ Reports > Outstanding due       9,98,721      9,97,420   +1,301 (MON-P1-01)
+ No-show fee #14                41,000 on booking, 0 everywhere else
+                                                          MISSING (MON-P1-02)
+ Finance > Hotel payable       6,11,148.84   should not   WRONG (MON-P0-01)
+                                             hold desk cash
+ * match only because the 41,000 no-show fee is left out everywhere.
+
+ After Expenses test (08_Operations):
+ Cash really paid out of drawer         9,500
+ Cashbox went down only                 3,000  (2,74,298 -> 2,71,298)
+ Gap                                    6,500  (MON-P0-03)
+
+
+================================================================
+ P0
+================================================================
+
+[MON-P0-01] Finance treats front-desk cash as money BinGi owes
+  WHERE     Finance > Overview / Ledger
+  HAPPENS   Page says "Money guests paid online through BinGi", but
+            every desk cash / manual bKash payment creates:
+              Payment Collected  +30,000   (WBK-085, cash)
+              BinGi Commission    -3.00
+              Hotel Payable      +29,997
+            "Available balance 4,73,053.09 - Request payout".
+            Payable 6,11,148.84 > collected 6,10,979.14 minus
+            deductions (6,10,829.14) -> 319.70 extra.
+            Config shows booking_fees walk_in = 0.01 (commission on
+            walk-in).
+  IMPACT    Hotel can request payout of cash it already holds; BinGi
+            charges commission on walk-in cash. Real money loss.
+  EXPECTED  Only gateway / Marketplace money goes to Finance payable.
+            Cash + hotel's own bKash stay in Cashbox / hotel accounts.
+            No commission on walk-in / phone / cash.
+  FIX       BE: post to Finance only when channel = BinGi gateway /
+            marketplace; fix payable arithmetic; walk_in fee = 0.
+  (was DEEP-P0-04)
+
+[MON-P0-02] "Net Profit" on Expenses is booked value, not profit
+  WHERE     Operations > Overview "Net Profit BDT 14,23,057.14";
+            "Revenue vs expense" (24 Nov revenue 13,49,912)
+  HAPPENS   Revenue = value of bookings CREATED in the period (incl.
+            unpaid and December stays). Received in the same 30 days
+            ~5,30,380. Expense side includes a REJECTED expense.
+  EXPECTED  "Left after costs = Received - spent - payroll" (prototype).
+  (same item as EXP-P0-05)
+
+[MON-P0-03] Cashbox does not match the drawer after expenses
+  WHERE     Cashbox  <-  Operations expense payments / status changes
+  HAPPENS   - 500 cash payment (EXP-000006, via API) never posted.
+            - Paid expense -> Draft / Rejected puts cash BACK (+6,000)
+              each time; shown as "Where cash came from: QA Utilities
+              12,000" (cash IN).
+  IMPACT    Day close shows a false balance; cash can be hidden.
+  EXPECTED  One Cashbox movement per real cash payment / refund, inside
+            the same DB transaction. Status changes never move cash.
+  (same items as EXP-P0-02, EXP-P0-04)
+
+
+================================================================
+ P1
+================================================================
+
+[MON-P1-01] Outstanding differs: Reports 9,98,721 vs Bookings /
+            Payments 9,97,420 (diff 1,301). One query for both.
+
+[MON-P1-02] No-show / cancellation fee not counted
+            #14 fee 41,000 shows on booking page only; list, Payments,
+            Reports ("Retained cancellation fees 0") show 0.
+            EXPECTED fee = receivable everywhere. (with BKG-P1-14)
+
+[MON-P1-03] Reports count future stays as today's sales
+            "Daily sales today 13,51,576" = all bookings made today,
+            incl. December stays. Hotel revenue should follow nights
+            stayed; keep "bookings made" as separate number.
+            CONFIRM which basis the founder wants.
+
+[MON-P1-04] Overpaid / refund due hidden (WBK-000077 ৳154) - see
+            BKG-P1-04. Refund due must show in Payments.
+
+[MON-P1-05] Reports not live
+            - Meals Reports/Overview old until Refresh (MEAL-P1-03).
+            - Services sale of today not in Reports (by requested date)
+              until tomorrow (SRV-P2-12).
+
+[MON-P1-06] Refund flow ends in Super Admin; no bKash refund method
+            (see BKG-P1-13). Payments "Refunds due" must be closable by
+            the hotel (with approval by a second person).
+
+
+================================================================
+ P2
+================================================================
+  MON-P2-01  "Average Transaction Tk. 22,586.635" (3 decimals).
+  MON-P2-02  Reports "Collections by method": Cash listed twice
+             (272,780 and 1,518).
+  MON-P2-03  Payments list shows method "Cash" for unpaid bookings.
+  MON-P2-04  Meals Collections report = same ledger as Sales; add totals
+             by method (cash / bKash).
+  MON-P2-05  Paisa decimals in hotel money (2,969.14 / 247.5 / 1,897.5 /
+             4,73,053.09). Round to whole taka or always 2 decimals;
+             use lakh format ৳3,73,174.
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - Every cash payment on bookings, services and meals posts to Cashbox
+    with its booking / order number - exact.
+  - Reports Collections, Room sales, Service sales match my ledger.
+  - Inside a booking: total, advance %, discount, change, balance - all
+    correct.
+  - Supplier bill payment -> expense -> Cashbox cash out - correct.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  Day close (Cashbox close + night audit) with counted cash and
+  discrepancy | Payout request (not clicked) | Online gateway payment
+  (EPS not clicked - real money) | Finance statement export | Reports
+  PDF / Excel | Expenses in P&L.
+
+
+================================================================
+ CASHBOX STATE LEFT (testing server)
+================================================================
+  Main Cashbox CB-2026-000020, business date 24 Nov, OPEN since
+  12:18 PM, opening float 0, balance 2,71,298 (all test money).
+  Day NOT closed.
+
+
+================================================================
+ FIX ORDER
+================================================================
+  1. MON-P0-01 Finance payable / payout / walk-in commission
+  2. MON-P0-03 Cashbox movements (with EXP-P0-02/04)
+  3. MON-P0-02 profit basis (with EXP-P0-05) + MON-P1-03 founder call
+  4. MON-P1-01, 02, 04, 06
+  5. MON-P1-05, then P2
+================================================================

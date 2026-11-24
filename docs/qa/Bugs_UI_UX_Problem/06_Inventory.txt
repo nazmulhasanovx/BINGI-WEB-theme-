@@ -1,0 +1,198 @@
+================================================================
+ 06  INVENTORY  -  Bugs / UI / UX problems
+================================================================
+ Site:    https://hms.bingi.app/dashboard/inventory  (testing server)
+ Prop:    Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Tested:  24 Nov 2026, Desktop Chrome 1568 px, Hotel admin
+          Phone layout and staff roles NOT tested yet.
+ Compare: BinGi HMS prototype (approved, repo main)
+ Source:  docs/qa/BinGi_HMS_Inventory_Services_QA_2026-11-24.txt
+
+ COUNT:   P0 x 0   |   P1 x 7   |   P2 x 17
+ IDs:     INV-P1-xx / INV-P2-xx
+
+HOW TO READ
+  P0 = blocker / money risk (none found here - module works end to end)
+  P1 = wrong, risky, or different from approved design. Fix first.
+  P2 = polish.
+  Each item: WHERE -> WHAT HAPPENS -> EXPECTED -> FIX (BE / FE)
+
+----------------------------------------------------------------
+ FLOW MAP - where each problem sits
+----------------------------------------------------------------
+
+  SETUP (stores, categories, suppliers)
+    | phone "123" accepted, delete icon on used items ...... P2-03/04
+    v
+  ADD ITEM .......... opening stock always Main Store ...... P1-06
+    |                 no SKU -> shows "kg" ................. P2-02
+    v
+  PURCHASE ORDER .... buying unit (sack) ignored ........... P1-05
+    |                 partial receive re-prices PO total ... P2-09
+    v
+  RECEIVE ........... new price RE-PRICES ALL OLD STOCK .... P1-01  <== money
+    v
+  STOCK (per store)
+    |-- Transfer ..................................... OK
+    |-- Issue / Wastage .. can change cost + supplier ...... P1-02
+    |                      wastage without reason .......... P1-03
+    |-- Stock count ...... drawer title hidden, no review .. P1-04, P2-11
+    v
+  RECIPES & SALES ... not linked to Meals menu ............. P1-07
+    v
+  HISTORY / REPORTS . store balance shows property total ... P2-12
+
+  WHAT WAS TESTED: store, category, supplier, item (kg, sack=25 kg),
+  Receive (no PO), Transfer, Issue, Wastage, Stock count, PO create ->
+  auto-approve -> partial receive, Recipe + sales, History, Reports,
+  over-quantity checks. All maths checked by hand and correct
+  (stock value, transfer, issue, count difference, food cost %, COGS).
+
+================================================================
+ P1 / P2
+================================================================
+---------------- P1 ----------------
+
+[INV-P1-01] Receiving at a new price re-prices ALL old stock
+  WHERE     Receive / PO receive
+  HAPPENS   Item cost is replaced by the last price, for all stores.
+            Example:
+              Main Store had 50 kg rice @ ৳80 = ৳4,000
+              Received 50 kg @ ৳90 into QA Kitchen
+              -> Main Store's old 50 kg became ৳90 too (৳4,400 -> ৳4,900)
+              Then PO receipt 25 kg @ ৳95 -> all 115 kg now @ ৳95
+            Form text even says: "A unit cost entered here replaces
+            the item's current unit cost."
+  IMPACT    Stock value, food cost and cost of goods are wrong
+            whenever prices change. Accounts get wrong numbers.
+  EXPECTED  Weighted average cost (prototype):
+            (old qty x old cost + new qty x new cost) / total qty
+            Example above: (50x80 + 50x90) / 100 = ৳85
+  FIX       BE: weighted average on every receipt. Movement keeps
+            its own unit cost for history.
+
+[INV-P1-02] Issue / Wastage / Adjust forms can change cost and supplier
+  WHERE     Issue, Wastage, Physical count adjustment drawers
+  HAPPENS   These forms show Supplier + Unit cost fields with
+            "replaces the item's current unit cost".
+            Supplier is saved on the movement: History shows
+            "QA Fresh Supply" on Issued and Wastage lines.
+  EXPECTED  Supplier + cost only on Receive. Issue/wastage use the
+            current (average) cost automatically.
+  FIX       FE: hide fields. BE: ignore cost/supplier for out moves.
+
+[INV-P1-03] Wastage saved without a reason
+  WHERE     Wastage
+  HAPPENS   Saved with empty note. History shows "-".
+  EXPECTED  Reason required for Wastage and Adjustment (prototype).
+            Quick picks Damaged / Expired / Spilled already exist.
+  FIX       FE + BE validation.
+
+[INV-P1-04] Drawer title and close (X) hidden under the top bar
+  WHERE     Stock count drawer, New Purchase Order drawer,
+            Purchase order details, Add Recipe drawer
+  HAPPENS   Drawer starts at top 0; the app header (63 px) covers
+            its title (e.g. "CNT-0001 - QA Kitchen") and X button.
+  EXPECTED  Same as Add Item / Transfer drawers: title + X visible.
+  FIX       FE: z-index / top offset of these drawers.
+
+[INV-P1-05] Buying unit (sack, carton...) not used anywhere
+  WHERE     Purchase order, Receive
+  HAPPENS   Item says "1 sack = 25 kg. Orders round up to whole
+            sacks." But PO accepted 30 kg (= "1.2 sack").
+            PO and Receive only allow kg, never sacks.
+  EXPECTED  PO and Receive can enter in sacks; PO rounds up to
+            whole buying units; stock is stored in kg.
+
+[INV-P1-06] Opening stock always goes to Main Store
+  WHERE     Add Item
+  HAPPENS   No store choice for opening stock.
+  EXPECTED  "Opening stock is in: [store]" (prototype) when
+            opening stock > 0.
+
+[INV-P1-07] Recipes are not linked to Restaurant & Bar (Meals)
+  WHERE     Recipes & sales
+  HAPPENS   Dish name is free text. Sales are typed by hand.
+  EXPECTED  Recipe links to a Meals menu item. Every closed
+            restaurant order takes ingredients out of stock
+            automatically (prototype note). Manual sales stay as
+            a backup.
+  FIX       BE: integration Meals order -> recipe -> stock out.
+
+---------------- P2 ----------------
+  INV-P2-01 Units: only piece, kg, litre, packet, box.
+     Add bottle, roll, set (prototype), and gram / ml.
+  INV-P2-02 Item with no SKU shows the unit ("kg") where SKU should be.
+     Auto-make a SKU like prototype (e.g. RICE-001).
+  INV-P2-03 Supplier phone accepts "123". Validate BD mobile (11 digits).
+  INV-P2-04 Category / supplier that has items still shows a Delete icon.
+     Disable it and say why.
+  INV-P2-05 Receive form starts with the first item already picked (DENTAL).
+     Start with "Choose item" to avoid receiving the wrong item.
+  INV-P2-06 Number inputs with unit (kg) show a broken border / the focus
+     ring covers the unit.
+  INV-P2-07 Add Item: hint "Enter 0 if this item has no stock yet" sits
+     under Unit Cost. Move it to Opening Stock.
+  INV-P2-08 Record sales: no warning before save when stock is not enough;
+     server error comes after ~5 s. Check in the form. Add sale date.
+  INV-P2-09 PO partial receipt changed the PO total from ৳2,700 to ৳2,850
+     (all lines re-priced). Keep ordered value; show received value
+     separately. "5 still due across lines" has no unit (5 kg).
+  INV-P2-10 PO has no Print / PDF / Send to supplier.
+  INV-P2-11 Stock count posts at once: no review screen, no reason for a
+     difference, system qty shown while counting (prefer blind count).
+  INV-P2-12 History "Balance" is the property total, not the store's balance.
+  INV-P2-13 Slow: tab switch and saves often take 3-6 s.
+  INV-P2-14 Inventory drawers use a dark backdrop; Services drawers use a
+     light one. Use one drawer style (design: no dark overlays).
+  INV-P2-15 Inventory "Suppliers" and Services "Vendors" are two separate
+     lists. Consider one shared vendor list.
+  INV-P2-16 Number formats differ: PO-0001, CNT-0001, SALE-0001, GRN-0001
+     vs Services "OSO-GIBQD2W45S". Use one readable pattern.
+  INV-P2-17 Money shown as "BDT" in Inventory/Services, "Tk." in Cashbox.
+     Use one (৳ or BDT) everywhere.
+
+---------------- WORKS - KEEP ----------------
+  - Tabs and layout match the prototype: Stock, Purchase orders,
+    Stock count, Recipes & sales, History, Reports, Setup.
+  - Header actions: Add Item, Transfer, Issue, Receive.
+  - Stores (Main + own stores), categories, suppliers.
+  - Transfer blocks more than the store has ("Enter 20 kg or less").
+  - PO receive blocks more than ordered ("Up to 30 kg").
+  - Recipe sales blocked when stock is short (clear message).
+  - Partial PO receipt -> "Partly received", stays open.
+  - History cannot be edited or deleted; Asia/Dhaka time.
+  - Reports: stock value, low/out of stock, movements, cost of goods
+    used by category, stock value by store. All numbers correct.
+  - Food cost and food cost % on recipes are correct.
+
+
+
+================================================================
+ SHARED with the other module -> see 10_Global_UI_UX.txt
+================================================================
+  Sidebar names, two drawer styles, slow saves 3-6 s, BDT vs Tk.
+
+================================================================
+ NOT TESTED YET
+================================================================
+  Staff roles (approvals) | "Send to Accounts" (COGS) | CSV / PDF
+  export | Edit / archive item, store | Phone layout.
+
+================================================================
+ TEST DATA LEFT
+================================================================
+  Store "QA Kitchen", category "QA Kitchen Dry Goods", supplier
+  "QA Fresh Supply", item "QA Rice", PO-0001 (partly received),
+  CNT-0001, recipe "QA Fried Rice", SALE-0001, GRN-0001 (bill 1,375 due
+  - see 08_Operations).
+
+================================================================
+ FIX ORDER
+================================================================
+  1. INV-P1-01, INV-P1-02  cost method (money correctness)
+  2. INV-P1-04             hidden drawer titles
+  3. INV-P1-03, 05, 06     wastage reason, buying units, store
+  4. INV-P1-07             Meals <-> recipe integration (with MEAL-P1-01)
+  5. P2
+================================================================

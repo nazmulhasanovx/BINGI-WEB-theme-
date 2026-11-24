@@ -1,0 +1,124 @@
+================================================================
+ 04  HOUSEKEEPING (Tasks, Maintenance, Room blocks)
+     Bugs / UI / UX problems
+================================================================
+ Site:    https://hms.bingi.app/dashboard/housekeeping  (testing server)
+ Prop:    Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Tested:  24 Nov 2026, Desktop Chrome 1568 px, Hotel admin
+          Checked as part of the Bookings and Rooms tests (not a full
+          module test yet - see NOT TESTED).
+ Source:  docs/qa/BinGi_HMS_Rooms_QA_2026-11-24.txt (ROOM-P0-05,
+          ROOM-P2-06), docs/qa/BinGi_HMS_Bookings_Deep_QA_2026-11-24.txt
+ Related: 03_Rooms_Accommodation (same OOO root cause)
+
+ COUNT:   P0 x 1 (shared with ROOM-P0-05)  |  P1 x 3  |  P2 x 4
+ IDs:     HK-P0-xx / HK-P1-xx / HK-P2-xx
+
+
+----------------------------------------------------------------
+ HOW "OUT OF ORDER" WORKS TODAY  (why it breaks)
+----------------------------------------------------------------
+
+   Housekeeping > Maintenance            Rooms > Room numbers
+   +-------------------------+           +-------------------------+
+   | ticket mnt_... (open)   |           | legacy status HOLD /    |
+   | "Room block" On / Off   |           | OCCUPIED / DIRTY        |
+   +------------+------------+           +------------+------------+
+                |                                     |
+                v                                     v
+        "Room blocks 0"                     202 "Not for sale"
+        207 urgent ticket, block Off        207 "Available"
+                \                                   /
+                 \_____ two sources, no link ______/
+                                |
+                                v
+            New booking sells 207 (open fault) and
+            nobody can release 202 (no ticket, no button)
+
+   EXPECTED: one record = maintenance ticket (+ optional block).
+             Rooms, Booking, Room board all read that record.
+
+
+================================================================
+ P0
+================================================================
+
+[HK-P0-01] Out-of-order comes from two places that disagree
+  WHERE     Housekeeping > Maintenance  vs  Rooms > Room numbers
+  HAPPENS   - Room 202 = "Not for sale / Maintenance" in Rooms (legacy
+              HOLD). Housekeeping: "Room blocks 0", no ticket for 202.
+              Room panel says "Review it in Housekeeping" -> nothing
+              there. No Release button anywhere.
+            - Room 207 has OPEN URGENT ticket mnt_dsz2mpsrwn ("ggg",
+              target 9 Nov - overdue) with Room block Off -> 207 is
+              "Available" and has a confirmed booking WBK-000080
+              (26-28 Nov).
+  IMPACT    One room lost from sale for ever; another sold with an
+            urgent open fault.
+  EXPECTED  An OOO block always has a maintenance record (reason +
+            expected back) and a "Release" action. An urgent open
+            ticket shows a warning on the room and in New booking.
+  FIX       BE: migrate legacy HOLD into maintenance blocks (or clear);
+            availability reads the maintenance block.
+            FE: warning chip "Open fault" on room cards.
+  (same item as ROOM-P0-05)
+
+
+================================================================
+ P1
+================================================================
+
+[HK-P1-01] Overdue maintenance not flagged
+  Ticket target "Nov 09, 02:39 PM" shown red in the table only. No
+  count, no Dashboard alert, room not marked.
+  EXPECTED "Overdue" chip + count on the Maintenance tab and Dashboard.
+
+[HK-P1-02] Ghost floors in the floor filter
+  Floor filter: 10th, 1st, 20th, 2nd, 3rd, 40th, 96th Floor. Rooms
+  exist only on 1st-5th; 4th and 5th are missing from the filter.
+  EXPECTED one floor list shared with Rooms > Setup (ROOM-P1-08).
+
+[HK-P1-03] Housekeeping "Ready 11" vs Rooms "Available tonight 19"
+  Two screens, two "ready" numbers, no explanation.
+  EXPECTED same definition ("clean + not booked + not blocked") or
+  different labels that say what is counted.
+
+
+================================================================
+ P2
+================================================================
+  HK-P2-01  Task card shows "Picked up" (status chip) and "Not started"
+            (staff line) together. Pick one state.
+  HK-P2-02  Developer IDs shown to staff: "tsk_mh0jdzbp",
+            "mnt_dsz2mpsrwn". Use HK-0001 / MNT-0001 or hide.
+  HK-P2-03  Maintenance issue "ggg" accepted - require issue type from a
+            list (AC, Plumbing, Electrical, Furniture, Other) + note.
+  HK-P2-04  Task "Due 2:01 PM" / "Overdue · 1:50 PM" for checkout
+            cleaning with nobody "Started"; no reminder to staff.
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - Check-out turns the room "Needs cleaning" and creates a "Checkout
+    cleaning" task (105, 201, 312) - badge 3 matches Rooms.
+  - Tasks / Maintenance / Checklist tabs; Pending / Cleaning /
+    Awaiting inspection / Ready counters; Cards / List view; History.
+  - Maintenance table: ID, room, issue, priority, assignee, target,
+    status, room block toggle.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  Full task flow (start -> done -> inspect -> ready), create
+  maintenance with block, release block, checklist, staff
+  (housekeeper) role on phone, Unit maintenance button.
+
+
+================================================================
+ FIX ORDER
+================================================================
+  1. HK-P0-01 (with ROOM-P0-05)   2. HK-P1-02 floors (with ROOM-P1-08)
+  3. HK-P1-01, HK-P1-03           4. P2
+================================================================

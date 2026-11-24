@@ -1,0 +1,135 @@
+================================================================
+ 10  GLOBAL  -  UI / UX problems seen in MANY modules
+================================================================
+ Tested:  24 Nov 2026, live HMS (testing server), Desktop 1568 px
+ Fix once in the shared component / API layer, then every module
+ gets better. Each item lists where it was seen.
+
+ COUNT:   P1 x 8   |   P2 x 10
+ IDs:     GLB-P1-xx / GLB-P2-xx
+
+
+----------------------------------------------------------------
+ MAP - which module shows which global problem
+----------------------------------------------------------------
+
+                     ONB BKG ROOM HK MEAL INV SRV EXP MON
+  GLB-P1-01 names     x   x   x    .   x   .   x   x   x
+  GLB-P1-02 errors    x   x   x    .   x   .   x   .   .
+  GLB-P1-03 dev text  x   x   x    x   .   .   x   x   .
+  GLB-P1-04 bKash x2  .   x   .    .   x   .   .   x   .
+  GLB-P1-05 alert()   .   .   x    .   x   .   .   .   .
+  GLB-P1-06 stale UI  .   .   .    .   x   .   x   x   x
+  GLB-P1-07 FE-only   x   .   .    .   x   .   .   x   .
+            rules
+  GLB-P1-08 two       .   x   x    x   .   .   .   x   x
+            sources
+  GLB-P2-01 money fmt .   x   .    .   x   x   x   x   x
+  GLB-P2-02 slow      .   x   .    .   x   x   x   .   .
+  GLB-P2-03 drawers   x   .   .    .   .   x   x   .   .
+  GLB-P2-04 Esc loses .   .   .    .   x   .   .   .   .
+  GLB-P2-05 numbers   .   x   .    x   x   x   x   x   .
+  GLB-P2-06 demo data .   x   x    .   x   .   x   .   .
+  GLB-P2-07 logo      .   .   .    .   x   .   .   .   .
+  GLB-P2-08 dates     .   x   .    .   .   .   .   .   .
+  GLB-P2-09 grammar   .   x   .    .   x   .   .   .   .
+  GLB-P2-10 validate  x   x   .    x   x   x   x   x   .
+
+
+================================================================
+ P1
+================================================================
+
+[GLB-P1-01] Sidebar / page names are the OLD names (Sidebar v7)
+  Live now                        ->  v7 name (23 Nov, founder)
+  Room / Accommodation            ->  Rooms  (Accommodations when
+                                      cottages/villas/apartments exist)
+  Meals  (also "F&B" breadcrumb)  ->  Restaurant & Bar
+  Staff                           ->  Team  (Team & HR on Ultra)
+  Other Services                  ->  Services
+  Discounts                       ->  Rates & Discounts
+  Operations                      ->  Expenses
+  Billing & Subscription          ->  Plan & Billing
+  Communication Center            ->  Messaging
+  Website Management              ->  Website
+  Same name on sidebar, page title, breadcrumb, Cmd-K search and phone
+  tab bar. Also onboarding 4.2 tool names (ONB-P2-15).
+
+[GLB-P1-02] Errors appear out of view or not at all
+  - Onboarding 3.2 save error above the fold (ONB-P1-11)
+  - New booking Guest step (BKG-P1-01)
+  - Services new order, error at bottom (SRV-P1-03)
+  - Meals Settings 422 shown nothing (MEAL-P0-01)
+  - Rooms edit 422 via browser alert (ROOM-P0-04)
+  RULE: error under the field + summary at top of the visible area +
+  scroll to first error. Never silent.
+
+[GLB-P1-03] Developer / API text shown to hotel staff
+  "Unauthenticated", "KYC_TRIAL_CATEGORY_LIMIT", "NOT_SUBMITTED",
+  "this HMS module", "eligible legacy Room inventory", "guest
+  info.booking mode is detailed", "Super Admin refund workflow",
+  "snapshotted ... fee", "LEGACY-RN-33", "canonical owner", "explicit
+  assignments", "Slug: qa-transport", "tsk_...", "mnt_...".
+  FIX: one error-code -> plain sentence map (Bangla + English).
+
+[GLB-P1-04] "bKash" listed twice in every payment-method list
+  Same account "01867734016 - Yeapas" twice. Seen in Bookings collect
+  payment, Meals POS + collect, Expenses new expense / pay / supplier
+  bill. Clicking first bKash highlights the second (Meals).
+  FIX: de-duplicate at source; show label + last digits; one list
+  component everywhere; add Card / Nagad if enabled.
+
+[GLB-P1-05] Native browser alert() / print dialog used
+  Rooms edit error via alert() - froze the browser tab once.
+  Meals "Receipt preview" opens print dialog directly.
+  FIX: in-app toast / inline error; preview screen before print.
+
+[GLB-P1-06] Screens do not refresh after an action
+  Expense panel after payment (EXP-P1-03), Meals reports (MEAL-P1-03),
+  Kitchen timers stuck (MEAL-P2-10), Services report (SRV-P2-12).
+  FIX: use the mutation response / refetch on success.
+
+[GLB-P1-07] Business rules enforced only in the UI
+  Expense approval bypassed by API (EXP-P0-01); QR orders ignore pause
+  + approval (MEAL-P0-02); onboarding checkout plan from URL (ONB-P0-04).
+  RULE: every rule (approval, limits, pause, plan, KYC) checked in the
+  backend endpoint, UI only hides the button.
+
+[GLB-P1-08] Two sources of truth for the same thing
+  Room state legacy vs accommodations (ROOM-P0-01..05, BKG-P0-01/03);
+  OOO Housekeeping vs Rooms (HK-P0-01); expense status vs payments vs
+  Cashbox (EXP-P0-03/04); outstanding Reports vs Bookings (MON-P1-01);
+  floors Setup vs Rooms vs Housekeeping (ROOM-P1-08, HK-P1-02).
+
+
+================================================================
+ P2
+================================================================
+  GLB-P2-01 Money format mixed: "BDT 266", "৳266", "Tk. 271,298.00",
+            decimals .14 / .5 / .635. Use ৳ + lakh grouping (৳3,73,174),
+            whole taka unless paisa are real.
+  GLB-P2-02 Slow: saves / tab switches 3-7 s (Bookings, Meals,
+            Inventory, Services). Add optimistic UI + check API time.
+  GLB-P2-03 Two drawer styles: Inventory dark backdrop, Services light;
+            some drawer titles under the header (INV-P1-04). Onboarding
+            panel width 58% vs 88% (ONB-P2-09). One drawer component,
+            no dark overlay (design rule).
+  GLB-P2-04 Esc closes forms and loses typed data (Meals Add menu item;
+            earlier Bookings drawer). Ask "Discard changes?".
+  GLB-P2-05 Number series not readable / mixed: WBK / OBK, FO / OFO,
+            OSO-GIBQD2W45S, PO-0001, EXP-2026-000005, tsk_..., mnt_....
+            One readable pattern per document type.
+  GLB-P2-06 Demo / test data in a demo property: lorem-ipsum dish and
+            service names, personal photo as dish image, "Tow bad room",
+            ৳16 room, "ggg" ticket. Clean before any customer demo.
+  GLB-P2-07 Guest QR header uses a different "BiNGi" icon. Official
+            logo from brand files only.
+  GLB-P2-08 Dates long ("Thu 26 Nov 2026 - Sat 28 Nov 2026"); prototype
+            "Thu 26 Nov - Sat 28 Nov", year only when different.
+  GLB-P2-09 Grammar / casing: "1 Nights", "1 orders", "CONFIRMED ·
+            Partial Paid", "Air Conditionin-g".
+  GLB-P2-10 Weak validation: phone "123" (supplier, guest), amount 0,
+            future dates (2027 expense), discount > price, close time
+            before open time, duplicate names (categories, room types,
+            room numbers). BD mobile = 11 digits starting 01.
+================================================================

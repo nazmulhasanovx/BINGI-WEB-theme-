@@ -1,0 +1,318 @@
+================================================================
+ 99  CHECKLIST - every issue, one line each (tick when fixed)
+================================================================
+ Use with the module files for full details.
+ [ ] = open   [x] = fixed + re-tested on hms.bingi.app
+ Owner column: BE = backend, FE = frontend, BE+FE = both (fill in).
+
+================================================================
+ P0 - FIX FIRST
+================================================================
+
+ -- ONBOARDING  (01_Onboarding.txt)
+ [ ] ONB-P0-01   "Continue" from My properties fails
+ [ ] ONB-P0-02   "Try again" opens a DIFFERENT property
+ [ ] ONB-P0-03   Only the FIRST room type can be saved
+ [ ] ONB-P0-04   Checkout sells a different plan
+ [ ] ONB-P0-05   Payment blocked by KYC at the end
+
+ -- BOOKINGS  (02_Bookings.txt)
+ [ ] BKG-P0-01   Occupied rooms are sold and checked in AGAIN
+ [ ] BKG-P0-02   "Email (optional)" but booking fails without it
+ [ ] BKG-P0-03   Room board does not match bookings; out-of-order room sold
+ [ ] BKG-P0-04   Move room is broken
+
+ -- ROOM / ACCOMMODATION  (03_Rooms_Accommodation.txt)
+ [ ] ROOM-P0-01  Rooms shown "Booked tonight / Guest in room" with NO guest
+ [ ] ROOM-P0-02  Overdue in-house guests are invisible (no "Overdue check-out")
+ [ ] ROOM-P0-03  Room 206 shown "Available" while a guest is checked in
+ [ ] ROOM-P0-04  Editing ANY room type fails (422) - price ৳16 cannot be fixed
+ [ ] ROOM-P0-05  Out-of-order state comes from two places that disagree
+
+ -- HOUSEKEEPING  (04_Housekeeping.txt)
+ [ ] HK-P0-01    Out-of-order comes from two places that disagree  = ROOM-P0-05
+
+ -- MEALS (RESTAURANT & BAR)  (05_Meals_Restaurant_Bar.txt)
+ [ ] MEAL-P0-01  Restaurant Settings cannot be saved
+ [ ] MEAL-P0-02  Guest QR orders ignore "Pause" and "Counter approval"
+ [ ] MEAL-P0-03  Payment cannot be taken for a Table QR order
+
+ -- OPERATIONS (EXPENSES)  (08_Operations_Expenses.txt)
+ [ ] EXP-P0-01   Approval can be skipped by paying through the API
+ [ ] EXP-P0-02   Cash payment not posted to Cashbox
+ [ ] EXP-P0-03   "Change status -> Paid" pays an unapproved expense in full
+ [ ] EXP-P0-04   Rejecting or "Draft"-ing a PAID expense puts the cash back
+ [ ] EXP-P0-05   "Net Profit" is not profit
+
+ -- MONEY: CASHBOX / PAYMENTS / FINANCE / REPORTS  (09_Money_Cashbox_Payments_Finance_Reports.txt)
+ [ ] MON-P0-01   Finance treats front-desk cash as money BinGi owes
+ [ ] MON-P0-02   "Net Profit" on Expenses is booked value, not profit  = EXP-P0-05
+ [ ] MON-P0-03   Cashbox does not match the drawer after expenses  = EXP-P0-02 + EXP-P0-04
+
+================================================================
+ P1
+================================================================
+
+ -- ONBOARDING  (01_Onboarding.txt)
+ [ ] ONB-P1-01   Progress % stuck at 0% in part 1, then jumps
+ [ ] ONB-P1-02   Old "What guests will see" website preview on the right
+ [ ] ONB-P1-03   1.4 Extras shows ROOM amenities (AC, bathtub, shampoo,
+ [ ] ONB-P1-04   Search "wifi" finds nothing (item "Wi-Fi").
+ [ ] ONB-P1-05   2.2 Plan: headline "Pay per room. Nothing hidden" but
+ [ ] ONB-P1-06   2.4 "Subscribe now" pre-selected.
+ [ ] ONB-P1-07   3.1 Resort pre-picks only Rooms ("Suggested for your
+ [ ] ONB-P1-08   3.2 Booking fees always at Starter rate
+ [ ] ONB-P1-09   Same unit code allowed in two blocks (C1-C100 / V1-V100 in
+ [ ] ONB-P1-10   3.2 Panel box itself scrolls after failed Save
+ [ ] ONB-P1-11   3.2 Save error is one generic line, above visible area,
+ [ ] ONB-P1-12   3.3 Review does not warn about 4 unsaved drafts (Cottage,
+ [ ] ONB-P1-13   5.1 Payments does not explain money flow.
+ [ ] ONB-P1-14   5.2 Website themes "Classic Stay / Compact Business / BinGi
+ [ ] ONB-P1-15   5.2 No "How guests book" choice.
+ [ ] ONB-P1-16   6.1 "Everything needed to submit is done" while Terms &
+ [ ] ONB-P1-17   Checkout summary wrong: "BinGi Ultra - One-time activation
+ [ ] ONB-P1-18   "Save & exit" signs the owner out (goes to /login).
+
+ -- BOOKINGS  (02_Bookings.txt)
+ [ ] BKG-P1-01   Error messages at top of page, out of view
+ [ ] BKG-P1-02   One price per room type, no rate plans
+ [ ] BKG-P1-03   Past bookings never become No-show
+ [ ] BKG-P1-04   Overpaid booking shows Due 0
+ [ ] BKG-P1-05   Departure review says nothing overdue
+ [ ] BKG-P1-06   Checked-out booking with unpaid balance exists
+ [ ] BKG-P1-07   Apartments not offered in New booking
+ [ ] BKG-P1-08   Booking source lost - everything "Walk-in"
+ [ ] BKG-P1-09   "Cash received" looks filled but is empty
+ [ ] BKG-P1-10   Check-in without any ID
+ [ ] BKG-P1-11   Actual check-in time not shown
+ [ ] BKG-P1-12   Cancelled booking shows two balances
+ [ ] BKG-P1-13   Refund cannot be finished by the hotel
+ [ ] BKG-P1-14   No-show saved as "Cancelled", fee not tracked
+ [ ] BKG-P1-15   Arrivals / Departures count the wrong things
+ [ ] BKG-P1-16   Early check-out keeps the full stay
+ [ ] BKG-P1-17   Calendar
+
+ -- ROOM / ACCOMMODATION  (03_Rooms_Accommodation.txt)
+ [ ] ROOM-P1-01  Room types are titled by bed type, not by name
+ [ ] ROOM-P1-02  "Edit" on the Add room type page opens an ADD wizard
+ [ ] ROOM-P1-03  "Waiting for BinGi approval" on rooms that are already sold
+ [ ] ROOM-P1-04  "with service + VAT" shows the same number as the base price
+ [ ] ROOM-P1-05  Duplicate room numbers allowed across types
+ [ ] ROOM-P1-06  Two room types with the same name "Suite"
+ [ ] ROOM-P1-07  Booking state and cleaning state are merged into one chip
+ [ ] ROOM-P1-08  Floors / locations do not match Setup
+ [ ] ROOM-P1-09  Reservation schedule panel is written for developers
+ [ ] ROOM-P1-10  "Rooms in use: 46" counts 17 not-bookable drafts
+
+ -- HOUSEKEEPING  (04_Housekeeping.txt)
+ [ ] HK-P1-01    Overdue maintenance not flagged
+ [ ] HK-P1-02    Ghost floors in the floor filter
+ [ ] HK-P1-03    Housekeeping "Ready 11" vs Rooms "Available tonight 19"
+
+ -- MEALS (RESTAURANT & BAR)  (05_Meals_Restaurant_Bar.txt)
+ [ ] MEAL-P1-01  Menu is not linked to Inventory
+ [ ] MEAL-P1-02  Discount price higher than price is accepted
+ [ ] MEAL-P1-03  Reports and Overview show old numbers
+ [ ] MEAL-P1-04  QR order on a busy table becomes a second bill
+ [ ] MEAL-P1-05  POS "Send for approval" goes straight to kitchen
+ [ ] MEAL-P1-06  Two "bKash" payment choices, no card
+ [ ] MEAL-P1-07  "Receipt preview" opens the print dialog directly
+
+ -- INVENTORY  (06_Inventory.txt)
+ [ ] INV-P1-01   Receiving at a new price re-prices ALL old stock
+ [ ] INV-P1-02   Issue / Wastage / Adjust forms can change cost and supplier
+ [ ] INV-P1-03   Wastage saved without a reason
+ [ ] INV-P1-04   Drawer title and close (X) hidden under the top bar
+ [ ] INV-P1-05   Buying unit (sack, carton...) not used anywhere
+ [ ] INV-P1-06   Opening stock always goes to Main Store
+ [ ] INV-P1-07   Recipes are not linked to Restaurant & Bar (Meals)
+
+ -- OTHER SERVICES  (07_Other_Services.txt)
+ [ ] SRV-P1-01   New scheduled order goes straight to "Active"
+ [ ] SRV-P1-02   Order details has only "Mark done"
+ [ ] SRV-P1-03   Save errors are hidden at the bottom of the form
+ [ ] SRV-P1-04   Cash sale only: no "pay later", only cash
+ [ ] SRV-P1-05   No "Charged per" and no child price
+ [ ] SRV-P1-06   Two durations that disagree
+ [ ] SRV-P1-07   No "New requests" column for guest requests
+
+ -- OPERATIONS (EXPENSES)  (08_Operations_Expenses.txt)
+ [ ] EXP-P1-01   Every new expense saved as "Waiting approval"
+ [ ] EXP-P1-02   Rejected expense counted in totals
+ [ ] EXP-P1-03   Panel shows stale numbers after a payment
+ [ ] EXP-P1-04   "bKash" listed twice in every payment-method list
+ [ ] EXP-P1-05   Weak amount/date validation
+ [ ] EXP-P1-06   Payroll is missing from Expenses
+ [ ] EXP-P1-07   No default categories
+ [ ] EXP-P1-08   Payment method asked at creation means nothing
+ [ ] EXP-P1-09   Page name "Operations" (decision D4 = "Expenses")
+
+ -- MONEY: CASHBOX / PAYMENTS / FINANCE / REPORTS  (09_Money_Cashbox_Payments_Finance_Reports.txt)
+ [ ] MON-P1-01   Outstanding differs: Reports 9,98,721 vs Bookings /
+ [ ] MON-P1-02   No-show / cancellation fee not counted
+ [ ] MON-P1-03   Reports count future stays as today's sales
+ [ ] MON-P1-04   Overpaid / refund due hidden (WBK-000077 ৳154) - see
+ [ ] MON-P1-05   Reports not live
+ [ ] MON-P1-06   Refund flow ends in Super Admin; no bKash refund method
+
+ -- GLOBAL UI / UX  (10_Global_UI_UX.txt)
+ [ ] GLB-P1-01   Sidebar / page names are the OLD names (Sidebar v7)
+ [ ] GLB-P1-02   Errors appear out of view or not at all
+ [ ] GLB-P1-03   Developer / API text shown to hotel staff
+ [ ] GLB-P1-04   "bKash" listed twice in every payment-method list
+ [ ] GLB-P1-05   Native browser alert() / print dialog used
+ [ ] GLB-P1-06   Screens do not refresh after an action
+ [ ] GLB-P1-07   Business rules enforced only in the UI
+ [ ] GLB-P1-08   Two sources of truth for the same thing
+
+================================================================
+ P2
+================================================================
+
+ -- ONBOARDING  (01_Onboarding.txt)
+ [ ] ONB-P2-01   1.1  Star rating + one-line "about" for hotel/resort/motel/
+ [ ] ONB-P2-02   1.3  City list: no division labels, no search, Dhaka far down.
+ [ ] ONB-P2-03   1.4  All amenity icons the same sparkle; "Air Conditionin-g"
+ [ ] ONB-P2-04   2.2  Ultra "Includes" list same as Business; Ultra extras only
+ [ ] ONB-P2-05   2.2  Plan cards should say "Team" (Business) vs "Full HR"
+ [ ] ONB-P2-06   2.4  With "Set up first", summary says "Monthly after trial".
+ [ ] ONB-P2-07   2.5  "Your subscription and setup service are ready" when
+ [ ] ONB-P2-08   2.4  Trial 30 days; ads say 7 days. (OPEN founder decision.)
+ [ ] ONB-P2-09   3.2  Panel ~58% wide; v8 = ~88% (max 1120 px).
+ [ ] ONB-P2-10   3.2  Cottage/villa/apartment forms say "Room numbers" and
+ [ ] ONB-P2-11   3.2  Villa/apartment have no bedrooms / bathrooms fields.
+ [ ] ONB-P2-12   3.2  Row shows "Ready" and "Waiting for BinGi approval" together.
+ [ ] ONB-P2-13   3.2  "100 available" does not go down after picking numbers.
+ [ ] ONB-P2-14   All  Reload/resume lands on a different step (3.2 -> 3.1,
+ [ ] ONB-P2-15   4.2  Old tool names (Staff & roles, Restaurant & meals, Other
+ [ ] ONB-P2-16   6.1  Raw "NOT_SUBMITTED"; "Fix" on optional items; ring 71% vs
+ [ ] ONB-P2-17   Plan Changing property type later (Hotel -> Guest house)
+ [ ] ONB-P2-18   Nav  No way back to My properties from onboarding; no way to
+
+ -- BOOKINGS  (02_Bookings.txt)
+ [ ] BKG-P2-01   List "Room / unit" shows "Twin" for every booking -> category.
+ [ ] BKG-P2-02   Booking page "Room Type: Room" (also check-out table) -> Deluxe.
+ [ ] BKG-P2-03   Two number series WBK / OBK - show source next to it.
+ [ ] BKG-P2-04   "BinGi Marketplace" vs "Bingi Mobile App" - spell BinGi.
+ [ ] BKG-P2-05   "1 Nights", "CONFIRMED · Unpaid", "CONFIRMED · Partial Paid".
+ [ ] BKG-P2-06   Meal for "24 Nov 08:00" (past) accepted; default next meal time.
+ [ ] BKG-P2-07   Direct discount up to full total (৳266 of ৳266) - apply cashier
+ [ ] BKG-P2-08   Room board text long/technical ("This is a review checklist, not
+ [ ] BKG-P2-09   Room board breadcrumb "Table", URL /bookings/table.
+ [ ] BKG-P2-10   Room board every room "Floor not set".
+ [ ] BKG-P2-11   Booking meals "Counter Pending" (approval works) but QR meals ...
+ [ ] BKG-P2-12   "Check in" button on bookings 8+ days ahead; show "Arrives 2 D...
+ [ ] BKG-P2-13   Overpay blocked silently (button disabled) - say "Up to BDT
+ [ ] BKG-P2-14   Collect payment fails once if clicked while "Loading payment
+ [ ] BKG-P2-15   Add charge categories Other / Late checkout / Damage / Room extra
+ [ ] BKG-P2-16   More menu stays open after choosing an item.
+ [ ] BKG-P2-17   No extra-bed option when guests > capacity ("max 3").
+ [ ] BKG-P2-18   Developer words: "snapshotted cancellation or no-show fee",
+ [ ] BKG-P2-19   Payments list shows method "Cash" for unpaid bookings.
+ [ ] BKG-P2-20   Room board "Total Rooms 46" counts 17 not-bookable apartments.
+ [ ] BKG-P2-21   New booking: summary "Estimate - the server re-prices ..." ->
+ [ ] BKG-P2-22   Breadcrumb "Reservations > New" -> "Bookings > New booking".
+
+ -- ROOM / ACCOMMODATION  (03_Rooms_Accommodation.txt)
+ [ ] ROOM-P2-01  Mark out of order is offered on an occupied room (101) with
+ [ ] ROOM-P2-02  Status filter on Room numbers lists 11 raw backend states in
+ [ ] ROOM-P2-03  "Available tonight" = 19 on screen, API summary available =
+ [ ] ROOM-P2-04  Data shown without sanity check: every type "520 sq ft";
+ [ ] ROOM-P2-05  /rooms/new list shows "No photos yet" on types that do have
+ [ ] ROOM-P2-06  (see also HK-P2-01) Housekeeping tasks show "Picked up" and "N...
+ [ ] ROOM-P2-07  Card list for type 312 shows "Out of order" badge top-left but
+ [ ] ROOM-P2-08  Typo in test data name "Tow bad room" (should be "Two bed
+ [ ] ROOM-P2-09  Room types "Edit" opens the OLD Edit Room drawer, while
+
+ -- HOUSEKEEPING  (04_Housekeeping.txt)
+ [ ] HK-P2-01    Task card shows "Picked up" (status chip) and "Not started"
+ [ ] HK-P2-02    Developer IDs shown to staff: "tsk_mh0jdzbp",
+ [ ] HK-P2-03    Maintenance issue "ggg" accepted - require issue type from a
+ [ ] HK-P2-04    Task "Due 2:01 PM" / "Overdue · 1:50 PM" for checkout
+
+ -- MEALS (RESTAURANT & BAR)  (05_Meals_Restaurant_Bar.txt)
+ [ ] MEAL-P2-01  Three names: sidebar "Meals", breadcrumb "F&B", page
+ [ ] MEAL-P2-02  Two order number series: FO-2026-000070 (dine-in / QR) and
+ [ ] MEAL-P2-03  "1 orders" -> "1 order".
+ [ ] MEAL-P2-04  Pause text differs: Settings says "new orders cannot be
+ [ ] MEAL-P2-05  Opening hours 07:17 PM - 06:18 PM saved; no check that close is
+ [ ] MEAL-P2-06  Charges has both "Tax rate" and "VAT rate". Bangladesh uses
+ [ ] MEAL-P2-07  Esc closes Add Menu Item and loses typed data without asking.
+ [ ] MEAL-P2-08  Menu "Sold on": only Staff POS / QR menu. Add Room service,
+ [ ] MEAL-P2-09  POS order panel: "Other service types" dropdown repeats the
+ [ ] MEAL-P2-10  Kitchen card timers and "Last updated" do not tick (stuck at
+ [ ] MEAL-P2-11  Guest QR shows "Table 2843U" (code), not the table name "Hamim".
+ [ ] MEAL-P2-12  Guest QR dish page background shows another dish (burger behind
+ [ ] MEAL-P2-13  Guest QR header uses a different "BiNGi" icon (fork on red
+ [ ] MEAL-P2-14  Guest QR: "Sign in to use your saved details" is red under
+ [ ] MEAL-P2-15  Guest QR offers "Online payment - Pay securely through EPS".
+ [ ] MEAL-P2-16  Cancel order drawer: opens on "Reject" even when Reject is not
+ [ ] MEAL-P2-17  Demo data: lorem-ipsum dish names and a personal photo used as
+ [ ] MEAL-P2-18  Slow: saves 4-7 s. Collections report shows the same ledger as
+
+ -- INVENTORY  (06_Inventory.txt)
+ [ ] INV-P2-01   Units: only piece, kg, litre, packet, box.
+ [ ] INV-P2-02   Item with no SKU shows the unit ("kg") where SKU should be.
+ [ ] INV-P2-03   Supplier phone accepts "123". Validate BD mobile (11 digits).
+ [ ] INV-P2-04   Category / supplier that has items still shows a Delete icon.
+ [ ] INV-P2-05   Receive form starts with the first item already picked (DENTAL).
+ [ ] INV-P2-06   Number inputs with unit (kg) show a broken border / the focus
+ [ ] INV-P2-07   Add Item: hint "Enter 0 if this item has no stock yet" sits
+ [ ] INV-P2-08   Record sales: no warning before save when stock is not enough;
+ [ ] INV-P2-09   PO partial receipt changed the PO total from ৳2,700 to ৳2,850
+ [ ] INV-P2-10   PO has no Print / PDF / Send to supplier.
+ [ ] INV-P2-11   Stock count posts at once: no review screen, no reason for a
+ [ ] INV-P2-12   History "Balance" is the property total, not the store's balance.
+ [ ] INV-P2-13   Slow: tab switch and saves often take 3-6 s.
+ [ ] INV-P2-14   Inventory drawers use a dark backdrop; Services drawers use a
+ [ ] INV-P2-15   Inventory "Suppliers" and Services "Vendors" are two separate
+ [ ] INV-P2-16   Number formats differ: PO-0001, CNT-0001, SALE-0001, GRN-0001
+ [ ] INV-P2-17   Money shown as "BDT" in Inventory/Services, "Tk." in Cashbox.
+
+ -- OTHER SERVICES  (07_Other_Services.txt)
+ [ ] SRV-P2-01   Add Category shows developer text "Slug: qa-transport". Hide it.
+ [ ] SRV-P2-02   Department is free text. Pick from Staff departments.
+ [ ] SRV-P2-03   Resource "Type" shows a dropdown arrow but has no options.
+ [ ] SRV-P2-04   Empty category has no delete option.
+ [ ] SRV-P2-05   "Md Yeapas" appears twice in "Assign to".
+ [ ] SRV-P2-06   Amounts like "BDT 247.5" and "BDT 1,897.5". Round to whole taka
+ [ ] SRV-P2-07   Switching Charge to booking / Cash sale clears guest name and
+ [ ] SRV-P2-08   Booking search shows nothing when no match. Add "No booking
+ [ ] SRV-P2-09   A job for tomorrow can be started today without a warning.
+ [ ] SRV-P2-10   Order number "OSO-GIBQD2W45S" is hard to read or say on phone.
+ [ ] SRV-P2-11   Timeline is a plain list. Prototype: rows per resource (car,
+ [ ] SRV-P2-12   Orders page says "Sales today ৳1,518" but Reports (by requested
+ [ ] SRV-P2-13   Old orders stay "Active" for weeks (LUX, 12 Nov). Flag overdue.
+ [ ] SRV-P2-14   Discount 20% above front desk limit 10%: admin saved with no
+ [ ] SRV-P2-15   Website note says "Horizon Experiences". Use current theme names
+ [ ] SRV-P2-16   This test property has lorem-ipsum demo data ("Eum sit
+
+ -- OPERATIONS (EXPENSES)  (08_Operations_Expenses.txt)
+ [ ] EXP-P2-01   Overview has 8 cards incl. counts (Approved 3, Completed 1,
+ [ ] EXP-P2-02   "30 days" selected, but Expense trend list shows only the
+ [ ] EXP-P2-03   Status words differ: API "completed", UI "Paid"; Overview
+ [ ] EXP-P2-04   Audit log says "Expense #7" and "changed expense status to
+ [ ] EXP-P2-05   Reject reason is optional - make it required.
+ [ ] EXP-P2-06   Prototype form has "Bill / receipt no." - live form doesn't
+ [ ] EXP-P2-07   "Operations settings: Accounts inside Operations" toggle and
+
+ -- MONEY: CASHBOX / PAYMENTS / FINANCE / REPORTS  (09_Money_Cashbox_Payments_Finance_Reports.txt)
+ [ ] MON-P2-01   "Average Transaction Tk. 22,586.635" (3 decimals).
+ [ ] MON-P2-02   Reports "Collections by method": Cash listed twice
+ [ ] MON-P2-03   Payments list shows method "Cash" for unpaid bookings.
+ [ ] MON-P2-04   Meals Collections report = same ledger as Sales; add totals
+ [ ] MON-P2-05   Paisa decimals in hotel money (2,969.14 / 247.5 / 1,897.5 /
+
+ -- GLOBAL UI / UX  (10_Global_UI_UX.txt)
+ [ ] GLB-P2-01   money fmt .   x   .    .   x   x   x   x   x
+ [ ] GLB-P2-02   slow      .   x   .    .   x   x   x   .   .
+ [ ] GLB-P2-03   drawers   x   .   .    .   .   x   x   .   .
+ [ ] GLB-P2-04   Esc loses .   .   .    .   x   .   .   .   .
+ [ ] GLB-P2-05   numbers   .   x   .    x   x   x   x   x   .
+ [ ] GLB-P2-06   demo data .   x   x    .   x   .   x   .   .
+ [ ] GLB-P2-07   logo      .   .   .    .   x   .   .   .   .
+ [ ] GLB-P2-08   dates     .   x   .    .   .   .   .   .   .
+ [ ] GLB-P2-09   grammar   .   x   .    .   x   .   .   .   .
+ [ ] GLB-P2-10   validate  x   x   .    x   x   x   x   x   .
+
+================================================================

@@ -1,0 +1,322 @@
+================================================================
+ 08  OPERATIONS (= EXPENSES)  -  Bugs / UI / UX problems
+================================================================
+ Site:    https://hms.bingi.app/dashboard/operations  (testing server)
+ Prop:    Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Tested:  24 Nov 2026, 16:02-16:20, Desktop Chrome 1568 px, admin
+          (can_approve = true)
+ Compare: prototype /hms/operations (Overview, Expenses, Supplier
+          bills, Payees, Categories & rules, Activity, New expense)
+ Cross:   Cashbox (/api/cashbox + page), Bookings API, Inventory GRN
+ Source:  docs/qa/BinGi_HMS_Operations_Expenses_QA_2026-11-24.txt
+          design refs: docs/qa/design-ref-operations/*.png
+ Related: 09_Money (Net profit, Cashbox totals)
+
+ COUNT:   P0 x 5   |   P1 x 9   |   P2 x 7   |  + design 1:1 (E)
+ IDs:     EXP-P0-xx / EXP-P1-xx / EXP-P2-xx
+
+HOW TO READ
+  P0 = blocker or money risk. Fix first.
+  P1 = wrong, risky, or different from approved design.
+  P2 = polish.
+  Each item: WHERE / HAPPENS / IMPACT / EXPECTED / FIX (BE / FE).
+
+TOTAL: 5 x P0 | 9 x P1 | 7 x P2 | + design gaps (section E)
+
+ROOT CAUSE IN ONE LINE
+  Expense "status" can be changed freely from a dropdown, and the
+  status change itself moves cash in/out of the Cashbox. Payments,
+  approval and cash are not one locked flow.
+
+
+================================================================
+ A. WHAT I DID (all with QA names, all on 24 Nov)
+================================================================
+ Setup
+  - Categories: QA Utilities, QA Repairs (+ "qa utilities" to test
+    duplicates).
+  - Approval rule: approve above BDT 5,000 (was Off).
+  - Payee: QA Fresh Supply (from Inventory supplier).
+
+ Expenses                         Amount  What I did                Result
+  EXP-2026-000005 Electricity     3,200   pay 1,200 cash            Partly paid, cash -1,200
+  EXP-2026-000006 Water pump     12,000   pay 500 cash via API      Auto-approved, cash NOT moved
+                                          while waiting approval     (EXP-P0-01, EXP-P0-02)
+  EXP-2026-000007 Laundry linen   6,000   status -> Paid (no         cash -6,000, then Draft +6,000,
+                                          approval), -> Draft,       Paid -6,000, Rejected +6,000
+                                          -> Paid, -> Rejected       (EXP-P0-03, EXP-P0-04)
+  EXP-2026-000008 Status-paid       800   status -> Paid             cash -800
+  EXP-2026-000009 QA zero             0   created (amount 0)         accepted (EXP-P1-05)
+  EXP-2026-000010 QA future         100   date 1 Jun 2027            accepted (EXP-P1-05)
+  EXP-2026-000011 Supplier bill   1,000   GRN-0001 pay 1,000 of      Partly paid, cash -1,000  OK
+                  (auto)                  2,375 cash
+  Negative amount (-500)                  blocked 422                OK
+  Over-pay (4,000 on 3,200)               blocked inline             OK
+
+ CASH CHECK (Main Cashbox, business date 24 Nov)
+  Before:  2,74,298
+  Cash that physically left the drawer in this test:
+           1,200 + 500 + 800 + 6,000 + 1,000      = 9,500
+  Cashbox now: 2,71,298  (only 3,000 lower)
+  Difference: 6,500 = 500 never posted (EXP-P0-02) + 6,000 put back
+              by "Rejected" (EXP-P0-04).
+  Cashbox page also shows "Where cash came from: QA Utilities
+  12,000" - two status reversals counted as cash IN (EXP-P0-04).
+
+
+================================================================
+ B. P0 - FIX FIRST
+================================================================
+
+[EXP-P0-01] Approval can be skipped by paying through the API
+  WHERE    POST /api/operations/expenses/{id}/payments
+  HAPPENS  EXP-000006 (12,000, above the 5,000 rule, "Waiting
+           approval"). The UI correctly hides "Pay". A direct API
+           call with amount 500 returned 201 "Part payment
+           recorded" and the expense became status "approved",
+           needs_approval false, approved_at set - nobody approved.
+  IMPACT   Approval rule is only a UI rule. Any staff token can pay
+           out and self-approve.
+  EXPECTED 403/422 "Waiting for manager approval" until a manager
+           approves. A payment must never change approval.
+  FIX      BE: check needs_approval + approver role in the payment
+           endpoint (and in supplier-bill pay). Never auto-approve.
+
+[EXP-P0-02] Cash payment not posted to Cashbox
+  WHERE    Same payment (EXP-000006, 500 Cash).
+  HAPPENS  Payment saved, paid_amount 500, but Cashbox balance did
+           not change and there is no movement for EXP-000006.
+           The 1,200 cash payment on EXP-000005 was posted.
+  IMPACT   Drawer is short 500 vs the system; day close will show
+           a discrepancy nobody can explain.
+  EXPECTED Every Cash payment = one Cashbox "cash out" movement,
+           same transaction.
+  FIX      BE: create the cash movement inside the payment service
+           (not in the status/approval path); DB transaction so both
+           save or both fail.
+
+[EXP-P0-03] "Change status -> Paid" pays an unapproved expense in full
+  WHERE    Expense panel > Change status dropdown.
+  HAPPENS  EXP-000007 (6,000, needs approval). Choosing "Paid" sent
+           PATCH status=completed, paid_amount=6000. Cash -6,000,
+           no approval, no payment record (panel says "Paid before
+           payment history (Cash)").
+  IMPACT   Approval and payment history are both bypassed from the
+           normal screen.
+  EXPECTED Prototype: no status dropdown. Buttons only, in order:
+           Approve / Reject (manager) -> Pay (creates payment).
+           "Paid" is a result, not a choice.
+  FIX      FE: remove the status dropdown. BE: block PATCH to
+           paid/completed; status changes only via approve, reject,
+           pay endpoints.
+
+[EXP-P0-04] Rejecting or "Draft"-ing a PAID expense puts the cash back
+  WHERE    Change status -> Draft / Rejected on a paid expense.
+  HAPPENS  EXP-000007 paid 6,000. -> Draft: Cashbox +6,000 (expense
+           still says paid 6,000). -> Paid again: -6,000. ->
+           Rejected (reason optional, left empty): +6,000 again.
+           Cashbox shows these as "cash in from QA Utilities".
+  IMPACT   Easy way to hide cash taken from the drawer: pay, then
+           reject. Cashbox looks balanced, drawer is short.
+  EXPECTED A paid expense cannot be rejected or drafted. To undo,
+           use "Record refund from payee" (cash in with reason,
+           manager only), shown as its own line.
+  FIX      BE: reject/draft only when paid_amount = 0. Refund =
+           separate endpoint + Cashbox movement "Expense refund".
+
+[EXP-P0-05] "Net Profit" is not profit
+  WHERE    Overview card "Net Profit BDT 14,23,057.14"; "Revenue vs
+           expense" chart (24 Nov revenue 13,49,912).
+  HAPPENS  Revenue = total value of bookings CREATED in the period
+           (incl. unpaid and future December stays; 30-day created,
+           not cancelled = 14,45,835). Money actually received in
+           the same period = about 5,30,380. Expenses side includes
+           a REJECTED expense (6,000) and unpaid ones.
+  IMPACT   Owner sees ~14 lakh "profit" with ~5 lakh collected.
+           Wrong decisions.
+  EXPECTED Prototype: "Left after costs = Received − spent −
+           payroll" with the formula shown under the number.
+  FIX      BE: received = payments in period (Payments module);
+           spent = paid expenses; exclude rejected. Rename card to
+           "Left after costs". Show the formula line.
+
+
+================================================================
+ C. P1
+================================================================
+
+[EXP-P1-01] Every new expense saved as "Waiting approval"
+  WHERE    New expense > Save.
+  HAPPENS  FE always sends status "pending". EXP-000005 (3,200,
+           under the 5,000 rule) shows "Waiting approval" in list
+           and panel, while API says needs_approval false.
+           "Pending approvals 1" on Overview = "QA zero" (BDT 0).
+  EXPECTED Under the limit -> "To pay" (or "Paid" if paid now).
+           Only above the limit -> "Waiting approval".
+  FIX      FE: don't send status; BE decides from the rule.
+
+[EXP-P1-02] Rejected expense counted in totals
+  WHERE    Overview: Total Expenses 24,375 and Paid 9,500 include
+           EXP-000007 (rejected, 6,000). "Where the money went:
+           QA Utilities 10,000" also includes it.
+  FIX      BE: exclude rejected from totals and charts.
+
+[EXP-P1-03] Panel shows stale numbers after a payment
+  WHERE    Expense panel after "Record payment".
+  HAPPENS  After paying 1,200 the panel still said Paid 0.00, Due
+           3,200, "No payments yet", status "Waiting approval" until
+           closed and reopened.
+  FIX      FE: refresh the expense after payment (use response).
+
+[EXP-P1-04] "bKash" listed twice in every payment-method list
+  WHERE    New expense, Record payment, Pay supplier bill.
+  FIX      BE/FE: de-duplicate payment methods (two bKash rows in
+           settings?). Same list as Payments module.
+
+[EXP-P1-05] Weak amount/date validation
+  HAPPENS  Amount 0 accepted (EXP-000009). Date 1 Jun 2027 accepted
+           (EXP-000010) and then hidden from all "30 days" views.
+  FIX      BE: amount > 0; date not later than today + 1 (or warn).
+
+[EXP-P1-06] Payroll is missing from Expenses
+  WHERE    Overview.
+  EXPECTED Prototype + plan D2: "Payroll · <month>" card (Net /
+           Paid / Due, link "Open payroll"), and payroll counted in
+           "Left after costs".
+  FIX      BE: payroll cost from Staff; FE card.
+
+[EXP-P1-07] No default categories
+  HAPPENS  New hotel has 0 categories; user must create them before
+           the first expense. Duplicate names allowed ("QA Utilities"
+           and "qa utilities"). Supplier-bill payment silently
+           creates/uses category "Supplies" which is not in the list.
+  EXPECTED Prototype seeds 11: Utilities, Repairs & maintenance,
+           Supplies, Food & beverage purchase, Laundry, Transport,
+           Staff food & welfare, Marketing, Rent, Bank & fees, Other.
+  FIX      BE: seed defaults per property; unique name
+           (case-insensitive).
+
+[EXP-P1-08] Payment method asked at creation means nothing
+  WHERE    New expense > Payment method (Cash).
+  HAPPENS  Choosing Cash does not pay anything; Paid stays 0. Users
+           will think the expense is paid.
+  EXPECTED Prototype form has no method. Either remove it, or add
+           "Paid now? [Yes / No]" - Yes creates the payment (and the
+           Cashbox movement) at once.
+
+[EXP-P1-09] Page name "Operations" (decision D4 = "Expenses")
+  WHERE    Sidebar, page title, breadcrumb.
+  EXPECTED Prototype + HMS_Remaining_Modules_Plan D4: label
+           "Expenses", order unchanged.
+
+
+================================================================
+ D. P2
+================================================================
+[EXP-P2-01] Overview has 8 cards incl. counts (Approved 3, Completed 1,
+        Rejected 1) - prototype has 4 money cards (Spent, To pay,
+        Waiting approval with amount, Left after costs).
+[EXP-P2-02] "30 days" selected, but Expense trend list shows only the
+        last 8 days (17-24 Nov). Show 30 bars or say "last 8 days".
+[EXP-P2-03] Status words differ: API "completed", UI "Paid"; Overview
+        card "Completed Expenses". Use: Waiting approval / To pay /
+        Partly paid / Paid / Rejected (prototype).
+[EXP-P2-04] Audit log says "Expense #7" and "changed expense status to
+        completed"; show EXP-2026-000007, amount, and cash effect
+        (e.g. "Cashbox −6,000").
+[EXP-P2-05] Reject reason is optional - make it required.
+[EXP-P2-06] Prototype form has "Bill / receipt no." - live form doesn't
+        (Reference only on payment).
+[EXP-P2-07] "Operations settings: Accounts inside Operations" toggle and
+        "Recent expenses loaded 6 rows / Account tracking mode"
+        block reads like a debug panel - move to Settings or hide.
+
+
+================================================================
+ E. DESIGN 1:1 (live vs approved prototype)
+================================================================
+ E1. Header + tabs
+   SAME : title + subtitle, primary "New expense", tabs Overview /
+          Expenses / Supplier bills / Payees / Categories & rules.
+   DIFF : title "Operations" (EXP-P1-09); "Audit log" vs "Activity";
+          extra Refresh button; no count badge on Expenses tab
+          (prototype "Expenses 2" = waiting approval).
+ E2. Overview
+   SAME : period chips, "Where the money went", "Needs approval".
+   DIFF : 8 cards vs 4 (EXP-P2-01); "Net Profit" vs "Left after costs"
+          with formula (EXP-P0-05); no bars in "Where the money went"
+          (prototype has red bars); no Payroll card (EXP-P1-06);
+          extra "Operations settings" and "Revenue vs expense"
+          blocks (EXP-P2-07).
+ E3. Expenses list
+   SAME : search, status/category/payee filters, row = title, ID,
+          category, payee, date, paid, total, status chip.
+   DIFF : extra "7 days / Today / Custom" chips (fine to keep);
+          prototype shows "All".
+ E4. Expense panel
+   DIFF : status dropdown (EXP-P0-03) - prototype has only Approve /
+          Reject / Pay buttons; "Account" row always "—".
+ E5. New expense
+   SAME : What for, Amount, Date, Category, Paid to, Note, Save.
+   DIFF : extra Payment method (EXP-P1-08); missing Bill / receipt no.
+          (EXP-P2-06); placeholder "Internet bill, kitchen stock,
+          salary payout..." - salary must NOT be entered here (it
+          is in Staff) -> use "e.g. Electricity bill — November".
+ E6. Supplier bills
+   SAME : "Bills come from goods received in Inventory", GRN · PO ·
+          date, To pay / Partly paid, Pay bill, part payment.
+   DIFF : prototype also shows supplier invoice no.
+ Screens: docs/qa/design-ref-operations/prototype_o1..o6.png
+
+
+================================================================
+ F. WORKS - KEEP
+================================================================
+ - Categories and approval rule save; rule shows "Now: BDT 5,000".
+ - Inventory supplier -> "Use as payee" in one click.
+ - Above-limit expense: UI hides Pay and shows "A manager must
+   approve it before it can be paid".
+ - Over-payment blocked inline ("Enter an amount up to ...").
+ - Negative amount blocked (422).
+ - Supplier bill from GRN: part payment works, creates an expense
+   (EXP-000011) and a correct Cashbox cash-out (-1,000).
+ - Cash payment on EXP-000005 posted to Cashbox (-1,200) with the
+   expense ID as reference.
+ - Audit log records every status change with user + time.
+
+
+================================================================
+ G. NOT TESTED YET
+================================================================
+ - Staff (non-admin) role: can they approve / see the dropdown?
+   (EXP-P0-01/EXP-P0-03 are worse if yes.)
+ - "Accounts inside Operations" ON mode.
+ - Attachments / receipt photo.
+ - Expenses in Reports (P&L) and Finance.
+ - Day close with these expense movements.
+ - Phone layout.
+
+
+================================================================
+ H. TEST DATA LEFT ON SERVER
+================================================================
+ - Expenses EXP-2026-000005 ... 000011 (QA names).
+ - Categories QA Utilities, QA Repairs, qa utilities.
+ - Payee PAYEE-2026-000004 QA Fresh Supply.
+ - Approval rule = 5,000 (was Off). Set back to 0 if not wanted.
+ - Supplier bill GRN-0001: 1,000 paid, 1,375 due.
+ - Cashbox (open, 24 Nov): 2,71,298.
+
+
+================================================================
+ I. SUGGESTED FIX ORDER
+================================================================
+ 1. EXP-P0-03 + EXP-P0-04  remove status dropdown; block reject/draft on
+    paid; refund as its own flow.
+ 2. EXP-P0-01 + EXP-P0-02  approval check + Cashbox movement inside the
+    payment endpoint (one DB transaction).
+ 3. EXP-P0-05  "Left after costs" from received money.
+ 4. EXP-P1-01, EXP-P1-02, EXP-P1-03  correct status on create, exclude
+    rejected, refresh panel.
+ 5. EXP-P1-04 .. EXP-P1-09, then P2.
+================================================================
