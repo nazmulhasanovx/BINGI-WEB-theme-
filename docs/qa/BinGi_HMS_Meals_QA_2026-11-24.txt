@@ -1,0 +1,257 @@
+================================================================
+ BinGi HMS - Live QA: MEALS (RESTAURANT & BAR)
+ Site:     https://hms.bingi.app/dashboard/meals (testing server)
+ Guest QR: https://hms.bingi.app/foods/HTL-000001-2843U
+ Property: Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Date:     24 Nov 2026
+ Tested:   Desktop Chrome 1568 px, Hotel admin role.
+           Phone layout and staff roles NOT tested yet.
+ Compare:  BinGi HMS prototype (approved design, main branch)
+================================================================
+
+HOW TO READ
+  P0 = blocker or money/control risk. Fix first.
+  P1 = wrong, risky, or different from approved design.
+  P2 = polish.
+  Each item: WHERE -> WHAT HAPPENS -> EXPECTED -> FIX (BE / FE)
+
+TOTAL: 3 x P0  |  7 x P1  |  18 x P2
+
+
+----------------------------------------------------------------
+ WHAT WAS TESTED (test data named "QA ...")
+----------------------------------------------------------------
+  Menu:     add dish "QA Fried Rice" (৳250, cost ৳19, 15 min)
+  POS:      takeaway, pay now (cash) -> kitchen -> ready -> handover
+            takeaway, pay later -> Collect payment (cash, change)
+  Guest QR: open table QR link -> add dish -> place order
+  Orders:   view, collect payment, cancel with reason
+  Kitchen:  Queued -> Preparing -> Ready -> Handover
+  Settings: Ordering (pause, approvals), Charges (VAT / service)
+  Reports, Approvals, Tables & QR, Cashbox, Inventory link
+
+  Cashbox maths correct: ৳577 + ৳250 food payments posted, each
+  with its order number. Order totals and change are correct.
+
+
+----------------------------------------------------------------
+ FLOW MAP - where problems are
+----------------------------------------------------------------
+
+ Menu ---------- discount price > price allowed (P1-02)
+   |             not linked to Inventory (P1-01)
+   v
+ POS (staff) --> Kitchen --> Ready --> Handover        OK
+   |   "Send for approval" but goes straight to kitchen (P1-05)
+   |   two "bKash" choices (P1-06)
+   v
+ Guest QR ----> order accepted while PAUSED and without
+                counter approval (P0-02)
+                separate bill on a busy table (P1-04)
+   v
+ Collect payment on QR order --> 500 Server Error (P0-03)
+
+ Settings Save --> 422 "qr logo must be an image",
+                   nothing saves, no message (P0-01)
+
+ Reports / Overview --> old numbers until Refresh (P1-03)
+ Receipt preview --> opens browser print dialog (P1-07)
+
+
+================================================================
+ P0 - FIX FIRST
+================================================================
+
+[MEAL-P0-01] Restaurant Settings cannot be saved
+  WHERE     Meals -> Settings -> Charges (VAT 15, service 10) -> Save
+  HAPPENS   POST https://api.bingi.app/api/meals/settings -> 422
+            {"message":"The qr logo field must be an image.",
+             "errors":{"qr_logo":[... must be a file of type:
+             jpeg, png, jpg, svg, webp]}}
+            Screen shows nothing. Values look saved but are not:
+            next POS order still had no VAT / service charge.
+  IMPACT    Owner cannot change VAT, service charge, hours, pause,
+            approvals, printing - and thinks he did.
+  FIX       FE: do not send qr_logo when no new file was picked
+            (send nothing, or keep existing path).
+            BE: make qr_logo optional ("sometimes|image").
+            FE: show save errors.
+
+[MEAL-P0-02] Guest QR orders ignore "Pause" and "Counter approval"
+  WHERE     Settings -> Ordering: "Pause accepting orders" = ON,
+            "Require counter approval for QR orders" = ON
+            Guest opens table QR -> adds dish -> Place order
+  HAPPENS   Order FO-2026-000071 accepted. Status "Confirmed",
+            Approval status "Accepted", sent straight to kitchen
+            (Queued). Approvals tab = 0.
+            Guest menu shows no "paused" notice; Add works.
+  IMPACT    Restaurant cannot stop or check guest orders. Kitchen
+            gets orders it did not agree to.
+  EXPECTED  Pause ON -> guest menu shows "Not taking orders now",
+            order is refused (also by the API).
+            Counter approval ON -> order waits in Approvals.
+  FIX       BE: check both settings when a QR / guest order is
+            created. FE: guest menu reads pause state.
+  NOTE      Check again after P0-01 is fixed (settings may be
+            stored but not read, or not stored).
+
+[MEAL-P0-03] Payment cannot be taken for a Table QR order
+  WHERE     Orders -> FO-2026-000071 (Table QR) -> Collect payment
+  HAPPENS   PATCH https://api.bingi.app/api/meals/orders/
+            FO-2026-000071/payment -> 500 {"message":"Server Error"}
+            Tried Cash (৳250 and ৳500 received) and bKash with a
+            reference. Same 500 each time.
+            The same steps on a POS order (OFO-2026-000013) work.
+  IMPACT    Every guest who orders by QR cannot be charged.
+  FIX       BE: check server log for this endpoint with QR / dine-in
+            orders (guest-created order, no staff, table source).
+
+
+================================================================
+ P1
+================================================================
+
+[MEAL-P1-01] Menu is not linked to Inventory
+  WHERE     Menu item, POS sale
+  HAPPENS   4 x QA Fried Rice sold; Inventory "QA Rice" stayed
+            113 kg. Menu "Cost price" is typed by hand.
+  EXPECTED  Menu item links to an Inventory recipe. A served /
+            paid order takes ingredients out of stock. Cost price
+            comes from the recipe.  (Same as INV-P1-07.)
+
+[MEAL-P1-02] Discount price higher than price is accepted
+  WHERE     Menu -> Add item
+  HAPPENS   Regular ৳250, Discount price ৳300 -> saved.
+  EXPECTED  Discount price must be lower than regular price.
+
+[MEAL-P1-03] Reports and Overview show old numbers
+  WHERE     Reports after new orders
+  HAPPENS   Showed 1 order / ৳146 / collected ৳0 while 4 orders and
+            ৳827 collected existed. Correct only after Refresh.
+  EXPECTED  Numbers update when orders change (or refetch on
+            opening the tab).
+
+[MEAL-P1-04] QR order on a busy table becomes a second bill
+  WHERE     Table "Hamim" had open order FO-2026-000070;
+            guest ordered by QR at the same table.
+  HAPPENS   New separate order FO-2026-000071. Tables & QR still
+            shows the table as "Ready".
+  EXPECTED  One running bill per table visit (QR adds items to it),
+            table shows "Occupied" while a bill is open.
+
+[MEAL-P1-05] POS "Send for approval" goes straight to kitchen
+  WHERE     POS approval policy = "Require counter approval"
+  HAPPENS   Admin's POS orders went to Queued; Approvals = 0.
+  EXPECTED  If admin skips approval, button says "Send to kitchen".
+            Check with a staff login that staff orders do wait.
+
+[MEAL-P1-06] Two "bKash" payment choices, no card
+  WHERE     POS "Collect payment now", Collect Payment drawer
+  HAPPENS   Cash, bKash, bKash. Clicking the first bKash highlights
+            the second.
+  EXPECTED  Show each account with its label/number
+            (e.g. "bKash Merchant 01XX"), one selection, add Card if
+            the hotel accepts it.
+
+[MEAL-P1-07] "Receipt preview" opens the print dialog directly
+  WHERE     Order details -> Receipt preview
+  HAPPENS   Browser print dialog opens and blocks the page.
+  EXPECTED  Show the receipt on screen first, with Print / Share.
+
+
+================================================================
+ P2 - POLISH
+================================================================
+  1. Three names: sidebar "Meals", breadcrumb "F&B", page
+     "Restaurant & Bar". Use "Restaurant & Bar" (sidebar v7).
+  2. Two order number series: FO-2026-000070 (dine-in / QR) and
+     OFO-2026-000012 (takeaway). Use one series.
+  3. "1 orders" -> "1 order".
+  4. Pause text differs: Settings says "new orders cannot be
+     placed"; POS says "New guest orders are paused". Pick one rule
+     and say it the same way.
+  5. Opening hours 07:17 PM - 06:18 PM saved; no check that close is
+     after open (or a clear "overnight" option). Time zone offers
+     UTC for a Dhaka hotel.
+  6. Charges has both "Tax rate" and "VAT rate". Bangladesh uses
+     VAT; keep one, or explain the second.
+  7. Esc closes Add Menu Item and loses typed data without asking.
+  8. Menu "Sold on": only Staff POS / QR menu. Add Room service,
+     Guest app, Website if those channels exist.
+  9. POS order panel: "Other service types" dropdown repeats the
+     Dine-in / Room / Takeaway / Delivery buttons above.
+ 10. Kitchen card timers and "Last updated" do not tick (stuck at
+     22 min / 12:28 PM).
+ 11. Guest QR shows "Table 2843U" (code), not the table name "Hamim".
+ 12. Guest QR dish page background shows another dish (burger behind
+     fried rice).
+ 13. Guest QR header uses a different "BiNGi" icon (fork on red
+     circle). Use the official BinGi logo from brand files.
+ 14. Guest QR: "Sign in to use your saved details" is red under
+     Guest Name and looks like an error. Make it a plain link.
+ 15. Guest QR offers "Online payment - Pay securely through EPS".
+     Show it only if EPS is live for this hotel (truth rule).
+ 16. Cancel order drawer: opens on "Reject" even when Reject is not
+     allowed; footer buttons "Cancel" and "Cancel Order" are
+     confusing ("Close" / "Cancel order"); guest message does not
+     change when the reason changes.
+ 17. Demo data: lorem-ipsum dish names and a personal photo used as
+     a dish image ("You cant afford it"). Clean before any demo.
+ 18. Slow: saves 4-7 s. Collections report shows the same ledger as
+     Sales; add totals by payment method (cash / bKash).
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - Tabs match prototype (Overview, POS, Orders, Kitchen, Menu,
+    Tables & QR, Reports, Cashbox, Settings) + Approvals.
+  - POS: tables / menu view, service types, cart, drafts,
+    pay now or later.
+  - Kitchen board: Queued -> Preparing (target time from prep time)
+    -> Ready -> Handover with confirm.
+  - Collect payment (POS orders): received amount, change, discount
+    with reason; "Above 10% a manager or admin must take the
+    payment".
+  - Cash payments post to Cashbox with order number
+    (৳577 + ৳250 correct).
+  - Cancel order: reason, guest message, impact summary
+    (kitchen, collected, room folio, refund), confirm tick.
+  - Orders list: filters by source, service type, payment, status.
+  - Guest QR: menu, dish page, cart, order status page with steps.
+  - Reports (after refresh): accepted orders, collected, not paid,
+    by channel, order ledger - numbers correct.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  1. Room service / Post to room - property has 0 bookings.
+  2. Delivery, split payment, void, refund.
+  3. Kitchen ticket printing (KOT), QR appearance, Printing settings.
+  4. Staff roles: approvals, discount above 10%.
+  5. Guest "Pay online (EPS)" - not clicked (real gateway).
+  6. Phone layout (POS and kitchen on tablet / phone).
+
+
+================================================================
+ TEST DATA LEFT ON THE TESTING SERVER (Pan Pacific Sonargaon)
+================================================================
+  Menu:    "QA Fried Rice" (৳250, discount price ৳300 - see P1-02)
+  Orders:  OFO-2026-000012  takeaway, paid ৳577, delivered
+           OFO-2026-000013  takeaway, paid ৳250, still Queued
+           FO-2026-000071   Table QR, cancelled (could not be paid)
+  Cashbox: now ৳2,345 (Services ৳1,518 + Food ৳577 + ৳250).
+           Day not closed.
+  Settings: nothing changed (save failed, see P0-01).
+
+
+================================================================
+ SUGGESTED FIX ORDER
+================================================================
+  1. P0-01 settings save   2. P0-03 QR payment 500
+  3. P0-02 pause / approval for guest orders (re-test after 1)
+  4. P1-04 one bill per table   5. P1-03 live reports
+  6. P1-01 menu <-> inventory recipe
+  7. Other P1, then P2
+================================================================
