@@ -43,7 +43,7 @@ export type Settings = {
   tax: { vat: number; service: number; minRate: number; discountBy: "Front desk" | "Manager" | "Owner"; discountLimit: number };
   hk: { dirtyOnCheckout: boolean; inspection: boolean; autoRelease: boolean; priority: "Low" | "Normal" | "High" };
   payments: PayMethodRow[];
-  docs: { prefix: string; next: number; terms: string; footer: string; showLogo: boolean; paper: "A4" | "Thermal"; design?: { template: "classic" | "modern" | "compact"; accent: string; logoSize: "S" | "M" | "L"; lang: "en" | "en-bn" }; contract: { on: boolean; title: string; intro: string; rules: string; signBefore: "Check-in" | "Booking"; block: boolean } };
+  docs: { prefix: string; next: number; terms: string; footer: string; showLogo: boolean; paper: "A4" | "Thermal"; design?: { template: "folio" | "classic" | "modern" | "elegant" | "compact" | "minimal"; accent: string; logoSize: "S" | "M" | "L"; lang: "en" | "bn" | "mix"; textSize?: "S" | "M" | "L" }; contract: { on: boolean; title: string; intro: string; rules: string; signBefore: "Check-in" | "Booking"; block: boolean } };
   printers: Printer[];
   messages: { rules: MsgRule[]; paymentNote: string; location: string; shortcuts: { id: string; title: string; text: string }[] };
   roles: Role[];
@@ -115,7 +115,7 @@ const seed = (h: Hotel): Settings => ({
     { id: "bank", name: "Bank transfer", kind: "bank", account: "", enabled: false, atProperty: true, onWebsite: false },
     { id: "gw", name: "Online payment gateway", kind: "gateway", account: "", enabled: false, atProperty: false, onWebsite: false, upcoming: true },
   ],
-  docs: { prefix: "INV-", next: 1001, terms: "", footer: "Thank you for staying with us.", showLogo: true, paper: "A4", design: { template: "compact", accent: "#B11C29", logoSize: "M", lang: "en-bn" }, contract: { on: false, title: "Stay agreement", intro: "This agreement confirms the reservation and the terms accepted by the guest.", rules: "", signBefore: "Check-in", block: false } },
+  docs: { prefix: "INV-", next: 1001, terms: "", footer: "Thank you for staying with us.", showLogo: true, paper: "A4", design: { template: "folio", accent: "#0E4C6B", logoSize: "M", lang: "mix", textSize: "M" }, contract: { on: false, title: "Stay agreement", intro: "This agreement confirms the reservation and the terms accepted by the guest.", rules: "", signBefore: "Check-in", block: false } },
   printers: [],
   messages: {
     rules: DEFAULT_RULES,

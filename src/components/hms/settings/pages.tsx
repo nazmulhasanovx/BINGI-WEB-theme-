@@ -11,6 +11,7 @@ import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
 import { invoiceHtml, regCardHtml, withDocsDraft, DOC_TEMPLATES, DOC_ACCENTS, type DocDesign } from "@/lib/bookings/docs";
+import { normaliseDesign } from "@/lib/bookings/doc-kit";
 import { useGuestNames } from "@/lib/guests/store";
 import { useRooms, priceBreak } from "@/lib/rooms/store";
 import { useHousekeeping } from "@/lib/housekeeping/store";
@@ -457,13 +458,17 @@ export function PaymentsPage() {
 
 /** Small drawing of each template for the picker (not a real document). */
 function TemplateThumb({ t, accent }: { t: DocDesign["template"]; accent: string }) {
-  const line = (w: string, extra = "") => <div className={clsx("h-[3px] rounded bg-[#dfe2e7]", extra)} style={{ width: w }} />;
+  const ln = (w: string, c = "#dfe2e7", h = 3) => <div className="rounded" style={{ width: w, height: h, background: c }} />;
+  const rows = (n: number, head?: string) => <div className="space-y-[4px]">{head && <div className="h-[5px] rounded-sm" style={{ background: head }} />}{Array.from({ length: n }, (_, i) => <div key={i}>{ln("100%")}</div>)}</div>;
+  const dot = (sz: number) => <div className="shrink-0 rounded-full border-[1.5px]" style={{ width: sz, height: sz, borderColor: accent }} />;
   return (
-    <div className="relative h-[92px] overflow-hidden rounded-lg border border-hms-line bg-white p-2.5" aria-hidden>
-      {t === "modern" && <div className="absolute inset-x-0 top-0 h-[4px]" style={{ background: accent }} />}
-      {t === "classic" ? <div className="flex flex-col items-center gap-1"><div className="size-4 rounded-full border-[1.5px]" style={{ borderColor: accent }} />{line("50%", "bg-[#b9bec7]")}{line("36%")}<div className="my-0.5 h-[3px] w-[40%] rounded" style={{ background: accent }} /></div>
-        : <div className="flex items-start justify-between"><div className="flex items-center gap-1.5"><div className={clsx("rounded-full border-[1.5px]", t === "compact" ? "size-3" : "size-4")} style={{ borderColor: accent }} /><div className="space-y-1">{line("34px", "bg-[#b9bec7]")}{line("26px")}</div></div><div className="h-[4px] w-[30%] rounded" style={{ background: accent }} /></div>}
-      <div className={clsx("space-y-[5px]", t === "compact" ? "mt-2" : "mt-3")}>{line("100%", "bg-[#c9cdd4]")}{line("100%")}{line("100%")}{t === "compact" && <>{line("100%")}{line("100%")}</>}<div className="ml-auto mt-1 h-[3px] w-1/3 rounded bg-[#9aa0aa]" /></div>
+    <div className="relative h-[100px] overflow-hidden rounded-lg border border-hms-line bg-white p-2.5" aria-hidden>
+      {t === "folio" && <><div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: accent }} /><div className="flex justify-between">{dot(14)}<div className="space-y-1">{ln("30px", "#b9bec7")}{ln("24px")}</div></div><div className="mt-1.5 h-[5px] w-10 rounded" style={{ background: accent }} /><div className="mt-1.5 grid grid-cols-3 gap-1 rounded border border-[#e3e6ea] p-1">{ln("90%")}{ln("80%")}{ln("85%")}</div><div className="mt-1.5">{rows(2, "#1c2230")}</div><div className="mt-1 ml-auto h-[5px] w-1/3 rounded" style={{ background: accent }} /></>}
+      {t === "classic" && <><div className="flex flex-col items-center gap-1">{dot(13)}{ln("45%", "#b9bec7")}{ln("32%")}</div><div className="my-1.5 border-y border-[#1c2230] py-[3px]"><div className="mx-auto h-[4px] w-1/3 rounded" style={{ background: accent }} /></div>{rows(3)}</>}
+      {t === "modern" && <><div className="-mx-2.5 -mt-2.5 mb-2 flex items-center justify-between px-2.5 py-2" style={{ background: accent }}><div className="size-[14px] rounded bg-white" />{ln("40px", "rgba(255,255,255,.7)")}</div><div className="mb-1.5 h-[5px] w-10 rounded bg-[#1c2230]" /><div className="mb-1.5 h-[12px] rounded bg-[#f1f3f6]" />{rows(2, accent)}</>}
+      {t === "elegant" && <><div className="flex flex-col items-center gap-1">{dot(12)}<div className="font-serif text-[9px] leading-none text-[#1c2230]">Hotel</div>{ln("30%")}</div><div className="mx-auto mt-2 h-[4px] w-1/4 rounded" style={{ background: accent }} /><div className="mx-auto mb-1.5 mt-1 h-px w-8" style={{ background: accent }} />{rows(3)}</>}
+      {t === "compact" && <><div className="flex items-center justify-between">{dot(10)}{ln("34px", "#b9bec7")}</div><div className="my-1 flex justify-between border-b border-[#1c2230] pb-1"><div className="h-[4px] w-8 rounded" style={{ background: accent }} /></div>{rows(7)}</>}
+      {t === "minimal" && <><div className="flex justify-between">{dot(11)}{ln("30px")}</div><div className="mt-2 flex items-end justify-between">{ln("30px", "#9aa0aa")}<div className="h-[9px] w-12 rounded" style={{ background: accent }} /></div><div className="mt-2.5">{rows(3)}</div></>}
     </div>
   );
 }
@@ -476,7 +481,7 @@ export function DocumentsPage() {
   const f = useDraft({ docs: s.docs, printers: s.printers }); const d = f.d.docs; const pr = f.d.printers;
   const setD = (patch: Partial<Settings["docs"]>) => f.setD({ ...f.d, docs: { ...d, ...patch } });
   const setC = (patch: Partial<Settings["docs"]["contract"]>) => setD({ contract: { ...d.contract, ...patch } });
-  const ds: DocDesign = { template: "compact", accent: "#B11C29", logoSize: "M", lang: "en-bn", ...d.design };
+  const ds: DocDesign = normaliseDesign(d.design);
   const setDs = (patch: Partial<DocDesign>) => setD({ design: { ...ds, ...patch } });
   const sample = bk.list.find((b) => b.status === "Checked out" && b.payments.length > 1) ?? bk.list.find((b) => b.status === "Checked in") ?? bk.list[0];
   const preview = useMemo(() => (sample ? withDocsDraft(d, () => invoiceHtml(h, sample, names.get(sample.guestId), [])) : ""), [d, sample, h, names, s.branding.logo, s.profile]);
@@ -488,7 +493,7 @@ export function DocumentsPage() {
       {tab === "invoice" && <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
         <div className="space-y-4">
         <Card title="Design" desc="One look for invoices, receipts, confirmations and registration cards.">
-          <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Template">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Template">
             {DOC_TEMPLATES.map((t) => { const on = ds.template === t.v; return (
               <button key={t.v} type="button" role="radio" aria-checked={on} onClick={() => setDs({ template: t.v })} className={clsx("rounded-xl border p-3 text-left transition", on ? "border-hms-coral ring-2 ring-hms-coral/20" : "border-hms-line hover:bg-hms-hover")}>
                 <TemplateThumb t={t.v} accent={ds.accent} />
@@ -503,8 +508,9 @@ export function DocumentsPage() {
                 {!DOC_ACCENTS.includes(ds.accent) && <span className="inline-flex items-center gap-1.5 text-[13px] text-hms-muted"><span className="size-7 rounded-full border-2 border-hms-ink" style={{ background: ds.accent }} />Your colour {ds.accent.toUpperCase()}</span>}
               </div>
             </Field></div>
+            <div className="sm:col-span-2"><Field label="Language"><Segmented value={ds.lang} onChange={(v) => setDs({ lang: v })} options={[{ v: "en", label: "English" }, { v: "bn", label: "বাংলা" }, { v: "mix", label: "Mix · English + বাংলা" }]} /></Field></div>
+            <Field label="Text size"><Segmented value={ds.textSize} onChange={(v) => setDs({ textSize: v })} options={[{ v: "S", label: "Small" }, { v: "M", label: "Normal" }, { v: "L", label: "Large" }]} /></Field>
             <Field label="Logo size"><Segmented value={ds.logoSize} onChange={(v) => setDs({ logoSize: v })} options={[{ v: "S", label: "Small" }, { v: "M", label: "Medium" }, { v: "L", label: "Large" }]} /></Field>
-            <Field label="Language"><Segmented value={ds.lang} onChange={(v) => setDs({ lang: v })} options={[{ v: "en", label: "English" }, { v: "en-bn", label: "English + বাংলা" }]} /></Field>
           </div>
           {!s.branding.logo && <p className="mt-4 rounded-lg bg-hms-hover px-3 py-2 text-[13px] text-hms-muted">No logo yet - documents show your initials. <Link href="/hms/settings/branding" className="text-hms-blue underline underline-offset-2">Upload your logo</Link></p>}
         </Card>

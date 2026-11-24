@@ -1,16 +1,14 @@
-# Document templates v1 (prototype, 24 Nov 2026)
+# Document templates v2 (prototype, 24 Nov 2026)
 
-Settings › Invoices & documents › **Design**:
-- Template: **Classic** (logo centred, formal), **Modern** (logo left, thin colour bar), **Compact** (most on one page).
-- Colour: 6 presets (BinGi red, ink, green, blue, brown, purple) or the hotel's own colour.
-- Logo size S / M / L. Logo from Settings › Branding; no logo → initials badge in the chosen colour.
-- Language: English, or English + বাংলা sub-labels.
-- Live preview of a real booking invoice, updates before saving.
+Settings › Invoices & documents › **Design** (one look for every A4 document):
+- **6 templates:** Folio (big-hotel guest folio), Classic (centred, fine lines), Modern (colour band with logo),
+  Elegant (serif, centred - resorts/boutique), Compact (tight rows, one page), Minimal (amount due large on top).
+- **Colour:** 8 presets or any colour (colour picker).
+- **Language:** English · বাংলা (Bangla labels, digits, dates, amount in words) · Mix (English + small Bangla).
+- **Text size:** Small / Normal / Large. **Logo size:** S / M / L. Logo from Branding; no logo → initials badge.
+- Live preview of a real booking before saving.
 
-One design is used by every A4 document in `src/lib/bookings/docs.ts`: invoice, booking confirmation,
-money/refund receipt, registration card, guest register, Form-C. Fonts: IBM Plex Sans + Noto Sans Bengali.
+Engine: `src/lib/bookings/doc-kit.ts`. Invoice: `docs.ts › invoiceHtml`. Next on the same kit: confirmation,
+stay agreement, registration card, money/refund receipt, guest register, Form-C.
 
-Settings key: `docs.design = { template, accent, logoSize, lang }` (old saved settings get the default `compact`).
-
-Status: **prototype only** (not in live HMS). Demo logo `azure-logo.svg` is an original drawing for the
-fictional demo property "Azure Bay Grand Resort".
+Status: prototype only. Demo property "Azure Bay Grand Resort" and its logo are fictional.

@@ -6,21 +6,16 @@ import { settingsOf, type Settings as HotelSettings } from "@/lib/settings/store
 import { bill, channelLabel, dmy, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, type Booking, type Pay, type Settings } from "./store";
 
 const esc = (s: string | undefined | null) => (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-export type DocTemplate = "classic" | "modern" | "compact";
-export type DocDesign = { template: DocTemplate; accent: string; logoSize: "S" | "M" | "L"; lang: "en" | "en-bn" };
-export const DOC_TEMPLATES: { v: DocTemplate; label: string; hint: string }[] = [
-  { v: "classic", label: "Classic", hint: "Logo centred on top. Formal - resorts, heritage hotels." },
-  { v: "modern", label: "Modern", hint: "Logo left, thin colour bar. Business and city hotels." },
-  { v: "compact", label: "Compact", hint: "Most on one page. Guest houses, apartments, busy desks." },
-];
-export const DOC_ACCENTS = ["#B11C29", "#1B1F27", "#0F5C4D", "#1E4E8C", "#8A5A12", "#5B2A86"];
+export { DOC_TEMPLATES, DOC_ACCENTS, type DocDesign, type DocTemplate } from "./doc-kit";
+import type { DocDesign } from "./doc-kit";
+import { normaliseDesign, lang as docLang, docPage, header as docHeader, footer as docFooter, esc as kesc, type DocHotel } from "./doc-kit";
 const BN: Record<string, string> = { "Invoice": "ইনভয়েস", "Booking confirmation": "বুকিং নিশ্চিতকরণ", "Money receipt": "টাকা প্রাপ্তির রসিদ", "Refund receipt": "ফেরতের রসিদ", "Guest registration card": "অতিথি নিবন্ধন কার্ড", "Guest register": "অতিথি রেজিস্টার", "Foreign guests (Form-C)": "বিদেশি অতিথি (ফর্ম-সি)" };
 const LOGO_H = { S: 30, M: 42, L: 56 } as const;
 let DRAFT: Partial<HotelSettings["docs"]> | null = null;
 /** Render with unsaved Settings → Invoices & documents values (live preview). */
 export function withDocsDraft<T>(draft: Partial<HotelSettings["docs"]>, fn: () => T): T { DRAFT = draft; try { return fn(); } finally { DRAFT = null; } }
 const docsOf = (h: Hotel): HotelSettings["docs"] => ({ ...settingsOf(h).docs, ...(DRAFT ?? {}) });
-const designOf = (h: Hotel): DocDesign => ({ template: "compact", accent: "#B11C29", logoSize: "M", lang: "en-bn", ...docsOf(h).design });
+const designOf = (h: Hotel) => normaliseDesign(docsOf(h).design);
 /** Initials badge used when the hotel has not uploaded a logo yet. */
 const monogram = (name: string, accent: string, px: number) => {
   const ini = name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "H";
@@ -45,19 +40,19 @@ td { padding: 5px 7px; border-bottom: .6px solid #e4e6ea; text-align: left; vert
 .sign { margin-top: 34px; display: flex; gap: 40px; } .sign div { flex: 1; border-top: .8px solid #1b1f27; padding-top: 4px; font-size: 10px; color: #6a7180; }
 .badge { display: inline-block; color: ${d.accent}; font-size: 9.6px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; }
 .foot { margin-top: 18px; padding-top: 6px; border-top: .6px solid #e4e6ea; color: #8a909c; font-size: 9.6px; text-align: center; }
-${d.template === "classic" ? `.top { flex-direction: column; align-items: center; text-align: center; border-bottom: 0; padding-bottom: 0; margin-bottom: 6px; }
+${d.template === "classic" || d.template === "elegant" ? `.top { flex-direction: column; align-items: center; text-align: center; border-bottom: 0; padding-bottom: 0; margin-bottom: 6px; }
 .brand { flex-direction: column; gap: 6px; } .doctbox { width: 100%; text-align: center; border-top: .6px solid #1b1f27; border-bottom: .6px solid #1b1f27; padding: 7px 0 6px; margin-top: 8px; }
 .doctbox .sub { margin-top: 3px; } h1 { font-size: 17px; letter-spacing: .3px; }` : ""}
-${d.template === "modern" ? `body { border-top: 5px solid ${d.accent}; padding-top: 12px; } @media screen { body { padding-top: 13mm; } } .top { border-bottom: .8px solid #d9dce2; }
+${d.template === "modern" || d.template === "folio" ? `body { border-top: 5px solid ${d.accent}; padding-top: 12px; } @media screen { body { padding-top: 13mm; } } .top { border-bottom: .8px solid #d9dce2; }
 th { border-bottom-color: ${d.accent}; } h2 { color: ${d.accent}; } .tot tr:last-child td { border-top-color: ${d.accent}; color: ${d.accent}; }` : ""}
-${d.template === "compact" ? `body { font-size: 10.6px; } td { padding: 3.5px 7px; } h2 { margin-top: 12px; } .sign { margin-top: 26px; }` : ""}`;
+${d.template === "compact" || d.template === "minimal" ? `body { font-size: 10.6px; } td { padding: 3.5px 7px; } h2 { margin-top: 12px; } .sign { margin-top: 26px; }` : ""}`;
 const fonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;600&display=swap">`;
 const page = (h: Hotel, title: string, body: string, landscape = false) => { const d = designOf(h); const docs = docsOf(h);
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${fonts}<style>${css(d, landscape)}</style></head><body>${body}${docs.footer ? `<div class="foot">${esc(docs.footer)}</div>` : ""}</body></html>`; };
 /** Name, address, logo and tax numbers come from Settings → Property profile / Branding; look from Invoices & documents → Design. */
 const head = (h: Hotel, title: string, sub: string) => { const st = settingsOf(h); const p = st.profile; const d = designOf(h); const docs = docsOf(h); const name = p.name || h.name; const px = LOGO_H[d.logoSize];
   const logo = !docs.showLogo ? "" : st.branding.logo ? `<img src="${st.branding.logo}" alt="" style="height:${px}px;max-width:${px * 4}px">` : monogram(name, d.accent, px);
-  const bn = d.lang === "en-bn" && BN[title] ? `<span class="bn">${BN[title]}</span>` : "";
+  const bn = d.lang !== "en" && BN[title] ? `<span class="bn">${BN[title]}</span>` : "";
   const info = `<div><h1>${esc(name)}</h1><div class="sub">${esc(p.address || h.address)}<br>${esc(p.phone || h.phone)} · ${esc(p.email || h.email)}${p.bin ? ` · BIN ${esc(p.bin)}` : ""}</div></div>`;
   const doc = `<div class="doctbox r"><div class="doct">${esc(title)}</div>${bn ? `<div>${bn}</div>` : ""}<div class="sub">${sub}</div></div>`;
   return `<div class="top"><div class="brand">${logo}${info}</div>${doc}</div>`; };
@@ -90,20 +85,50 @@ ${b.note ? `<p><b>Your request:</b> ${esc(b.note)}</p>` : ""}<p class="m">${esc(
 }
 
 export function invoiceHtml(h: Hotel, b: Booking, g: Guest | undefined, extras: { label: string; amount: number }[]) {
-  const rows = charges(b, extras);
-  const total = totalOf(b) + extras.reduce((s, e) => s + e.amount, 0);
-  const paid = paidOf(b); const due = total - paid; const st = { docs: docsOf(h) }; const bn = designOf(h).lang === "en-bn";
-  const L = (en: string, bnTxt: string) => `${en}${bn ? `<span class="bn">${bnTxt}</span>` : ""}`;
-  const to = b.payer?.kind === "Company" ? `<b>${esc(b.payer.name)}</b><br><small>For guest ${esc(g?.name)}</small>` : `<b>${esc(g?.name)}</b><br><small>${esc(g?.phone)}${g?.email ? ` · ${esc(g.email)}` : ""}</small>`;
-  const no = `${esc(st.docs.prefix)}${b.code.slice(3)}`;
-  return page(h, `Invoice ${no}`, `${head(h, "Invoice", `${no} · ${dmy(b.checkedOutAt?.slice(0, 10) ?? b.to)}<br>Booking ${b.code} · <span class="badge">${due <= 0 ? "Paid in full" : `${tk(due)} due`}</span>`)}
-<div class="grid" style="margin-bottom:12px"><div><h2 style="margin-top:0">${L("Billed to", "বিল প্রাপক")}</h2>${to}</div><div><h2 style="margin-top:0">${L("Stay", "অবস্থান")}</h2>${dmy(b.from)} → ${dmy(b.to)} · ${b.nights.length} night(s)<br><small>Room ${esc(b.unit || "—")} · ${esc(b.type)} · ${b.adults} adult(s)${b.children ? `, ${b.children} child(ren)` : ""}</small></div></div>
-<table><tr><th>Description</th><th class="r">Amount</th></tr>${rows.map(([l, a]) => `<tr><td>${esc(l)}</td><td class="r">${a < 0 ? "−" : ""}${tk(Math.abs(a))}</td></tr>`).join("")}</table>
-<table class="tot" style="width:46%;margin:8px 0 0 auto"><tr><td>${L("Total", "মোট")}</td><td class="r b">${tk(total)}</td></tr><tr><td>Paid</td><td class="r">−${tk(paid)}</td></tr>
-<tr><td class="big">${L("Balance due", "বাকি")}</td><td class="r big">${tk(Math.max(0, due))}</td></tr></table>
-${b.payments.length ? `<h2>${L("Payments", "পরিশোধ")}</h2><table><tr><th>Date</th><th>Method</th><th>Note</th><th class="r">Amount</th></tr>${b.payments.map((p) => `<tr><td>${dmy(p.at.slice(0, 10))} ${timeOf(p.at)}</td><td>${esc(p.method)}</td><td class="m">${p.amount < 0 ? "Refund" : esc(p.note) || "—"}</td><td class="r">${p.amount < 0 ? "−" : ""}${tk(Math.abs(p.amount))}</td></tr>`).join("")}</table>` : ""}
-${st.docs.terms ? `<h2>Notes</h2><p class="m" style="margin:0">${esc(st.docs.terms)}</p>` : ""}
-<p class="m" style="margin-top:12px">Computer-generated invoice · no signature required.</p>`);
+  const st = settingsOf(h); const p = st.profile; const docs = docsOf(h); const d = designOf(h); const x = docLang(d.lang);
+  const H: DocHotel = { name: p.name || h.name, address: p.address || h.address || "", phone: p.phone || h.phone || "", email: p.email || h.email || "", bin: p.bin, logo: st.branding.logo, showLogo: docs.showLogo };
+  const r = bill(b); const total = totalOf(b) + extras.reduce((s, e) => s + e.amount, 0); const paid = paidOf(b); const due = Math.max(0, total - paid);
+  const no = `${kesc(docs.prefix)}${b.code.slice(3)}`; const issued = b.checkedOutAt?.slice(0, 10) ?? b.to;
+  const roomLabel = `${x.t("room")} ${x.num(kesc(b.unit || "—"))} · ${kesc(b.type)}`;
+  const perMeal = b.mealPlan?.perNight ?? 0;
+  type Row = { date: string; text: string; qty: number; rate: number; amount: number };
+  const rows: Row[] = b.nights.map((n, i) => ({ date: n.date, text: `${roomLabel} · ${x.t("night")} ${x.num(i + 1)}${b.mealPlan ? ` · ${kesc(b.mealPlan.name)}` : ""}`, qty: 1, rate: n.base + perMeal, amount: n.base + perMeal }));
+  for (const m of heldMeals(b)) rows.push({ date: m.date, text: kesc(m.name), qty: m.qty, rate: preMealTotal(m) / Math.max(1, m.qty), amount: preMealTotal(m) });
+  for (const c of b.charges ?? []) rows.push({ date: c.at.slice(0, 10), text: kesc(c.label), qty: 1, rate: c.amount, amount: c.amount });
+  for (const e of extras) rows.push({ date: issued, text: kesc(e.label), qty: 1, rate: e.amount, amount: e.amount });
+  const other = total - r.total;
+  const stamp = `<span class="stamp ${due <= 0 ? "ok" : "due"}">${due <= 0 ? x.t("stPaid") : `${x.t("stDue")} ${x.money(due)}`}</span>`;
+  const meta = `${x.t("invoiceNo")} ${x.num(no)} · ${x.date(issued)}`;
+  const title = d.template === "minimal"
+    ? `<div class="title"><div><h1>${x.t("invoice")}</h1><div class="mut" style="margin-top:1.5mm">${meta}</div></div><div class="big"><div class="lab">${x.lb("amountDue")}</div><b>${x.money(due)}</b><div style="margin-top:1.5mm">${stamp}</div></div></div>`
+    : d.template === "classic" || d.template === "elegant"
+      ? `<div class="title"><h1>${x.t("invoice")}</h1>${x.mix ? `<span class="bn" style="margin-top:1mm">${"ইনভয়েস"}</span>` : ""}<div class="meta mut">${meta}</div><div style="margin-top:2mm">${stamp}</div></div>`
+      : `<div class="title"><h1>${x.t("invoice")}${x.mix ? `<span class="bn" style="font-size:.36em;margin-top:1.4mm;color:#828a98">ইনভয়েস / বিল</span>` : ""}</h1>${stamp}</div>`;
+  const billTo = b.payer?.kind === "Company"
+    ? `<div class="nm">${kesc(b.payer.name)}</div><div class="mut">${x.t("forGuest")}: ${kesc(g?.name)}</div>`
+    : `<div class="nm">${kesc(g?.name)}</div><div class="mut">${x.num(kesc(g?.phone))}${g?.email ? `<br>${kesc(g.email)}` : ""}</div>`;
+  const info = `<div class="info">
+<div><div class="lab">${x.lb("billedTo")}</div>${billTo}</div>
+<div><div class="lab">${x.lb("invoice")}</div><div class="kv"><span>${x.t("invoiceNo")}</span><b>${x.num(no)}</b><span>${x.t("date")}</span><span>${x.date(issued)}</span><span>${x.t("booking")}</span><span>${x.num(b.code)}</span><span>${x.t("source")}</span><span>${kesc(channelLabel(b))}</span></div></div>
+<div><div class="lab">${x.lb("stay")}</div><div class="kv"><span>${x.t("arrival")}</span><span>${x.date(b.from, true)}</span><span>${x.t("departure")}</span><span>${x.date(b.to, true)}</span><span>${x.t("room")}</span><span>${x.num(kesc(b.unit || "—"))} · ${kesc(b.type)}</span><span>${x.t("nights")}</span><span>${x.num(b.nights.length)} · ${x.num(b.adults)} ${x.t("adults")}${b.children ? `, ${x.num(b.children)} ${x.t("children")}` : ""}</span></div></div></div>`;
+  const lines = `<table class="lines"><thead><tr><th style="width:26mm">${x.lb("date")}</th><th>${x.lb("description")}</th><th class="c" style="width:14mm">${x.lb("qty")}</th><th class="r" style="width:25mm">${x.lb("rate")} (৳)</th><th class="r" style="width:27mm">${x.lb("amount")} (৳)</th></tr></thead><tbody>
+${rows.map((w) => `<tr><td class="nw">${x.date(w.date)}</td><td>${w.text}</td><td class="c">${x.num(w.qty)}</td><td class="r">${x.plain(w.rate)}</td><td class="r">${x.plain(w.amount)}</td></tr>`).join("")}</tbody></table>`;
+  const tot = `<div class="tot">
+<div><span>${x.t("roomCharges")}</span><span class="nw">${x.money(r.rooms)}</span></div>
+${r.discount ? `<div><span>${x.t("discount")}</span><span class="nw">− ${x.money(r.discount)}</span></div>` : ""}
+<div><span>${x.t("service")} ${x.num(b.tax.service)}%</span><span class="nw">${x.money(r.service)}</span></div>
+<div><span>${x.t("vat")} ${x.num(b.tax.vat)}%</span><span class="nw">${x.money(r.vat)}</span></div>
+${other ? `<div><span>${x.t("extras")}</span><span class="nw">${x.money(other)}</span></div>` : ""}
+<div class="g"><span>${x.lb("total")}</span><span class="nw">${x.money(total)}</span></div>
+<div><span>${x.t("paid")}</span><span class="nw">− ${x.money(paid)}</span></div>
+<div class="due"><span>${x.lb("balance")}</span><span class="nw">${x.money(due)}</span></div></div>`;
+  const pays = `<div><div class="lab">${x.lb("payments")}</div>${b.payments.length ? `<table class="pay"><thead><tr><th>${x.t("date")}</th><th>${x.t("method")}</th><th>${x.t("reference")}</th><th class="r">${x.t("amount")} (৳)</th></tr></thead><tbody>
+${b.payments.map((q) => `<tr><td class="nw">${x.date(q.at)}, ${x.time(q.at)}</td><td>${x.method(q.method)}${q.amount < 0 ? ` · ${x.t("refund")}` : ""}</td><td class="mut">${kesc(q.note) || x.num(`RCT-${q.id.slice(-6).toUpperCase()}`)}</td><td class="r">${q.amount < 0 ? "−" : ""}${x.plain(q.amount)}</td></tr>`).join("")}</tbody></table>` : `<p class="mut">${x.t("noPay")}</p>`}
+<div class="words">${x.t("inWords")}: <b>${x.words(total)}</b></div></div>`;
+  const notes = `<div class="notes"><b>${x.t("notes")}.</b> ${docs.terms ? `${kesc(docs.terms)} ` : ""}${x.t("computer")}</div>`;
+  const body = `${docHeader(H, d, x)}${title}${info}${lines}<div class="below">${pays}${tot}</div>${notes}${docs.footer ? `<div class="thanks">${kesc(docs.footer)}</div>` : ""}
+<div class="sign"><div>${x.t("preparedBy")} · ${x.t("frontDesk")}</div><div>${x.t("guestSign")}</div><div>${x.t("authSign")}</div></div>${docFooter(`${kesc(H.name)} · ${x.t("invoice")} ${x.num(no)}`)}`;
+  return docPage(`${x.t("invoice")} ${no}`, d, body);
 }
 
 export function receiptHtml(h: Hotel, b: Booking, g: Guest | undefined, p: Pay) {
