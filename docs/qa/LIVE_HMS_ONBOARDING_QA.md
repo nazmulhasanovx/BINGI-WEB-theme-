@@ -1,68 +1,181 @@
 # Live HMS onboarding — QA notes
 
-- **Target:** https://hms.bingi.app (developer build, live)
-- **Compared against:** BinGi onboarding v8 prototype (this repo, `src/components/onboarding/*`)
-- **Started:** 24 Nov 2026 · tester: Claude (with Nazmul)
-- **Rules:** view and test only. No payment, no card/password entry, nothing irreversible without the founder's OK.
+- **Target:** https://hms.bingi.app/onboarding (developer build, live)
+- **Compared against:** BinGi onboarding v8 prototype (`main` of this repo; preview artifact `STWeLymPk5CtiyE4Zvyav7`)
+- **Run:** 24 Nov 2026 · tester: Claude with Nazmul · desktop Chrome 1568 px
+- **Test property:** "QA Test Resort" (Resort · Cox's Bazar · Ultra 30 rooms · "Set up first")
+- **Rules kept:** no payment, no checkout page opened, no NID upload, no Terms ticked, **Submit not pressed**.
 
-Severity: **P0** blocks the owner · **P1** wrong or confusing · **P2** polish / mismatch with v8.
+Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the agreed v8 behaviour · **P2** polish.
 
 ---
 
-## 1. Flow map (where each problem sits)
+## 0. Summary
+
+| Area | Verdict |
+|---|---|
+| Overall look & step order | ✅ Same 6 parts and steps as v8; panel, live drawing, drafts, custom kind are in |
+| Session / entry | ❌ P0 — Continue from *My properties* fails "Unauthenticated" |
+| Accommodation categories | ❌ **P0 — only the first room type saves; every next type (cottage, villa, apartment, even a 2nd room type) fails** |
+| Category details | ⚠️ Works for the first type; fees shown at Starter rates on Ultra; duplicate unit codes across blocks |
+| Plan / payment | ⚠️ "Pay per room" headline but package prices; default = Subscribe now; online-payment copy misses the BinGi balance → payout model |
+| Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
+| Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
+
+Count: **3 × P0 · 14 × P1 · 16 × P2**
+
+---
+
+## 1. Flow map — where each problem sits
 
 ```mermaid
-flowchart LR
+flowchart TD
   A[Sign up / OTP] --> B[My properties]
-  B -->|Continue| C{Onboarding loads?}
-  C -->|No: Unauthenticated| X1[[P0-01 Stuck on error]]
-  X1 -->|Try again| X2[[P0-02 Lands in another account's Setup checklist]]
-  C -->|Yes| D[1 · Property type & details]
-  D --> E[2 · Where they are]
-  E --> F[3 · Room types per category]
-  F --> G[4 · Plan & payment]
-  G --> H[Submit / Go live]
+  B -->|Continue| E1[[P0-01 Unauthenticated error]]
+  E1 -->|Try again| E2[[P0-02 Lands in another property's dashboard]]
+  B -->|New / Let's start| S1
+
+  subgraph P1s [1 · Your property]
+    S1[1.1 Type] --> S2[1.2 Name] --> S3[1.3 Address] --> S4[1.4 Extras] --> S5[1.5 Contact]
+  end
+  subgraph P2s [2 · Plan & papers]
+    D1[2.1 Documents] --> D2[2.2 Plan] --> D3[2.3 Setup help] --> D4[2.4 Start] --> D5[2.5 Summary]
+  end
+  subgraph P3s [3 · Rooms]
+    R1[3.1 Where they are] --> R2[3.2 Add rooms] --> R3[3.3 Review]
+  end
+  subgraph P4s [4 · Booking & team]
+    B1[4.1 Rules] --> B2[4.2 Tools] --> B3[4.3 Team]
+  end
+  subgraph P5s [5 · Money & website]
+    M1[5.1 Payments] --> M2[5.2 Website]
+  end
+  F[6.1 Review & submit]
+
+  S5 --> D1
+  D5 --> R1
+  R3 --> B1
+  B3 --> M1
+  M2 --> F
+
+  S4 -. P1-03 room amenities .-> S4
+  D2 -. P1-05 per-room vs packages .-> D2
+  D4 -. P1-06 default Subscribe now .-> D4
+  R1 -. P1-07 resort pre-pick .-> R1
+  R2 -. P0-03 2nd type never saves .-> R2
+  R2 -. P1-08 fees at Starter rate .-> R2
+  R2 -. P1-09 duplicate codes .-> R2
+  R2 -. P1-10 panel box scrolls .-> R2
+  R3 -. P1-12 drafts not warned .-> R3
+  M1 -. P1-13 payout model missing .-> M1
+  M2 -. P1-14 theme names .-> M2
+  F  -. P1-16 Terms not required .-> F
 ```
 
-Plain-text version:
+Plain text:
 
 ```
-Sign up ─▶ My properties ─▶ Continue ─▶ [ERROR: Unauthenticated]  ← P0-01
-                                             │ Try again
-                                             ▼
-                              Setup checklist of a DIFFERENT account  ← P0-02
+My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─▶ other property's dashboard (P0-02)
+
+1 Property ── Extras = room amenities (P1-03)
+2 Plan ────── "pay per room" but packages (P1-05) · default Subscribe now (P1-06)
+3 Rooms ───── Resort pre-picks only Rooms (P1-07)
+              Room type #1 saves ✔ · type #2… ✖ "Accommodation category draft cannot be saved." (P0-03)
+              fees at Starter % on Ultra (P1-08) · C1 allowed in 2 blocks (P1-09) · panel box scrolls (P1-10)
+              Review hides 4 unfinished drafts (P1-12)
+5 Money ───── no "money comes to BinGi balance → payout" (P1-13)
+  Website ─── themes "Classic Stay / Compact Business / BinGi Nest", empty images (P1-14) · no "How guests book" (P1-15)
+6 Finish ──── "everything needed is done" without Terms (P1-16) · NOT_SUBMITTED raw (P2)
 ```
 
 ---
 
-## 2. Problems found
+## 2. P0 — blockers
 
-### P0-01 · "Continue" on My properties fails: "Could not load onboarding. Unauthenticated."
-- **Where:** /onboarding → My properties → property "cvbdfgdfgd" (Resort, next step "Where they are") → **Continue**
-- **What happens:** the list loads (so the user *is* seen as signed in), but opening the property shows
-  `Could not load onboarding. Unauthenticated.` with a **Try again** button.
-- **Why it matters:** an owner who left setup half-way cannot come back to it. Dead end on day one.
-- **Likely cause (to check):** My-properties list and the onboarding API use different auth (cookie vs token, or different
-  session scope). The list call succeeds, the onboarding bootstrap call returns 401.
-- **Expected (v8):** Continue opens the property on its saved step. If the session really expired → sign-in screen,
-  then back to the same step — never a dead-end error.
+### P0-01 · Continue on *My properties* → "Could not load onboarding. Unauthenticated."
+- **Steps:** /onboarding → My properties → "cvbdfgdfgd" (Resort, next "Where they are") → **Continue**.
+- **Seen:** list loads (user is signed in for that call), then the onboarding load returns *Unauthenticated*.
+- **Impact:** an owner who stopped half-way cannot come back.
+- **Expected (v8):** Continue opens the saved step; if the session really expired → sign-in → back to the same step.
+- **Dev hint:** list and onboarding bootstrap likely use different auth (cookie vs bearer / different scope).
 
-### P0-02 · "Try again" sends the user into a different account's dashboard
-- **Where:** same error box → **Try again**
-- **What happens:** lands on `/dashboard/setup-center` signed in as another owner ("Pan Pacific Sonargaon Dhaka",
-  10 of 13 setup steps) — not the property the user was continuing.
-- **Why it matters:** wrong-account context = privacy and data-safety risk; the user may edit the wrong hotel.
-- **Expected:** Try again retries the same property; if auth is missing → sign-in, then back to that property.
+### P0-02 · "Try again" opens a different property's dashboard
+- **Seen:** `/dashboard/setup-center` of "Pan Pacific Sonargaon Dhaka" (10 / 13 steps), not the property being continued.
+- **Impact:** wrong-property context; owner may edit the wrong hotel.
+- **Expected:** retry the same property, or sign-in and return to it.
+- **To confirm:** whether that property belongs to the same login (phone shown on *My properties* and on the account row differed).
+
+### P0-03 · Only the **first** accommodation type can be saved
+- **Steps:** 3.2 Add rooms → Deluxe Room (5 rooms) saves ✔ → then any of: Garden Cottage, Private Villa, 2-Bedroom Apartment, Suite (a 2nd *room* type) → **Save**.
+- **Seen:** every time `Accommodation category draft cannot be saved.`; panel stays open; **no API request is sent** (refused in the browser); same after page reload.
+- **Impact:** a resort cannot add cottages or villas; a hotel cannot add a 2nd room type. Onboarding still lets them finish with 1 type.
+- **Expected (v8):** every type saves; "Save & next" moves to the next.
+- **Dev hint:** client-side guard on the category-draft call (maybe "one open draft" check, or a stale category-draft id from the first save). Check `/api/onboarding/accommodation-configuration` + category endpoints.
 
 ---
 
-## 3. Checks still to run (after a fresh registration)
+## 3. P1 — wrong or different from v8
 
-| # | Area | Check against v8 | Status |
+| ID | Step | Problem | Expected (v8 / decisions) |
 |---|---|---|---|
-| 1 | UX/UI overall | Layout, copy, steps, Bangla/English, mobile | ⏳ |
-| 2 | Property type | Type asked once; big types (hotel/resort/motel/lodge) get star + about | ⏳ |
-| 3 | Where they are | Buildings, floors, ground, basements, zones/blocks, names | ⏳ |
-| 4 | Categories | Every accommodation type: Room, Cottage, Villa, Apartment, Custom | ⏳ |
-| 5 | Category details | Name, guests, bed, size, price + VAT/service, numbers, photos, amenities, meals | ⏳ |
-| 6 | Payment | Plan step, How guests book, BinGi balance/payout copy vs current UI | ⏳ |
+| P1-01 | All | Progress stays **0 %** through all of part 1, then jumps by part (26 → 32 → 42 → 47 → 53 …) | Moves with each step |
+| P1-02 | 1.x – 5.x | Right column still shows **"What guests will see" website preview** | Removed on 23 Nov; 3.1 shows the live drawing only |
+| P1-03 | 1.4 Extras | Top list is **room** amenities (AC, bathtub, shampoo, hair dryer, King bed…); Wi-Fi / Pool only via search | Property facilities first: Free Wi-Fi, Parking, Power backup, 24-h desk, Restaurant, Room service, CCTV, Elevator, Breakfast, Airport transfer + Resort: Pool, Beach, Garden |
+| P1-04 | 1.4 Extras | Search "wifi" finds nothing (item is "Wi-Fi") | Ignore hyphens/spaces/case |
+| P1-05 | 2.2 Plan | Headline **"Pay per room. Nothing hidden"** but prices are **packages** (Starter ৳500 up to 30 rooms; Ultra 30/50/100/200 = ৳3,500 / 4,999 / 7,999 / 14,999) | One model. 11 Nov / 22 Nov decision = per room per month, min 1 room — **founder to confirm which is live** |
+| P1-06 | 2.4 Start | **"Subscribe now" pre-selected**, button "Go to checkout" | Default "Set up first"; trial / subscribe are options |
+| P1-07 | 3.1 Where | Resort pre-picks **only Rooms** although it says "Suggested for your property type" | Resort → Rooms + Cottages + Villas |
+| P1-08 | 3.2 Price table | On **Ultra**, fees shown as Website −1.5 % / Marketplace −12 % (Starter rates) → owner sees wrong earnings | Use the selected plan: Ultra 0.5 % / 4 % |
+| P1-09 | 3.2 Numbers | Same code range **C1–C100 / V1–V100 in every block**; C1 can be picked in Lake Side *and* Block 2 | Codes unique per property (or block prefix — open decision "Z1-C1") |
+| P1-10 | 3.2 Panel | After Save fails, the **panel box itself scrolls** (dialog scrollTop 367): footer floats mid-panel, blank area below | Only the panel body scrolls (fixed in prototype 23 Nov) |
+| P1-11 | 3.2 Panel | Error is one generic line and **hidden above the fold**; no reason given | Show the reason at the top of the visible area |
+| P1-12 | 3.3 Review | 4 unfinished drafts (Cottage, Villa, Apartment, Suite) **not mentioned**; "Finish room setup" allowed | Warn: "4 types not saved — finish or discard" |
+| P1-13 | 5.1 Payments | Online payment copy misses **how money flows** (SSLCommerz / EPS → BinGi balance → payout on request) and marketplace | v8 copy (22 Nov "Payments via BinGi") |
+| P1-14 | 5.2 Website | Themes named **Classic Stay / Compact Business / BinGi Nest**, thumbnails empty | NEST · CITY · ESCAPE · GRAND with real previews; Resort → ESCAPE first |
+| P1-15 | 5.2 Website | No **"How guests book"** choice (request only / pay at hotel / pay online) | 22 Nov decision |
+| P1-16 | 6.1 Finish | "Everything needed to submit is done" while **Terms & Privacy not accepted** (Documents step says all three are needed before submit) | Submit blocked until the 3 confirmations are ticked |
+
+---
+
+## 4. P2 — polish
+
+1. 1.1 — Big types (hotel/resort/motel/lodge) don't open **star rating + one-line about** on the type step (v8 round 3 #1); star rating sits on 1.5 Contact.
+2. 1.3 — City list is grouped by division without labels; no search; Dhaka is far down.
+3. 1.4 — All amenity icons are the same sparkle; "Air Conditionin-g" wraps mid-word.
+4. 2.2 — Ultra card "Includes" list is the same as Business; Ultra's extras (Restaurant, Full HRM, Inventory) only in the top box.
+5. 2.2 — Plan cards don't show Team (Business) vs Full HR (Ultra) — 23 Nov decision.
+6. 2.4 — With "Set up first" the summary says **"Monthly after trial"**.
+7. 2.5 — "Your subscription and setup service are ready" although nothing was subscribed.
+8. 2.4 — Trial is **30-day**; ads say 7-day (open decision).
+9. 3.2 — Panel is ~58 % wide; v8 ≈ 88 % (max 1120 px) on desktop.
+10. 3.2 — Cottage / villa / apartment forms say "Room numbers" and placeholder "e.g. Ocean View Deluxe".
+11. 3.2 — Villa / apartment have no bedrooms / bathrooms fields (v8 presets carry them) — *to confirm in v8 form*.
+12. 3.2 — Row shows **"Ready"** and **"Waiting for BinGi approval"** together.
+13. 3.2 — "100 available" doesn't drop after picking numbers.
+14. 3.x — Reload returns to 3.1 instead of the step you were on.
+15. 4.2 — Tool names still old (Staff & roles, Restaurant & meals, Other services) — v7 names are 23 Nov.
+16. 6.1 — Raw `NOT_SUBMITTED`; "Fix" on optional items; ring 71 % vs sidebar 89 %; developer text "eligible legacy Room inventory"; Money & website not ticked Done in the sidebar.
+
+---
+
+## 5. Matches v8 ✅ (keep)
+
+- 6 parts / step names, sidebar with sub-steps, Save & exit, Help, Bangla/English switch.
+- Contact: verified mobile, optional business details.
+- Documents: NID both sides, optional papers, "Do it later".
+- Setup help with prices; summary with "Change" links.
+- 3.1: What you rent / Building & floors / Zones-Blocks with own names / numbering letters per kind / **custom kind with quick picks** / **live drawing** (floors, blocks, names update live) / "Has rooms — can't remove".
+- 3.2: one-type panel with section nav, category presets per kind, price breakdown, floor/zone number picker (+5 / +10 in a row, own code), unfinished drafts kept and shown with Continue.
+- 4.x: booking rules prefilled; tools per plan; team optional.
+- 5.1: cash always on; bKash/Nagad/Rocket with number, account type, guest instructions; payout "add now / later".
+
+---
+
+## 6. Not tested yet
+
+| # | What | Why |
+|---|---|---|
+| 1 | Subscription **checkout page** | Opening it may create a payment order — needs founder OK |
+| 2 | **Phone** layout (390 px) | Next run |
+| 3 | Hotel, Guest house, Serviced apartment, Hostel, Home/flat, Lodge, Motel, Vacation rental, Other **as property type** (pre-picks, floors vs zones) | Each needs a new property; blocked on P0-03 for multi-type checks |
+| 4 | Submit + what happens after | Needs Terms acceptance by the owner |
