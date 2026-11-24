@@ -1,0 +1,324 @@
+================================================================
+ BinGi HMS - Live QA: INVENTORY + OTHER SERVICES
+ Site:     https://hms.bingi.app (testing server)
+ Property: Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Date:     24 Nov 2026
+ Tested:   Desktop Chrome 1568 px, Hotel admin role.
+           Phone layout and staff roles NOT tested yet.
+ Compare:  BinGi HMS prototype (approved design, main branch)
+================================================================
+
+HOW TO READ
+  P1 = wrong, risky, or different from approved design. Fix first.
+  P2 = polish.
+  No P0 here: both modules work end to end.
+  Each item: WHERE -> WHAT HAPPENS -> EXPECTED -> FIX (BE / FE)
+
+TOTAL
+  Inventory:      7 x P1  | 17 x P2
+  Other Services: 7 x P1  | 16 x P2
+
+
+----------------------------------------------------------------
+ WHAT WAS TESTED (all with "QA ..." test data)
+----------------------------------------------------------------
+ Inventory
+   Setup: add store, category, supplier
+   Add item (unit kg, bought in sack = 25 kg, reorder, par, cost)
+   Receive (no PO), Transfer, Issue, Wastage, Stock count
+   Purchase order: create -> auto-approve -> partial receive
+   Recipe + record sales
+   History, Reports, stock value maths
+   Over-quantity checks on transfer, PO receive, recipe sales
+
+ Other Services
+   Setup: category, resource (car), vendor, service charge / VAT
+   Add service with resource
+   New order (cash sale, scheduled, 20% discount)
+   Resource double-booking check
+   Board: Assign -> Start -> Done, Timeline, Orders, Reports
+   Cashbox entry from the cash sale
+
+ All maths checked by hand and correct:
+   stock value, transfer, issue, count difference, food cost %,
+   COGS, service charge + VAT, cashbox amount.
+
+
+================================================================
+ PART 1 - INVENTORY
+================================================================
+
+---------------- P1 ----------------
+
+[INV-P1-01] Receiving at a new price re-prices ALL old stock
+  WHERE     Receive / PO receive
+  HAPPENS   Item cost is replaced by the last price, for all stores.
+            Example:
+              Main Store had 50 kg rice @ ৳80 = ৳4,000
+              Received 50 kg @ ৳90 into QA Kitchen
+              -> Main Store's old 50 kg became ৳90 too (৳4,400 -> ৳4,900)
+              Then PO receipt 25 kg @ ৳95 -> all 115 kg now @ ৳95
+            Form text even says: "A unit cost entered here replaces
+            the item's current unit cost."
+  IMPACT    Stock value, food cost and cost of goods are wrong
+            whenever prices change. Accounts get wrong numbers.
+  EXPECTED  Weighted average cost (prototype):
+            (old qty x old cost + new qty x new cost) / total qty
+            Example above: (50x80 + 50x90) / 100 = ৳85
+  FIX       BE: weighted average on every receipt. Movement keeps
+            its own unit cost for history.
+
+[INV-P1-02] Issue / Wastage / Adjust forms can change cost and supplier
+  WHERE     Issue, Wastage, Physical count adjustment drawers
+  HAPPENS   These forms show Supplier + Unit cost fields with
+            "replaces the item's current unit cost".
+            Supplier is saved on the movement: History shows
+            "QA Fresh Supply" on Issued and Wastage lines.
+  EXPECTED  Supplier + cost only on Receive. Issue/wastage use the
+            current (average) cost automatically.
+  FIX       FE: hide fields. BE: ignore cost/supplier for out moves.
+
+[INV-P1-03] Wastage saved without a reason
+  WHERE     Wastage
+  HAPPENS   Saved with empty note. History shows "-".
+  EXPECTED  Reason required for Wastage and Adjustment (prototype).
+            Quick picks Damaged / Expired / Spilled already exist.
+  FIX       FE + BE validation.
+
+[INV-P1-04] Drawer title and close (X) hidden under the top bar
+  WHERE     Stock count drawer, New Purchase Order drawer,
+            Purchase order details, Add Recipe drawer
+  HAPPENS   Drawer starts at top 0; the app header (63 px) covers
+            its title (e.g. "CNT-0001 - QA Kitchen") and X button.
+  EXPECTED  Same as Add Item / Transfer drawers: title + X visible.
+  FIX       FE: z-index / top offset of these drawers.
+
+[INV-P1-05] Buying unit (sack, carton...) not used anywhere
+  WHERE     Purchase order, Receive
+  HAPPENS   Item says "1 sack = 25 kg. Orders round up to whole
+            sacks." But PO accepted 30 kg (= "1.2 sack").
+            PO and Receive only allow kg, never sacks.
+  EXPECTED  PO and Receive can enter in sacks; PO rounds up to
+            whole buying units; stock is stored in kg.
+
+[INV-P1-06] Opening stock always goes to Main Store
+  WHERE     Add Item
+  HAPPENS   No store choice for opening stock.
+  EXPECTED  "Opening stock is in: [store]" (prototype) when
+            opening stock > 0.
+
+[INV-P1-07] Recipes are not linked to Restaurant & Bar (Meals)
+  WHERE     Recipes & sales
+  HAPPENS   Dish name is free text. Sales are typed by hand.
+  EXPECTED  Recipe links to a Meals menu item. Every closed
+            restaurant order takes ingredients out of stock
+            automatically (prototype note). Manual sales stay as
+            a backup.
+  FIX       BE: integration Meals order -> recipe -> stock out.
+
+---------------- P2 ----------------
+  1. Units: only piece, kg, litre, packet, box.
+     Add bottle, roll, set (prototype), and gram / ml.
+  2. Item with no SKU shows the unit ("kg") where SKU should be.
+     Auto-make a SKU like prototype (e.g. RICE-001).
+  3. Supplier phone accepts "123". Validate BD mobile (11 digits).
+  4. Category / supplier that has items still shows a Delete icon.
+     Disable it and say why.
+  5. Receive form starts with the first item already picked (DENTAL).
+     Start with "Choose item" to avoid receiving the wrong item.
+  6. Number inputs with unit (kg) show a broken border / the focus
+     ring covers the unit.
+  7. Add Item: hint "Enter 0 if this item has no stock yet" sits
+     under Unit Cost. Move it to Opening Stock.
+  8. Record sales: no warning before save when stock is not enough;
+     server error comes after ~5 s. Check in the form. Add sale date.
+  9. PO partial receipt changed the PO total from ৳2,700 to ৳2,850
+     (all lines re-priced). Keep ordered value; show received value
+     separately. "5 still due across lines" has no unit (5 kg).
+ 10. PO has no Print / PDF / Send to supplier.
+ 11. Stock count posts at once: no review screen, no reason for a
+     difference, system qty shown while counting (prefer blind count).
+ 12. History "Balance" is the property total, not the store's balance.
+ 13. Slow: tab switch and saves often take 3-6 s.
+ 14. Inventory drawers use a dark backdrop; Services drawers use a
+     light one. Use one drawer style (design: no dark overlays).
+ 15. Inventory "Suppliers" and Services "Vendors" are two separate
+     lists. Consider one shared vendor list.
+ 16. Number formats differ: PO-0001, CNT-0001, SALE-0001, GRN-0001
+     vs Services "OSO-GIBQD2W45S". Use one readable pattern.
+ 17. Money shown as "BDT" in Inventory/Services, "Tk." in Cashbox.
+     Use one (৳ or BDT) everywhere.
+
+---------------- WORKS - KEEP ----------------
+  - Tabs and layout match the prototype: Stock, Purchase orders,
+    Stock count, Recipes & sales, History, Reports, Setup.
+  - Header actions: Add Item, Transfer, Issue, Receive.
+  - Stores (Main + own stores), categories, suppliers.
+  - Transfer blocks more than the store has ("Enter 20 kg or less").
+  - PO receive blocks more than ordered ("Up to 30 kg").
+  - Recipe sales blocked when stock is short (clear message).
+  - Partial PO receipt -> "Partly received", stays open.
+  - History cannot be edited or deleted; Asia/Dhaka time.
+  - Reports: stock value, low/out of stock, movements, cost of goods
+    used by category, stock value by store. All numbers correct.
+  - Food cost and food cost % on recipes are correct.
+
+
+================================================================
+ PART 2 - OTHER SERVICES
+================================================================
+
+---------------- P1 ----------------
+
+[SRV-P1-01] New scheduled order goes straight to "Active"
+  WHERE     New Service Order -> Schedule (tomorrow), nobody assigned
+  HAPPENS   Board shows it in "Active - open work to deliver".
+            Edit Order shows status = Active.
+  EXPECTED  Future + nobody assigned = "Scheduled".
+            Assigned, not started = "Assigned".
+            Started = "Active".
+  FIX       BE: default status from requested time + assignee.
+
+[SRV-P1-02] Order details has only "Mark done"
+  WHERE     Click an order card -> Order Details
+  HAPPENS   Buttons: Close, Edit Order, Mark done.
+            No Assign, no Start. Assign only inside Edit Order.
+  EXPECTED  Assign (pick staff) and Start buttons in details, same
+            steps as the board: Assign -> Start -> Done.
+
+[SRV-P1-03] Save errors are hidden at the bottom of the form
+  WHERE     New Service Order -> Save
+  HAPPENS   "Order not confirmed - Open today's cashbox ..." and
+            "QA Car 1 is already booked 10:00-11:00 ..." appear
+            below the total, out of view. Looks like Save did nothing.
+  EXPECTED  Error shown at the top of the visible area (or toast),
+            and the form scrolls to it.
+
+[SRV-P1-04] Cash sale only: no "pay later", only cash
+  WHERE     New Service Order -> Cash sale
+  HAPPENS   A walk-in order scheduled for tomorrow must be
+            "Cash sale - paid now" and needs today's cashbox open.
+            No bKash / Nagad / card choice.
+  EXPECTED  Walk-in: Pay now (cash / bKash / Nagad / card) or
+            Pay when done. Booking guests: Charge to booking.
+            Info box should say up front if the cashbox is closed.
+
+[SRV-P1-05] No "Charged per" and no child price
+  WHERE     Add Service
+  HAPPENS   Only one "Unit price". Quantity on the order has no
+            meaning (person? trip? hour?).
+  EXPECTED  Charged: each / per person / per trip / per night /
+            per hour / per piece. Child price when per person.
+            (prototype)
+
+[SRV-P1-06] Two durations that disagree
+  WHERE     Add Service with a resource
+  HAPPENS   "Duration shown" is free text ("1 hour") and
+            "Book the resource for (minutes)" says "Empty means 80".
+            Catalog shows durations as "20", "2" with no unit.
+  EXPECTED  One duration in minutes (picker: 30 min, 1 h, 2 h...).
+            Resource is booked for that time. Show "1 h" in catalog.
+
+[SRV-P1-07] No "New requests" column for guest requests
+  WHERE     Today board
+  HAPPENS   Columns: Scheduled, Assigned, Active, Done.
+  EXPECTED  Prototype: New requests (from guests - accept / decline),
+            To assign, Assigned, In progress, Done.
+  NOTE      Please confirm if Guest App / website can request a
+            service today. If yes, this column is needed.
+
+---------------- P2 ----------------
+  1. Add Category shows developer text "Slug: qa-transport". Hide it.
+  2. Department is free text. Pick from Staff departments.
+  3. Resource "Type" shows a dropdown arrow but has no options.
+     Use a list: Car, Room, Guide, Boat, Other (prototype).
+  4. Empty category has no delete option.
+  5. "Md Yeapas" appears twice in "Assign to".
+  6. Amounts like "BDT 247.5" and "BDT 1,897.5". Round to whole taka
+     or always show 2 decimals.
+  7. Switching Charge to booking / Cash sale clears guest name and
+     phone already typed.
+  8. Booking search shows nothing when no match. Add "No booking
+     found".
+  9. A job for tomorrow can be started today without a warning.
+ 10. Order number "OSO-GIBQD2W45S" is hard to read or say on phone.
+     Use SO-0001 style.
+ 11. Timeline is a plain list. Prototype: rows per resource (car,
+     spa room) so double-booking is visible.
+ 12. Orders page says "Sales today ৳1,518" but Reports (by requested
+     date) does not include it until tomorrow. Explain or align.
+ 13. Old orders stay "Active" for weeks (LUX, 12 Nov). Flag overdue.
+ 14. Discount 20% above front desk limit 10%: admin saved with no
+     note. Show "Above front desk limit - approved by admin".
+ 15. Website note says "Horizon Experiences". Use current theme names
+     (NEST / CITY / ESCAPE / GRAND) or just "your website".
+ 16. This test property has lorem-ipsum demo data ("Eum sit
+     exercitatio", "Commodo soluta..."). Clean before demos.
+
+---------------- WORKS - KEEP ----------------
+  - Tabs match prototype: Today, Service Catalog, Orders, Reports,
+    Setup. Board + Timeline switch.
+  - Setup: categories, resources, vendors, service charge, VAT,
+    front desk discount limit, "Who can do what" text.
+  - Price breakdown is correct: discount -> + service charge ->
+    VAT on (price after discount + service charge).
+  - Resource double-booking is blocked with a clear message.
+  - Cash sale posts to Cashbox with the order number.
+  - Board flow Assigned -> Start -> Active -> Done works.
+  - Orders: filters by work and payment status, totals.
+  - Reports: by service, by staff, resource use, vendor cost, margin.
+
+
+================================================================
+ SHARED (both modules)
+================================================================
+  - Sidebar still uses old names: Room / Accommodation, Staff,
+    Other Services, Discounts, Billing & Subscription.
+    New names (23 Nov): Rooms or Accommodations, Team,
+    Services, Rates & Discounts, Plan & Billing.
+  - Two drawer styles (see INV P2-14).
+  - Slow saves 3-6 s (see INV P2-13).
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  1. Staff roles (non-admin): approvals above limit, "Orders need
+     approval", discount above front desk limit.
+  2. Charge to booking - not tested. (Correction 24 Nov: the property
+     has 25 bookings; booking search for "a" showed no result - check
+     search by name.)
+  3. "Send to Accounts" (cost of goods) - would post to Accounts.
+  4. CSV / PDF export.
+  5. Edit / archive item, service, store.
+  6. Vendor-done service (vendor cost and margin).
+  7. Phone layout.
+
+
+================================================================
+ TEST DATA LEFT ON THE TESTING SERVER (Pan Pacific Sonargaon)
+================================================================
+  Inventory: store "QA Kitchen", category "QA Kitchen Dry Goods",
+             supplier "QA Fresh Supply", item "QA Rice",
+             PO-0001 (partly received), CNT-0001,
+             recipe "QA Fried Rice", SALE-0001
+  Services:  category "QA Transport", resource "QA Car 1",
+             vendor "QA Spa Partner", service "QA Airport Pickup",
+             order OSO-GIBQD2W45S (৳1,518, done)
+  Cashbox:   opened today with ৳0 float; holds the ৳1,518 test sale.
+             Day is NOT closed.
+  Charges:   service charge / VAT / discount limit were set to
+             10 / 15 / 10 for the test and set back to 0 / 0 / 0.
+
+
+================================================================
+ SUGGESTED FIX ORDER
+================================================================
+  1. INV-P1-01, INV-P1-02   cost method (money correctness)
+  2. SRV-P1-01, SRV-P1-02   order status and steps
+  3. INV-P1-04, SRV-P1-03   hidden titles / hidden errors
+  4. SRV-P1-04, SRV-P1-05, SRV-P1-06  payment, pricing, duration
+  5. INV-P1-03, 05, 06      wastage reason, buying units, store
+  6. INV-P1-07, SRV-P1-07   Meals + guest request integrations
+  7. P2 items
+================================================================

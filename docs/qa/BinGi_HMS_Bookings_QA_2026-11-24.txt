@@ -1,0 +1,269 @@
+================================================================
+ BinGi HMS - Live QA: BOOKINGS (RESERVATIONS)
+ Site:     https://hms.bingi.app/dashboard/bookings (testing server)
+ Property: Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Date:     24 Nov 2026
+ Tested:   Desktop Chrome 1568 px, Hotel admin role.
+           Phone layout and staff roles NOT tested yet.
+ Compare:  BinGi HMS prototype (approved design, main branch)
+================================================================
+
+HOW TO READ
+  P0 = blocker or money / double-booking risk. Fix first.
+  P1 = wrong, risky, or different from approved design.
+  P2 = polish.
+  Each item: WHERE -> WHAT HAPPENS -> EXPECTED -> FIX (BE / FE)
+
+TOTAL: 3 x P0  |  7 x P1  |  16 x P2
+
+
+----------------------------------------------------------------
+ WHAT WAS TESTED
+----------------------------------------------------------------
+  Booking list (25 bookings), counters, filters
+  New booking (walk-in): room -> guest -> meal -> review -> confirm
+  Booking page: overview, check-in review, check-in,
+                partial payment (cash ৳100), check-out review
+  Room board (Room Overview)
+
+  Test booking made: WBK-2026-000079, "QA Booking Guest",
+  room 104, 24 -> 25 Nov, ৳16 room + ৳250 meal = ৳266,
+  paid ৳100, IN HOUSE now (see P0-01).
+
+  Checked by hand and correct:
+  - Outstanding ৳71,904 = sum of 6 dues (93 + 18,000 + 20,000 +
+    17,795 + 16 + 16,000).
+  - In house today = 5. Booking total, paid, balance after ৳100.
+  - Check-out is blocked while balance is due or a meal is pending.
+
+
+----------------------------------------------------------------
+ FLOW MAP - where problems are
+----------------------------------------------------------------
+
+ Booking list ---- past "Confirmed" never become No-show (P1-03)
+                   overpaid booking shows Due 0 (P1-04)
+                   category shows "Twin" for every room (P2)
+      |
+      v
+ New booking
+   1 Rooms ------- occupied + out-of-order rooms shown FREE (P0-01, P0-03)
+   2 Guest ------- error at top, out of view (P2)
+   3 Meals ------- meal time in the past accepted (P2)
+   4 Review ------ "Email (optional)" but server requires it (P0-02)
+      |
+      v
+ Booking page --- Check-in allowed into an occupied room (P0-01)
+                  Room type shows "Room" not "Deluxe" (P2)
+      |
+      v
+ Check-out ------ blocked with balance / pending meal   OK
+
+ Room board ----- occupied rooms do not match bookings (P0-03)
+                  departure review says 0 overdue (P1-05)
+
+
+================================================================
+ P0 - FIX FIRST
+================================================================
+
+[BKG-P0-01] Occupied rooms can be booked and checked in again
+  WHERE     New booking -> Rooms (tonight 24 -> 25 Nov)
+  HAPPENS   Rooms with guests still IN HOUSE (checkout overdue):
+              104 (Saimon Hasan, WBK-2026-000077)
+              102 (NaZmul, WBK-2026-000043)
+              206 (Yeapes, WBK-2026-000011)
+              208 (Saimon Hasan, WBK-2026-000064)
+              209 (test, WBK-2026-000010)
+            All show as free ("5 of 5 free", "4 of 4 free").
+            I booked 104 -> saved (WBK-2026-000079).
+            Check-in review said "Room is clean and ready - Ready".
+            Check-in confirmed. Room 104 now has TWO in-house guests.
+  IMPACT    Two guests sent to the same room. Front desk cannot
+            trust availability.
+  EXPECTED  A room is not free while an in-house stay is in it,
+            even after its planned checkout date (overdue).
+            Check-in is blocked if the room has another in-house
+            stay.
+  FIX       BE: availability = no overlapping stay with status
+            confirmed / in-house, where an in-house stay's end is
+            max(planned checkout, today+1) until checked out.
+            BE: block check-in when room has an in-house stay.
+
+[BKG-P0-02] "Email (optional)" but booking fails without it
+  WHERE     New booking -> Guest (no email) -> Confirm booking
+  HAPPENS   Error: "The guest info.email field is required when
+            guest info.booking mode is detailed."
+            The Guest step labels Email as optional.
+  IMPACT    Walk-in guests without email cannot be booked.
+            Message is developer text.
+  EXPECTED  Email optional for walk-in / phone bookings (phone is
+            the key in BD). If needed, ask on the Guest step.
+  FIX       BE: drop "required_if detailed" for email, or FE: mark
+            it required. Map all API errors to plain sentences.
+
+[BKG-P0-03] Room board does not match bookings
+  WHERE     Bookings -> Room board (Room Overview)
+  HAPPENS   Occupied = 3 (101, 102, 104).
+            But in-house bookings are in 102, 104, 206, 208, 209.
+            101 shows "Currently occupied" with no in-house booking.
+            206, 208, 209 show "Clean / Available".
+            202 is "Out of Order" on the board but New booking lists
+            202 as free.
+  IMPACT    Housekeeping and front desk see a different hotel from
+            the booking list. Rooms may be sold twice or sold while
+            blocked.
+  EXPECTED  Room occupancy comes from in-house stays; out-of-order
+            rooms are never offered in New booking.
+  FIX       BE: one source of truth for room occupancy; availability
+            query excludes out-of-order / blocked rooms.
+
+
+================================================================
+ P1
+================================================================
+
+[BKG-P1-01] Error messages show at the top, out of view
+  WHERE     New booking -> Guest -> Next with phone "123"
+  HAPPENS   Next looks dead. Message "Enter the guest's phone number"
+            is at the top of the page (scrolled away). Text says
+            "enter" although a number was entered.
+  EXPECTED  Error under the field, page scrolls to it,
+            "Enter a valid phone number (01XXXXXXXXX)".
+
+[BKG-P1-02] Only one price per room type, no rate plans
+  WHERE     New booking -> Rooms
+  HAPPENS   Every category shows one price and
+            "Breakfast + Lunch + Dinner included".
+  EXPECTED  Rate plans (Room only / With breakfast / Full board) or
+            at least the hotel's own meal plan per category.
+            (Rates & Discounts module.)
+
+[BKG-P1-03] Past bookings never become No-show
+  WHERE     Booking list
+  HAPPENS   Bookings from Aug / Sep 2026 still "Confirmed" with a
+            "Check in" button (e.g. WBK-2026-000021, OBK-2026-000010).
+            Their rooms show "(Held)".
+  EXPECTED  Day close (night audit) marks them No-show (or asks),
+            and releases held rooms.
+
+[BKG-P1-04] Overpaid booking shows Due 0
+  WHERE     Booking list, WBK-2026-000077
+  HAPPENS   Total ৳2,969.14, Paid ৳3,123.14, Due 0.
+            ৳154 overpaid is hidden.
+  EXPECTED  Show "Refund due ৳154" (or credit) and flag it in
+            Needs attention.
+
+[BKG-P1-05] Departure review says nothing is overdue
+  WHERE     Room board -> Accommodation departure review
+  HAPPENS   "0 current checked-in stays due by 2026-11-24"
+            while 5 in-house stays are past checkout
+            (list shows "Checkout overdue").
+  EXPECTED  List overdue departures first.
+
+[BKG-P1-06] Checked-out booking with unpaid balance exists
+  WHERE     Booking list, OBK-2026-000003
+  HAPPENS   Status Checked Out, Due ৳16,000. Stay "Mon 10 Aug ->
+            Mon 10 Aug" (same day) shown as "1 night".
+  EXPECTED  Check-out is blocked with balance (it is now - see
+            WORKS). Old data: check if a path still allows it
+            (API / mobile app), and fix the same-day stay record.
+
+[BKG-P1-07] Apartments are not offered in New booking
+  WHERE     Room board has APARTMENT units (A-102, A-104, A-106 ...)
+  HAPPENS   New booking lists only room categories; no apartment
+            units appear.
+  EXPECTED  All rentable units appear, grouped by kind.
+  NOTE      Please confirm: maybe these units have no rate yet.
+
+
+================================================================
+ P2 - POLISH
+================================================================
+  1. List "Room / unit" shows "Twin" for every booking. Show the room
+     category (Deluxe, Premium Room ...).
+  2. Booking page "Room Type: Room" instead of "Deluxe".
+     Check-out table also says "Room".
+  3. Two booking number series: WBK-... (walk-in) and OBK-... (online).
+     Fine if intended; show the source next to it.
+  4. Source names: "BinGi Marketplace" vs "Bingi Mobile App" -
+     use "BinGi" everywhere.
+  5. Money format mixes "BDT 266" and "৳266" on the same screens,
+     and decimals like 2,969.14.
+  6. "1 Nights", "CONFIRMED · Unpaid" (capitals) in check-in review.
+  7. Two categories both named "Suite" (৳41,000 and ৳60,000).
+     Ask for unique names.
+  8. Meal added to booking for "24 Nov 08:00" (already past) - accepted.
+     Default to the next meal time; warn on past times.
+  9. Direct discount allows up to the full total (৳266 of ৳266).
+     Apply the cashier discount limit, needs a reason (it does).
+ 10. Room board text is long and technical ("This is a review
+     checklist, not check-in approval. Category/type/location
+     eligibility ..."). Shorten for staff.
+ 11. Room board breadcrumb says "Table", URL /bookings/table.
+ 12. Room board: every room "Floor not set".
+ 13. Collect payment shows "bKash" twice (same as Meals).
+ 14. Booking meals wait as "Counter Pending" (approval works here),
+     but QR meal orders skip approval (see MEAL-P0-02) - align.
+ 15. Test data: unit type "Tow bad room", ৳16 room prices,
+     lorem dish names. Clean before demos.
+ 16. Slow: confirm / check-in / payment take 5-7 s.
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - Counters, tabs (All, Arrivals, In House, Departures, Payment
+    Due), search, status and source filters, "Needs attention".
+  - "Checkout overdue" and "Needs review" tags in the list.
+  - New booking 4 steps match prototype: Rooms & rates -> Guest ->
+    Meals & services -> Payment & review, with live summary.
+  - Guest step: saved guest search, ID type, ID photos, stay
+    register (booked by / who pays), other guests, preferences.
+  - Booking page tabs: Overview, Stay & room, Guests, Bill & folio,
+    Payments, Meals & services, Documents, Messages, Activity.
+    Quick links: confirmation PDF, contract, letter, invoice.
+  - Check-in review checklist (room ready, guest, ID, advance,
+    balance, actual time) with confirmation tick.
+  - Partial payment: amount, received, change, "I have received
+    the cash"; Paid / Balance update correctly; "Partly paid".
+  - Check-out review blocks completion while balance is due or a
+    meal / service order is pending, and explains why.
+  - Footer note: "Booking status, payment and room cleaning are kept
+    separate" - matches our rule.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  1. Cancel booking, refund, no-show, room move, extend / shorten
+     stay, edit rate.
+  2. Calendar view, Waitlist, Day close (night audit), Booking
+     reports, group booking.
+  3. Online bookings (website / marketplace / app) arriving here.
+  4. Staff roles, phone layout.
+
+
+================================================================
+ TEST DATA LEFT ON THE TESTING SERVER (Pan Pacific Sonargaon)
+================================================================
+  WBK-2026-000079  QA Booking Guest, room 104, 24 -> 25 Nov,
+                   IN HOUSE, paid ৳100 cash, balance ৳166,
+                   1 meal (QA Fried Rice) Counter Pending.
+                   Room 104 now has two in-house guests (P0-01).
+                   Please check out / remove after the fix is tested.
+  Guest profile:   QA Booking Guest, 01700000002,
+                   qa.booking@example.com
+  Payment:         ৳100 cash recorded on the booking (not checked
+                   in Cashbox yet). Cashbox day not closed.
+
+
+================================================================
+ SUGGESTED FIX ORDER
+================================================================
+  1. P0-01 + P0-03  availability and room occupancy (one source)
+  2. P0-02          email rule + plain error messages
+  3. P1-03, P1-05   no-show and overdue departures (night audit)
+  4. P1-04, P1-06   overpaid / checked-out-with-balance
+  5. Other P1, then P2
+================================================================
