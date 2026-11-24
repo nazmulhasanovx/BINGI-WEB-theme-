@@ -164,7 +164,7 @@
   file; please confirm with one Bangla booking.)
   FIX  HTML -> PDF with headless Chrome (Browsershot / Gotenberg /
   Puppeteer) and Inter + Noto Sans Bengali (subset). The samples in
-  section G are made this way: Bangla renders, 1 page, ~120 KB.
+  section G are made this way: Bangla renders, 1 page, ~60 KB.
 
 [DOC-P1-08] Excel exports are not usable as spreadsheets
   (all 11 reports read cell by cell)
@@ -247,7 +247,7 @@
  P2
 ================================================================
   DOC-P2-01 PDF size 880 KB - 1 MB for 1-3 pages (full fonts embedded).
-            Target < 300 KB (samples: ~120 KB) - matters for WhatsApp.
+            Target < 100 KB per page (samples: ~60 KB) - matters for WhatsApp.
   DOC-P2-02 Layout: invoice uses 2 pages (page 2 = 6 terms + footer);
             Payment report page 1 is almost empty (4 KPI boxes, table
             pushed to page 2); Sales Register KPI boxes run off the
@@ -294,13 +294,17 @@
  +--------------------------------------------------------------+
   - A4 portrait for guest documents, A4 landscape for wide reports,
     80 mm thermal for counter receipts.
-  - Font: Inter (Latin) + Noto Sans Bengali (Bangla), subset.
+  - Font: IBM Plex Sans (Latin, 400/500/600) + Noto Sans Bengali
+    (Bangla + ৳ sign), subset, tabular figures. Body 8-8.6 pt, labels
+    6.8 pt caps, title 16 pt with letter-spacing.
+  - Compact: hairline rules (0.5-0.8 pt) instead of boxes and cards,
+    no background fills except the brand red text accent.
   - Colour: ink #1D2433, grey #6B7385, lines #E3E6EC, brand red
     #B11C29 for the title and one accent only. No dark fills.
   - Money: ৳ + lakh grouping, numbers right-aligned, tabular figures.
   - Bilingual: English labels with small Bangla sub-labels (or a
     language switch per hotel in Settings).
-  - Size < 300 KB, generated < 2 s, file name
+  - Size < 100 KB per page, generated < 2 s, file name
     <Hotel>_<Document>_<No-or-Date>.pdf
   - Same data service for screen, PDF, Excel, CSV (DOC-P1-09).
 
@@ -346,19 +350,21 @@
  G. REFERENCE SAMPLES (made by QA with the SAME live data)
 ================================================================
   samples/Sample_Invoice_INV-2026-000198.pdf
-     WBK-2026-000091, 1 page, ~125 KB. All 4 payments listed,
+     WBK-2026-000091, 1 page, ~57 KB (live: 2 pages, 880 KB). All 4 payments listed,
      subtotal / service 0% / VAT 0% / total / paid / balance, Bangla
      sub-labels rendered, hotel address, BIN placeholder, footer with
      official BinGi HMS logo, page 1/1.
   samples/Sample_Daily_Collections_2026-11-24.pdf
-     A4 landscape, 2 pages. 23 real payments of 24 Nov (total
+     A4 landscape, 1 page, ~62 KB. 23 real payments of 24 Nov (total
      ৳4,35,914 = cash ৳2,74,298 + bKash ৳1,61,616 - same as live
-     Reports and Cashbox), header row repeats on page 2, total only
-     at the end, by-method and by-module tables.
+     Reports and Cashbox), header row repeats if it runs to page 2,
+     total only at the end, by-method and by-module tables.
   samples/Sample_Daily_Collections_2026-11-24.xlsx
-     Summary (formulas: SUM / SUMIFS / COUNTIFS + a check cell = 0),
+     Summary (formulas: SUM / SUMIFS / COUNTIFS + a check cell = 0,
+     lakh number format ৳4,35,914),
      Transactions (23 rows, numbers with ৳ format, frozen header,
      filter, Excel table, print setup), Read me.
+  samples/screens/*.png = screenshots of every sample page.
   samples/*.html  = the HTML templates used (render with headless
      Chrome; Laravel: spatie/browsershot or Gotenberg).
   NOTE  The samples show LAYOUT and RULES. "BIN not set" and the
