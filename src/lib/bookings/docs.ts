@@ -8,14 +8,15 @@ import { bill, channelLabel, dmy, heldMeals, paidOf, preMealTotal, timeOf, tk, t
 const esc = (s: string | undefined | null) => (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 export { DOC_TEMPLATES, DOC_ACCENTS, type DocDesign, type DocTemplate } from "./doc-kit";
 import type { DocDesign } from "./doc-kit";
+export { confirmationHtml, receiptHtml, runningBillHtml } from "./docs-confirm";
 import { normaliseDesign, lang as docLang, docPage, header as docHeader, footer as docFooter, esc as kesc, type DocHotel } from "./doc-kit";
 const BN: Record<string, string> = { "Invoice": "ইনভয়েস", "Booking confirmation": "বুকিং নিশ্চিতকরণ", "Money receipt": "টাকা প্রাপ্তির রসিদ", "Refund receipt": "ফেরতের রসিদ", "Guest registration card": "অতিথি নিবন্ধন কার্ড", "Guest register": "অতিথি রেজিস্টার", "Foreign guests (Form-C)": "বিদেশি অতিথি (ফর্ম-সি)" };
 const LOGO_H = { S: 30, M: 42, L: 56 } as const;
 let DRAFT: Partial<HotelSettings["docs"]> | null = null;
 /** Render with unsaved Settings → Invoices & documents values (live preview). */
 export function withDocsDraft<T>(draft: Partial<HotelSettings["docs"]>, fn: () => T): T { DRAFT = draft; try { return fn(); } finally { DRAFT = null; } }
-const docsOf = (h: Hotel): HotelSettings["docs"] => ({ ...settingsOf(h).docs, ...(DRAFT ?? {}) });
-const designOf = (h: Hotel) => normaliseDesign(docsOf(h).design);
+export const docsOf = (h: Hotel): HotelSettings["docs"] => ({ ...settingsOf(h).docs, ...(DRAFT ?? {}) });
+export const designOf = (h: Hotel) => normaliseDesign(docsOf(h).design);
 /** Initials badge used when the hotel has not uploaded a logo yet. */
 const monogram = (name: string, accent: string, px: number) => {
   const ini = name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "H";
@@ -73,17 +74,6 @@ function charges(b: Booking, extras: { label: string; amount: number }[]) {
   return rows;
 }
 
-export function confirmationHtml(h: Hotel, b: Booking, g: Guest | undefined, s: Settings) {
-  const total = totalOf(b), paid = paidOf(b);
-  return page(h, `Confirmation ${b.code}`, `${head(h, "Booking confirmation", `${b.code} · issued ${dmy(b.created.slice(0, 10))}`)}
-<p>Dear ${esc(g?.name)}, thank you for booking with us. Your stay is <span class="badge">${b.status === "Cancelled" ? "CANCELLED" : "CONFIRMED"}</span></p>
-${stayBlock(b, g)}
-<h2>Price</h2><table class="tot"><tr><td>Total (incl. VAT &amp; service)</td><td class="r b">${tk(total)}</td></tr><tr><td>Paid</td><td class="r">${tk(paid)}</td></tr><tr><td class="big">Due at the hotel</td><td class="r big">${tk(Math.max(0, total - paid))}</td></tr></table>
-<h2>Good to know</h2><p>Check-in from ${s.checkIn} · check-out by ${s.checkOut}. Please bring your NID or passport.<br>
-Free cancellation up to ${s.freeCancelDays} day(s) before arrival; later cancellations are charged ${s.cancelFeePct}% of the first night, no-shows ${s.noShowFeePct}%.</p>
-${b.note ? `<p><b>Your request:</b> ${esc(b.note)}</p>` : ""}<p class="m">${esc(h.name)} · ${esc(h.phone)}</p>`);
-}
-
 export function invoiceHtml(h: Hotel, b: Booking, g: Guest | undefined, extras: { label: string; amount: number }[]) {
   const st = settingsOf(h); const p = st.profile; const docs = docsOf(h); const d = designOf(h); const x = docLang(d.lang);
   const H: DocHotel = { name: p.name || h.name, address: p.address || h.address || "", phone: p.phone || h.phone || "", email: p.email || h.email || "", bin: p.bin, logo: st.branding.logo, showLogo: docs.showLogo };
@@ -129,13 +119,6 @@ ${b.payments.map((q) => `<tr><td class="nw">${x.date(q.at)}, ${x.time(q.at)}</td
   const body = `${docHeader(H, d, x)}${title}${info}${lines}<div class="below">${pays}${tot}</div>${notes}${docs.footer ? `<div class="thanks">${kesc(docs.footer)}</div>` : ""}
 <div class="sign"><div>${x.t("preparedBy")} · ${x.t("frontDesk")}</div><div>${x.t("guestSign")}</div><div>${x.t("authSign")}</div></div>${docFooter(`${kesc(H.name)} · ${x.t("invoice")} ${x.num(no)}`)}`;
   return docPage(`${x.t("invoice")} ${no}`, d, body);
-}
-
-export function receiptHtml(h: Hotel, b: Booking, g: Guest | undefined, p: Pay) {
-  return page(h, `Receipt ${b.code}`, `${head(h, p.amount < 0 ? "Refund receipt" : "Money receipt", `RCT-${p.id.slice(-6).toUpperCase()} · ${dmy(p.at.slice(0, 10))} ${timeOf(p.at)}`)}
-<p>Received ${p.amount < 0 ? "back by" : "from"} <b>${esc(g?.name)}</b> the sum of <span class="big">${tk(Math.abs(p.amount))}</span> by <b>${esc(p.method)}</b>${p.note ? ` (${esc(p.note)})` : ""} for booking <b>${b.code}</b>, room ${esc(b.unit || "—")}, ${dmy(b.from)} → ${dmy(b.to)}.</p>
-<table class="tot"><tr><td>Booking total</td><td class="r">${tk(totalOf(b))}</td></tr><tr><td>Paid so far</td><td class="r">${tk(paidOf(b))}</td></tr><tr><td class="b">Balance</td><td class="r b">${tk(Math.max(0, totalOf(b) - paidOf(b)))}</td></tr></table>
-<div class="sign"><div>Received by · ${esc(p.by)}</div><div>Guest</div></div>`);
 }
 
 export function regCardHtml(h: Hotel, b: Booking, g: Guest | undefined) {
