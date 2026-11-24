@@ -6,7 +6,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, ChevronRight, Lock, Pencil, Plus, Search, Wallet, X } from "lucide-react";
+import { Check, ChevronRight, Lock, Pencil, Plus, Printer, Search, Wallet, X } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { dmy, timeOf, tk } from "@/lib/bookings/store";
 import { can } from "@/lib/plan";
@@ -20,6 +20,8 @@ import { useCashboxData } from "../cashbox/pages";
 import { usePaymentRows } from "../payments/page";
 import { PlanGate } from "../plan-gate";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
+import { printHtml } from "../meals/print";
+import { billReceiptHtml, expenseVoucherHtml } from "@/lib/bookings/docs-office";
 
 /** Cashbox petty-cash categories → the same names as expense categories (one list in reports). */
 const PETTY_CAT: Record<string, string> = { Repairs: "Repairs & maintenance", "Staff food": "Staff food & welfare" };
@@ -382,6 +384,9 @@ function ExpenseForm({ d, e, onClose, done }: { d: Data; e?: Expense; onClose: (
 function Detail({ d, e, onClose, edit, pay, say }: { d: Data; e: Expense; onClose: () => void; edit: () => void; pay: () => void; say: (m: string) => void }) {
   const [why, setWhy] = useState<string | null>(null);
   const s = payState(e);
+  const po = e.grn ? d.inv.st.pos.find((p) => p.grns.some((g) => g.id === e.grn)) : undefined;
+  const pe = d.ex.st.payees.find((p) => p.id === e.payee); const sup = d.inv.st.suppliers.find((x) => x.id === e.payee);
+  const print = () => printHtml(po && e.grn && e.payments.length ? billReceiptHtml(d.h, d.inv.st, po, e.grn, e) : expenseVoucherHtml(d.h, e, { category: d.cat(e.category), payee: pe ? { name: pe.name, kind: pe.kind, phone: pe.phone } : sup ? { name: sup.name, kind: "Supplier", phone: sup.phone } : undefined }));
   const rows: [string, string][] = [["Status", s], ["Amount", tk(e.amount)], ["Paid", tk(paidOf(e))], ["Category", d.cat(e.category)], ["Paid to", d.payee(e.payee)], ["Date", dmy(e.date)], ["Bill / receipt no.", e.billNo ?? "—"], ["Added by", e.by], ...(e.approvedBy ? [["Approved by", e.approvedBy] as [string, string]] : []), ...(e.grn ? [["Supplier bill", e.grn] as [string, string]] : [])];
   return (
     <Sheet title={e.title} sub={`${e.id} · ${STATUS_LABEL[e.status]}`} onClose={onClose}
@@ -398,6 +403,7 @@ function Detail({ d, e, onClose, edit, pay, say }: { d: Data; e: Expense; onClos
       {e.status === "pending" && why === null && <p className="mb-3 flex items-start gap-2 rounded-xl bg-hms-amber-soft p-3 text-[13.5px] text-hms-amber"><Lock className="mt-0.5 size-4 shrink-0" aria-hidden />Above {tk(d.ex.st.limit)}. A manager approves it before anyone can pay.</p>}
       {why !== null && <div className="mb-3"><label htmlFor="rej" className={lbl}>Why reject?</label><input id="rej" autoFocus value={why} onChange={(x) => setWhy(x.target.value)} className={input} placeholder="e.g. Get a second quote" /></div>}
       {e.rejectReason && <p className="mb-3 rounded-xl bg-hms-hover p-3 text-[13.5px]">Rejected: {e.rejectReason}</p>}
+      <button type="button" onClick={print} className={clsx(btnLine, "mb-3 h-9 px-3")}><Printer className="size-4" aria-hidden />{po && e.payments.length ? "Print payment receipt" : "Print voucher"}</button>
       <dl className="divide-y divide-hms-line text-[14.5px]">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-hms-muted">{k}</dt><dd className="text-right font-medium">{v}</dd></div>)}</dl>
       {e.note && <p className="mt-3 rounded-xl bg-hms-canvas p-3 text-[14px]">{e.note}</p>}
       {e.payments.length > 0 && <>

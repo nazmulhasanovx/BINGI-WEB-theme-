@@ -9,6 +9,9 @@ import { prepareRun, recordPayment } from "@/lib/hrm/actions";
 import { DateBox, FilterSelect, StaffFrame, useToast } from "./Frame";
 import { Btn, Card, Chip, Drawer, Empty, Field, Input, Menu, Person, Select, Table, useQuery, type Tone } from "./ui";
 import { HrmGate } from "./plan";
+import { useProperty } from "../property";
+import { printHtml } from "../meals/print";
+import { payrollSheetHtml, payslipHtml } from "@/lib/bookings/docs-office";
 
 const PS_TONE = (s: string): Tone => (s === "Paid" ? "green" : s === "Unpaid" ? "red" : "amber");
 const RUN_ST: Record<PayrollRun["status"], [string, Tone]> = { draft: ["Draft", "gray"], reviewed: ["Reviewed", "blue"], approved: ["Approved", "green"] };
@@ -197,6 +200,7 @@ function Benefits() {
 const STEPS = ["Prepare", "Review", "Approve", "Payment"];
 function PayrollRunPageFull({ id }: { id: string }) {
   const { st, update } = useHrm();
+  const h = useProperty();
   const toast = useToast();
   const [q, setQ] = useState("");
   const [fp, setFp] = useState("all");
@@ -248,6 +252,7 @@ function PayrollRunPageFull({ id }: { id: string }) {
         <div className="mt-5 flex flex-wrap gap-3">
           <Btn onClick={() => setSlip(r.lines[0]?.emp ?? null)}><FileText className="size-[18px]" /> Payslip</Btn>
           <Btn onClick={() => setHist(true)}><History className="size-[18px]" /> Payment history</Btn>
+          <Btn onClick={() => printHtml(payrollSheetHtml(h, st, r))}><Printer className="size-[18px]" /> Payroll sheet</Btn>
           {r.step < 4 && <span className="self-center text-[14px] text-[#4d5664]">{r.step === 1 ? "Check deductions in each breakdown, then send for review." : r.step === 2 ? "Reviewer checks the lines." : "Approve to unlock payments."}</span>}
         </div>
         <div className="mt-5">
@@ -285,6 +290,7 @@ function Stat({ icon: Icon, label, v }: { icon: typeof Coins; label: string; v: 
 
 function Payslip({ run, empId, onClose, onPay, onPick }: { run: PayrollRun; empId: string; onClose: () => void; onPay: () => void; onPick: (id: string) => void }) {
   const { st, update } = useHrm();
+  const h = useProperty();
   const l = run.lines.find((x) => x.emp === empId) as PayLine | undefined;
   const e = emp(st, empId);
   const [ded, setDed] = useState(l?.deductions ?? 0);
@@ -296,7 +302,7 @@ function Payslip({ run, empId, onClose, onPay, onPick }: { run: PayrollRun; empI
   const parts = (["basic", "house", "food", "transport"] as const).map((k) => [k === "house" ? "House rent" : k[0].toUpperCase() + k.slice(1), Math.round((e.salary[k] / g) * base)] as const);
   const pays = run.payments.filter((p) => p.emp === empId);
   return (
-    <Drawer wide title={`Payslip · ${monthLabel(run.month)}`} onClose={onClose} footer={<><Btn onClick={() => window.print()}><Printer className="size-4" /> Print</Btn>{run.status === "approved" && lineNet(l) > l.paid && <Btn kind="primary" onClick={onPay}>Record payment</Btn>}</>}>
+    <Drawer wide title={`Payslip · ${monthLabel(run.month)}`} onClose={onClose} footer={<><Btn onClick={() => printHtml(payslipHtml(h, st, run, empId))}><Printer className="size-4" /> Print</Btn>{run.status === "approved" && lineNet(l) > l.paid && <Btn kind="primary" onClick={onPay}>Record payment</Btn>}</>}>
       <div className="flex items-center justify-between gap-3">
         <Person name={e.name} id={e.id} sub={`${e.id} · ${e.position}`} />
         <Select value={empId} onChange={(ev) => onPick(ev.target.value)} className="w-[200px]" aria-label="Employee">{run.lines.map((x) => <option key={x.emp} value={x.emp}>{emp(st, x.emp)?.name}</option>)}</Select>
