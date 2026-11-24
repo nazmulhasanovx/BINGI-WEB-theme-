@@ -10,17 +10,17 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronRight, CircleHelp, HelpCircle, MessageCircle, Phone, X } from "lucide-react";
 import { num, setOnbLang, useL } from "@/lib/onboarding/store";
 
-export function Header({ right, title }: { right?: ReactNode; title?: ReactNode }) {
+export function Header({ right, title, home = "/onboarding", badge }: { right?: ReactNode; title?: ReactNode; home?: string; badge?: ReactNode }) {
   const [help, setHelp] = useState(false);
   const { t, lang } = useL();
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#e3e7ec] bg-white px-4 sm:px-6">
-      <Link href="/onboarding" className="flex shrink-0 items-center" aria-label="BinGi">
+      <Link href={home} className="flex shrink-0 items-center" aria-label="BinGi">
         <Image src="/brand/bingi-master.svg" alt="BinGi" width={84} height={28} className="h-7 w-auto" priority />
       </Link>
       {title && <span className="hidden h-6 w-px bg-[#e3e7ec] sm:block" />}
       {title && <span className="hidden min-w-0 truncate text-[14.5px] font-medium text-[#4d5664] sm:block">{title}</span>}
-      <span className="hidden rounded bg-hms-amber-soft px-1.5 py-0.5 text-[11px] font-semibold text-hms-amber md:inline">Prototype</span>
+      {badge}<span className="hidden rounded bg-hms-amber-soft px-1.5 py-0.5 text-[11px] font-semibold text-hms-amber md:inline">Prototype</span>
       <div className="ml-auto flex items-center gap-2">
         <div role="group" aria-label="Language" className="flex rounded-lg border border-[#d3d8df] p-0.5 text-[13px] font-semibold">
           {(["bn", "en"] as const).map((l) => <button key={l} onClick={() => setOnbLang(l)} aria-pressed={lang === l} className={clsx("h-7 rounded-md px-2.5", lang === l ? "bg-[#0f1720] text-white" : "text-[#4d5664] hover:bg-[#e9edf2]")}>{l === "bn" ? "বাংলা" : "EN"}</button>)}
