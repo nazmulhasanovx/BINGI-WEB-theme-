@@ -10,6 +10,12 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 
 ---
 
+## Founder decisions (24 Nov 2026)
+- **Pricing:** the 22 Nov model is final — per room per month (Starter ৳25 · Business ৳70 · Ultra ৳116; 6 mo 23/63/105; 12 mo 19/53/87), minimum 1 room, capacity = purchased rooms. No 30/50/100/200 packages.
+- **KYC and room types — option (a):** owners can save as many room-type drafts as they need during onboarding. KYC gates only website publishing, online booking and payouts. → backend: drop `KYC_TRIAL_CATEGORY_LIMIT` for onboarding drafts.
+- **KYC and subscription:** owners can pay the subscription before KYC. KYC gates online *guest* payments only. → backend: allow subscription checkout without KYC (fixes P0-05).
+- Testing server `hms.bingi.app` may be tested freely (no real money, no real IDs).
+
 ## 0. Summary
 
 | Area | Verdict |
@@ -23,7 +29,7 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 | Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
 | Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
 
-Count: **5 × P0 · 19 × P1 · 18 × P2** (updated after the checkout run — section 2b)
+Count: **5 × P0 · 19 × P1 · 21 × P2** (updated after the checkout run — section 2b)
 
 ---
 
@@ -155,6 +161,20 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 - Hotel → Business recommended ✅ · Rooms pre-picked + Apartments + "More kinds" ✅ · Area guessed from the road text ("Banani") ✅
 - P1-08 again: Business shows −1.5 % / −12 % (should be −1 % / −8 %) → fees are always Starter's.
 - Business package shows "5 of 20 rooms in your package" (`max_units: 20`) — package model, not the 22 Nov per-room model.
+
+### Property types (plan helper on 2.2)
+| Helper tile | Recommends | v8 | |
+|---|---|---|---|
+| Home / flat | Starter | Starter | ✅ |
+| Guest house | Starter | Starter | ✅ |
+| Hotel | Business | Business | ✅ |
+| Resort | Ultra | Ultra | ✅ |
+| Hotel group | Custom | Enterprise/custom | ✅ |
+- Hostel, Motel, Serviced apartment, Lodge, Vacation rental and Other have no helper tile of their own.
+- After the property type is changed (Hotel → Guest house), the plan helper still shows "Hotel" and "What you rent" does not re-suggest. → P2
+- Changing the property type after setup turns *Booking & team* and *Money & website* grey again, without a warning. → P2
+- Onboarding has no way back to *My properties* and no way to start a 2nd property. → P2
+- Multi-type tests per property type are blocked until the KYC draft limit is lifted on the test account (it was still active at 11:50).
 
 ### More P2
 17. Resume lands on a different step each time (3.1 after reload on 3.2; 5.2 after reload on 2.4 checkout).
