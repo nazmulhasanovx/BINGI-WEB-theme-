@@ -29,7 +29,7 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 | Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
 | Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
 
-Count: **5 × P0 · 19 × P1 · 21 × P2** (updated after the checkout run — section 2b)
+Count: **5 × P0 · 18 × P1 · 21 × P2** (updated after the checkout run — section 2b)
 
 ---
 
@@ -154,8 +154,8 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 - **Seen:** Save & exit → `/login` ("Welcome back").
 - **Expected:** save → *My properties* (or HMS dashboard) while staying signed in.
 
-### P1-19 · Business plan lists "Restaurant / meal management (limited)"
-- 2.2 Plan, Hotel → BinGi Business card. Rule: Restaurant & Bar is **Ultra or custom only**.
+### ~~P1-19~~ withdrawn · Business lists "Restaurant / meal management (limited)"
+- This is correct. The 11 Nov 2026 decision put Restaurant in Business as a limited version; Ultra has the full version.
 
 ### Confirmed on a 2nd property (QA Test Hotel · Business)
 - Hotel → Business recommended ✅ · Rooms pre-picked + Apartments + "More kinds" ✅ · Area guessed from the road text ("Banani") ✅
