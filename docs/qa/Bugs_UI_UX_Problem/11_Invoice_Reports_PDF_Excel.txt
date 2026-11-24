@@ -1,0 +1,400 @@
+================================================================
+ 11  INVOICE, DOCUMENTS, REPORTS  -  PDF / EXCEL / CSV / PRINT
+     Bugs / UI / UX problems  +  PROFESSIONAL STANDARD to build to
+================================================================
+ Site:    https://hms.bingi.app (testing server)
+ Prop:    Pan Pacific Sonargaon Dhaka (test account "Md Yeapas")
+ Tested:  24 Nov 2026, 17:00-17:20, Desktop Chrome 1568 px, admin
+ What:    Booking Invoice, Booking Confirmation PDF, Contract letter,
+          Confirmation letter, Reports (11 reports x PDF / Excel /
+          Print), Payments export + print, Finance statement CSV + PDF,
+          Room numbers CSV, Meals report export; looked for exports in
+          Bookings, Cashbox, Expenses, Inventory, Services, Guests.
+          Files opened inside the browser only. Excel files were
+          unzipped and read cell by cell; PDF fonts / pages / size read
+          from the file.
+ Samples: docs/qa/Bugs_UI_UX_Problem/samples/  (reference files made
+          with the SAME real data - see section G)
+
+ FOUNDER NOTE (24 Nov): "These must be clean and professional. In the
+ old HMS they are in a very bad state."
+
+ COUNT:   P0 x 2   |   P1 x 14   |   P2 x 10
+ IDs:     DOC-P0-xx / DOC-P1-xx / DOC-P2-xx
+
+
+----------------------------------------------------------------
+ MAP - every document / export and its state today
+----------------------------------------------------------------
+
+  BOOKING PAGE  > Documents
+   |-- Invoice ................ opens  | 2 pages, 880 KB, no logo,
+   |                                    | 1 payment of 4, wrong VAT note
+   |-- Booking confirmation ... PDF    | ~5 s, no loading state
+   |-- Confirmation letter .... page   | wrong rate 21,200/night,
+   |                                    | Phone "—", Category "—"
+   '-- Contract letter ........ page   | ANOTHER COMPANY "KeyHost Homes"
+                                        |                       DOC-P0-01
+  REPORTS (11 reports)   [PDF] [Excel] [Print]
+   |-- PDF ................... works   | Sales Register PDF = demo
+   |                                    | "Illustrative" data  DOC-P0-02
+   |-- Excel ................. works   | money as TEXT, IDs not names
+   '-- Print ................. = PDF download (no print preview)
+
+  PAYMENTS     [Export Report] = CSV (no BOM)   [Print] = native
+                                                  print, tab froze
+  FINANCE      Statement [CSV] [PDF]  (PDF ~10 s, 1 MB, no spinner)
+  ROOMS        Room numbers [Export CSV] = raw database dump
+  MEALS        Reports [Export] = xlsx ; receipt preview = print dialog
+
+  NO EXPORT AT ALL:  Bookings list | Cashbox (day / Z report,
+  movements, closed days) | Expenses (list, voucher) | Inventory
+  (reports, PO print) | Services reports | Guests       DOC-P1-12
+
+
+================================================================
+ P0
+================================================================
+
+[DOC-P0-01] Contract letter prints ANOTHER company's name and rules
+  WHERE     Booking > Documents > Contract > /bookings/WBK-2026-000091/
+            contract-letter  (page + Download PDF)
+  HAPPENS   Header is Pan Pacific Sonargaon Dhaka, but the body says:
+            "KeyHost Homes is not liable for loss, theft or accidents",
+            "a KeyHost personal will greet you", "as per KeyHost
+            policy", "gives KeyHost Homes the right to cancel booking
+            and evict guests". Also fixed rules nobody set for this
+            hotel: "50% Advance is non-refundable", "Late check-out ...
+            25% charge on room rent for every 30 minute", smoking fine
+            BDT 2,500, unregistered guest fine BDT 5,000.
+            Same page also prints the hotel's own cancellation text
+            -> two different cancellation policies in one contract.
+  IMPACT    Guest signs a contract with the wrong company and rules the
+            hotel never agreed to. Legal and trust risk for every
+            hotel on BinGi.
+  EXPECTED  Contract built only from THIS hotel's Settings (name, legal
+            name, address, policies, fees). No text from another client
+            or a demo. Sections the hotel left empty are left out.
+  FIX       BE: find where the KeyHost text lives (template hard-code
+            or this property's saved text). Template = placeholders
+            only ({{hotel.name}}, {{policy.cancellation}} ...).
+            FE: Settings > Documents preview before use.
+
+[DOC-P0-02] Sales Register PDF shows demo data, not the register
+  WHERE     Reports > Sales Register > PDF (report_type
+            daily_sales_register)
+  HAPPENS   Excel = real register (one row per booking: WBK-079 ...
+            WBK-100, guest, mobile, rent, paid, due).
+            PDF = 3 made-up lines "SAL-0001 Room sales 1,387,835 /
+            SAL-0002 Meal sales / SAL-0003 Service sales",
+            "Transactions 3", "Room transactions 1", footer
+            "Illustrative grouped entries · Sales do not imply cash
+            collection" and "Powered by BinGi · Design preview".
+  IMPACT    The PDF the owner prints or sends to the accountant is a
+            mock-up with invented numbers of transactions.
+  EXPECTED  PDF and Excel come from the SAME query, same rows, same
+            totals. No "illustrative", "design preview" or sample text
+            in any production file.
+  FIX       BE: build the PDF from the register dataset. Grep all
+            export templates for "Illustrative", "Design preview",
+            "sample", "lorem".
+
+
+================================================================
+ P1
+================================================================
+
+[DOC-P1-01] Invoice shows 1 payment, guest paid 4 times
+  WBK-2026-000091 paid 21,200 in 4 payments: 5,000 cash (13:14),
+  5,000 bKash (13:24), 10,000 cash (13:24), 1,200 bKash (13:30).
+  Invoice "Payment information": "Method on record bKash", one
+  "Transaction ID TXN-2026-000087". Confirmation letter "Mode of
+  payment bKash".
+  EXPECTED table of every payment: date-time, method, reference,
+  amount, total paid (see sample).
+
+[DOC-P1-02] Invoice totals are not a real bill
+  Totals box: Base room amount 20,000 -> Total 21,200 -> Paid 21,200.
+  The 1,200 minibar line is in the table but there is no Subtotal /
+  Service charge / VAT / Discount lines. Note says "Room rates include
+  VAT and service charges" while this hotel's VAT = 0 % and service =
+  0 % (contract page prints "VAT BDT 0.00, Service charge BDT 0.00").
+  No BIN / VAT registration number field anywhere.
+  EXPECTED Subtotal, Discount (if any), Service charge (x %), VAT
+  (x %), Total, Paid, Balance due - always the same order; the VAT note
+  only when VAT is really inside the rate. Hotel BIN printed when set.
+  If the hotel is VAT registered, the format must follow NBR Mushak
+  rules - confirm with the founder / accountant before building.
+
+[DOC-P1-03] Three documents, three designs, missing hotel data
+  Invoice: no logo, no address (only name, branch, email, phone).
+  Contract: bright red banner (not brand #B11C29) with address.
+  Confirmation letter: red title, "Phone: —", "Room Category: —",
+  "Purpose of stay: —", "Complimentary: —".
+  EXPECTED one document header for all: hotel logo (from Settings),
+  legal name, address, phone, email, BIN; one footer; empty rows hidden.
+
+[DOC-P1-04] Confirmation letter money is wrong
+  "Rack Rate BDT 21,200 / night", "Special Room Rate 21,200 / night",
+  "Total Room Rent 21,200" but "Room Subtotal 20,000". Room rate is
+  20,000; the 1,200 is minibar, not rent.
+  EXPECTED rate per night from the rate plan; extras listed apart.
+
+[DOC-P1-05] "Invoice" number given to unpaid future bookings
+  WBK-2026-000099 (10-12 Dec, paid 0) already has INV-2026-000206,
+  titled "Invoice", "Issued 24 Nov". WBK-082 (27-29 Nov, part paid)
+  INV-2026-000189.
+  EXPECTED before check-out = "Proforma / Booking confirmation" (no
+  invoice number) + "Payment receipt" for each advance; the INVOICE
+  number is issued at check-out (or when fully billed), one sequence,
+  no gaps. (Numbers are stable per booking - that part is good.)
+
+[DOC-P1-06] Wrong / stale facts printed on documents
+  Every document: "Source Walk-in" (Corporate, Phone, Agent lost -
+  BKG-P1-08). Invoice "ID Number —"; contract "National ID / Passport:
+  To be completed at check-in" for a guest already checked OUT.
+  Contract / letter show planned times 2:00 PM / 12:00 PM, not actual.
+
+[DOC-P1-07] PDFs cannot print Bangla; values fall back to Times
+  PDF fonts inside every file: DejaVuSans, DejaVuSans-Bold, Times-Bold.
+  DejaVu has no Bengali letters -> a Bangla guest name, address or
+  policy prints as empty boxes. Values in the invoice ("QA Guest 12",
+  amounts, dates) print in Times-Bold (serif) next to sans labels.
+  (Not yet tried with a Bangla name on live - glyph check from the
+  file; please confirm with one Bangla booking.)
+  FIX  HTML -> PDF with headless Chrome (Browsershot / Gotenberg /
+  Puppeteer) and Inter + Noto Sans Bengali (subset). The samples in
+  section G are made this way: Bangla renders, 1 page, ~120 KB.
+
+[DOC-P1-08] Excel exports are not usable as spreadsheets
+  (all 11 reports read cell by cell)
+  - Money stored as TEXT: "BDT 1,392,722.00" -> cannot SUM, sort or
+    filter. Must be numbers with a ৳ number format.
+  - Title row "BINGI HOTEL MANAGEMENT" (should be hotel name, BinGi
+    small in footer).
+  - "Refunds &amp;amp; Reversals" (double-escaped "&").
+  - Payment ledger: Guest = "GST-00000091" (not the name), Collected
+    by = "75" (user id, not "Md Yeapas"), method "Cash" and "cash"
+    as two rows, "BKash" spelling, Type "Full Payment" on a 10,000
+    part payment.
+  - Expense report: includes the REJECTED expense (6,000) and a
+    2027-dated expense in "today" (total 24,475); "Profit Margin
+    98.24 %"; no list of expenses, only by category.
+  - One sheet only, "Report Scope: Active report tab only".
+  - No frozen header, no filter, no print setup.
+
+[DOC-P1-09] The same number is different in each export
+  Outstanding:  10,39,867 (Daily Sales) | 9,66,808 (Payment report
+                "Due") | 10,38,566 (Bookings list)
+  Expenses:     24,375 (Daily Sales) | 24,475 (Expense report) |
+                800 (Master Sales "Completed expenses")
+  Master Sales: Total collections 4,35,914 but Room 4,33,569 + Food
+                827 = 4,34,396 -> Services 1,518 missing from the
+                breakdown.
+  Net Cash:     4,11,539 = collections - ALL expenses (unpaid and
+                rejected included) - not cash.
+  EXPECTED one calculation service per figure, used by screen, PDF,
+  Excel and CSV. (Money root causes in 09_Money.)
+
+[DOC-P1-10] Export downloads the WRONG report if clicked fast
+  Switching report tab and pressing Excel / PDF within a few seconds
+  exported the previous report: "Occupancy Report" file contained the
+  Booking report; "Guest Report" file contained occupancy data.
+  Exports take 0.5-5 s (Excel) and 5-10 s (PDF), button stays active,
+  no spinner; Sales Register and Guest PDFs did not arrive in 6 s.
+  FIX  FE: send the current report_type + filters with the click,
+  disable button + spinner until the file arrives; BE: < 2 s target.
+
+[DOC-P1-11] "Print" does not mean print preview
+  Payments > Print opens the browser print dialog at once and the tab
+  froze (had to reload). Reports > Print only downloads the PDF again.
+  Meals receipt preview opens print (MEAL-P1-07).
+  EXPECTED Print -> on-screen preview of the PDF -> Print / Download /
+  Share. Thermal (80 mm) layout for receipts, A4 for invoices/reports.
+
+[DOC-P1-12] Exports / documents that do not exist
+  - Bookings list: no export.
+  - Cashbox: no day report (opening, cash in/out by source, expected,
+    counted, difference, signed by) and no movements export, also on
+    "Closed days".
+  - Expenses: no list export, no expense voucher / payment slip.
+  - Inventory: Reports and Purchase order have no PDF / Excel / print
+    (PO to send to supplier) - INV-P2-10.
+  - Services: Reports have no export; no service order receipt.
+  - Guests: no export.
+  - Invoice / receipt: no "Send by email / WhatsApp / SMS" - only
+    download.
+  - Refund / cancellation: no credit note or refund receipt.
+
+[DOC-P1-13] CSV files break in Excel and are raw
+  Payments, Finance statement and Room numbers CSV have no UTF-8 BOM:
+  Excel shows "—" as "â€”" and Bangla as broken letters.
+  Payments CSV = one row per BOOKING (PAY-2026-000252 ...), not per
+  payment; unpaid bookings show method "Cash".
+  Room numbers CSV = database dump: unit_id / category_id UUIDs,
+  snake_case headers, legacy_room_id, "A-102" codes (screen shows
+  "102"), exported_at in ISO.
+  EXPECTED BOM, staff-readable headers, one row per thing it lists.
+
+[DOC-P1-14] Finance statement numbers do not add up
+  Collected 5,72,515.14 - deductions 134.90 = 5,72,380.24, but
+  "Hotel payable" says 5,72,401.24 (diff 21.00). (Morning figures
+  were also off - MON-P0-01.) PDF is 1 MB and takes ~10 s with no
+  loading state.
+
+
+================================================================
+ P2
+================================================================
+  DOC-P2-01 PDF size 880 KB - 1 MB for 1-3 pages (full fonts embedded).
+            Target < 300 KB (samples: ~120 KB) - matters for WhatsApp.
+  DOC-P2-02 Layout: invoice uses 2 pages (page 2 = 6 terms + footer);
+            Payment report page 1 is almost empty (4 KPI boxes, table
+            pushed to page 2); Sales Register KPI boxes run off the
+            page edge and "Services BDT 3,518 · Fees · Refund due" text
+            overlaps the next box.
+  DOC-P2-03 Money: "Tk." and "BDT" mixed in one invoice; rate wraps on
+            two lines ("Tk. / 41,000.00"); .00 everywhere; no lakh
+            grouping. Use ৳ + lakh (৳4,35,914), whole taka.
+  DOC-P2-04 File names: "daily_sales-report.pdf" (no date, no hotel);
+            invoice file named by booking (Invoice-WBK-...pdf) not by
+            invoice number; Print blob has no name. Use
+            <Hotel>_<Document>_<No or Date>.pdf
+  DOC-P2-05 Invoice page header has a "New Booking" button; breadcrumb
+            "Reservations > Invoice" (name should be Bookings).
+  DOC-P2-06 Payment report PDF column "Invoice" shows the booking
+            number (WBK-...), not the invoice number.
+  DOC-P2-07 Dates in 4 formats across files: "24-Nov-2026, 02:00 PM",
+            "2026-11-24", "Nov 24, 2026", "24 Nov 2026". Use
+            "Tue 24 Nov 2026, 13:24" in documents, ISO only in CSV.
+  DOC-P2-08 Hotel policy text is printed as typed ("No return policy,
+            in case happend then contract to admin"). Settings should
+            preview the document and offer spell check.
+  DOC-P2-09 Every PDF footer "Powered by BinGi" uses text, not the
+            official logo; position differs per document.
+  DOC-P2-10 Excel title block wastes 7 rows before data; put the table
+            on its own sheet starting row 1 (summary on another sheet).
+
+
+================================================================
+ PROFESSIONAL STANDARD  -  build every document to this
+================================================================
+
+ S1. ONE DOCUMENT SYSTEM (shared by every module)
+ +--------------------------------------------------------------+
+ | HEADER  hotel logo | legal name | address | phone | email |   |
+ |         BIN (if set)                  DOC TITLE + Bangla sub |
+ |                                       No. / date / ref / chip|
+ |--------------------------------------------------------------|
+ | BODY    2 info boxes (who / what) -> line table -> totals    |
+ |         -> payments -> notes from Settings                   |
+ |--------------------------------------------------------------|
+ | FOOTER  thank-you line | "Powered by" + official BinGi logo  |
+ |         page x / y (repeats on every page, header row too)   |
+ +--------------------------------------------------------------+
+  - A4 portrait for guest documents, A4 landscape for wide reports,
+    80 mm thermal for counter receipts.
+  - Font: Inter (Latin) + Noto Sans Bengali (Bangla), subset.
+  - Colour: ink #1D2433, grey #6B7385, lines #E3E6EC, brand red
+    #B11C29 for the title and one accent only. No dark fills.
+  - Money: ৳ + lakh grouping, numbers right-aligned, tabular figures.
+  - Bilingual: English labels with small Bangla sub-labels (or a
+    language switch per hotel in Settings).
+  - Size < 300 KB, generated < 2 s, file name
+    <Hotel>_<Document>_<No-or-Date>.pdf
+  - Same data service for screen, PDF, Excel, CSV (DOC-P1-09).
+
+ S2. WHICH DOCUMENT, WHEN
+   Booking confirmation / Proforma  when booked      no invoice no.
+   Payment receipt                  each payment     RCP-0001
+   Folio (running bill)             any time in house
+   Invoice                          at check-out     INV-0001, no gaps
+   Credit note / Refund receipt     refund, cancel   CRN-0001
+   Contract / Registration card     at check-in      ID + signature
+   Restaurant / Service receipt     each order       80 mm
+   Expense voucher                  each expense paid
+   Cashbox day report (Z)           day close        signed counts
+   Purchase order                   to supplier      PO-0001
+
+ S3. INVOICE MUST SHOW
+   Hotel block + BIN | Invoice no., issue date, booking no. | Bill to
+   (name, phone, email, company + its BIN if corporate) | Stay (dates,
+   nights, guests, room no. + category) | Lines: description, details,
+   qty, rate, amount | Subtotal, discount, service charge %, VAT %,
+   Total | Payments table (every payment) | Paid, Balance due | Notes
+   and policy from Settings | "Computer-generated, no signature".
+
+ S4. REPORT PDF MUST SHOW
+   Hotel + report name + date range + generated at/by | 4-5 KPI boxes
+   that fit the page | full table, header row repeats each page,
+   grand total only at the end | small summary tables | footer with
+   page x/y. No placeholder text.
+
+ S5. EXCEL MUST BE
+   Sheet 1 "Summary" (totals as FORMULAS pointing to the data sheet),
+   Sheet 2+ data tables: header in row 1, frozen, filter on, numbers
+   as numbers with ৳ format, dates as dates, real names (guest, staff),
+   one spelling per method, column widths set, print = fit to 1 page
+   wide + header/footer, "Read me" sheet with what is counted.
+
+ S6. CSV MUST BE
+   UTF-8 with BOM, readable headers, ISO dates, plain numbers (no ৳,
+   no commas), one row per item, no internal IDs unless asked.
+
+
+================================================================
+ G. REFERENCE SAMPLES (made by QA with the SAME live data)
+================================================================
+  samples/Sample_Invoice_INV-2026-000198.pdf
+     WBK-2026-000091, 1 page, ~125 KB. All 4 payments listed,
+     subtotal / service 0% / VAT 0% / total / paid / balance, Bangla
+     sub-labels rendered, hotel address, BIN placeholder, footer with
+     official BinGi HMS logo, page 1/1.
+  samples/Sample_Daily_Collections_2026-11-24.pdf
+     A4 landscape, 2 pages. 23 real payments of 24 Nov (total
+     ৳4,35,914 = cash ৳2,74,298 + bKash ৳1,61,616 - same as live
+     Reports and Cashbox), header row repeats on page 2, total only
+     at the end, by-method and by-module tables.
+  samples/Sample_Daily_Collections_2026-11-24.xlsx
+     Summary (formulas: SUM / SUMIFS / COUNTIFS + a check cell = 0),
+     Transactions (23 rows, numbers with ৳ format, frozen header,
+     filter, Excel table, print setup), Read me.
+  samples/*.html  = the HTML templates used (render with headless
+     Chrome; Laravel: spatie/browsershot or Gotenberg).
+  NOTE  The samples show LAYOUT and RULES. "BIN not set" and the
+  hotel's own policy text are shown as they are in Settings; no number
+  in the samples was invented.
+
+
+================================================================
+ WORKS - KEEP
+================================================================
+  - Invoice number stays the same for a booking (opened twice).
+  - Reports: one date range for all reports; PDF + Excel exist for all
+    11 reports; Excel opens without repair.
+  - Payment report PDF lists every transaction with reference.
+  - Finance statement CSV + PDF for a chosen month.
+  - Meals report Excel file name has the date range.
+
+
+================================================================
+ NOT TESTED YET
+================================================================
+  Booking with a Bangla guest name (DOC-P1-07 confirm) | invoice after
+  discount / multi-room / extra bed | cancellation & refund documents |
+  80 mm thermal print on a real printer | email / WhatsApp sending |
+  very large ranges (Last month, 1,000+ rows) | Bangla UI language
+  for documents | phone download.
+
+
+================================================================
+ FIX ORDER
+================================================================
+  1. DOC-P0-01 contract text, DOC-P0-02 demo PDF   (this week)
+  2. DOC-P1-09 one data source + DOC-P1-08 Excel numbers
+  3. DOC-P1-01..05 invoice / proforma / receipt rules (S2, S3)
+  4. DOC-P1-07 HTML->PDF engine + fonts (fixes P2-01/02/03 too)
+  5. DOC-P1-10/11/13 export UX, print preview, CSV
+  6. DOC-P1-12 missing documents (Cashbox Z report first)
+  7. P2
+================================================================

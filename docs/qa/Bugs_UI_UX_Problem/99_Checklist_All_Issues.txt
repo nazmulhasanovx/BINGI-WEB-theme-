@@ -3,7 +3,7 @@
 ================================================================
  Use with the module files for full details.
  [ ] = open   [x] = fixed + re-tested on hms.bingi.app
- Owner column: BE = backend, FE = frontend, BE+FE = both (fill in).
+ Total 270: P0 28 | P1 106 | P2 136
 
 ================================================================
  P0 - FIX FIRST
@@ -48,6 +48,10 @@
  [ ] MON-P0-01   Finance treats front-desk cash as money BinGi owes
  [ ] MON-P0-02   "Net Profit" on Expenses is booked value, not profit  = EXP-P0-05
  [ ] MON-P0-03   Cashbox does not match the drawer after expenses  = EXP-P0-02 + EXP-P0-04
+
+ -- INVOICE / REPORTS PDF / EXCEL / CSV  (11_Invoice_Reports_PDF_Excel.txt)
+ [ ] DOC-P0-01   Contract letter prints ANOTHER company's name and rules
+ [ ] DOC-P0-02   Sales Register PDF shows demo data, not the register
 
 ================================================================
  P1
@@ -164,6 +168,22 @@
  [ ] GLB-P1-06   Screens do not refresh after an action
  [ ] GLB-P1-07   Business rules enforced only in the UI
  [ ] GLB-P1-08   Two sources of truth for the same thing
+
+ -- INVOICE / REPORTS PDF / EXCEL / CSV  (11_Invoice_Reports_PDF_Excel.txt)
+ [ ] DOC-P1-01   Invoice shows 1 payment, guest paid 4 times
+ [ ] DOC-P1-02   Invoice totals are not a real bill
+ [ ] DOC-P1-03   Three documents, three designs, missing hotel data
+ [ ] DOC-P1-04   Confirmation letter money is wrong
+ [ ] DOC-P1-05   "Invoice" number given to unpaid future bookings
+ [ ] DOC-P1-06   Wrong / stale facts printed on documents
+ [ ] DOC-P1-07   PDFs cannot print Bangla; values fall back to Times
+ [ ] DOC-P1-08   Excel exports are not usable as spreadsheets
+ [ ] DOC-P1-09   The same number is different in each export
+ [ ] DOC-P1-10   Export downloads the WRONG report if clicked fast
+ [ ] DOC-P1-11   "Print" does not mean print preview
+ [ ] DOC-P1-12   Exports / documents that do not exist
+ [ ] DOC-P1-13   CSV files break in Excel and are raw
+ [ ] DOC-P1-14   Finance statement numbers do not add up
 
 ================================================================
  P2
@@ -314,5 +334,17 @@
  [ ] GLB-P2-08   dates     .   x   .    .   .   .   .   .   .
  [ ] GLB-P2-09   grammar   .   x   .    .   x   .   .   .   .
  [ ] GLB-P2-10   validate  x   x   .    x   x   x   x   x   .
+
+ -- INVOICE / REPORTS PDF / EXCEL / CSV  (11_Invoice_Reports_PDF_Excel.txt)
+ [ ] DOC-P2-01   PDF size 880 KB - 1 MB for 1-3 pages (full fonts embedded).
+ [ ] DOC-P2-02   Layout: invoice uses 2 pages (page 2 = 6 terms + footer);
+ [ ] DOC-P2-03   Money: "Tk." and "BDT" mixed in one invoice; rate wraps on
+ [ ] DOC-P2-04   File names: "daily_sales-report.pdf" (no date, no hotel);
+ [ ] DOC-P2-05   Invoice page header has a "New Booking" button; breadcrumb
+ [ ] DOC-P2-06   Payment report PDF column "Invoice" shows the booking
+ [ ] DOC-P2-07   Dates in 4 formats across files: "24-Nov-2026, 02:00 PM",
+ [ ] DOC-P2-08   Hotel policy text is printed as typed ("No return policy,
+ [ ] DOC-P2-09   Every PDF footer "Powered by BinGi" uses text, not the
+ [ ] DOC-P2-10   Excel title block wastes 7 rows before data; put the table
 
 ================================================================

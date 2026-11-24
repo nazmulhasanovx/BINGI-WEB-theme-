@@ -31,6 +31,11 @@
   09_Money_Cashbox_Payments_
      Finance_Reports.txt .............. money check across modules
   10_Global_UI_UX.txt ................. problems seen in many modules
+  11_Invoice_Reports_PDF_Excel.txt .... invoice, letters, contract,
+                                        report PDF / Excel / CSV / print
+                                        + PROFESSIONAL STANDARD
+  samples/ ............................ reference invoice PDF, report
+                                        PDF + Excel, HTML templates
   99_Checklist_All_Issues.txt ......... every ID on one line, tick box
 
 
@@ -65,10 +70,11 @@
   08 Operations (Expenses)                5     9     7     21
   09 Money (Cashbox/Payments/Finance)     3*    6     5     14
   10 Global UI / UX                       0     8    10     18
+  11 Invoice / Reports PDF / Excel        2    14    10     26
   ------------------------------------  ----  ----  ----  -----
-  TOTAL                                  26    92   126    244
+  TOTAL                                  28   106   136    270
   * HK-P0-01 = ROOM-P0-05, MON-P0-02 = EXP-P0-05,
-    MON-P0-03 = EXP-P0-02 + EXP-P0-04  ->  23 different P0 problems.
+    MON-P0-03 = EXP-P0-02 + EXP-P0-04  ->  25 different P0 problems.
 
 
 ----------------------------------------------------------------
@@ -114,6 +120,12 @@
    |                             |  EXP-P0-05 "Net Profit" = booked value
    +-----------------------------+
 
+   DOCUMENTS & EXPORTS (every module)
+   +-----------------------------+  DOC-P0-01 contract = other company
+   | invoice, letters, reports   |  DOC-P0-02 PDF with demo data
+   | PDF / Excel / CSV / print   |  + 14 P1: text money, Bangla, 1 of 4
+   +-----------------------------+    payments, missing Cashbox report
+
 
 ----------------------------------------------------------------
  5 ROOT CAUSES  (fix these, many items close together)
@@ -139,6 +151,8 @@
  SUGGESTED FIX ORDER  (sprints)
 ----------------------------------------------------------------
   SPRINT 1 - money + double booking (stop real loss)
+    DOC-P0-01  contract prints another company (KeyHost Homes)
+    DOC-P0-02  Sales Register PDF = demo "illustrative" data
     MON-P0-01  Finance only for BinGi gateway / marketplace money
     EXP-P0-01..04  approval + payment + Cashbox in one locked flow
     R1 + R2    one room-state source, overdue check-out
@@ -155,6 +169,9 @@
   SPRINT 3 - P1 (wrong / different from design)
     Per module "FIX ORDER" at the end of each file.
     GLB-P1-01 names (Sidebar v7) + GLB-P1-02/03 errors & plain text.
+
+  SPRINT 3b - documents: 11_Invoice_Reports_PDF_Excel "PROFESSIONAL
+    STANDARD" (S1-S6) + samples/ as the target look.
 
   SPRINT 4 - design 1:1 + P2
     02_Bookings DESIGN D1-D5, 03_Rooms section E, 08_Operations
