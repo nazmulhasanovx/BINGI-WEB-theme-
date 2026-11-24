@@ -16,14 +16,14 @@ Severity: **P0** blocks the owner · **P1** wrong, confusing or differs from the
 |---|---|
 | Overall look & step order | ✅ Same 6 parts and steps as v8; panel, live drawing, drafts, custom kind are in |
 | Session / entry | ❌ P0 — Continue from *My properties* fails "Unauthenticated" |
-| Accommodation categories | ❌ **P0 — only the first room type saves; every next type (cottage, villa, apartment, even a 2nd room type) fails** |
+| Accommodation categories | ❌ **P0 — only the first room type saves: backend `KYC_TRIAL_CATEGORY_LIMIT` (403) before KYC, shown as a generic error** |
 | Category details | ⚠️ Works for the first type; fees shown at Starter rates on Ultra; duplicate unit codes across blocks |
 | Subscription checkout | ❌ P0 — checkout says Ultra but URL is `PLAN_ENTERPRISE`; payment blocked by KYC after the flow offered "Subscribe now" |
 | Plan / payment | ⚠️ "Pay per room" headline but package prices; default = Subscribe now; online-payment copy misses the BinGi balance → payout model |
 | Website step | ⚠️ Wrong theme names (not NEST/CITY/ESCAPE/GRAND), empty thumbnails, no "How guests book" |
 | Finish | ⚠️ Says "everything needed is done" without Terms; raw `NOT_SUBMITTED`; 2 different progress numbers |
 
-Count: **5 × P0 · 18 × P1 · 16 × P2** (updated after the checkout run — section 2b)
+Count: **5 × P0 · 19 × P1 · 18 × P2** (updated after the checkout run — section 2b)
 
 ---
 
@@ -81,7 +81,7 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 1 Property ── Extras = room amenities (P1-03)
 2 Plan ────── "pay per room" but packages (P1-05) · default Subscribe now (P1-06)
 3 Rooms ───── Resort pre-picks only Rooms (P1-07)
-              Room type #1 saves ✔ · type #2… ✖ "Accommodation category draft cannot be saved." (P0-03)
+              Room type #1 saves ✔ · type #2… ✖ 403 KYC_TRIAL_CATEGORY_LIMIT shown as generic error (P0-03)
               fees at Starter % on Ultra (P1-08) · C1 allowed in 2 blocks (P1-09) · panel box scrolls (P1-10)
               Review hides 4 unfinished drafts (P1-12)
 5 Money ───── no "money comes to BinGi balance → payout" (P1-13)
@@ -106,12 +106,21 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 - **Expected:** retry the same property, or sign-in and return to it.
 - **To confirm:** whether that property belongs to the same login (phone shown on *My properties* and on the account row differed).
 
-### P0-03 · Only the **first** accommodation type can be saved
-- **Steps:** 3.2 Add rooms → Deluxe Room (5 rooms) saves ✔ → then any of: Garden Cottage, Private Villa, 2-Bedroom Apartment, Suite (a 2nd *room* type) → **Save**.
-- **Seen:** every time `Accommodation category draft cannot be saved.`; panel stays open; **no API request is sent** (refused in the browser); same after page reload.
-- **Impact:** a resort cannot add cottages or villas; a hotel cannot add a 2nd room type. Onboarding still lets them finish with 1 type.
-- **Expected (v8):** every type saves; "Save & next" moves to the next.
-- **Dev hint:** client-side guard on the category-draft call (maybe "one open draft" check, or a stale category-draft id from the first save). Check `/api/onboarding/accommodation-configuration` + category endpoints.
+### P0-03 · Only the **first** accommodation type can be saved — backend KYC limit, hidden from the owner
+- **Steps:** 3.2 Add rooms → first type saves ✔ → any next type (Garden Cottage, Private Villa, 2-Bedroom Apartment, Suite; and on a fresh *Hotel* property a 2nd room type "Twin Room") → **Save**.
+- **Root cause (captured in the page, 24 Nov):**
+  ```
+  POST https://api.bingi.app/api/onboarding/accommodation-categories  → 403
+  {"code":"KYC_TRIAL_CATEGORY_LIMIT","message":"Accommodation category draft cannot be saved."}
+  ```
+  The backend allows **1 category before KYC**. Reproduced on 2 properties (Resort / Ultra, Hotel / Business).
+- **Seen in the UI:** only the generic message, above the fold; panel stays open; no hint that NID would unlock it.
+  Meanwhile 2.1 Documents says "You can continue setup meanwhile" and offers *Do it later*.
+- **Impact:** a resort cannot add cottages or villas, a hotel cannot add its 2nd room type — exactly what onboarding is for.
+- **Fix — founder decision needed:**
+  - **(a, recommended)** lift the limit for *drafts* during onboarding (KYC still gates publishing, online booking and payouts), or
+  - **(b)** keep the limit, but say it: "Upload your NID to add more room types" + button to Documents, shown *before* the owner fills the form; and make Documents required when the property has more than one kind.
+- **Also:** map every API `code` to a plain sentence (KYC_TRIAL_CATEGORY_LIMIT, NOT_SUBMITTED…).
 
 ---
 
@@ -138,6 +147,14 @@ My properties ─ Continue ─▶ ✖ Unauthenticated (P0-01) ─ Try again ─�
 ### P1-18 · "Save & exit" signs the owner out
 - **Seen:** Save & exit → `/login` ("Welcome back").
 - **Expected:** save → *My properties* (or HMS dashboard) while staying signed in.
+
+### P1-19 · Business plan lists "Restaurant / meal management (limited)"
+- 2.2 Plan, Hotel → BinGi Business card. Rule: Restaurant & Bar is **Ultra or custom only**.
+
+### Confirmed on a 2nd property (QA Test Hotel · Business)
+- Hotel → Business recommended ✅ · Rooms pre-picked + Apartments + "More kinds" ✅ · Area guessed from the road text ("Banani") ✅
+- P1-08 again: Business shows −1.5 % / −12 % (should be −1 % / −8 %) → fees are always Starter's.
+- Business package shows "5 of 20 rooms in your package" (`max_units: 20`) — package model, not the 22 Nov per-room model.
 
 ### More P2
 17. Resume lands on a different step each time (3.1 after reload on 3.2; 5.2 after reload on 2.4 checkout).
