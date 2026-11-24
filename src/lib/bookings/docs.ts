@@ -8,14 +8,15 @@ import { bill, channelLabel, dmy, heldMeals, paidOf, preMealTotal, timeOf, tk, t
 const esc = (s: string | undefined | null) => (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 export { DOC_TEMPLATES, DOC_ACCENTS, type DocDesign, type DocTemplate } from "./doc-kit";
 import type { DocDesign } from "./doc-kit";
+export { agreementHtml, regCardHtml, refundReceiptHtml, cancellationNoteHtml, depositReceiptHtml } from "./docs-agreement";
 import { normaliseDesign, lang as docLang, docPage, header as docHeader, footer as docFooter, esc as kesc, type DocHotel } from "./doc-kit";
 const BN: Record<string, string> = { "Invoice": "ইনভয়েস", "Booking confirmation": "বুকিং নিশ্চিতকরণ", "Money receipt": "টাকা প্রাপ্তির রসিদ", "Refund receipt": "ফেরতের রসিদ", "Guest registration card": "অতিথি নিবন্ধন কার্ড", "Guest register": "অতিথি রেজিস্টার", "Foreign guests (Form-C)": "বিদেশি অতিথি (ফর্ম-সি)" };
 const LOGO_H = { S: 30, M: 42, L: 56 } as const;
 let DRAFT: Partial<HotelSettings["docs"]> | null = null;
 /** Render with unsaved Settings → Invoices & documents values (live preview). */
 export function withDocsDraft<T>(draft: Partial<HotelSettings["docs"]>, fn: () => T): T { DRAFT = draft; try { return fn(); } finally { DRAFT = null; } }
-const docsOf = (h: Hotel): HotelSettings["docs"] => ({ ...settingsOf(h).docs, ...(DRAFT ?? {}) });
-const designOf = (h: Hotel) => normaliseDesign(docsOf(h).design);
+export const docsOf = (h: Hotel): HotelSettings["docs"] => ({ ...settingsOf(h).docs, ...(DRAFT ?? {}) });
+export const designOf = (h: Hotel) => normaliseDesign(docsOf(h).design);
 /** Initials badge used when the hotel has not uploaded a logo yet. */
 const monogram = (name: string, accent: string, px: number) => {
   const ini = name.split(/\s+/).filter((w) => /^[A-Za-z0-9]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "H";
@@ -136,20 +137,6 @@ export function receiptHtml(h: Hotel, b: Booking, g: Guest | undefined, p: Pay) 
 <p>Received ${p.amount < 0 ? "back by" : "from"} <b>${esc(g?.name)}</b> the sum of <span class="big">${tk(Math.abs(p.amount))}</span> by <b>${esc(p.method)}</b>${p.note ? ` (${esc(p.note)})` : ""} for booking <b>${b.code}</b>, room ${esc(b.unit || "—")}, ${dmy(b.from)} → ${dmy(b.to)}.</p>
 <table class="tot"><tr><td>Booking total</td><td class="r">${tk(totalOf(b))}</td></tr><tr><td>Paid so far</td><td class="r">${tk(paidOf(b))}</td></tr><tr><td class="b">Balance</td><td class="r b">${tk(Math.max(0, totalOf(b) - paidOf(b)))}</td></tr></table>
 <div class="sign"><div>Received by · ${esc(p.by)}</div><div>Guest</div></div>`);
-}
-
-export function regCardHtml(h: Hotel, b: Booking, g: Guest | undefined) {
-  const row = (k: string, v?: string) => `<div class="kv"><span>${k}</span><b>${esc(v) || "&nbsp;"}</b></div>`;
-  return page(h, `Registration ${b.code}`, `${head(h, "Guest registration card", `${b.code} · ${dmy(b.from)}`)}
-<div class="grid">${row("Full name", g?.name)}${row("Phone", g?.phone)}${row("Nationality", g?.country)}${row("Email", g?.email)}
-${row(g?.idType || "ID", g?.idNo)}${row("Date of birth", g?.dob)}${row("Gender", g?.gender)}${row("Occupation", g?.occupation)}
-${g?.country !== "Bangladesh" ? `${row("Visa no.", g?.visaNo)}${row("Visa valid until", g?.visaExpiry)}` : ""}
-${row("Address", g?.address)}${row("Purpose of visit", b.purpose)}${row("Coming from", b.comingFrom)}${row("Going to", b.goingTo)}
-${row("Room", b.unit)}${row("Arrival", `${dmy(b.from)}${b.eta ? ` · ${b.eta}` : ""}`)}${row("Departure", dmy(b.to))}${row("Booked through", channelLabel(b))}</div>
-${b.companions?.length ? `<h2>Other guests in the room</h2><table><tr><th>Name</th><th>ID</th><th>Relation</th></tr>${b.companions.map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.idType)} ${esc(c.idNo)}</td><td>${esc(c.relation)}</td></tr>`).join("")}</table>` : ""}
-${(() => { const c = docsOf(h).contract; return c.on ? `<h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p>${c.rules ? `<p style="white-space:pre-wrap">${esc(c.rules)}</p>` : ""}` : ""; })()}
-<p class="m" style="margin-top:14px">I agree to the hotel's terms. Check-out by the agreed time; the hotel is not responsible for valuables not deposited at the front desk.</p>
-<div class="sign"><div>Guest signature</div><div>Front desk</div></div>`);
 }
 
 /** Daily guest register — everyone staying tonight (kept by every hotel; asked for by police on inspection). */

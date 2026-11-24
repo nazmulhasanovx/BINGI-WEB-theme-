@@ -10,7 +10,7 @@ import { useSettings, bookingOf, AREAS, type Settings, type Perm, type Role, typ
 import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
-import { invoiceHtml, regCardHtml, withDocsDraft, DOC_TEMPLATES, DOC_ACCENTS, type DocDesign } from "@/lib/bookings/docs";
+import { invoiceHtml, agreementHtml, withDocsDraft, DOC_TEMPLATES, DOC_ACCENTS, type DocDesign } from "@/lib/bookings/docs";
 import { normaliseDesign } from "@/lib/bookings/doc-kit";
 import { useGuestNames } from "@/lib/guests/store";
 import { useRooms, priceBreak } from "@/lib/rooms/store";
@@ -535,7 +535,7 @@ export function DocumentsPage() {
           </div>
         </div>
       </div>}
-      {tab === "contract" && <Card title="Stay agreement" desc="Printed on the registration card for the guest to sign." action={sample && d.contract.on && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(regCardHtml(h, sample, names.get(sample.guestId))); }}><PrinterIcon className="size-4" />Preview</Btn>}>
+      {tab === "contract" && <Card title="Stay agreement" desc="Printed as its own page for the guest to sign (booking › Documents)." action={sample && d.contract.on && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(agreementHtml(h, sample, names.get(sample.guestId), bk.settings)); }}><PrinterIcon className="size-4" />Preview</Btn>}>
         <ToggleRow title="Use a stay agreement" on={d.contract.on} onChange={(v) => setC({ on: v })} />
         {d.contract.on && <div className="mt-4 space-y-4">
           <Grid><Field label="Title"><Input value={d.contract.title} onChange={(e) => setC({ title: e.target.value })} /></Field>
