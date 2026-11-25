@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarRange, Check, Clock, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { bill, holdClock, holdLeft, holdLive, stamp, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
-import { agreementHtml, cancellationNoteHtml, confirmationHtml, depositReceiptHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, refundReceiptHtml, regCardHtml } from "@/lib/bookings/docs";
+import { agreementHtml, cancellationNoteHtml, companyInvoiceHtml, confirmationHtml, depositReceiptHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, refundReceiptHtml, regCardHtml } from "@/lib/bookings/docs";
 import { settingsOf } from "@/lib/settings/store";
 import { printHtml } from "../meals/print";
 import { useBkMode } from "@/lib/bookings/mode";
@@ -391,6 +391,14 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
   if (b.status === "Cancelled" || b.status === "No-show") docs.push([b.status === "No-show" ? "No-show note" : "Cancellation note", "What, when, why, fee kept and refund due", () => cancellationNoteHtml(h, b, g, S)]);
   if (paidOf(b) > totalOf(b)) docs.push(["Credit note", "Refund still owed to the guest", () => refundReceiptHtml(h, b, g)]);
   if (b.deposit) docs.push(["Security deposit receipt", b.deposit.settled ? "Deposit returned / used for the bill" : "Deposit held", () => depositReceiptHtml(h, b, g)]);
+  // One invoice for the whole group (same group code) or for every booking this company pays for.
+  const company = b.payer?.kind === "Company" && b.payer.name ? b.payer.name : "";
+  const counted = (x: Booking) => x.status !== "On hold" && !((x.status === "Cancelled" || x.status === "No-show") && !(x.cancel?.keep ?? 0));
+  const together = bk.list.filter((x) => counted(x) && (b.group ? x.group === b.group : !!company && x.payer?.kind === "Company" && x.payer.name === company));
+  if (together.length > 1 || (company && together.length)) {
+    const billTo = company || b.booker?.name || g?.name || "Guest";
+    docs.push([`${b.group ? "Group" : "Company"} invoice · ${together.length} booking${together.length > 1 ? "s" : ""}`, `One bill to ${billTo}: a line per room and guest`, () => companyInvoiceHtml(h, { company: { name: billTo, phone: company ? undefined : b.booker?.phone }, rows: together.map((x) => ({ b: x, g: guests.get(x.guestId) })) })]);
+  }
   const link = precheckUrl(h, b);
   const msgs: [string, string][] = [["Confirmation message", fillMsg(S.confirmMsg, h, b, g, S)], ["Pre-arrival message", fillMsg(S.preArrivalMsg, h, b, g, S)]];
   const wa = (t: string) => `https://wa.me/${(g?.phone ?? "").replace(/\D/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(t)}`;

@@ -14,6 +14,7 @@ import { useCashboxData } from "../cashbox/pages";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { useOutlet } from "./frame";
 import { billHtml, kotHtml, printHtml, roomSlipHtml } from "./print";
+import { restaurantBillA4Html } from "@/lib/bookings/docs";
 
 export function useToast() { const [t, setT] = useState(""); const show = (m: string) => { setT(m); setTimeout(() => setT((x) => (x === m ? "" : x)), 2800); }; return [t, show] as const; }
 
@@ -81,6 +82,7 @@ export function OrderSheet({ r, id, onClose, onDone, onPay }: { r: Restaurant; i
             {o.pay === "unpaid" && !["cancelled", "declined", "approval"].includes(o.status) && <Link href={`/hms/meals/pos?order=${o.id}`} className={clsx(btnLine, "h-9 px-3")}><Plus className="size-4" aria-hidden />Add items</Link>}
             <button onClick={() => printHtml(billHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print bill</button>
             {o.pay === "room" && <button onClick={() => printHtml(roomSlipHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print room slip</button>}
+            {!["cancelled", "declined"].includes(o.status) && <button onClick={() => printHtml(restaurantBillA4Html(r.h, { orders: [o], customer: { name: o.guest?.trim() || "Company customer" }, placeName: r.placeName }))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />A4 bill (company)</button>}
             {!["cancelled", "declined", "served"].includes(o.status) && <button onClick={() => printHtml(kotHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>}
           </div>
           <dl className="space-y-1 text-[14px]">

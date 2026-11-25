@@ -3,11 +3,14 @@ import Link from "next/link";
 import clsx from "clsx";
 import { type ReactNode } from "react";
 import { CircleCheck, Lock, Moon, Printer } from "lucide-react";
-import { formCHtml, registerHtml } from "@/lib/bookings/docs";
+import { formCHtml, nightAuditHtml, registerHtml } from "@/lib/bookings/docs";
+import { can } from "@/lib/plan";
+import { useServices } from "@/lib/services/store";
+import { useRestaurant } from "../meals/shared";
 import { printHtml } from "../meals/print";
 import { useProperty } from "../property";
 import { TODAY } from "@/lib/rooms/store";
-import { bill, dm, dmy, dueOf, policyFee, timeOf, tk } from "@/lib/bookings/store";
+import { ME, dm, dmy, dueOf, policyFee, roomRevenueOn, timeOf, tk } from "@/lib/bookings/store";
 import { BookingsFrame, ChannelBadge, bMain, bSoft, card, useBk } from "./ui";
 
 function Box({ title, sub, children, action }: { title: string; sub?: string; children: ReactNode; action?: ReactNode }) {
@@ -35,8 +38,9 @@ function DayCloseBody() {
   const departures = L.filter((b) => b.status === "Checked out" && (b.checkedOutAt ?? "").startsWith(TODAY)).length;
   const inHouse = L.filter((b) => b.status === "Checked in").length;
   const noShows = L.filter((b) => b.status === "No-show" && (b.cancel?.at ?? "").startsWith(TODAY)).length;
-  // Tonight's room revenue: tonight's night of every stay in house (incl. VAT & service).
-  const revenue = L.filter((b) => b.status === "Checked in" || b.status === "Checked out").reduce((s, b) => { const n = b.nights.find((x) => x.date === TODAY); return n ? s + bill({ nights: [n], tax: b.tax, discount: 0, mealPlan: b.mealPlan }).total : s; }, 0);
+  // Tonight's room revenue, NET (after discount, before service + VAT) — same rule as the night audit print.
+  const R = roomRevenueOn(L, TODAY);
+  const rest = useRestaurant(); const svc = useServices(h);
   const collected = L.reduce((s, b) => s + b.payments.filter((p) => p.at.startsWith(TODAY)).reduce((a, p) => a + p.amount, 0), 0);
   const closed = bk.audits.find((a) => a.date === TODAY);
   const open3 = notArrived.length + overdue.length;
@@ -47,11 +51,12 @@ function DayCloseBody() {
       <div className={clsx(card, "flex flex-wrap items-center gap-3 p-4 sm:p-5")}>
         <span className="grid size-11 place-items-center rounded-xl bg-[#eef0ff] text-[#3d4bd6]"><Moon className="size-5" /></span>
         <div className="min-w-0 flex-1"><h2 className="text-[17px] font-bold">Close {dmy(TODAY)}</h2><p className="text-[13.5px] text-hms-muted">{closed ? `Closed at ${timeOf(closed.at)} by ${closed.by}` : open3 ? `${open3} thing${open3 > 1 ? "s" : ""} to check first` : "Everything is checked — ready to close"}</p></div>
+        <button onClick={() => printHtml(nightAuditHtml(h, TODAY, { bookings: L, units: bk.units, guests, meals: can(h, "restaurant") ? rest.m.st.orders : undefined, services: can(h, "services") ? svc.st.orders : undefined, audit: closed, preparedBy: closed?.by ?? ME }))} className={clsx(bSoft, "!h-10")}><Printer className="size-4" />Night audit</button>
         {closed ? <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e5f5ec] px-3 py-1.5 text-[13.5px] font-semibold text-[#16693a]"><Lock className="size-4" />Day closed</span>
-          : <button onClick={() => { bk.closeDay({ date: TODAY, arrivals, departures, noShows, inHouse, revenue, collected }); toast(`${dm(TODAY)} closed`); }} className={bMain}>Close the day</button>}
+          : <button onClick={() => { bk.closeDay({ date: TODAY, arrivals, departures, noShows, inHouse, revenue: R.net, service: R.service, vat: R.vat, gross: R.gross, sold: R.sold, collected }); toast(`${dm(TODAY)} closed`); }} className={bMain}>Close the day</button>}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi k="Arrived" v={arrivals} /><Kpi k="Left" v={departures} /><Kpi k="In house" v={inHouse} /><Kpi k="No-shows" v={noShows} /><Kpi k="Room revenue" v={tk(revenue)} /><Kpi k="Collected" v={tk(collected)} />
+        <Kpi k="Arrived" v={arrivals} /><Kpi k="Left" v={departures} /><Kpi k="In house" v={inHouse} /><Kpi k="No-shows" v={noShows} /><Kpi k="Room revenue (net)" v={tk(R.net)} sub={`+ service ${tk(R.service)} + VAT ${tk(R.vat)} · gross ${tk(R.gross)}`} /><Kpi k="Collected · room bills" v={tk(collected)} />
       </div>
       <Box title="Not arrived" sub={`No-show fee: ${S.noShowFeePct}% of the first night`}>
         {notArrived.length ? <ul className="divide-y divide-hms-line">{notArrived.map((b) => (
@@ -78,15 +83,15 @@ function DayCloseBody() {
           </div>); })()}
       </Box>
       <Box title="Closed days">
-        {bk.audits.length ? <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-[13.5px]"><thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="py-2 font-semibold">Date</th><th className="font-semibold">Arrived</th><th className="font-semibold">Left</th><th className="font-semibold">In house</th><th className="font-semibold">No-shows</th><th className="text-right font-semibold">Revenue</th><th className="text-right font-semibold">Collected</th></tr></thead>
-          <tbody className="divide-y divide-hms-line">{bk.audits.map((a) => <tr key={a.date + a.at}><td className="py-2 font-semibold">{dm(a.date)}<span className="block text-[12px] font-normal text-hms-muted">{timeOf(a.at)} · {a.by}</span></td><td>{a.arrivals}</td><td>{a.departures}</td><td>{a.inHouse}</td><td>{a.noShows}</td><td className="text-right tabular-nums">{tk(a.revenue)}</td><td className="text-right tabular-nums">{tk(a.collected)}</td></tr>)}</tbody></table></div>
+        {bk.audits.length ? <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-[13.5px]"><thead><tr className="text-left text-[12.5px] text-hms-muted"><th className="py-2 font-semibold">Date</th><th className="font-semibold">Arrived</th><th className="font-semibold">Left</th><th className="font-semibold">In house</th><th className="font-semibold">No-shows</th><th className="text-right font-semibold">Room revenue (net)</th><th className="text-right font-semibold">Gross (incl. VAT/service)</th><th className="text-right font-semibold">Collected</th></tr></thead>
+          <tbody className="divide-y divide-hms-line">{bk.audits.map((a) => <tr key={a.date + a.at}><td className="py-2 font-semibold">{dm(a.date)}<span className="block text-[12px] font-normal text-hms-muted">{timeOf(a.at)} · {a.by}</span></td><td>{a.arrivals}</td><td>{a.departures}</td><td>{a.inHouse}</td><td>{a.noShows}</td><td className="text-right tabular-nums">{a.gross !== undefined ? tk(a.revenue) : "—"}</td><td className="text-right tabular-nums">{tk(a.gross ?? a.revenue)}</td><td className="text-right tabular-nums">{tk(a.collected)}</td></tr>)}</tbody></table></div>
           : <p className="text-[14px] text-hms-muted">No day closed yet. <Link href="/hms/cashbox" className="font-semibold text-hms-red">Cash is closed in Cashbox</Link>.</p>}
       </Box>
     </div>
   );
 }
-function Kpi({ k, v }: { k: string; v: ReactNode }) {
-  return <div className="rounded-xl bg-[#f7f8fa] px-3.5 py-3"><p className="text-[12.5px] font-semibold text-hms-muted">{k}</p><p className="text-[19px] font-bold tabular-nums">{v}</p></div>;
+function Kpi({ k, v, sub }: { k: string; v: ReactNode; sub?: string }) {
+  return <div className="rounded-xl bg-[#f7f8fa] px-3.5 py-3"><p className="text-[12.5px] font-semibold text-hms-muted">{k}</p><p className="text-[19px] font-bold tabular-nums">{v}</p>{sub && <p className="text-[11.5px] leading-snug text-hms-muted tabular-nums">{sub}</p>}</div>;
 }
 function Ok({ text }: { text: string }) {
   return <p className="flex items-center gap-2 py-1 text-[14px] text-[#16693a]"><CircleCheck className="size-4" />{text}</p>;

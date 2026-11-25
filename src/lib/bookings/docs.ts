@@ -122,22 +122,7 @@ ${b.payments.map((q) => `<tr><td class="nw">${x.date(q.at)}, ${x.time(q.at)}</td
   return docPage(`${x.t("invoice")} ${no}`, d, body);
 }
 
-/** Daily guest register — everyone staying tonight (kept by every hotel; asked for by police on inspection). */
-export function registerHtml(h: Hotel, date: string, rows: { b: Booking; g?: Guest }[]) {
-  return page(h, `Guest register ${date}`, `${head(h, "Guest register", `Night of ${dmy(date)} · ${rows.length} room(s)`)}
-<table><tr><th>Room</th><th>Guest</th><th>Nationality</th><th>ID</th><th>Phone</th><th>From → to</th><th>Purpose</th><th>Coming from</th><th>Others</th></tr>
-${rows.map(({ b, g }) => `<tr><td class="b">${esc(b.unit)}</td><td>${esc(g?.name)}<br><small>${b.code}</small></td><td>${esc(g?.country)}</td><td>${esc(g?.idType)} ${esc(g?.idNo) || "<b>missing</b>"}</td><td>${esc(g?.phone)}</td><td>${dmy(b.from)} → ${dmy(b.to)}</td><td>${esc(b.purpose)}</td><td>${esc(b.comingFrom)}</td><td>${(b.companions ?? []).map((c) => esc(c.name)).join(", ") || (b.adults + b.children > 1 ? `${b.adults + b.children - 1} unnamed` : "")}</td></tr>`).join("")}</table>
-<div class="sign"><div>Prepared by</div><div>Manager</div></div>`, true);
-}
-
-/** Form-C style list of foreign guests (passport + visa) for the police / immigration. */
-export function formCHtml(h: Hotel, date: string, rows: { b: Booking; g?: Guest }[]) {
-  return page(h, `Form-C ${date}`, `${head(h, "Foreign guests (Form-C)", `${dmy(date)} · ${rows.length} guest(s)`)}
-<table><tr><th>#</th><th>Name</th><th>Nationality</th><th>Passport</th><th>Visa / valid until</th><th>Date of birth</th><th>Arrived</th><th>Leaving</th><th>Room</th><th>Coming from / going to</th><th>Purpose</th></tr>
-${rows.map(({ b, g }, i) => `<tr><td>${i + 1}</td><td class="b">${esc(g?.name)}</td><td>${esc(g?.country)}</td><td>${esc(g?.idNo) || "<b>missing</b>"}</td><td>${esc(g?.visaNo) || "—"}${g?.visaExpiry ? ` / ${dmy(g.visaExpiry)}` : ""}</td><td>${esc(g?.dob) || "—"}</td><td>${dmy(b.from)}</td><td>${dmy(b.to)}</td><td>${esc(b.unit)}</td><td>${esc(b.comingFrom) || "—"} / ${esc(b.goingTo) || "—"}</td><td>${esc(b.purpose) || "—"}</td></tr>`).join("") || `<tr><td colspan="11" class="m">No foreign guests tonight.</td></tr>`}</table>
-<p class="m">Check the exact Form-C format required by your local police station before submitting.</p>
-<div class="sign"><div>Prepared by</div><div>Manager</div></div>`, true);
-}
+export { registerHtml, formCHtml, nightAuditHtml, companyInvoiceHtml, restaurantBillA4Html, type NightAuditInput, type BillParty } from "./docs-register";
 
 /** Fill a message template ({guest}, {code}, {hotel}, {room}, {from}, {to}, {nights}, {total}, {paid}, {checkin}). */
 /** Guest-facing pre-check-in page for this booking (works on the Next app and the hash-routed preview). */
