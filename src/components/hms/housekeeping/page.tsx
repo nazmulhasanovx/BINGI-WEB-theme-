@@ -8,7 +8,7 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlarmClock, BedDouble, Brush, Check, CheckCheck, ChevronRight, CircleCheck, Clock, History, LayoutGrid, List, ListChecks,
-  Plus, Search, Settings2, ShieldCheck, Sparkles, Trash2, User, Wrench,
+  Plus, Printer, Search, Settings2, ShieldCheck, Sparkles, Trash2, User, Wrench,
 } from "lucide-react";
 import { can } from "@/lib/plan";
 import { PlanGate } from "../plan-gate";
@@ -21,6 +21,8 @@ import { DEFAULT_LISTS, KINDS, LIST_KINDS, PRIORITIES, listFor, useHousekeeping,
 import { useProperty } from "../property";
 import { Drawer, Field, Input, Select, Area } from "../staff/ui";
 import { Toast, bMain, bSoft, card } from "../bookings/ui";
+import { printHtml } from "../meals/print";
+import { hkSheetHtml, workOrderHtml, type HkRow } from "@/lib/bookings/docs-office";
 
 type Tab = "tasks" | "maintenance" | "checklist";
 type Stage = "all" | "Open" | "Doing" | "Review" | "ready";
@@ -57,6 +59,12 @@ function HousekeepingBoard() {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const say = (t: string) => { setToastS(t); clearTimeout(timer.current); timer.current = setTimeout(() => setToastS(""), 2400); };
   const [adding, setAdding] = useState(false);
+  const info = useRoomInfo();
+  /** Today's room sheet: every sellable room, its readiness and the open cleaning task (if any). */
+  const printSheet = () => printHtml(hkSheetHtml(h, TODAY, hk.units.map((u): HkRow => {
+    const r = info.get(u); const t = hk.st.tasks.find((x) => x.room === u && x.status !== "Done" && CLEANING.includes(x.kind));
+    return { room: u, type: r?.type, where: r?.where, occ: r?.occ, ooo: r?.ooo, clean: hk.stateOf(u), task: t && { kind: t.kind, status: t.status, who: t.who, priority: t.priority, due: t.due, note: t.note } };
+  })));
 
   if (!hk.ready || !bk.ready) return <div className="hms-page"><p role="status" className="py-10 text-[14px] text-hms-muted">Loading housekeeping…</p></div>;
   return (
@@ -65,6 +73,7 @@ function HousekeepingBoard() {
         <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Housekeeping</h1><p className="text-[14px] text-hms-muted">Cleaning tasks, maintenance and room checklists · {dm(TODAY)}</p></div>
         <div className="flex items-center gap-2">
           <Link href="/hms/settings/housekeeping" aria-label="Housekeeping rules" className="grid size-11 place-items-center rounded-xl border border-hms-line bg-white hover:bg-hms-hover"><Settings2 className="size-[18px]" /></Link>
+          {tab === "tasks" && <button onClick={printSheet} className={bSoft}><Printer className="size-4" aria-hidden />Room sheet</button>}
           {tab !== "checklist" && <button onClick={() => setAdding(true)} className={bMain}><Plus className="size-4" />{tab === "maintenance" ? "Add maintenance" : "Add task"}</button>}
         </div>
       </div>
@@ -411,6 +420,7 @@ function AddTask({ hk, onClose, say }: { hk: HK; onClose: () => void; say: (s: s
 
 // ---------------------------------------------------------------- Maintenance
 function Maintenance({ hk, rooms, say }: { hk: HK; rooms: ReturnType<typeof useRooms>; say: (t: string) => void }) {
+  const h = useProperty();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const fixes = hk.st.tasks.filter((t) => t.kind === "Fix" && t.status !== "Done");
@@ -442,7 +452,7 @@ function Maintenance({ hk, rooms, say }: { hk: HK; rooms: ReturnType<typeof useR
                 <td className="px-4 py-3"><select aria-label={`Assign maintenance room ${t.room}`} value={t.who ?? ""} onChange={(e) => hk.assign(t.id, e.target.value)} className="h-9 rounded-xl border border-hms-line bg-white px-2 text-[13px]"><option value="">Not assigned</option>{hk.staff.map((s) => <option key={s}>{s}</option>)}</select></td>
                 <td className="px-4 py-3"><span className={clsx("text-[13px] font-semibold", t.status === "Doing" ? "text-[#1d4ed8]" : "text-[#8a4b00]")}>{t.status === "Doing" ? "In progress" : "Open"}</span></td>
                 <td className="px-4 py-3"><Toggle on={!!u?.ooo} label={`Block room ${t.room}`} set={(on) => { setBlock(t.room, on, t.note ?? "Maintenance"); say(on ? `Room ${t.room} blocked` : `Room ${t.room} open for sale`); }} /><span className="ml-2 text-[12.5px] text-hms-muted">{u?.ooo ? "Out of order" : "Sellable"}</span></td>
-                <td className="px-4 py-3 text-right">{t.status === "Open"
+                <td className="whitespace-nowrap px-4 py-3 text-right"><button onClick={() => printHtml(workOrderHtml(h, t, { type: rooms.st.categories.find((c) => c.id === u?.category)?.name, where: u ? nodePath(rooms.st.config, u.node).replace(/^.* › /, "") : undefined, block: u?.ooo }))} aria-label={`Print work order room ${t.room}`} className="mr-2 inline-grid size-9 place-items-center rounded-xl border border-hms-line bg-white align-middle hover:bg-hms-hover"><Printer className="size-4" /></button>{t.status === "Open"
                   ? <button onClick={() => { hk.start(t.id); say(`Room ${t.room} · repair started`); }} className="h-9 rounded-xl border border-hms-line bg-white px-3 text-[13.5px] font-semibold hover:bg-hms-hover">Start</button>
                   : <button onClick={() => fixed(t)} aria-label={`Mark room ${t.room} fixed`} className="h-9 rounded-xl border border-hms-line bg-white px-3 text-[13.5px] font-semibold hover:bg-hms-hover">Mark fixed</button>}</td>
               </tr>); })}

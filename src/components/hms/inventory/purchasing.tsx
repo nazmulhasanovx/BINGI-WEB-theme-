@@ -3,11 +3,14 @@
 // (partial deliveries create one GRN each). Stock only changes when goods are received.
 import clsx from "clsx";
 import { useState } from "react";
-import { CheckCircle2, Clock, PackageCheck, Plus, ShoppingCart, Trash2, Truck } from "lucide-react";
+import { CheckCircle2, Clock, PackageCheck, Plus, Printer, ShoppingCart, Trash2, Truck } from "lucide-react";
 import { CAN, PO_LABEL, TODAY, fmtQty, inBuy, poTotal, q, tk, type Po, type PoStatus, type useInventory } from "@/lib/inventory/store";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { Err, Hint, QtyInput } from "./sheets";
 import { InventoryFrame, useInv } from "./frame";
+import { useProperty } from "../property";
+import { printHtml } from "../meals/print";
+import { grnHtml, poHtml } from "@/lib/bookings/docs-office";
 
 type Inv = ReturnType<typeof useInventory>;
 const card = "rounded-xl border border-hms-line bg-white";
@@ -156,6 +159,7 @@ export function PoView({ inv, id, onClose, onEdit, onDone }: { inv: Inv; id: str
   const [costs, setCosts] = useState<Record<string, string>>({});
   const [invoice, setInvoice] = useState("");
   const [err, setErr] = useState("");
+  const h = useProperty();
   if (!p) return null;
   const can = ["approved", "partial"].includes(p.status);
   const sup = inv.st.suppliers.find((s) => s.id === p.supplier);
@@ -185,6 +189,7 @@ export function PoView({ inv, id, onClose, onEdit, onDone }: { inv: Inv; id: str
           <span><span className="text-hms-muted">By</span> {p.by}</span>
           {p.approvedBy && <span><span className="text-hms-muted">Approved by</span> {p.approvedBy}</span>}
           {sup?.phone && <a href={`tel:${sup.phone.replace(/\D/g, "")}`} className="font-semibold text-action underline underline-offset-2">Call {sup.phone}</a>}
+          <button type="button" onClick={() => printHtml(poHtml(h, inv.st, p))} className={clsx(btnLine, "ml-auto h-9 px-3")}><Printer className="size-4" aria-hidden />Print order</button>
         </div>
         {p.status === "pending" && !CAN.approve(inv.role) && <p className="flex items-center gap-2 rounded-lg bg-[#fdf3d9] px-3 py-2 text-[13.5px] text-[#6b4309]"><Clock className="size-4" />Waiting for a manager to approve.</p>}
         <div className="overflow-x-auto rounded-xl border border-hms-line" tabIndex={0} role="region" aria-label="Order lines">
@@ -216,7 +221,7 @@ export function PoView({ inv, id, onClose, onEdit, onDone }: { inv: Inv; id: str
         {p.grns.length > 0 && (
           <div><p className="text-[14px] font-semibold">Deliveries</p>
             <ul className="mt-2 divide-y divide-hms-line rounded-xl border border-hms-line">{p.grns.map((g) => (
-              <li key={g.id} className="px-4 py-3 text-[13.5px]"><p><b>{g.id}</b> · {day(g.at)} {g.at.slice(11, 16)}{g.invoice && ` · ${g.invoice}`} · {g.by}</p><p className="text-hms-muted">{g.lines.map((l) => `${items.get(l.item)?.name} ${fmtQty(l.qty, items.get(l.item)?.unit ?? "")}`).join(", ")}</p></li>
+              <li key={g.id} className="px-4 py-3 text-[13.5px]"><button type="button" onClick={() => printHtml(grnHtml(h, inv.st, p, g.id))} aria-label={`Print ${g.id}`} className="float-right inline-flex items-center gap-1 text-[13px] font-semibold text-action underline underline-offset-2"><Printer className="size-3.5" aria-hidden />Print GRN</button><p><b>{g.id}</b> · {day(g.at)} {g.at.slice(11, 16)}{g.invoice && ` · ${g.invoice}`} · {g.by}</p><p className="text-hms-muted">{g.lines.map((l) => `${items.get(l.item)?.name} ${fmtQty(l.qty, items.get(l.item)?.unit ?? "")}`).join(", ")}</p></li>
             ))}</ul>
           </div>
         )}

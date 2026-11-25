@@ -7,6 +7,9 @@ import { CAN, KIND_LABEL, MAIN, MOVE_LABEL, ROLE_LABEL, TODAY, at, fmtQty, inBuy
 import { btnLine, btnPrimary } from "../guests/ui";
 import { imgSrc } from "@/lib/img";
 import { InventoryFrame, StorePicker, useInv } from "./frame";
+import { useProperty } from "../property";
+import { printHtml } from "../meals/print";
+import { stockSlipHtml } from "@/lib/bookings/docs-office";
 
 const card = "rounded-xl border border-hms-line bg-white";
 const sel = "h-10 rounded-lg border border-hms-line bg-white px-3 text-[14px] outline-none focus:border-hms-ink";
@@ -232,6 +235,9 @@ function HistoryView() {
 }
 function MoveRow({ m, it, store }: { m: Move; it?: Item; store: string }) {
   const u = it?.unit ?? "";
+  const { inv } = useInv();
+  const h = useProperty();
+  const slip = m.type === "issue" || (m.type === "transfer" && m.change < 0);
   return (
     <tr className="border-t border-hms-line">
       <td className="whitespace-nowrap px-5 py-2.5"><span className="block font-semibold">{time(m.at)}</span><span className="text-[12.5px] text-hms-muted">{day(m.at)}</span></td>
@@ -240,7 +246,7 @@ function MoveRow({ m, it, store }: { m: Move; it?: Item; store: string }) {
       <td className="whitespace-nowrap px-3 py-2.5">{store}</td>
       <td className={clsx("whitespace-nowrap px-3 py-2.5 text-right font-bold tabular-nums", m.change > 0 ? "text-[#16693a]" : "")}>{signed(m.change, u)}</td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">{fmtQty(m.balance, u)}</td>
-      <td className="max-w-[260px] px-3 py-2.5">{m.ref && <span className="block font-mono text-[13px]">{m.ref}</span>}{m.note && <span className={m.ref ? "text-[12.5px] text-hms-muted" : ""}>{m.note}</span>}{!m.ref && !m.note && "—"}</td>
+      <td className="max-w-[260px] px-3 py-2.5">{m.ref && <span className="block font-mono text-[13px]">{m.ref}</span>}{m.note && <span className={m.ref ? "text-[12.5px] text-hms-muted" : ""}>{m.note}</span>}{!m.ref && !m.note && "—"}{slip && <button type="button" onClick={() => printHtml(stockSlipHtml(h, inv.st, m))} aria-label={`Print ${m.type === "issue" ? "issue" : "transfer"} slip`} className="mt-0.5 flex items-center gap-1 text-[12.5px] font-semibold text-action underline underline-offset-2"><Printer className="size-3.5" aria-hidden />Slip</button>}</td>
       <td className="whitespace-nowrap px-5 py-2.5 text-[#4d5664]">{m.by}</td>
     </tr>
   );
