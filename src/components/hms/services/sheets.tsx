@@ -2,12 +2,14 @@
 import { imgSrc } from "@/lib/img";
 import clsx from "clsx";
 import { useState, type ReactNode } from "react";
-import { BedDouble, CircleAlert, ImagePlus, Info, Plus, Search, Trash2, TriangleAlert, X } from "lucide-react";
+import { BedDouble, CircleAlert, ImagePlus, Info, Plus, Printer, Search, Trash2, TriangleAlert, X } from "lucide-react";
 import { CAN, RES_LABEL, ROLE_LABEL, SAMPLE_ART, SOURCE_LABEL, STATUS_LABEL, UNIT_LABEL, charges, orderSub, orderTotal, statusOf, tk, whenLabel, type BookingRef, type Order, type ResType, type Resource, type Service, type SvcCategory, type Unit, type Vendor, type WorkStatus, type useServices } from "@/lib/services/store";
 import { useHrm, type Dept } from "@/lib/hrm/store";
 import type { Item as InvItem } from "@/lib/inventory/store";
 import { TODAY as TODAY_ISO } from "@/lib/rooms/store";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
+import { useProperty } from "../property";
+import { printHtml, serviceReceiptHtml } from "../meals/print";
 
 type Svc = ReturnType<typeof useServices>;
 export const Err = ({ children }: { children: ReactNode }) => <p className="mt-1 flex items-center gap-1 text-[13px] font-medium text-[#c81e1e]"><CircleAlert className="size-3.5" />{children}</p>;
@@ -270,6 +272,7 @@ export function WorkPill({ o }: { o: Order }) { const s = statusOf(o); return <s
 
 export function DetailsSheet({ svc, order, onClose, onEdit, onCancel, onAct }: { svc: Svc; order: Order; onClose: () => void; onEdit: () => void; onCancel: () => void; onAct: (a: "accept" | "decline" | "assign" | "start" | "done") => void }) {
   const { st: hrm } = useHrm();
+  const h = useProperty();
   const s = svc.st.services.find((x) => x.id === order.service);
   const v = s?.variants?.find((x) => x.id === order.variant);
   const st = statusOf(order);
@@ -303,6 +306,7 @@ export function DetailsSheet({ svc, order, onClose, onEdit, onCancel, onAct }: {
           {(order.sc || order.vat) ? <div className="flex justify-between"><span className="text-hms-muted">Service charge + VAT</span><span className="tabular-nums">{tk((order.sc ?? 0) + (order.vat ?? 0))}</span></div> : null}
           <div className="mt-1.5 flex justify-between border-t border-hms-line pt-2"><span className="font-semibold">Order Total</span><b className={clsx("text-[20px] tabular-nums", order.cancelled && "text-hms-muted line-through")}>{tk(orderTotal(order))}</b></div>
         </div>
+        <button onClick={() => printHtml(serviceReceiptHtml(h, order, s))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print receipt</button>
         <dl className="divide-y divide-hms-line text-[14px]">{rows.map(([k, x]) => <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-hms-muted">{k}</dt><dd className="text-right font-semibold">{x}</dd></div>)}</dl>
         {order.cancelled && <Note tone="warn" title="Cancelled">{order.cancelled.reason}</Note>}
         {order.note && st === "declined" && <Note tone="warn" title="Declined">{order.note}</Note>}

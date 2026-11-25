@@ -4,7 +4,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowDownLeft, ArrowUpRight, Banknote, ChevronRight, CircleCheck, Lock, RotateCcw, Search, Settings2, Undo2, UtensilsCrossed, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Banknote, ChevronRight, CircleCheck, Lock, Printer, RotateCcw, Search, Settings2, Undo2, UtensilsCrossed, Wallet } from "lucide-react";
 import { TODAY, useRooms } from "@/lib/rooms/store";
 import { useStays } from "@/lib/bookings/store";
 import { useGuestNames } from "@/lib/guests/store";
@@ -12,6 +12,8 @@ import { APPROVAL_LIMIT, IN_FOR, IN_LABEL, MAIN, NOTES, OUT_FOR, OUT_LABEL, PETT
 import { useProperty } from "../property";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "../meals/frame";
+import { printHtml } from "../meals/print";
+import { cashVoucherHtml, dayReportHtml } from "@/lib/bookings/docs-cash";
 
 const card = "rounded-2xl border border-hms-line bg-white";
 function useToast() { const [t, setT] = useState(""); const show = (m: string) => { setT(m); setTimeout(() => setT((x) => (x === m ? "" : x)), 2600); }; return [t, show] as const; }
@@ -249,7 +251,7 @@ function OpenCard({ cb, last, onDone }: { cb: Cashbox; last?: Day; onDone: (m: s
 }
 
 // =================== Movement list ===================
-function MoveList({ moves, day, all, onReverse }: { moves: Movement[]; day?: Day; all: Movement[]; onReverse?: (m: Movement) => void }) {
+function MoveList({ moves, day, all, onReverse, onPrint }: { moves: Movement[]; day?: Day; all: Movement[]; onReverse?: (m: Movement) => void; onPrint?: (m: Movement) => void }) {
   if (!moves.length) return <p className="border-t border-hms-line px-5 py-10 text-center text-[14.5px] text-hms-muted">No movements.</p>;
   const sorted = [...all.filter((m) => m.drawer === day?.drawer && m.day === day?.date)].sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id, undefined, { numeric: true }));
   const bal = new Map<string, number>();
@@ -260,7 +262,7 @@ function MoveList({ moves, day, all, onReverse }: { moves: Movement[]; day?: Day
     <>
       <div className="hidden border-t border-hms-line md:block">
         <table className="w-full text-[14px]">
-          <thead><tr className="bg-[#f7f8fa] text-left text-[12.5px] font-semibold text-hms-muted"><th className="px-5 py-2.5">Time</th><th className="px-3 py-2.5">What</th><th className="px-3 py-2.5">Reference</th><th className="px-3 py-2.5">By</th><th className="px-3 py-2.5 text-right">Amount</th><th className="px-3 py-2.5 text-right">Balance</th>{onReverse && <th className="px-5 py-2.5"><span className="sr-only">Actions</span></th>}</tr></thead>
+          <thead><tr className="bg-[#f7f8fa] text-left text-[12.5px] font-semibold text-hms-muted"><th className="px-5 py-2.5">Time</th><th className="px-3 py-2.5">What</th><th className="px-3 py-2.5">Reference</th><th className="px-3 py-2.5">By</th><th className="px-3 py-2.5 text-right">Amount</th><th className="px-3 py-2.5 text-right">Balance</th>{(onReverse || onPrint) && <th className="px-5 py-2.5"><span className="sr-only">Actions</span></th>}</tr></thead>
           <tbody>{moves.map((m) => (
             <tr key={m.id} className={clsx("border-t border-hms-line/70", (m.reversedBy || m.reverses) && "text-hms-muted")}>
               <td className="whitespace-nowrap px-5 py-3 tabular-nums">{fmtTime(m.at)}</td>
@@ -269,7 +271,7 @@ function MoveList({ moves, day, all, onReverse }: { moves: Movement[]; day?: Day
               <td className="px-3 py-3 text-[13px]">{m.by}{m.approvedBy && <span className="block text-hms-muted">Approved: {m.approvedBy}</span>}</td>
               <td className={clsx("whitespace-nowrap px-3 py-3 text-right font-semibold tabular-nums", m.kind === "in" ? "text-[#1c7d45]" : "text-[#b11c29]")}>{m.kind === "in" ? "+" : "−"}{tk(m.amount)}</td>
               <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{tk(bal.get(m.id) ?? 0)}</td>
-              {onReverse && <td className="px-5 py-3 text-right">{canRev(m) && <button onClick={() => onReverse(m)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-hms-muted hover:bg-hms-hover hover:text-hms-ink" aria-label={`Reverse ${label(m)} ${tk(m.amount)} at ${fmtTime(m.at)}`}><Undo2 className="size-3.5" aria-hidden />Reverse</button>}</td>}
+              {(onReverse || onPrint) && <td className="whitespace-nowrap px-5 py-3 text-right">{onPrint && <button onClick={() => onPrint(m)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-hms-muted hover:bg-hms-hover hover:text-hms-ink" aria-label={`Print voucher for ${label(m)} ${tk(m.amount)} at ${fmtTime(m.at)}`}><Printer className="size-3.5" aria-hidden />Voucher</button>}{canRev(m) && <button onClick={() => onReverse?.(m)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-hms-muted hover:bg-hms-hover hover:text-hms-ink" aria-label={`Reverse ${label(m)} ${tk(m.amount)} at ${fmtTime(m.at)}`}><Undo2 className="size-3.5" aria-hidden />Reverse</button>}</td>}
             </tr>
           ))}</tbody>
         </table>
@@ -291,7 +293,7 @@ function Kind({ m }: { m: Movement }) {
 // =================== Movements tab ===================
 export function MovementsPage() { return <MovementsView drawerId={MAIN} />; }
 function MovementsView({ drawerId }: { drawerId: string }) {
-  const { cb } = useData(drawerId);
+  const { cb, h } = useData(drawerId);
   const [toast, show] = useToast();
   const days = cb.st.days.filter((d) => d.drawer === drawerId).sort((a, b) => b.date.localeCompare(a.date));
   const [date, setDate] = useState(TODAY);
@@ -309,13 +311,14 @@ function MovementsView({ drawerId }: { drawerId: string }) {
         </select>
         <label className="flex h-11 min-w-[220px] flex-1 items-center gap-2 rounded-lg border border-[#858c97] bg-white px-3"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search reference, note, person" aria-label="Search movements" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" /></label>
         <div role="radiogroup" aria-label="Direction" className="flex rounded-lg bg-[#e9edf2] p-1">{([["all", "All"], ["in", "Cash in"], ["out", "Cash out"]] as const).map(([v, l]) => <button key={v} role="radio" aria-checked={k === v} onClick={() => setK(v)} className={clsx("h-9 rounded-md px-3 text-[13.5px] font-semibold", k === v ? "bg-white shadow-sm" : "text-[#4d5664]")}>{l}</button>)}</div>
+        {day && <button onClick={() => printHtml(dayReportHtml(h, day, cb.drawer ?? { name: "Cashbox" }, cb.st.moves))} className={clsx(btnLine, "h-11")}><Printer className="size-4" aria-hidden />Print day report</button>}
       </div>
       {day && <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[["Opening float", tk(t.float)], ["Cash in", tk(t.cin)], ["Cash out", tk(t.cout)], [day.closedAt ? "Left after closing" : "In drawer now", tk(t.now)]].map(([l, v]) => <div key={l} className={clsx(card, "px-4 py-3")}><p className="text-[13px] text-hms-muted">{l}</p><p className="text-[18px] font-bold tabular-nums">{v}</p></div>)}
       </div>}
       <section className={clsx(card, "mt-4 overflow-hidden")} aria-label="Movements">
         <div className="px-5 py-4"><h2 className="text-[17px] font-bold">Movements · {fmtDate(date)}</h2><p className="text-[13px] text-hms-muted">A permanent log. A mistake is fixed by a reversal, so both entries stay visible. Auto-posted entries are fixed in Payments, Meals or Services.</p></div>
-        <MoveList moves={list} day={day} all={cb.st.moves} onReverse={setRev} />
+        <MoveList moves={list} day={day} all={cb.st.moves} onReverse={setRev} onPrint={(m) => printHtml(cashVoucherHtml(h, m, cb.drawer ?? { name: "Cashbox" }))} />
       </section>
       {rev && <ReverseSheet m={rev} onClose={() => setRev(null)} onDone={(why) => { cb.reverse(rev.id, why); show(`${label(rev)} ${tk(rev.amount)} reversed`); setRev(null); }} />}
     </Frame>
@@ -490,7 +493,7 @@ function CloseSheet({ cb, unpaid, ooo, onClose, onDone }: { cb: Cashbox; unpaid:
 // =================== Closed days ===================
 export function DaysPage() { return <DaysView drawerId={MAIN} />; }
 function DaysView({ drawerId }: { drawerId: string }) {
-  const { cb } = useData(drawerId);
+  const { cb, h } = useData(drawerId);
   const [toast] = useToast();
   const days = cb.st.days.filter((d) => d.drawer === drawerId && d.closedAt).sort((a, b) => b.date.localeCompare(a.date));
   const short = days.reduce((s, d) => s + Math.min(0, (d.counted ?? 0) - (d.expected ?? 0)), 0);
@@ -504,8 +507,8 @@ function DaysView({ drawerId }: { drawerId: string }) {
       <section className={clsx(card, "mt-4 overflow-hidden")} aria-label="Closed days">
         {!days.length ? <p className="px-6 py-12 text-center text-[14.5px] text-hms-muted">No closed days yet.</p> : (
           <div className="overflow-x-auto" role="region" aria-label="Closed days table" tabIndex={0}>
-            <table className="w-full min-w-[760px] text-[14px]">
-              <thead><tr className="bg-[#f7f8fa] text-left text-[12.5px] font-semibold text-hms-muted"><th className="px-5 py-2.5">Day</th><th className="px-3 py-2.5">Opened</th><th className="px-3 py-2.5">Closed</th><th className="px-3 py-2.5 text-right">Expected</th><th className="px-3 py-2.5 text-right">Counted</th><th className="px-3 py-2.5">Difference</th><th className="px-3 py-2.5 text-right">Kept</th><th className="px-5 py-2.5 text-right">Sent on</th></tr></thead>
+            <table className="w-full min-w-[840px] text-[14px]">
+              <thead><tr className="bg-[#f7f8fa] text-left text-[12.5px] font-semibold text-hms-muted"><th className="px-5 py-2.5">Day</th><th className="px-3 py-2.5">Opened</th><th className="px-3 py-2.5">Closed</th><th className="px-3 py-2.5 text-right">Expected</th><th className="px-3 py-2.5 text-right">Counted</th><th className="px-3 py-2.5">Difference</th><th className="px-3 py-2.5 text-right">Kept</th><th className="px-3 py-2.5 text-right">Sent on</th><th className="px-5 py-2.5"><span className="sr-only">Day report</span></th></tr></thead>
               <tbody>{days.map((d) => { const v = (d.counted ?? 0) - (d.expected ?? 0); return (
                 <tr key={d.date} className="border-t border-hms-line/70 align-top">
                   <td className="whitespace-nowrap px-5 py-3 font-semibold">{fmtDate(d.date)}{d.date === TODAY && <span className="ml-1.5 text-[12px] font-normal text-hms-muted">today</span>}</td>
@@ -515,7 +518,8 @@ function DaysView({ drawerId }: { drawerId: string }) {
                   <td className="px-3 py-3 text-right tabular-nums">{tk(d.counted ?? 0)}</td>
                   <td className="px-3 py-3"><span className={clsx("rounded-md px-2 py-0.5 text-[12.5px] font-semibold", v === 0 ? "bg-[#e7f6ec] text-[#1c7d45]" : v < 0 ? "bg-[#fde5e4] text-[#b11c29]" : "bg-[#fdf3d9] text-[#7a4a0b]")}>{v === 0 ? "Matched" : `${v > 0 ? "Over +" : "Short "}${tk(Math.abs(v))}`}</span>{d.varianceNote && <span className="mt-1 block max-w-[220px] text-[12.5px] text-hms-muted">{d.varianceNote}</span>}</td>
                   <td className="px-3 py-3 text-right tabular-nums">{tk(d.carry ?? 0)}</td>
-                  <td className="px-5 py-3 text-right tabular-nums">{tk(d.deposit ?? 0)}{(d.deposit ?? 0) > 0 && <span className="block text-[12px] text-hms-muted">{d.depositTo === "main" ? "to main cashbox" : "to bank"}</span>}</td>
+                  <td className="px-3 py-3 text-right tabular-nums">{tk(d.deposit ?? 0)}{(d.deposit ?? 0) > 0 && <span className="block text-[12px] text-hms-muted">{d.depositTo === "main" ? "to main cashbox" : "to bank"}</span>}</td>
+                  <td className="px-5 py-3 text-right"><button onClick={() => printHtml(dayReportHtml(h, d, cb.drawer ?? { name: "Cashbox" }, cb.st.moves))} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-hms-muted hover:bg-hms-hover hover:text-hms-ink" aria-label={`Print day report ${fmtDate(d.date)}`}><Printer className="size-3.5" aria-hidden />Report</button></td>
                 </tr>
               ); })}</tbody>
             </table>
