@@ -8,7 +8,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarRange, Check, Clock, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { bill, holdClock, holdLeft, holdLive, stamp, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
-import { confirmationHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, regCardHtml } from "@/lib/bookings/docs";
+import { agreementHtml, cancellationNoteHtml, confirmationHtml, depositReceiptHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, refundReceiptHtml, regCardHtml } from "@/lib/bookings/docs";
+import { settingsOf } from "@/lib/settings/store";
 import { printHtml } from "../meals/print";
 import { useBkMode } from "@/lib/bookings/mode";
 import { useRates } from "@/lib/rates/store";
@@ -386,6 +387,10 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
     ["Registration card", "Guest details, ID and signature — at check-in", () => regCardHtml(h, b, g)],
     [b.payer?.kind === "Company" ? `Invoice to ${b.payer.name}` : "Invoice", "Every charge, payments and balance", () => invoiceHtml(h, b, g, extras)],
   ];
+  if (settingsOf(h).docs.contract.on) docs.splice(2, 0, ["Stay agreement", "Your terms, money summary and signatures", () => agreementHtml(h, b, g, S)]);
+  if (b.status === "Cancelled" || b.status === "No-show") docs.push([b.status === "No-show" ? "No-show note" : "Cancellation note", "What, when, why, fee kept and refund due", () => cancellationNoteHtml(h, b, g, S)]);
+  if (paidOf(b) > totalOf(b)) docs.push(["Credit note", "Refund still owed to the guest", () => refundReceiptHtml(h, b, g)]);
+  if (b.deposit) docs.push(["Security deposit receipt", b.deposit.settled ? "Deposit returned / used for the bill" : "Deposit held", () => depositReceiptHtml(h, b, g)]);
   const link = precheckUrl(h, b);
   const msgs: [string, string][] = [["Confirmation message", fillMsg(S.confirmMsg, h, b, g, S)], ["Pre-arrival message", fillMsg(S.preArrivalMsg, h, b, g, S)]];
   const wa = (t: string) => `https://wa.me/${(g?.phone ?? "").replace(/\D/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(t)}`;
@@ -395,7 +400,7 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
       <Box title="Documents">
         <ul className="divide-y divide-hms-line">
           {docs.map(([t, s, f]) => <li key={t} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{t}</b><span className="text-[12.5px] text-hms-muted">{s}</span></span><button onClick={() => printHtml(f())} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print / PDF</button></li>)}
-          {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button></li>)}
+          {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(p.amount < 0 ? refundReceiptHtml(h, b, g, p) : receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button></li>)}
         </ul>
         <p className="mt-2 text-[12.5px] text-hms-muted">Choose “Save as PDF” in the print dialog to keep or send a file.</p>
         {b.status === "Confirmed" && <div className="mt-3 rounded-xl bg-[#f7f8fa] p-3">

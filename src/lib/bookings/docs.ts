@@ -9,6 +9,7 @@ const esc = (s: string | undefined | null) => (s ?? "").replace(/[&<>"]/g, (c) =
 export { DOC_TEMPLATES, DOC_ACCENTS, type DocDesign, type DocTemplate } from "./doc-kit";
 import type { DocDesign } from "./doc-kit";
 export { confirmationHtml, receiptHtml, runningBillHtml } from "./docs-confirm";
+export { agreementHtml, regCardHtml, refundReceiptHtml, cancellationNoteHtml, depositReceiptHtml } from "./docs-agreement";
 import { normaliseDesign, lang as docLang, docPage, header as docHeader, footer as docFooter, esc as kesc, type DocHotel } from "./doc-kit";
 const BN: Record<string, string> = { "Invoice": "ইনভয়েস", "Booking confirmation": "বুকিং নিশ্চিতকরণ", "Money receipt": "টাকা প্রাপ্তির রসিদ", "Refund receipt": "ফেরতের রসিদ", "Guest registration card": "অতিথি নিবন্ধন কার্ড", "Guest register": "অতিথি রেজিস্টার", "Foreign guests (Form-C)": "বিদেশি অতিথি (ফর্ম-সি)" };
 const LOGO_H = { S: 30, M: 42, L: 56 } as const;
@@ -119,20 +120,6 @@ ${b.payments.map((q) => `<tr><td class="nw">${x.date(q.at)}, ${x.time(q.at)}</td
   const body = `${docHeader(H, d, x)}${title}${info}${lines}<div class="below">${pays}${tot}</div>${notes}${docs.footer ? `<div class="thanks">${kesc(docs.footer)}</div>` : ""}
 <div class="sign"><div>${x.t("preparedBy")} · ${x.t("frontDesk")}</div><div>${x.t("guestSign")}</div><div>${x.t("authSign")}</div></div>${docFooter(`${kesc(H.name)} · ${x.t("invoice")} ${x.num(no)}`)}`;
   return docPage(`${x.t("invoice")} ${no}`, d, body);
-}
-
-export function regCardHtml(h: Hotel, b: Booking, g: Guest | undefined) {
-  const row = (k: string, v?: string) => `<div class="kv"><span>${k}</span><b>${esc(v) || "&nbsp;"}</b></div>`;
-  return page(h, `Registration ${b.code}`, `${head(h, "Guest registration card", `${b.code} · ${dmy(b.from)}`)}
-<div class="grid">${row("Full name", g?.name)}${row("Phone", g?.phone)}${row("Nationality", g?.country)}${row("Email", g?.email)}
-${row(g?.idType || "ID", g?.idNo)}${row("Date of birth", g?.dob)}${row("Gender", g?.gender)}${row("Occupation", g?.occupation)}
-${g?.country !== "Bangladesh" ? `${row("Visa no.", g?.visaNo)}${row("Visa valid until", g?.visaExpiry)}` : ""}
-${row("Address", g?.address)}${row("Purpose of visit", b.purpose)}${row("Coming from", b.comingFrom)}${row("Going to", b.goingTo)}
-${row("Room", b.unit)}${row("Arrival", `${dmy(b.from)}${b.eta ? ` · ${b.eta}` : ""}`)}${row("Departure", dmy(b.to))}${row("Booked through", channelLabel(b))}</div>
-${b.companions?.length ? `<h2>Other guests in the room</h2><table><tr><th>Name</th><th>ID</th><th>Relation</th></tr>${b.companions.map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.idType)} ${esc(c.idNo)}</td><td>${esc(c.relation)}</td></tr>`).join("")}</table>` : ""}
-${(() => { const c = docsOf(h).contract; return c.on ? `<h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p>${c.rules ? `<p style="white-space:pre-wrap">${esc(c.rules)}</p>` : ""}` : ""; })()}
-<p class="m" style="margin-top:14px">I agree to the hotel's terms. Check-out by the agreed time; the hotel is not responsible for valuables not deposited at the front desk.</p>
-<div class="sign"><div>Guest signature</div><div>Front desk</div></div>`);
 }
 
 /** Daily guest register — everyone staying tonight (kept by every hotel; asked for by police on inspection). */
