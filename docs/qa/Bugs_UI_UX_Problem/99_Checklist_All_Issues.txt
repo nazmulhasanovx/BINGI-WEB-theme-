@@ -3,6 +3,8 @@
 ================================================================
  Use with the module files for full details.
  [ ] = open   [x] = fixed + re-tested on hms.bingi.app
+ [~] = partly fixed   [?] = not re-tested yet
+ Re-test 25 Nov 2026: see retest/RETEST_2026-11-25_P0_All.txt
  Total 270: P0 28 | P1 106 | P2 136
 
 ================================================================
@@ -10,20 +12,20 @@
 ================================================================
 
  -- ONBOARDING  (01_Onboarding.txt)
- [ ] ONB-P0-01   "Continue" from My properties fails
- [ ] ONB-P0-02   "Try again" opens a DIFFERENT property
- [ ] ONB-P0-03   Only the FIRST room type can be saved
- [ ] ONB-P0-04   Checkout sells a different plan
- [ ] ONB-P0-05   Payment blocked by KYC at the end
+ [x] ONB-P0-01   "Continue" from My properties fails
+ [x] ONB-P0-02   "Try again" opens a DIFFERENT property
+ [x] ONB-P0-03   Only the FIRST room type can be saved
+ [x] ONB-P0-04   Checkout sells a different plan
+ [?] ONB-P0-05   Payment blocked by KYC at the end
 
  -- BOOKINGS  (02_Bookings.txt)
  [ ] BKG-P0-01   Occupied rooms are sold and checked in AGAIN
  [ ] BKG-P0-02   "Email (optional)" but booking fails without it
  [ ] BKG-P0-03   Room board does not match bookings; out-of-order room sold
- [ ] BKG-P0-04   Move room is broken
+ [~] BKG-P0-04   Move room is broken
 
  -- ROOM / ACCOMMODATION  (03_Rooms_Accommodation.txt)
- [ ] ROOM-P0-01  Rooms shown "Booked tonight / Guest in room" with NO guest
+ [x] ROOM-P0-01  Rooms shown "Booked tonight / Guest in room" with NO guest
  [ ] ROOM-P0-02  Overdue in-house guests are invisible (no "Overdue check-out")
  [ ] ROOM-P0-03  Room 206 shown "Available" while a guest is checked in
  [ ] ROOM-P0-04  Editing ANY room type fails (422) - price ৳16 cannot be fixed
@@ -39,43 +41,43 @@
 
  -- OPERATIONS (EXPENSES)  (08_Operations_Expenses.txt)
  [ ] EXP-P0-01   Approval can be skipped by paying through the API
- [ ] EXP-P0-02   Cash payment not posted to Cashbox
+ [x] EXP-P0-02   Cash payment not posted to Cashbox
  [ ] EXP-P0-03   "Change status -> Paid" pays an unapproved expense in full
- [ ] EXP-P0-04   Rejecting or "Draft"-ing a PAID expense puts the cash back
+ [~] EXP-P0-04   Rejecting or "Draft"-ing a PAID expense puts the cash back
  [ ] EXP-P0-05   "Net Profit" is not profit
 
  -- MONEY: CASHBOX / PAYMENTS / FINANCE / REPORTS  (09_Money_Cashbox_Payments_Finance_Reports.txt)
  [ ] MON-P0-01   Finance treats front-desk cash as money BinGi owes
  [ ] MON-P0-02   "Net Profit" on Expenses is booked value, not profit  = EXP-P0-05
- [ ] MON-P0-03   Cashbox does not match the drawer after expenses  = EXP-P0-02 + EXP-P0-04
+ [~] MON-P0-03   Cashbox does not match the drawer after expenses  = EXP-P0-02 + EXP-P0-04
 
  -- INVOICE / REPORTS PDF / EXCEL / CSV  (11_Invoice_Reports_PDF_Excel.txt)
  [ ] DOC-P0-01   Contract letter prints ANOTHER company's name and rules
- [ ] DOC-P0-02   Sales Register PDF shows demo data, not the register
+ [?] DOC-P0-02   Sales Register PDF shows demo data, not the register
 
 ================================================================
  P1
 ================================================================
 
  -- ONBOARDING  (01_Onboarding.txt)
- [ ] ONB-P1-01   Progress % stuck at 0% in part 1, then jumps
+ [x] ONB-P1-01   Progress % stuck at 0% in part 1, then jumps
  [ ] ONB-P1-02   Old "What guests will see" website preview on the right
- [ ] ONB-P1-03   1.4 Extras shows ROOM amenities (AC, bathtub, shampoo,
+ [x] ONB-P1-03   1.4 Extras shows ROOM amenities (AC, bathtub, shampoo,
  [ ] ONB-P1-04   Search "wifi" finds nothing (item "Wi-Fi").
- [ ] ONB-P1-05   2.2 Plan: headline "Pay per room. Nothing hidden" but
- [ ] ONB-P1-06   2.4 "Subscribe now" pre-selected.
- [ ] ONB-P1-07   3.1 Resort pre-picks only Rooms ("Suggested for your
+ [x] ONB-P1-05   2.2 Plan: headline "Pay per room. Nothing hidden" but
+ [x] ONB-P1-06   2.4 "Subscribe now" pre-selected.
+ [x] ONB-P1-07   3.1 Resort pre-picks only Rooms ("Suggested for your
  [ ] ONB-P1-08   3.2 Booking fees always at Starter rate
  [ ] ONB-P1-09   Same unit code allowed in two blocks (C1-C100 / V1-V100 in
  [ ] ONB-P1-10   3.2 Panel box itself scrolls after failed Save
  [ ] ONB-P1-11   3.2 Save error is one generic line, above visible area,
  [ ] ONB-P1-12   3.3 Review does not warn about 4 unsaved drafts (Cottage,
- [ ] ONB-P1-13   5.1 Payments does not explain money flow.
- [ ] ONB-P1-14   5.2 Website themes "Classic Stay / Compact Business / BinGi
- [ ] ONB-P1-15   5.2 No "How guests book" choice.
- [ ] ONB-P1-16   6.1 "Everything needed to submit is done" while Terms &
+ [x] ONB-P1-13   5.1 Payments does not explain money flow.
+ [x] ONB-P1-14   5.2 Website themes "Classic Stay / Compact Business / BinGi
+ [x] ONB-P1-15   5.2 No "How guests book" choice.
+ [x] ONB-P1-16   6.1 "Everything needed to submit is done" while Terms &
  [ ] ONB-P1-17   Checkout summary wrong: "BinGi Ultra - One-time activation
- [ ] ONB-P1-18   "Save & exit" signs the owner out (goes to /login).
+ [x] ONB-P1-18   "Save & exit" signs the owner out (goes to /login).
 
  -- BOOKINGS  (02_Bookings.txt)
  [ ] BKG-P1-01   Error messages at top of page, out of view
@@ -348,3 +350,18 @@
  [ ] DOC-P2-10   Excel title block wastes 7 rows before data; put the table
 
 ================================================================
+
+================================================================
+ NEW - found in re-test 25 Nov 2026
+================================================================
+ [ ] NEW-EXP-P0-01   Deleting a PAID expense puts the cash back in Cashbox
+ [ ] NEW-ONB-P1-01   Plan chosen in onboarding (Ultra) lost - HMS shows Starter
+ [ ] NEW-ONB-P1-02   Trial banner "0/1 room types" while 2 types saved
+ [ ] NEW-ONB-P1-03   Almost every module locked after submit (trial decision)
+ [ ] NEW-ROOM-P1-01  Room type cards still titled by bed type ("Twin")
+ [ ] NEW-ONB-P2-01   Checkout URL plan=PLAN_ENTERPRISE for Ultra (rename)
+ [ ] NEW-ONB-P2-02   My properties "Next: Where they are" vs real step
+ [ ] NEW-ONB-P2-03   Money & website part not marked Done
+ [ ] NEW-ONB-P2-04   Locked module URL module=undefined
+ [ ] NEW-ONB-P2-05   Room card "Waiting for approval" with no photo hint
+ [ ] NEW-MEAL-P2-02  Guest QR menu shows test dishes / unsuitable photos
