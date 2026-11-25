@@ -1,0 +1,95 @@
+================================================================
+ RE-TEST 25 Nov 2026  -  ONBOARDING  (hms.bingi.app)
+================================================================
+ Tester: Claude (QA)   Account: new owner account (no property)
+ Test property: "QA Retest Resort (demo)", Resort, Cox's Bazar
+ Stopped at Finish (Terms not accepted, NOT submitted).
+
+ RESULT KEY:  FIXED | NOT FIXED | PARTLY | NOT TESTED
+
+----------------------------------------------------------------
+ P0
+----------------------------------------------------------------
+ ONB-P0-01  "Continue" from My properties fails ........ FIXED
+            Save & exit -> My properties -> Continue opens the
+            saved step (Add rooms) with both room types intact.
+ ONB-P0-02  "Try again" opens a different property ..... FIXED
+            Error screen no longer appears (P0-01 fixed).
+ ONB-P0-03  Only the first room type can be saved ...... FIXED
+            Deluxe Sea View (101-104) + Garden Cottage (C1, C2)
+            both saved. 2 types / 6 rooms.
+ ONB-P0-04  Checkout sells a different plan ............ FIXED (in effect)
+            Page and /api/onboarding/plan-quote both use
+            plan_code PLAN_ENTERPRISE whose plan_name is
+            "BinGi Ultra"; ৳116 x 10 rooms = ৳1,160 + activation
+            ৳8,999 = ৳10,159 matches on every screen.
+            LEFT: internal code name PLAN_ENTERPRISE for Ultra is
+            confusing (see NEW-ONB-P2-01).
+ ONB-P0-05  Payment blocked by KYC at the end .......... NOT TESTED
+            Needs a click on "Continue to secure payment"
+            (opens the payment gateway) - waiting for owner OK.
+
+----------------------------------------------------------------
+ P1 seen on the way
+----------------------------------------------------------------
+ ONB-P1-01  Progress stuck at 0% ....................... FIXED (5% -> 95%)
+ ONB-P1-03  Extras shows room amenities ................ FIXED (property amenities)
+ ONB-P1-05  "Pay per room" headline vs flat plans ...... FIXED (real per-room price)
+ ONB-P1-06  "Subscribe now" pre-selected ............... FIXED (default "Set up first")
+ ONB-P1-07  Resort pre-picks only Rooms ................ FIXED (Rooms+Cottages+Villas)
+ ONB-P1-13  Payments does not explain money flow ....... FIXED ("At the hotel" vs
+                                                          "Online - through BinGi")
+ ONB-P1-14  Fake website theme names ................... FIXED (real theme ESCAPE)
+ ONB-P1-15  No "How guests book" choice ................ FIXED
+ ONB-P1-16  "Everything done" while Terms unticked ..... FIXED ("Confirm before you
+                                                          submit" box)
+ ONB-P1-18  "Save & exit" signs the owner out .......... FIXED (goes to My properties)
+ Not yet re-checked: P1-02, 04, 08, 09, 10, 11, 12, 17.
+
+ Also seen: Rooms step now has the live property drawing and the
+ new one-page room type panel (Category, Price with "guest pays /
+ you get", Room numbers picker, Photos, Amenities, Meals).
+
+----------------------------------------------------------------
+ NEW (found in re-test)
+----------------------------------------------------------------
+ NEW-ONB-P2-01  Checkout URL says plan=PLAN_ENTERPRISE for Ultra.
+                Rename plan code (PLAN_ULTRA) or keep code out of
+                the URL. Money is right; name is confusing.
+ NEW-ONB-P2-02  My properties shows "Next: Where they are" while the
+                owner stopped at "Add rooms". Show the real next step.
+ NEW-ONB-P2-03  After Money & website, sidebar does not mark the part
+                "Done" (Account, Property, Plan, Rooms, Booking show
+                Done).
+
+----------------------------------------------------------------
+ AFTER SUBMIT  (property opened in HMS, 25 Nov 12:15)
+----------------------------------------------------------------
+ NEW-ONB-P1-01  Plan chosen in onboarding is lost.
+                Onboarding: BinGi Ultra, 10 rooms, "Set up first".
+                HMS after submit: sidebar "BinGi Starter", Pricing page
+                "Current subscription: Starter - not Selected".
+                EXPECTED: show "Ultra - selected, starts when you
+                start" and offer "Start trial / Subscribe" for Ultra.
+ NEW-ONB-P1-02  Trial banner contradicts the rooms just saved.
+                Banner: "Trial: 0/1 room types · 0/3 bookings" while
+                the property has 2 room types (6 draft units).
+                Same KYC_TRIAL_CATEGORY_LIMIT idea as old ONB-P0-03,
+                now after onboarding. Decision D2 = unlimited drafts
+                before KYC; the limit should apply to publishing /
+                bookings only, and say so in plain words.
+ NEW-ONB-P1-03  Almost every module is locked after submit
+                (sidebar shows only Verify KYC, Room / Accommodation,
+                Setup checklist, Billing, Communication, Settings,
+                each with a PLAN / KYC lock). Onboarding "Tools" step
+                said Front desk, Housekeeping, Inventory, Expenses,
+                Finance, Restaurant, Services are "Included with
+                Ultra". Owner cannot try anything before paying/KYC.
+                Needs a product decision (trial = full access with
+                limits, as in the 1 Nov audit).
+ NEW-ONB-P2-04  Redirect URL /dashboard/pricing-plan?reason=module_locked
+                &module=undefined  - module name missing.
+ NEW-ONB-P2-05  Room / Accommodation KPI row shows 0 total / 0 available
+                with "6 draft units not bookable yet" - fine, but cards
+                only say "Waiting for approval" with no photo hint
+                (old audit: rooms without photo never go public).

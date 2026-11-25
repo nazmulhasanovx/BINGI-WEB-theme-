@@ -1,0 +1,176 @@
+================================================================
+ RE-TEST 25 Nov 2026  -  ALL P0 (28)   hms.bingi.app
+================================================================
+ Property: HTL-000001 Pan Pacific Sonargaon Dhaka (owner login)
+ Onboarding: new empty owner account (see RETEST_2026-11-25_Onboarding.txt)
+ Business date 25 Nov 2026. Evidence = API responses + screenshots.
+
+ SCORE:  FIXED 6  |  PARTLY 3  |  NOT FIXED 16  |  NOT TESTED 3
+
+ ID           ISSUE                                         RESULT
+ ------------ --------------------------------------------- ----------
+ ONB-P0-01    Continue from My properties fails             FIXED
+ ONB-P0-02    Try again opens a different property          FIXED
+ ONB-P0-03    Only first room type can be saved             FIXED
+ ONB-P0-04    Checkout sells a different plan               FIXED (code
+                                                            name only)
+ ONB-P0-05    Payment blocked by KYC                        NOT TESTED
+ BKG-P0-01    Occupied rooms sold / checked in again        NOT FIXED
+ BKG-P0-02    "Email (optional)" but required               NOT FIXED
+ BKG-P0-03    Room board vs bookings; OOO room sold         NOT FIXED
+ BKG-P0-04    Move room broken                              PARTLY
+ ROOM-P0-01   Booked tonight with no guest                  FIXED (not
+                                                            reproducible)
+ ROOM-P0-02   Overdue in-house guests invisible             NOT FIXED
+ ROOM-P0-03   Room 206 Available while guest checked in     NOT FIXED
+ ROOM-P0-04   Edit room type fails (422)                    NOT FIXED
+ ROOM-P0-05 / HK-P0-01  OOO from two places                 NOT FIXED
+ MEAL-P0-01   Restaurant Settings cannot be saved           NOT FIXED
+ MEAL-P0-02   QR orders ignore Pause / Counter approval     NOT FIXED
+ MEAL-P0-03   Payment fails for Table QR order (500)        NOT FIXED
+ EXP-P0-01    Approval skipped by paying through API        NOT FIXED
+ EXP-P0-02    Cash payment not posted to Cashbox            FIXED
+ EXP-P0-03    Status -> Paid pays unapproved expense        NOT FIXED
+ EXP-P0-04    Reject/Draft paid expense puts cash back      PARTLY
+ EXP-P0-05 / MON-P0-02  "Net Profit" is not profit          NOT FIXED
+ MON-P0-01    Finance treats desk cash as BinGi payable     NOT FIXED
+ MON-P0-03    Cashbox vs drawer after expenses              PARTLY
+ DOC-P0-01    Contract letter prints KeyHost text           NOT FIXED
+ DOC-P0-02    Sales Register PDF shows demo rows            NOT TESTED
+ (ONB-P0-05 and DOC-P0-02 need a manual check, see below)
+
+================================================================
+ DETAILS
+================================================================
+
+[BKG-P0-01] NOT FIXED
+  New booking 25 -> 26 Nov, "Premium Deluxe 4 of 4 free" offers
+  206, 208, 209. All three have a CHECKED_IN guest who never left:
+    206 WBK-2026-000011 (out 12 Sep)  208 WBK-2026-000064 (out 4 Nov)
+    209 WBK-2026-000010 (out 9 Sep)
+  "Deluxe 2 of 5 free" offers 102 (WBK-2026-000043 in house, out
+  2 Nov). Room 104 still has TWO checked-in bookings (077 + 079).
+
+[BKG-P0-02] NOT FIXED
+  Guest without email -> Confirm booking -> "The guest info.email
+  field is required when guest info.booking mode is detailed."
+  (developer text, shown in the summary card).
+
+[BKG-P0-03] NOT FIXED
+  /api/accommodations/tonight: 206 state "available"/"clean" with a
+  checked-in guest; 104 "available" with 2 checked-in guests.
+  (202 is now sold legitimately to WBK-2026-000101 - old HOLD gone.)
+
+[BKG-P0-04] PARTLY
+  More -> Move room: still does nothing (no panel opens).
+  Stay & room -> Move / Upgrade Room: list now shows 4 rooms
+  (206, 204, 303, 105) instead of 1, but the FIRST one offered is
+  206 "Available · Clean" which has a checked-in guest.
+
+[ROOM-P0-01] FIXED (not reproducible)
+  101 now has a real guest (WBK-2026-000102). 102/208/209 show
+  booked because overdue guests are really there.
+
+[ROOM-P0-02] NOT FIXED
+  6 bookings CHECKED_IN after their check-out date (077, 064, 043,
+  011, 010; 079 due out today). overdue_checkout = false for every
+  unit in /api/accommodations/tonight. No chip, no count.
+
+[ROOM-P0-03] NOT FIXED   206 "Available / clean" (WBK-000011 in house).
+
+[ROOM-P0-04] NOT FIXED
+  Room types -> Edit (101-105 type) -> price 16 -> 16000 -> Update
+  Room: POST /api/rooms/RM-HTL000001-101 -> 422 "The selected bed is
+  invalid. (and 5 more errors)" (bed + 5 amenities). Shown with a
+  browser alert(). Deluxe still sells at ৳16/night.
+
+[ROOM-P0-05 / HK-P0-01] NOT FIXED
+  Maintenance mnt_dsz2mpsrwn on room 207: status Open, priority
+  Urgent, availability_status OUT_OF_ORDER, target 9 Nov (overdue).
+  Tonight: 207 "available", summary ooo = 0, and New booking offers
+  207 in "Premium Deluxe 4 of 4 free".
+
+[MEAL-P0-01] NOT FIXED
+  Settings -> Charges: VAT 15, service 10 -> Save changes ->
+  POST /api/meals/settings 422 "The qr logo field must be an image".
+  No message on screen. VAT/service stay 0.
+
+[MEAL-P0-02] NOT FIXED
+  Stored setting require_counter_approval_for_qr_orders = 1.
+  Guest QR order FO-2026-000074 (Table Hamim) -> "Confirmed",
+  Approval status "Accepted", Queued for kitchen, Needs approval 0.
+  (Pause could not be tested because settings cannot be saved.)
+
+[MEAL-P0-03] NOT FIXED
+  FO-2026-000074 -> Collect payment -> Cash 250, received 500,
+  confirm tick -> PATCH /api/meals/orders/FO-2026-000074/payment
+  -> 500 "Server Error". Order left unpaid (test order).
+
+[EXP-P0-01] NOT FIXED
+  New expense EXP-2026-000012, 7,000 (needs_approval true, pending).
+  POST /api/operations/expenses/EXP-2026-000012/payments
+  {amount 500, cash} -> 201 "Part payment recorded"; expense became
+  status "approved", needs_approval false, approved_at set,
+  approved_by empty. Nobody approved.
+
+[EXP-P0-02] FIXED   That 500 cash payment moved Cashbox 3,09,000 -> 3,08,500.
+
+[EXP-P0-03] NOT FIXED
+  New expense EXP-2026-000013, 6,000 (needs approval) -> PATCH
+  .../status {status completed, paid_amount 6000} -> 200 "Expense
+  status updated"; status completed, paid 6,000, needs_approval
+  false; Cashbox -6,000. No approval, no payment record.
+
+[EXP-P0-04] PARTLY
+  Reject a paid expense: PATCH status rejected -> 422 "This expense
+  already has payments..." -> FIXED, cash unchanged.
+  BUT: DELETE a paid expense (EXP-2026-000012, paid 500) -> 200
+  "Expense deleted" and Cashbox +500 (3,02,500 -> 3,03,000).
+  Same hole: pay, then delete -> drawer short, Cashbox "balanced".
+  -> NEW-EXP-P0-01 below.
+
+[EXP-P0-05 / MON-P0-02] NOT FIXED
+  Operations Overview (30 days): card still "Net Profit BDT
+  1,484,219.14". "Total Expenses 24,375" still includes the
+  REJECTED 6,000 (EXP-2026-000007).
+
+[MON-P0-01] NOT FIXED
+  WBK-2026-000086 walk-in, Cash, 2,04,000 (25 Nov) ->
+  ledger payment_collected 2,04,000 + commission_earned 20.40 +
+  hotel_payable 2,03,979.60. Desk cash still becomes "money BinGi
+  owes the hotel", with commission on walk-in.
+  /api/finance/summary: collected 8,35,552.14 − commission 146.03
+  − gateway 1.73 = 8,35,404.38, but hotel_payable = 8,35,699.38
+  (295.00 too much).
+
+[MON-P0-03] PARTLY  (cash payment now posts; delete still reverses cash)
+
+[DOC-P0-01] NOT FIXED
+  GET /api/bookings/WBK-2026-000091/contract-letter -> page still
+  contains "KeyHost" 4 times.
+
+[DOC-P0-02] NOT TESTED
+  PDF exports fine (200, 1 page, dompdf) but its text is embedded
+  in a way the browser test could not read. Owner: open Reports >
+  Sales Register > PDF and look for "Illustrative", "Design
+  preview" or "SAL-0001".
+
+[ONB-P0-05] NOT TESTED  (needs a click on "Continue to secure payment").
+
+================================================================
+ NEW
+================================================================
+ NEW-EXP-P0-01  Deleting a PAID expense puts the cash back in the
+                Cashbox (see EXP-P0-04). Block delete when
+                paid_amount > 0; use "Record refund from payee".
+ NEW-MEAL-P2-01 Payment method chips show "bKash" twice (known).
+ NEW-MEAL-P2-02 Guest QR menu shows test dishes with photos of real
+                people / jokes ("You cant afford it", ৳69) - clean the
+                demo menu before any demo.
+ NEW-ROOM-P1-01 Room type cards are still titled by bed type
+                ("Twin", "Single"), not by name (old ROOM-P1-01).
+
+ Test data left on the server (clean when you like):
+   EXP-2026-000013 (6,000, "paid" through the status bug; Cashbox -6,000)
+   FO-2026-000074 (Table QR, 250, unpaid)
+   Room type price for 101-105 unchanged (save failed).
