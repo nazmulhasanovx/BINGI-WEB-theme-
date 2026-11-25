@@ -81,7 +81,7 @@ export function serviceReceiptHtml(h: Hotel, o: SvcOrder, s: SvcItem | undefined
 ${kv(x.lb("receiptNo"), `<b>${code(x, o.id)}</b>`)}${kv(x.lb("date"), when(x, o.created))}${o.when !== "now" ? kv(x.lb("scheduled"), `${x.date(o.when.date)} · ${x.num(esc(o.when.time))}`) : ""}
 ${kv(x.lb("guest"), guest)}${o.method === "booking" && o.booking?.code ? kv(x.t("booking"), code(x, o.booking.code)) : ""}<hr>
 <table><tr class="it"><td class="b">${esc(s?.name) || "—"}${v ? ` (${esc(v.name)})` : ""}</td><td class="r b">${x.plain(o.qty * o.unitPrice)}</td></tr><tr><td class="sub" colspan="2">${x.num(o.qty)} × ${x.plain(o.unitPrice)}</td></tr>
-${o.children ? `<tr class="it"><td>${x.t("children2")}</td><td class="r">${x.plain(o.children * (o.childPrice ?? 0))}</td></tr><tr><td class="sub" colspan="2">${x.num(o.children)} × ${x.plain(o.childPrice ?? 0)}</td></tr>` : ""}</table><hr>
+${o.children ? `<tr class="it"><td>${x.t("children2_th")}</td><td class="r">${x.plain(o.children * (o.childPrice ?? 0))}</td></tr><tr><td class="sub" colspan="2">${x.num(o.children)} × ${x.plain(o.childPrice ?? 0)}</td></tr>` : ""}</table><hr>
 ${kv(x.lb("subtotal"), x.money(gross))}${o.discount ? kv(x.t("discount"), `− ${x.money(o.discount)}`) : ""}${o.sc ? kv(x.t("service"), x.money(o.sc)) : ""}${o.vat ? kv(x.t("vat"), x.money(o.vat)) : ""}
 <hr class="d">${kv(x.lb("total"), x.money(total), "tot")}<hr class="d"><div class="sm">${x.t("inWords")}: ${x.words(total)}</div><hr>
 ${pay}${state}${o.method === "booking" && !o.cancelled ? `<div class="sig">${x.lb("guestSign")}</div>` : `<div class="c b" style="margin-top:3mm">${x.t("thanksFood").split(/[.।]/)[0]}${x.bn ? "।" : "."}</div>`}${thermalFoot(x)}`;

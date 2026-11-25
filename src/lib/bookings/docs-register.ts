@@ -84,7 +84,7 @@ export function registerHtml(h: Hotel, date: string, rows: Row[]) {
   const noId = rows.filter((r) => !r.g?.idNo).length;
   const rooms = new Set(rows.map((r) => r.b.unit).filter(Boolean)).size;
   const col = (w: number, k: LKey, cls = "") => `<th${cls ? ` class="${cls}"` : ""} style="width:${w}%">${x.lb(k)}</th>`;
-  const head = `<thead><tr>${col(3.4, "sn", "c")}${col(12, "guest")}${col(7, "nationality")}${col(9.6, "idDoc")}${col(13.8, "address")}${col(8.8, "phone")}${col(4.4, "room")}${col(7.4, "arrival")}${col(7.4, "departure")}${col(4.6, "adCh", "c")}${col(6.8, "comingFrom")}${col(6.8, "goingTo")}${col(8, "purpose")}</tr></thead>`;
+  const head = `<thead><tr>${col(3.4, "sn", "c")}${col(12, "guest")}${col(7, "nationality")}${col(9.6, "idDoc")}${col(13.8, "address")}${col(8.8, "phone")}${col(4.4, "room")}${col(7.4, "arrival")}${col(7.4, "departure")}${col(4.6, "adCh", "c")}${col(6.8, "comingFrom")}${col(6.8, "goingTo")}${col(8, "purpose_reg")}</tr></thead>`;
   const body = rows.map(({ b, g }, i) => {
     const gd = gender(x, g?.gender);
     const comp = (b.companions ?? []).map((c) => `${esc(c.name)}${c.relation ? ` (${esc(c.relation)})` : ""}${c.idNo ? ` · ${tr(x, ID_BN, c.idType)} ${x.num(esc(c.idNo))}` : ""}`).join("; ");
@@ -97,7 +97,7 @@ export function registerHtml(h: Hotel, date: string, rows: Row[]) {
 <td class="nw">${td(x, b.from)}${arrT ? `<span class="sub">${arrT}</span>` : ""}</td><td class="nw">${td(x, b.to)}</td><td class="c">${x.num(b.adults)} / ${x.num(b.children)}</td>
 <td>${v(b.comingFrom)}</td><td>${v(b.goingTo)}</td><td>${tr(x, PURPOSE_BN, b.purpose)}</td></tr>`;
   }).join("") || `<tr><td colspan="13" class="mut c" style="padding:6mm">${x.t("noGuests")}</td></tr>`;
-  const strip = `<div class="strip">${cell(x, "nightOf", x.date(date, true))}${cell(x, "roomsOcc", x.num(rooms))}${cell(x, "persons", x.num(persons))}${cell(x, "foreign", x.num(foreign))}${cell(x, "noId", x.num(noId), noId > 0)}</div>`;
+  const strip = `<div class="strip">${cell(x, "nightOf", x.date(date, true))}${cell(x, "roomsOcc", x.num(rooms))}${cell(x, "persons_reg", x.num(persons))}${cell(x, "foreign_reg", x.num(foreign))}${cell(x, "noId", x.num(noId), noId > 0)}</div>`;
   const out = `${header(H, d, x)}${titleRow(x, "guestRegister", `${x.t("nightOf")} ${x.date(date)}`)}${strip}
 <table class="lines reg">${head}<tbody>${body}</tbody></table>
 <div class="sign"><div>${x.t("preparedBy")}</div><div>${x.t("managerSign")}</div><div class="seal">${x.t("seal")}</div></div>`;
@@ -109,7 +109,7 @@ export function registerHtml(h: Hotel, date: string, rows: Row[]) {
 export function formCHtml(h: Hotel, date: string, rows: Row[]) {
   const { H, d, x } = ctx(h);
   const col = (w: number, k: LKey, cls = "") => `<th${cls ? ` class="${cls}"` : ""} style="width:${w}%">${x.lb(k)}</th>`;
-  const head = `<thead><tr>${col(3.4, "sn", "c")}${col(14, "guest")}${col(8, "nationality")}${col(9.5, "passport")}${col(8.5, "visaNo")}${col(8, "visaExp")}${col(7.6, "dob")}${col(7.4, "arrival")}${col(7.4, "departure")}${col(4.8, "room")}${col(7.6, "purpose")}${col(7, "comingFrom")}${col(6.8, "nextDest")}</tr></thead>`;
+  const head = `<thead><tr>${col(3.4, "sn", "c")}${col(14, "guest")}${col(8, "nationality")}${col(9.5, "passport")}${col(8.5, "visaNo")}${col(8, "visaExp")}${col(7.6, "dob")}${col(7.4, "arrival")}${col(7.4, "departure")}${col(4.8, "room")}${col(7.6, "purpose_reg")}${col(7, "comingFrom")}${col(6.8, "nextDest")}</tr></thead>`;
   let gaps = 0;
   const body = rows.map(({ b, g }, i) => {
     const isPass = g?.idType === "Passport";
@@ -123,7 +123,7 @@ export function formCHtml(h: Hotel, date: string, rows: Row[]) {
 <td>${anyDate(x, g?.dob)}</td><td class="nw">${td(x, b.from)}${b.checkedInAt ? `<span class="sub">${x.time(b.checkedInAt)}</span>` : ""}</td><td class="nw">${td(x, b.to)}</td><td><b>${b.unit ? x.num(esc(b.unit)) : DASH}</b></td>
 <td>${tr(x, PURPOSE_BN, b.purpose)}</td><td>${v(b.comingFrom)}</td><td>${v(b.goingTo)}</td></tr>`;
   }).join("") || `<tr><td colspan="13" class="mut c" style="padding:6mm">${x.t("noForeign")}</td></tr>`;
-  const strip = `<div class="strip">${cell(x, "date", x.date(date, true))}${cell(x, "foreign", x.num(rows.length))}${cell(x, "visaMissing", x.num(gaps), gaps > 0)}</div>`;
+  const strip = `<div class="strip">${cell(x, "date", x.date(date, true))}${cell(x, "foreign_reg", x.num(rows.length))}${cell(x, "visaMissing", x.num(gaps), gaps > 0)}</div>`;
   const out = `${header(H, d, x)}${titleRow(x, "formC", x.date(date))}${strip}
 <table class="lines reg">${head}<tbody>${body}</tbody></table>
 <p class="fine">${x.t("checkFormat")}</p>
@@ -214,7 +214,7 @@ ${inp.audit ? `<p class="fine">${x.t("closedAt")} · ${x.date(inp.audit.at)}, ${
 // ---------------- 4. Company / group invoice ----------------
 export type BillParty = { name: string; contact?: string; address?: string; phone?: string; email?: string; bin?: string };
 function partyBlock(x: X, p: BillParty) {
-  return `<div class="nm">${esc(p.name)}</div><div class="mut">${p.contact ? `${x.t("contact")}: ${esc(p.contact)}<br>` : ""}${p.address ? `${esc(p.address)}<br>` : ""}${p.phone ? `${x.num(esc(p.phone))}` : ""}${p.phone && p.email ? " · " : ""}${p.email ? esc(p.email) : ""}${p.bin ? `<br>${x.t("bin")} ${x.num(esc(p.bin))}` : ""}</div>`;
+  return `<div class="nm">${esc(p.name)}</div><div class="mut">${p.contact ? `${x.t("contact_reg")}: ${esc(p.contact)}<br>` : ""}${p.address ? `${esc(p.address)}<br>` : ""}${p.phone ? `${x.num(esc(p.phone))}` : ""}${p.phone && p.email ? " · " : ""}${p.email ? esc(p.email) : ""}${p.bin ? `<br>${x.t("bin")} ${x.num(esc(p.bin))}` : ""}</div>`;
 }
 const stampOf = (x: X, due: number) => `<span class="stamp ${due <= 0 ? "ok" : "due"}">${due <= 0 ? x.t("stPaid") : `${x.t("stDue")} ${x.money(due)}`}</span>`;
 

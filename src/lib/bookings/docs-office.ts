@@ -115,7 +115,7 @@ export function poHtml(h: Hotel, inv: InvData, p: Po) {
   const info = `<div class="info">
 ${k.box("supplier", supBlock(c, L.sup(p.supplier)))}
 ${k.box("deliverTo", `<div class="nm">${esc(c.H.name)}</div><div class="mut">${esc(L.store(p.store))}${c.H.address ? `<br>${esc(c.H.address)}` : ""}</div>`)}
-${k.box("order", k.kv([["poNo", `<b>${x.num(esc(p.id))}</b>`], ["orderDate", x.date(p.date)], ["expected", p.expected && x.date(p.expected)], ["status", k.v(st)]]))}</div>`;
+${k.box("order", k.kv([["poNo", `<b>${x.num(esc(p.id))}</b>`], ["orderDate", x.date(p.date)], ["expected_off", p.expected && x.date(p.expected)], ["status", k.v(st)]]))}</div>`;
   const rows = p.lines.map((l, i) => { const it = L.item.get(l.item); const hint = it ? inBuy(it, l.qty) : "";
     return `<tr><td class="c">${x.num(i + 1)}</td><td><span class="b">${esc(it?.name ?? l.item)}</span>${hint ? `<span class="mut sm"> · ${x.num(esc(hint))}</span>` : ""}</td><td class="mut">${esc(it?.sku)}</td><td class="r">${k.qty(l.qty)}</td><td>${esc(it?.unit)}</td><td class="r">${k.rate(l.cost)}</td><td class="r">${x.plain(l.qty * l.cost)}</td></tr>`; }).join("");
   const lines = `<table class="lines"><thead><tr><th class="c" style="width:8mm">#</th>${k.th("item")}${k.th("sku", "", "20mm")}${k.th("qty", "r", "18mm")}${k.th("unit", "", "15mm")}${k.th("rate", "r", "22mm")}${k.th("amount", "r", "26mm")}</tr></thead><tbody>${rows}</tbody>
@@ -142,7 +142,7 @@ ${k.box("delivery", k.kv([["grnNo", `<b>${x.num(esc(g.id))}</b>`], ["receivedOn"
 ${k.box("order", k.kv([["poNo", x.num(esc(p.id))], ["orderDate", x.date(p.date)], ["approvedBy", p.approvedBy && esc(p.approvedBy)]]))}</div>`;
   const rows = p.lines.map((l, i) => { const it = L.item.get(l.item); const b = before(l.item), n = now(l.item); const due = Math.max(0, l.qty - b - n);
     return `<tr><td class="c">${x.num(i + 1)}</td><td><span class="b">${esc(it?.name ?? l.item)}</span></td><td>${esc(it?.unit)}</td><td class="r">${k.qty(l.qty)}</td><td class="r mut">${b ? k.qty(b) : "—"}</td><td class="r b">${n ? k.qty(n) : "—"}</td><td></td><td class="r">${due ? k.qty(due) : "—"}</td><td class="r">${k.rate(l.cost)}</td><td class="r">${n ? x.plain(n * l.cost) : "—"}</td></tr>`; }).join("");
-  const lines = `<table class="lines fx"><thead><tr><th class="c" style="width:8mm">#</th>${k.th("item")}${k.th("unit", "", "12mm")}${k.th("ordered", "r", "17mm")}${k.th("prevReceived", "r", "19mm")}${k.th("receivedNow", "r", "19mm")}${k.th("rejected", "r", "18mm")}${k.th("stillDue", "r", "16mm")}${k.th("rate", "r", "15mm")}${k.th("value", "r", "20mm")}</tr></thead><tbody>${rows}</tbody>
+  const lines = `<table class="lines fx"><thead><tr><th class="c" style="width:8mm">#</th>${k.th("item")}${k.th("unit", "", "12mm")}${k.th("ordered", "r", "17mm")}${k.th("prevReceived", "r", "19mm")}${k.th("receivedNow", "r", "19mm")}${k.th("rejected", "r", "18mm")}${k.th("stillDue_off", "r", "16mm")}${k.th("rate", "r", "15mm")}${k.th("value", "r", "20mm")}</tr></thead><tbody>${rows}</tbody>
 <tfoot><tr><td></td><td colspan="8">${x.lb("valueReceived")}</td><td class="r">${x.money(value)}</td></tr></tfoot></table>`;
   const body = `${docHeader(c.H, c.d, x)}${k.title("grn", meta, k.stamp(k.v(PO_LABEL[p.status]), p.status === "received" ? "ok" : "neu"), { k: "valueReceived", value: x.money(value) })}${info}${lines}
 <div class="words">${x.t("inWords")}: <b>${x.words(value)}</b></div>
@@ -171,7 +171,7 @@ ${k.box(transfer ? "transferSlip" : "issueSlip", k.kv([["slip", m.ref ? x.num(es
   let sum = 0;
   const rows = lineMoves.map((y, i) => { const it = L.item.get(y.item); const val = y.value ?? Math.abs(y.change) * (it?.cost ?? 0); sum += val;
     return `<tr><td class="c">${x.num(i + 1)}</td><td><span class="b">${esc(it?.name ?? y.item)}</span>${transfer && note(y) ? `<span class="mut sm"> · ${esc(note(y))}</span>` : ""}</td><td class="mut">${esc(it?.sku)}</td><td class="r b">${k.qty(Math.abs(y.change))}</td><td>${esc(it?.unit)}</td><td class="r">${k.qty(y.balance)}</td><td class="r">${x.plain(val)}</td></tr>`; }).join("");
-  const lines = `<table class="lines"><thead><tr><th class="c" style="width:8mm">#</th>${k.th("item")}${k.th("sku", "", "20mm")}${k.th("qty", "r", "18mm")}${k.th("unit", "", "14mm")}${k.th("balanceAfter", "r", "26mm")}${k.th("value", "r", "24mm")}</tr></thead><tbody>${rows}</tbody>
+  const lines = `<table class="lines"><thead><tr><th class="c" style="width:8mm">#</th>${k.th("item")}${k.th("sku", "", "20mm")}${k.th("qty", "r", "18mm")}${k.th("unit", "", "14mm")}${k.th("balanceAfter_off", "r", "26mm")}${k.th("value", "r", "24mm")}</tr></thead><tbody>${rows}</tbody>
 <tfoot><tr><td></td><td colspan="5">${x.lb("total")}</td><td class="r">${x.money(sum)}</td></tr></tfoot></table>`;
   const body = `${docHeader(c.H, c.d, x)}${k.title(titleKey, meta)}${info}${lines}
 ${end(k.sign([k.who("issuedBy", m.by), x.t("receivedBy"), x.t("approvedBy")]), `${esc(c.H.name)} · ${x.t(titleKey)}${m.ref ? ` ${x.num(esc(m.ref))}` : ""}`)}`;
@@ -226,7 +226,7 @@ export function expenseVoucherHtml(h: Hotel, e: Expense, o: { category: string; 
   const meta = `${x.t("voucherNo")} ${x.num(esc(e.id))} · ${x.date(e.date)}`;
   const info = `<div class="info">
 ${k.box("paidTo", o.payee ? `<div class="nm">${esc(o.payee.name)}</div><div class="mut">${[o.payee.kind && k.v(o.payee.kind), o.payee.phone && x.num(esc(o.payee.phone))].filter(Boolean).join(" · ")}</div>` : `<div class="wl"></div>`)}
-${k.box("voucher", k.kv([["voucherNo", `<b>${x.num(esc(e.id))}</b>`], ["date", x.date(e.date)], ["category", esc(o.category)], ["billNo", e.billNo && x.num(esc(e.billNo))]]))}
+${k.box("voucher", k.kv([["voucherNo", `<b>${x.num(esc(e.id))}</b>`], ["date", x.date(e.date)], ["category", esc(o.category)], ["billNo_off", e.billNo && x.num(esc(e.billNo))]]))}
 ${k.box("approval", k.kv([["status", k.v(st)], ["addedBy", esc(e.by)], ["approvedBy", e.approvedBy && esc(e.approvedBy)]]))}</div>`;
   const lines = `<table class="lines"><thead><tr>${k.th("description")}${k.th("amount", "r", "34mm")}</tr></thead><tbody><tr><td><span class="b">${esc(e.title)}</span>${e.note ? `<br><span class="mut sm">${esc(e.note)}</span>` : ""}${e.rejectReason ? `<br><span class="neg sm">${k.v("Rejected")}: ${esc(e.rejectReason)}</span>` : ""}</td><td class="r">${x.plain(e.amount)}</td></tr></tbody></table>`;
   const tot = `<div class="tot"><div class="g"><span>${x.lb("total")}</span><span class="nw">${x.money(e.amount)}</span></div><div><span>${x.t("paid")}</span><span class="nw">− ${x.money(paid)}</span></div><div class="due"><span>${x.lb("balance")}</span><span class="nw">${x.money(due)}</span></div></div>`;
@@ -289,7 +289,7 @@ ${k.box("payPeriod", k.kv([["month", `<b>${k.month(run.month)}</b>`], ["payrollR
 ${att.length ? k.box("attendance", k.kv([["present", `${x.num(cnt("present"))} ${x.t("days")}`], ["halfDay", cnt("half") ? `${x.num(cnt("half"))} ${x.t("days")}` : false], ["onLeave", `${x.num(cnt("leave"))} ${x.t("days")}`], ["absent", `${x.num(cnt("absent"))} ${x.t("days")}`], ["dayOff", cnt("off") ? `${x.num(cnt("off"))} ${x.t("days")}` : false]]) ) : k.box("netPay", k.kv([["netPay", `<b>${x.money(net)}</b>`], ["paid", x.money(l.paid)], ["due", x.money(due)]]))}</div>`;
   const row = (label: string, n: number, neg = false) => `<tr><td>${label}</td><td class="r">${neg ? "− " : ""}${x.plain(n)}</td></tr>`;
   const earn = [row(x.t("basic"), p.basic), p.house ? row(x.t("houseRent"), p.house) : "", p.food ? row(x.t("food"), p.food) : "", p.transport ? row(x.t("transport"), p.transport) : "", ...bonuses.map((a) => row(`${x.t("bonus")}${a.note ? ` <span class="mut sm">· ${esc(a.note)}</span>` : ""}`, a.amount))].join("");
-  const ded = [...dedAdj.map((a) => row(`${x.t(a.kind === "Advance" ? "advance" : "deduction")}${a.note ? ` <span class="mut sm">· ${esc(a.note)}</span>` : ""}`, a.amount, true)), other > 0 ? row(x.t("otherDed"), other, true) : ""].join("") || `<tr><td class="mut" colspan="2">${x.t("noDed")}</td></tr>`;
+  const ded = [...dedAdj.map((a) => row(`${x.t(a.kind === "Advance" ? "advance_off" : "deduction")}${a.note ? ` <span class="mut sm">· ${esc(a.note)}</span>` : ""}`, a.amount, true)), other > 0 ? row(x.t("otherDed"), other, true) : ""].join("") || `<tr><td class="mut" colspan="2">${x.t("noDed")}</td></tr>`;
   const pair = `<div class="pair"><table class="lines"><thead><tr>${k.th("earnings")}${k.th("amount", "r", "26mm")}</tr></thead><tbody>${earn}</tbody><tfoot><tr><td>${x.lb("grossPay")}</td><td class="r">${x.money(l.gross)}</td></tr></tfoot></table>
 <table class="lines"><thead><tr>${k.th("deductions")}${k.th("amount", "r", "26mm")}</tr></thead><tbody>${ded}</tbody><tfoot><tr><td>${x.lb("totalDed")}</td><td class="r">− ${x.money(l.deductions)}</td></tr></tfoot></table></div>`;
   const netbox = `<div class="netbox"><div><div class="lab" style="margin:0">${x.lb("netPay")}</div><div class="words" style="margin-top:1mm">${x.t("inWords")}: <b>${x.words(net)}</b></div></div><b>${x.money(net)}</b></div>`;
@@ -346,7 +346,7 @@ ${k.box("rooms", k.kv([["rooms", x.num(rows.length)], ["task", x.num(tasks)], ["
     return `<tr class="wr"><td class="b">${x.num(esc(r.room))}</td><td>${esc(r.type)}${r.where ? `<br><span class="mut sm">${esc(r.where)}</span>` : ""}</td><td>${k.v(r.occ)}${r.ooo ? `<br><span class="neg sm">${x.t("outOfOrder")}</span>` : ""}</td><td>${k.v(r.clean)}</td>
 <td>${t ? `${k.v(t.kind, KIND_EN[t.kind])}<br><span class="mut sm">${k.v(t.status, TASK_EN[t.status])}</span>` : "—"}</td><td>${t ? (t.who ? esc(t.who) : `<span class="mut">${x.t("notAssigned")}</span>`) : ""}</td><td>${t?.priority ? k.v(t.priority) : ""}</td><td class="nw">${t?.due ? x.num(esc(t.due)) : ""}</td><td></td><td></td><td>${t?.note ? `<span class="mut sm">${esc(t.note)}</span>` : ""}</td></tr>`;
   }).join("");
-  const table = `<table class="lines dense"><thead><tr>${k.th("room", "", "15mm")}${k.th("roomType", "", "34mm")}${k.th("occupancy", "", "22mm")}${k.th("roomStatus", "", "22mm")}${k.th("task", "", "32mm")}${k.th("assignedTo", "", "30mm")}${k.th("priority", "", "17mm")}${k.th("dueBy", "", "14mm")}${k.th("timeIn", "", "15mm")}${k.th("timeOut", "", "15mm")}${k.th("cleanerNotes")}</tr></thead><tbody>${body0}</tbody></table>`;
+  const table = `<table class="lines dense"><thead><tr>${k.th("room", "", "15mm")}${k.th("roomType_off", "", "34mm")}${k.th("occupancy", "", "22mm")}${k.th("roomStatus", "", "22mm")}${k.th("task", "", "32mm")}${k.th("assignedTo", "", "30mm")}${k.th("priority", "", "17mm")}${k.th("dueBy", "", "14mm")}${k.th("timeIn", "", "15mm")}${k.th("timeOut", "", "15mm")}${k.th("cleanerNotes")}</tr></thead><tbody>${body0}</tbody></table>`;
   const body = `${docHeader(c.H, c.d, x)}${k.title("hkSheet", meta)}${info}${table}
 ${end(k.sign([x.t("supervisor"), x.t("hkManager")]), `${esc(c.H.name)} · ${x.t("hkSheet")} · ${x.date(date)}`)}`;
   return page(c, `${x.t("hkSheet")} ${date}`, body, true);
@@ -358,7 +358,7 @@ export function workOrderHtml(h: Hotel, t: Task, room: { type?: string; where?: 
   const meta = `${x.t("room")} ${x.num(esc(t.room))} · ${k.at(t.at)}`;
   const st = TASK_EN[t.status];
   const info = `<div class="info">
-${k.box("room", `<div class="nm">${x.t("room")} ${x.num(esc(t.room))}</div>${k.kv([["roomType", room.type && esc(room.type)], ["location", room.where && esc(room.where)]])}`)}
+${k.box("room", `<div class="nm">${x.t("room")} ${x.num(esc(t.room))}</div>${k.kv([["roomType_off", room.type && esc(room.type)], ["location", room.where && esc(room.where)]])}`)}
 ${k.box("status", k.kv([["reported", k.at(t.at)], ["priority", k.v(t.priority ?? "Normal")], ["status", k.v(t.status, st)], ["assignedTo", t.who ? esc(t.who) : x.t("notAssigned")], ["started", t.started ? k.at(t.started) : BLANK], ["finished", t.done ? k.at(t.done) : BLANK], ["reference", t.ref && x.num(esc(t.ref))]]))}
 ${k.box("roomBlocked", room.block ? `<div class="neg b">${x.t("outOfOrder")}</div><div class="mut">${x.date(room.block.since)} → ${room.block.until ? x.date(room.block.until) : x.t("untilFixed")}</div>` : `<div>${x.t("notBlocked")}</div>`)}</div>`;
   const issue = `<div class="sec"><div class="lab">${x.lb("issue")}</div><div class="nm" style="font-weight:500">${t.note ? esc(t.note) : `<div class="wl"></div>`}</div></div>`;

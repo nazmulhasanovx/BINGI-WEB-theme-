@@ -194,6 +194,8 @@ const L = {
   roomBlocked: ["Room blocked", "কক্ষ বন্ধ"], untilFixed: ["until fixed", "মেরামত না হওয়া পর্যন্ত"], notBlocked: ["No, room can be sold", "না, কক্ষ বিক্রয়যোগ্য"], workDone: ["Work done", "সম্পন্ন কাজ"],
   partsUsed: ["Parts / materials used", "ব্যবহৃত যন্ত্রাংশ / উপকরণ"], cost: ["Cost", "খরচ"], finished: ["Finished", "শেষ"], technician: ["Technician", "টেকনিশিয়ান"],
   roomAccepted: ["Room checked & accepted", "কক্ষ যাচাই ও গ্রহণ"], location: ["Location", "অবস্থান"],
+  // ---- branch-specific labels kept apart on merge (same key, different wording) ----
+  contact_reg: ["Contact", "যোগাযোগ"], persons_reg: ["Persons", "মোট ব্যক্তি"], purpose_reg: ["Purpose", "উদ্দেশ্য"], foreign_reg: ["Foreign guests", "বিদেশি অতিথি"], children2_th: ["Child", "শিশু"], balanceAfter_off: ["Store balance after", "পরের মজুদ"], expected_off: ["Expected", "প্রত্যাশিত তারিখ"], stillDue_off: ["Still due", "বাকি"], billNo_off: ["Bill / receipt no.", "বিল / রসিদ নং"], advance_off: ["Advance", "অগ্রিম"], roomType_off: ["Type", "ধরন"],
 } as const;
 export type LKey = keyof typeof L;
 const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
