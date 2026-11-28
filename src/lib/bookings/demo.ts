@@ -51,9 +51,11 @@ export function demoStays(slug: string, rooms: RoomLite[]): Stay[] {
   const occupied = Math.min(rooms.length, Math.round(rooms.length * 0.75));
   rooms.slice(0, occupied).forEach((r, i) => {
     const arriving = i < arrivals;
-    const from = arriving ? TODAY : addDays(TODAY, -1 - Math.floor(rnd() * 3));
+    // One in-house guest is past check-out (front desk must see "Checkout overdue").
+    const late = !arriving && i % 7 === 5;
+    const from = arriving ? TODAY : late ? addDays(TODAY, -3) : addDays(TODAY, -1 - Math.floor(rnd() * 3));
     const n0 = 1 + Math.floor(rnd() * 3);
-    const to = arriving ? addDays(TODAY, n0) : i % 4 === 0 ? TODAY : addDays(TODAY, n0);
+    const to = arriving ? addDays(TODAY, n0) : late ? addDays(TODAY, -1) : i % 4 === 0 ? TODAY : addDays(TODAY, n0);
     const nights = Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 864e5));
     const total = r.rate * nights;
     const paidAll = !arriving || i === 1 || i === 3;
