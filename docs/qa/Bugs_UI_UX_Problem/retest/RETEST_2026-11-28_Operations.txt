@@ -46,7 +46,8 @@
 ================================================================
  B. NEW P0
 ================================================================
- NEW-BKG-P0-01  Availability for any date except tonight never
+ NEW-BKG-P0-01  [UPDATE 13:00: FIXED - rooms?check_in=12-10 -> 200 in 1.4 s]
+   Availability for any date except tonight never
    loads. GET /api/rooms?check_in=2026-11-29 (also 12-01, 12-10)
    gave no answer in 20-35 s. New booking keeps TONIGHT's rooms
    with no message. On 10 Dec it offers 505, which QA Guest 20
