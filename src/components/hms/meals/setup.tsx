@@ -10,7 +10,7 @@ import { PhotoButton } from "../photo";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "./frame";
 import { Dish, useRestaurant, useToast, type Restaurant } from "./shared";
-import { SeatLegend, TablePreview } from "./table-preview";
+import { TablePreview } from "./table-preview";
 
 const card = "rounded-2xl border border-hms-line bg-white";
 function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
@@ -201,7 +201,7 @@ function PlaceSheet({ r, p, onClose, onDone }: { r: Restaurant; p?: Place; onClo
     <Sheet title={p ? `Edit ${p.name}` : "Add table or QR"} sub="Each table, room or spot gets its own QR" onClose={onClose}
       footer={<><button onClick={onClose} className={clsx(btnLine, "flex-1")}>Cancel</button><button onClick={save} className={clsx(btnPrimary, "flex-[1.4]")}>Save</button></>}>
       <div className="space-y-4">
-        {seated ? <TablePreview kind={f.kind} name={f.name.trim() || "T?"} codes={shown} caption={<><SeatLegend /><span className="tabular-nums">{shown.length} seats · {f.kind === "private" ? "whole table" : sharesSeats({ ...f, shared: f.shared }) ? "shared" : "whole table"}</span></>} />
+        {seated ? <TablePreview kind={f.kind} name={f.name.trim() || "T?"} codes={shown} caption={<><span className="text-hms-muted">Seat codes show on each chair</span><span className="tabular-nums">{shown.length} seats · {f.kind === "private" ? "whole table" : sharesSeats({ ...f, shared: f.shared }) ? "shared" : "whole table"}</span></>} />
           : <div className="flex items-center gap-3 rounded-2xl border border-[#e3e7ec] bg-[#f4f6f8] p-4"><span className="grid size-12 place-items-center rounded-xl bg-white text-hms-muted ring-1 ring-hms-line">{f.kind === "room" ? <BedDouble className="size-6" /> : <Trees className="size-6" />}</span><p className="text-[13.5px] text-[#3a414c]"><b className="block text-[14.5px] text-hms-ink">{f.name.trim() || (f.kind === "room" ? "Room 305" : "Pool side")}</b>{PLACE_KIND[f.kind].hint}. No seats — one QR for the whole {f.kind === "room" ? "room" : "spot"}.</p></div>}
         <div><p className={lbl}>Type</p>
           <div role="radiogroup" aria-label="Type" className="grid grid-cols-3 gap-1.5">{(Object.keys(PLACE_KIND) as PlaceKind[]).map((x) => { const I = KIND_ICON[x]; return (
