@@ -9,7 +9,8 @@ import { TODAY } from "@/lib/rooms/store";
 import { PLACE_KIND, SERVICE_LABEL, bill, isSeated, roomServiceOutlet, seatsTaken, sharesSeats, tk, type Item, type Line, type Order, type Place, type Service } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
 import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
-import { MealsFrame, useMealsFull } from "./frame";
+import { MealsFrame } from "./frame";
+import { useFocusMode } from "../focus";
 import { Dish, PaySheet, SERVICE_ICON, StatusChip, useRestaurant, useToast, type Restaurant } from "./shared";
 import { billHtml, kotHtml, printHtml } from "./print";
 
@@ -42,7 +43,8 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const [done, setDone] = useState<{ id: string; round: number } | null>(null);
   const [pay, setPay] = useState<string | null>(null);
   const cartRef = useRef<HTMLElement>(null);
-  const [full] = useMealsFull();
+  const [fs] = useFocusMode("meals");
+  const full = false; // POS keeps its sticky order panel in full screen too
   const running = run ? st.orders.find((o) => o.id === run) : undefined;
   const items = useMemo(() => st.items.filter((i) => i.pos && (cat === "all" || i.cat === cat) && (!q || i.name.toLowerCase().includes(q.toLowerCase()))), [st.items, cat, q]);
   const service = running?.service ?? (services.includes(svc) ? svc : services[0]);
@@ -246,7 +248,7 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
           </div>
         </section>
       </div>
-      {count > 0 && <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })} className={clsx("fixed inset-x-4 z-[86] flex h-12 items-center justify-between rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white shadow-lg lg:hidden", full ? "bottom-4" : "bottom-20")}><span>Order · {count} item{count > 1 ? "s" : ""}</span><span className="tabular-nums">{tk(b.total)}</span></button>}
+      {count > 0 && <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })} className={clsx("fixed inset-x-4 z-[86] flex h-12 items-center justify-between rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white shadow-lg lg:hidden", fs ? "bottom-4" : "bottom-20")}><span>Order · {count} item{count > 1 ? "s" : ""}</span><span className="tabular-nums">{tk(b.total)}</span></button>}
       {pay && <PaySheet r={r} id={pay} onClose={() => setPay(null)} onDone={(m) => { show(m); setPay(null); setDone(null); setRun(null); setView("tables"); }} />}
     </MealsFrame>
   );

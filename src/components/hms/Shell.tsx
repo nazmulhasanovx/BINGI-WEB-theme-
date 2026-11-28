@@ -27,6 +27,7 @@ import { WM_PAGES } from "./website/pages";
 import { AccountMenu, LanguageMenu, Notifications, SearchBox, type NavTarget } from "./shell-extras";
 import { NewsBanner, NewsPopup } from "./news";
 import { FullscreenButton } from "./app-install";
+import { FOCUS_MODULES, FocusBar, useFocusMode } from "./focus";
 import { useAppServiceWorker } from "@/lib/app-mode";
 import { setViewAs, useViewAs } from "@/lib/hrm/views";
 import { useBilling, monthName, dShort } from "@/lib/billing/store";
@@ -191,6 +192,15 @@ function ShellInner({ children }: { children: ReactNode }) {
   const active = ALL_ITEMS.find((i) => (i.href === "/hms" ? path === "/hms" : path.startsWith(i.href.replace("/overview", "")))) ?? (path.startsWith("/hms/news") || path.startsWith("/hms/design-system") ? { id: "" } : ALL_ITEMS[0]);
 
   const [drawer, setDrawer] = useState(false);
+  const mod = moduleOfPath(path);
+  const focusTitle = FOCUS_MODULES[mod];
+  const [focus] = useFocusMode(focusTitle ? mod : "_none");
+  if (focus && focusTitle) return (
+    <div data-font={prefs.font} className={clsx("hms-app flex h-dvh flex-col overflow-hidden bg-hms-canvas text-[14px]", prefs.reduceMotion && "hms-no-motion")}>
+      <FocusBar id={mod} title={focusTitle} />
+      <main style={prefs.zoom !== 100 ? { zoom: prefs.zoom / 100 } : undefined} className="min-h-0 flex-1 [&_.focus-hide]:hidden [&_.hms-page]:max-w-none"><AccessGuard>{children}</AccessGuard></main>
+    </div>
+  );
   return (
     <div data-font={prefs.font} className={clsx("hms-app flex h-dvh overflow-hidden bg-hms-canvas text-[14px]", prefs.reduceMotion && "hms-no-motion")}>
       <Sidebar collapsed={isCollapsed} activeId={active.id} onToggle={toggle} />

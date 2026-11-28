@@ -21,3 +21,9 @@ ticket or a new round of added items reaches Queued. Browsers only allow sound a
 
 ## Open decision
 Kiosk lock (manager PIN to leave full screen on shared devices) is not built — needs role/permission backend.
+
+## Fix 28 Nov — full screen per module, not per page
+The HMS shell now decides full screen from the module of the current path (`moduleOfPath`): every page of a full-screen
+module stays full screen — Calendar → New booking / Walk-in / booking page all keep it (new_booking_full.png). Leaving
+the module (e.g. Guests) shows the normal HMS; coming back returns to full screen. Restaurant & Bar uses the same
+mechanism (key `bingi.full.meals`). Keys: `bingi.full.<dashboard|bookings|rooms|housekeeping|meals>`.
