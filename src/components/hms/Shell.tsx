@@ -10,7 +10,7 @@ import { MealsBadge } from "./meals/shared";
 import Link from "next/link";
 import { imgSrc } from "@/lib/img";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import clsx from "clsx";
 import { usePrefs } from "@/lib/settings/prefs";
@@ -31,7 +31,7 @@ import { useAppServiceWorker } from "@/lib/app-mode";
 import { setViewAs, useViewAs } from "@/lib/hrm/views";
 import { useBilling, monthName, dShort } from "@/lib/billing/store";
 import { useRooms } from "@/lib/rooms/store";
-import { can } from "@/lib/plan";
+import { can, type Feature } from "@/lib/plan";
 import { useTitle } from "./rooms/parts";
 
 type Item = { id: string; label: string; icon: typeof Globe; href: string; badge?: number };
@@ -76,6 +76,63 @@ const GROUPS: { label: string; items: Item[] }[] = [
     ],
   },
 ];
+/** Expandable sidebar: each main module opens to show its own sub-pages (the same tabs the module page has).
+ *  f = plan feature the sub-page needs (missing → hidden, or a lock for Owner/Manager on Business/Ultra);
+ *  edit = only roles that can change this module; boss = Owner, Manager and Accountant only. */
+type Sub = { label: string; href: string; f?: Feature; edit?: true; boss?: true };
+const SUBS: Record<string, Sub[]> = {
+  bookings: [
+    { label: "All bookings", href: "/hms/bookings" }, { label: "Calendar", href: "/hms/bookings/calendar" },
+    { label: "Room board", href: "/hms/bookings/board", f: "roomBoard" }, { label: "Waitlist", href: "/hms/bookings/waitlist" },
+    { label: "Day close", href: "/hms/bookings/close", edit: true, boss: true }, { label: "Booking reports", href: "/hms/bookings/reports", boss: true },
+  ],
+  rooms: [{ label: "Room types", href: "/hms/rooms" }, { label: "Room numbers", href: "/hms/rooms/numbers" }, { label: "Setup", href: "/hms/rooms/configuration", edit: true, boss: true }],
+  housekeeping: [{ label: "Tasks", href: "/hms/housekeeping" }, { label: "Maintenance", href: "/hms/housekeeping?tab=maintenance" }, { label: "Checklist", href: "/hms/housekeeping?tab=checklist", edit: true }],
+  guests: [{ label: "All guests", href: "/hms/guests" }, { label: "Reviews", href: "/hms/guests/reviews" }],
+  meals: [
+    { label: "Overview", href: "/hms/meals" }, { label: "POS", href: "/hms/meals/pos" }, { label: "Orders", href: "/hms/meals/orders" },
+    { label: "Kitchen", href: "/hms/meals/kitchen" }, { label: "Menu", href: "/hms/meals/menu", edit: true }, { label: "Tables & QR", href: "/hms/meals/tables", edit: true, f: "qrOrdering" },
+    { label: "Reports", href: "/hms/meals/reports", boss: true }, { label: "Cashbox", href: "/hms/meals/cashbox" }, { label: "Settings", href: "/hms/meals/settings", edit: true, boss: true },
+  ],
+  staff: [
+    { label: "Overview", href: "/hms/staff" }, { label: "People", href: "/hms/staff/people", f: "hrm" }, { label: "Attendance", href: "/hms/staff/attendance", f: "hrm" },
+    { label: "Schedule", href: "/hms/staff/schedule", f: "hrm" }, { label: "Leave", href: "/hms/staff/leave", f: "hrm" }, { label: "Payroll", href: "/hms/staff/payroll", f: "hrm", boss: true },
+    { label: "Hiring", href: "/hms/staff/hiring", f: "hrm", boss: true }, { label: "Department views", href: "/hms/staff/views", edit: true, boss: true }, { label: "HR settings & reports", href: "/hms/staff/settings", f: "hrm", edit: true, boss: true },
+  ],
+  inventory: [
+    { label: "Stock", href: "/hms/inventory" }, { label: "Purchase orders", href: "/hms/inventory/purchase" }, { label: "Stock count", href: "/hms/inventory/count" },
+    { label: "Recipes & sales", href: "/hms/inventory/recipes", f: "restaurant" }, { label: "History", href: "/hms/inventory/history" }, { label: "Reports", href: "/hms/inventory/reports", boss: true }, { label: "Setup", href: "/hms/inventory/setup", edit: true, boss: true },
+  ],
+  "other-services": [{ label: "Today", href: "/hms/other-services" }, { label: "Orders", href: "/hms/other-services/orders" }, { label: "Service catalog", href: "/hms/other-services/catalog", edit: true }, { label: "Reports", href: "/hms/other-services/reports", boss: true }, { label: "Setup", href: "/hms/other-services/setup", edit: true, boss: true }],
+  discounts: [{ label: "Rates calendar", href: "/hms/discounts" }, { label: "Discount campaigns", href: "/hms/discounts/campaigns", edit: true }],
+  payments: [{ label: "Today", href: "/hms/payments" }, { label: "To collect", href: "/hms/payments?tab=collect" }, { label: "Refunds due", href: "/hms/payments?tab=refunds" }, { label: "Transactions", href: "/hms/payments?tab=all" }],
+  cashbox: [{ label: "Today", href: "/hms/cashbox" }, { label: "Movements", href: "/hms/cashbox/movements" }, { label: "Closed days", href: "/hms/cashbox/days", boss: true }],
+  finance: [{ label: "Overview", href: "/hms/finance" }, { label: "Ledger", href: "/hms/finance?tab=ledger" }, { label: "Payouts", href: "/hms/finance?tab=settlements" }, { label: "Statement", href: "/hms/finance?tab=statement" }],
+  operations: [{ label: "Overview", href: "/hms/operations" }, { label: "Expenses", href: "/hms/operations?tab=list" }, { label: "Supplier bills", href: "/hms/operations?tab=bills" }, { label: "Payees", href: "/hms/operations?tab=payees" }, { label: "Categories & rules", href: "/hms/operations?tab=categories", edit: true, boss: true }],
+  reports: [{ label: "Daily sales", href: "/hms/reports?r=daily" }, { label: "Revenue & profit", href: "/hms/reports?r=profit", boss: true }, { label: "Occupancy, ADR, RevPAR", href: "/hms/reports?r=occupancy" }],
+  communication: [{ label: "Overview", href: "/hms/communication" }, { label: "Automatic messages", href: "/hms/communication?tab=auto", edit: true }, { label: "History", href: "/hms/communication?tab=history" }, { label: "Credits", href: "/hms/communication?tab=credits", boss: true }],
+  website: [
+    { label: "Overview", href: "/hms/website/overview" }, { label: "Theme & style", href: "/hms/website/design", edit: true }, { label: "Rooms", href: "/hms/website/rooms", edit: true },
+    { label: "Booking engine", href: "/hms/website/booking", edit: true }, { label: "Inquiries", href: "/hms/website/inquiries" }, { label: "Reviews", href: "/hms/website/reviews" }, { label: "Online on/off", href: "/hms/website/online", edit: true, boss: true },
+  ],
+  settings: [
+    { label: "Overview", href: "/hms/settings" }, { label: "Property profile", href: "/hms/settings/profile", edit: true }, { label: "Booking policies", href: "/hms/settings/policies", edit: true },
+    { label: "Taxes & pricing", href: "/hms/settings/taxes", edit: true, boss: true }, { label: "Guest payments", href: "/hms/settings/payments", edit: true, boss: true }, { label: "Invoices & documents", href: "/hms/settings/documents", edit: true },
+    { label: "Guest messages", href: "/hms/settings/messages", edit: true }, { label: "Users & roles", href: "/hms/settings/users", edit: true, boss: true }, { label: "Activity log", href: "/hms/settings/activity", boss: true },
+  ],
+};
+const BOSS = ["owner", "manager", "accountant"];
+/** Sub-pages this person sees for a module, by plan and role (Owner sees all; others by their role). */
+function useSubs() {
+  const { h, roleId, level } = useAccess();
+  return (mod: string) => (SUBS[mod] ?? []).flatMap((x): (Sub & { locked?: boolean })[] => {
+    if (x.boss && !BOSS.includes(roleId)) return [];
+    if (x.edit && level(mod) !== "edit") return [];
+    if (x.f && !can(h, x.f)) return h.plan !== "starter" && (roleId === "owner" || roleId === "manager") ? [{ ...x, locked: true }] : [];
+    return [x];
+  });
+}
+
 /** Names that depend on the property (23 Nov 2026 sidebar names): Rooms → "Accommodations" when cottages, villas or
  *  apartments exist; Team → "Team & HR" on plans with the full HR. */
 export function useNavLabel() {
@@ -174,7 +231,7 @@ function Sidebar({ collapsed, activeId, onToggle }: { collapsed: boolean; active
   );
 }
 
-// ---------- Sidebar mode (decision 2 Nov): Flat = all items, Expandable = groups fold (accordion) ----------
+// ---------- Sidebar mode: Flat = modules only; Expandable = each module opens to its sub-pages (by plan + role) ----------
 const MODE_KEY = "hms-sidebar-mode";
 const modeSubs = new Set<() => void>();
 const readNavMode = () => { try { return localStorage.getItem(MODE_KEY) === "expandable" ? "expandable" : "flat"; } catch { return "flat"; } };
@@ -233,29 +290,59 @@ function ViewAsBanner() {
 function NavList({ activeId, collapsed, big }: { activeId: string; collapsed: boolean; big?: boolean }) {
   const [mode] = useNavMode();
   const { show, locked } = useShown();
-  const [openG, setOpenG] = useState<string[]>([]);
+  const subsOf = useSubs();
+  const [openM, setOpenM] = useState<Record<string, boolean>>({});
   const fold = mode === "expandable" && !collapsed;
+  const row = (i: Item) => {
+    const subs = fold && !locked(i.id) ? subsOf(i.id) : [];
+    const active = activeId === i.id;
+    const isOpen = subs.length > 1 && (openM[i.id] ?? active);
+    return (
+      <div key={i.id}>
+        <div className="relative">
+          <NavItem item={i} active={active} collapsed={collapsed} big={big} locked={locked(i.id)} padRight={subs.length > 1} />
+          {subs.length > 1 && <button type="button" onClick={() => setOpenM((o) => ({ ...o, [i.id]: !isOpen }))} aria-expanded={isOpen} aria-label={`${isOpen ? "Hide" : "Show"} ${i.label} pages`}
+            className={clsx("absolute right-1 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md", active ? "text-white hover:bg-white/15" : "text-hms-muted hover:bg-black/5 hover:text-hms-ink")}>
+            <ChevronDown className={clsx("size-3.5 transition-transform duration-200", !isOpen && "-rotate-90")} />
+          </button>}
+        </div>
+        {isOpen && <SubList subs={subs} big={big} />}
+      </div>
+    );
+  };
   return (
     <nav className={clsx("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-3", big ? "px-3" : "px-2")} aria-label="HMS">
-      {GROUPS.map((g0) => ({ ...g0, items: g0.items.filter((i) => show(i.id)) })).filter((g) => g.items.length).map((g) => {
-        const hasActive = g.items.some((i) => i.id === activeId);
-        const isOpen = !fold || hasActive || openG.includes(g.label);
-        return (
-          <div key={g.label} className="mt-2.5 first:mt-0.5">
-            {!collapsed && (fold
-              ? <button type="button" onClick={() => setOpenG((o) => (o.includes(g.label) ? o.filter((x) => x !== g.label) : [...o, g.label]))} aria-expanded={isOpen} disabled={hasActive}
-                  className="flex w-full items-center px-2.5 pb-0.5 text-left text-[11.5px] font-medium text-hms-muted hover:text-hms-ink disabled:cursor-default">
-                  <span className="flex-1">{g.label}</span><ChevronDown className={clsx("size-3.5 transition-transform", !isOpen && "-rotate-90")} />
-                </button>
-              : <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>)}
-            {isOpen && <div className={fold ? "hms-fade" : undefined}>{g.items.map((i) => <NavItem key={i.id} item={i} active={activeId === i.id} collapsed={collapsed} big={big} locked={locked(i.id)} />)}</div>}
-          </div>
-        );
-      })}
-      {show("settings") && <div className="mt-2.5 border-t border-hms-line pt-2.5">
-        <NavItem item={ALL_ITEMS.at(-1)!} active={activeId === "settings"} collapsed={collapsed} big={big} />
-      </div>}
+      {GROUPS.map((g0) => ({ ...g0, items: g0.items.filter((i) => show(i.id)) })).filter((g) => g.items.length).map((g) => (
+        <div key={g.label} className="mt-2.5 first:mt-0.5">
+          {!collapsed && <p className="px-2.5 pb-0.5 text-[11.5px] font-medium text-hms-muted">{g.label}</p>}
+          {g.items.map(row)}
+        </div>
+      ))}
+      {show("settings") && <div className="mt-2.5 border-t border-hms-line pt-2.5">{row(ALL_ITEMS.at(-1)!)}</div>}
     </nav>
+  );
+}
+
+/** The open module's sub-pages: a thin guide line on the left, the current page in red. */
+function SubList({ subs, big }: { subs: (Sub & { locked?: boolean })[]; big?: boolean }) {
+  const path = usePathname();
+  const sp = useSearchParams();
+  const score = (x: Sub) => {
+    const [p, q] = x.href.split("?");
+    if (p !== path && !(p !== "/hms/settings" && p.length > 5 && path.startsWith(p + "/") && !subs.some((y) => y.href.split("?")[0] === path))) return 0;
+    if (!q) return [...sp.keys()].some((k) => subs.some((y) => y.href.includes(`?${k}=`))) ? 1 : 2;
+    const [k, v] = q.split("="); return sp.get(k) === v ? 3 : 0;
+  };
+  const best = Math.max(0, ...subs.map(score));
+  return (
+    <ul className="hms-fade mb-1 ml-[19px] mt-0.5 border-l border-hms-line pl-2">
+      {subs.map((x) => { const on = best > 0 && score(x) === best; return (
+        <li key={x.href}><Link href={x.href} aria-current={on ? "page" : undefined}
+          className={clsx("flex items-center gap-1.5 rounded-md px-2 transition-colors", big ? "h-10 text-[14.5px]" : "h-[27px] text-[13px]", on ? "bg-hms-coral-soft font-semibold text-hms-red" : "text-[#4d5664] hover:bg-hms-hover hover:text-hms-ink")}>
+          <span className="min-w-0 flex-1 truncate">{x.label}</span>{x.locked && <Lock aria-label="Not in your plan" className="size-3 shrink-0 text-hms-muted" />}
+        </Link></li>
+      ); })}
+    </ul>
   );
 }
 
@@ -298,7 +385,7 @@ function MobileDrawer({ activeId, onClose }: { activeId: string; onClose: () => 
   );
 }
 
-function NavItem({ item, active, collapsed, big, locked }: { item: Item; active: boolean; collapsed: boolean; big?: boolean; locked?: boolean }) {
+function NavItem({ item, active, collapsed, big, locked, padRight }: { item: Item; active: boolean; collapsed: boolean; big?: boolean; locked?: boolean; padRight?: boolean }) {
   const Icon = item.icon;
   const label = useNavLabel()(item.id, item.label);
   return (
@@ -311,6 +398,7 @@ function NavItem({ item, active, collapsed, big, locked }: { item: Item; active:
         big ? "h-11 text-[15px]" : "h-[30px] text-[14px]",
         active ? "btn-glow font-medium text-white" : "text-hms-ink hover:bg-hms-hover",
         collapsed && "justify-center px-0",
+        padRight && "pr-8",
       )}
     >
       <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
