@@ -65,7 +65,7 @@ export function NewBookingPage() {
   const [to, setTo] = useState(qTo && qTo > start ? qTo : addDays(start, 1));
   const [adults, setAdults] = useState(() => Math.max(1, Math.min(8, Number(sp.get("adults")) || 2)));
   const [children, setChildren] = useState(0);
-  const [picked, setPicked] = useState<string[]>(() => (sp.get("room") ? [sp.get("room")!] : []));
+  const [picked, setPicked] = useState<string[]>(() => (sp.get("rooms") ? sp.get("rooms")!.split(",").filter(Boolean) : sp.get("room") ? [sp.get("room")!] : []));
   const [phone, setPhone] = useState(() => sp.get("phone") ?? "");
   const [useId, setUseId] = useState<string | null>(() => sp.get("guest"));
   const [gd, setGd] = useState<GuestDraft | null>(null);
