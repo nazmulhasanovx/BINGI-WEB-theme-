@@ -2,36 +2,16 @@
 // Restaurant & Bar — POS. Two views on the left: Tables (who is sitting where, running bills) and Menu (dishes).
 // Right: the order. Tap a free table → new order; tap a busy table → add more dishes to its running order.
 import clsx from "clsx";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createPortal } from "react-dom";
-import { BedDouble, CircleCheck, LayoutGrid, Maximize2, Minimize2, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { BedDouble, CircleCheck, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { PLACE_KIND, SERVICE_LABEL, bill, isSeated, roomServiceOutlet, seatsTaken, sharesSeats, tk, type Item, type Line, type Order, type Place, type Service } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
 import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
-import { MealsFrame } from "./frame";
+import { MealsFrame, useMealsFull } from "./frame";
 import { Dish, PaySheet, SERVICE_ICON, StatusChip, useRestaurant, useToast, type Restaurant } from "./shared";
 import { billHtml, kotHtml, printHtml } from "./print";
-import { imgSrc } from "@/lib/img";
-
-// Full-screen restaurant mode: remembered per device, so a restaurant tablet or counter PC keeps opening the POS full screen.
-const FKEY = "bingi.meals.pos.full";
-const fsubs = new Set<() => void>();
-function useFullPos() {
-  const on = useSyncExternalStore((f) => (fsubs.add(f), () => void fsubs.delete(f)), () => { try { return localStorage.getItem(FKEY) === "1"; } catch { return false; } }, () => false);
-  const set = (v: boolean) => {
-    try { localStorage.setItem(FKEY, v ? "1" : "0"); } catch {}
-    try { if (v && !document.fullscreenElement) document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {}); else if (!v && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch { /* browser blocked it — the full-screen layout still fills the window */ }
-    fsubs.forEach((f) => f());
-  };
-  return [on, set] as const;
-}
-function useClock() {
-  const [t, setT] = useState(() => new Date());
-  useEffect(() => { const i = setInterval(() => setT(new Date()), 30_000); return () => clearInterval(i); }, []);
-  return t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
 
 const key = (l: Pick<Line, "item" | "size">) => `${l.item}|${l.size ?? ""}`;
 const openOrder = (o: Order) => o.at.slice(0, 10) === TODAY && o.pay === "unpaid" && !["cancelled", "declined"].includes(o.status);
@@ -62,9 +42,7 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const [done, setDone] = useState<{ id: string; round: number } | null>(null);
   const [pay, setPay] = useState<string | null>(null);
   const cartRef = useRef<HTMLElement>(null);
-  const [full, setFull] = useFullPos();
-  const clock = useClock();
-  useEffect(() => { if (!full) return; const k = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.fullscreenElement && !pay) setFull(false); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [full, pay, setFull]);
+  const [full] = useMealsFull();
   const running = run ? st.orders.find((o) => o.id === run) : undefined;
   const items = useMemo(() => st.items.filter((i) => i.pos && (cat === "all" || i.cat === cat) && (!q || i.name.toLowerCase().includes(q.toLowerCase()))), [st.items, cat, q]);
   const service = running?.service ?? (services.includes(svc) ? svc : services[0]);
@@ -121,7 +99,7 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const doneOrder = done ? st.orders.find((o) => o.id === done.id) : undefined;
   return (
-    <PosShell full={full} setFull={setFull} toast={toast} outlets={r.m.outlets} hotel={r.h.name} outlet={r.outlet} clock={clock}>
+    <MealsFrame tab="pos" toast={toast} outlets={r.m.outlets} fill>
       <div className={clsx("grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]", full && "lg:h-full lg:min-h-0")}>
         <div className={clsx("min-w-0", full && "lg:min-h-0 lg:overflow-y-auto lg:pb-4 lg:pr-1")}>
           <div className="flex flex-wrap items-center gap-2">
@@ -129,7 +107,6 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
               {([["tables", "Tables", LayoutGrid], ["menu", "Menu", UtensilsCrossed]] as const).map(([v, l, I]) => <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={clsx("flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[14px] font-semibold transition-colors", view === v ? "bg-white shadow-sm" : "text-[#4d5664] hover:text-hms-ink")}><I className="size-4" aria-hidden />{l}</button>)}
             </div>
             {view === "menu" && <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-lg border border-hms-line bg-white px-3 sm:w-[220px]"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search dishes" aria-label="Search dishes" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>}
-            {!full && <button onClick={() => setFull(true)} className={clsx(btnLine, "h-10 px-3", view !== "menu" && "ml-auto")} aria-label="Open POS in full screen" title="Full screen for the restaurant team — hides the HMS menu"><Maximize2 className="size-4" aria-hidden /><span className="hidden sm:inline">Full screen</span></button>}
           </div>
 
           {view === "tables" ? (
@@ -271,24 +248,6 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
       </div>
       {count > 0 && <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })} className={clsx("fixed inset-x-4 z-[86] flex h-12 items-center justify-between rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white shadow-lg lg:hidden", full ? "bottom-4" : "bottom-20")}><span>Order · {count} item{count > 1 ? "s" : ""}</span><span className="tabular-nums">{tk(b.total)}</span></button>}
       {pay && <PaySheet r={r} id={pay} onClose={() => setPay(null)} onDone={(m) => { show(m); setPay(null); setDone(null); setRun(null); setView("tables"); }} />}
-    </PosShell>
+    </MealsFrame>
   );
-}
-
-/** Normal: inside the Restaurant & Bar frame. Full screen: only the POS, over the whole window (HMS menu and header hidden). */
-function PosShell({ full, setFull, toast, outlets, hotel, outlet, clock, children }: { full: boolean; setFull: (v: boolean) => void; toast?: string; outlets: string[]; hotel: string; outlet: string; clock: string; children: React.ReactNode }) {
-  if (!full) return <MealsFrame tab="pos" toast={toast} outlets={outlets}>{children}</MealsFrame>;
-  return createPortal(
-    <div role="dialog" aria-modal="true" aria-label="Restaurant POS — full screen" className="hms-app fixed inset-0 z-[85] flex flex-col bg-[#f4f6f8]">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
-        {/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}
-        <img src={imgSrc("/brand/bingi-hms.svg")} alt="BinGi HMS" className="h-6 w-auto" />
-        <span className="h-6 w-px bg-hms-line" aria-hidden />
-        <div className="min-w-0 leading-tight"><b className="block truncate text-[14.5px]">Restaurant POS · {outlet}</b><span className="block truncate text-[12px] text-hms-muted">{hotel}</span></div>
-        <span className="ml-auto hidden text-[14px] font-semibold tabular-nums text-hms-muted sm:block" aria-label="Time">{clock}</span>
-        <button onClick={() => setFull(false)} aria-label="Exit full screen" className={clsx(btnLine, "ml-auto h-10 shrink-0 px-3 sm:ml-0")}><Minimize2 className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Exit full screen</span></button>
-      </header>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:overflow-hidden lg:pb-4">{children}</div>
-      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{toast}</div>}
-    </div>, document.body);
 }
