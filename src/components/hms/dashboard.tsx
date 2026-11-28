@@ -1,5 +1,7 @@
 "use client";
 import { FocusButton, FocusView } from "./focus";
+import { MorningSummary } from "./dashboard-summary";
+import { useHousekeeping } from "@/lib/housekeeping/store";
 import { can } from "@/lib/plan";
 // HMS Dashboard (operating property). Layout from Nazmul's reference (10 Nov 2026):
 // greeting → 4 KPIs → Today's priorities + Website & booking → Arriving today + plan card.
@@ -112,6 +114,14 @@ function PlanDashboard() {
     { icon: UserRoundCheck, text: `${n(attIssues, "attendance exception")}`, href: "/hms/staff/attendance", show: hasHrm && attIssues > 0 },
   ].filter((p) => p.show);
 
+  const hkSt = useHousekeeping(h);
+  const notReady = hk && hkSt.ready ? hkSt.units.filter((u) => !hkSt.isReady(u)).length : null;
+  const summary = {
+    hotel: h.name, day: new Date(`${TODAY}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" }),
+    arriving: arriving.length, leaving: departing.length, inHouse: inHouse.length, rooms: rooms.length, occupancy, revenue: bdt(revenue),
+    collect: collect.length, due: bdt(collect.reduce((s0, x) => s0 + x.due, 0)), notReady, orders: hasRestaurant ? ordersToday : null,
+    priorities: priorities.map((p) => p.text),
+  };
   const hour = new Date().getHours();
   const day = new Date(`${TODAY}T00:00:00`).toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "short", year: "numeric" }).replace(",", "");
   const kpis = [
@@ -144,6 +154,8 @@ function PlanDashboard() {
             </div>
           ))}
         </div>
+
+        <MorningSummary data={summary} comm={comm} phone={h.phone} email={h.email} />
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
           <section aria-labelledby="pri" className="flex flex-col gap-4 rounded-xl border border-hms-line bg-white p-5 sm:flex-row sm:items-center">

@@ -148,8 +148,21 @@ function Calendar() {
     justDragged.current = true; setTimeout(() => { justDragged.current = false; }, 0);
     const p = dropOf(d); const b = bk.list.find((x) => x.code === d.code);
     if (!p || !b || !p.unit || (p.unit === b.unit && p.from === b.from && p.to === b.to)) return;
+    const l = landing(d); if (l && !l.ok) { toast(`Can't move ${b.code} here · ${l.why}`); return; }
     setPerr(""); setPending(p);
   };
+  /** While dragging: where the stay would land and whether it can (same rules as moveStay, checked live). */
+  function landing(d: Drag) {
+    const p = dropOf(d); const b = bk.list.find((x) => x.code === d.code);
+    if (!p || !b || !p.unit) return null;
+    const u = bk.unitByCode.get(p.unit);
+    const why = b.status === "Checked in" && d.kind === "move" && p.unit === b.unit ? "" // in-house: only the room moves
+      : b.status === "Confirmed" && p.from < TODAY ? "Check-in can't be in the past"
+      : !u ? "Pick a room" : oooOn(u, p.from, p.to) ? `Room ${p.unit} is out of order`
+      : (() => { const c = bk.clash(p.unit, b.status === "Checked in" && TODAY > p.from ? TODAY : p.from, p.to, b.code); return c ? `Taken by ${c.code}` : ""; })();
+    return { ...p, ok: !why, why, n: Math.round((Date.parse(p.to) - Date.parse(p.from)) / 864e5) };
+  }
+  const ghost = drag?.moved ? landing(drag) : null;
   const pb = pending ? bk.list.find((x) => x.code === pending.code) : undefined;
   const confirmMove = () => {
     if (!pending || !pb) return;
@@ -335,6 +348,12 @@ function Calendar() {
                         const n = nightsOf(view.from, view.to).length;
                         return <span aria-hidden className="pointer-events-none absolute inset-y-1 z-[2] flex items-center justify-end rounded-lg border-2 border-[#2f6fed] bg-[#2f6fed]/[0.06] px-2" style={{ left: ((Date.parse(f) - Date.parse(start)) / 864e5) * W + 1, width: ((Date.parse(t) - Date.parse(f)) / 864e5) * W - 2 }}>{W * n > 90 && <span className="rounded bg-[#2f6fed] px-1.5 text-[11px] font-bold text-white">{n} night{n > 1 ? "s" : ""}</span>}</span>;
                       })()}
+                      {ghost && ghost.unit === u.code && ghost.from < end && ghost.to > start && (() => {
+                        const f = ghost.from < start ? start : ghost.from, t = ghost.to > end ? end : ghost.to;
+                        return <span aria-hidden className={clsx("pointer-events-none absolute inset-y-1 z-[3] rounded-lg border-2 border-dashed", ghost.ok ? "border-[#16a34a] bg-[#16a34a]/10 text-[#14632f]" : "border-[#d92d20] bg-[#d92d20]/10 text-[#a3302a]")}
+                          style={{ left: ((Date.parse(f) - Date.parse(start)) / 864e5) * W + (ghost.from >= start ? W / 2 : 0) + 2, width: Math.max(24, ((Date.parse(t) - Date.parse(f)) / 864e5) * W - 4) }}>
+                        </span>;
+                      })()}
                       {bk.list.filter((b) => b.unit === u.code && inRange(b)).map(bar)}
                       {u.ooo && oooOn(u, start, end) && <span style={{ left: Math.max(0, (Date.parse(u.ooo.since.slice(0, 10) > start ? u.ooo.since.slice(0, 10) : start) - Date.parse(start)) / 864e5) * W + 8 }} className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded bg-white/90 px-1.5 text-[12px] font-semibold text-[#8a4b00]">Out of order · {u.ooo.reason}{u.ooo.until ? ` → ${dm(u.ooo.until)}` : ""}</span>}
                     </div>
@@ -374,6 +393,9 @@ function Calendar() {
       )}
 
       {/* hover card */}
+      {ghost && drag && <div role="status" className={clsx("pointer-events-none fixed z-50 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold text-white shadow-lg", ghost.ok ? "bg-[#14632f]" : "bg-[#b42318]")} style={{ left: drag.x0 + drag.dx + 18, top: drag.y0 + drag.dy - 40 }}>
+        {ghost.ok ? `Room ${ghost.unit} · ${dm(ghost.from)} – ${dm(ghost.to)} · ${ghost.n} night${ghost.n > 1 ? "s" : ""}` : `Can't drop · ${ghost.why}`}
+      </div>}
       {hb && hover && !drag && (
         <div role="tooltip" className="pointer-events-none fixed z-50 w-64 rounded-xl border border-hms-line bg-white p-3 text-[13px] shadow-xl" style={{ left: Math.min(hover.x + 14, (typeof window !== "undefined" ? window.innerWidth : 1600) - 270), top: hover.y + 16 }}>
           <div className="flex items-center gap-2"><span className={clsx("size-3 rounded border", SKM[skOf(hb)].chip)} /><b className="truncate">{name(hb)}</b><span className="ml-auto text-[11.5px] text-hms-muted">{hb.code}</span></div>

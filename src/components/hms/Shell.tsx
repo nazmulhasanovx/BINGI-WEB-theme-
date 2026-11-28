@@ -88,7 +88,7 @@ const SUBS: Record<string, Sub[]> = {
     { label: "Day close", href: "/hms/bookings/close", edit: true, boss: true }, { label: "Booking reports", href: "/hms/bookings/reports", boss: true },
   ],
   rooms: [{ label: "Room types", href: "/hms/rooms" }, { label: "Room numbers", href: "/hms/rooms/numbers" }, { label: "Setup", href: "/hms/rooms/configuration", edit: true, boss: true }],
-  housekeeping: [{ label: "Tasks", href: "/hms/housekeeping" }, { label: "Maintenance", href: "/hms/housekeeping?tab=maintenance" }, { label: "Checklist", href: "/hms/housekeeping?tab=checklist", edit: true }],
+  housekeeping: [{ label: "Tasks", href: "/hms/housekeeping" }, { label: "Floor map", href: "/hms/housekeeping?tab=map" }, { label: "Maintenance", href: "/hms/housekeeping?tab=maintenance" }, { label: "Checklist", href: "/hms/housekeeping?tab=checklist", edit: true }],
   guests: [{ label: "All guests", href: "/hms/guests" }, { label: "Reviews", href: "/hms/guests/reviews" }],
   meals: [
     { label: "Overview", href: "/hms/meals" }, { label: "POS", href: "/hms/meals/pos" }, { label: "Orders", href: "/hms/meals/orders" },

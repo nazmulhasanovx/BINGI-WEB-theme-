@@ -25,7 +25,7 @@ import { Toast, bMain, bSoft, card } from "../bookings/ui";
 import { printHtml } from "../meals/print";
 import { hkSheetHtml, workOrderHtml, type HkRow } from "@/lib/bookings/docs-office";
 
-type Tab = "tasks" | "maintenance" | "checklist";
+type Tab = "tasks" | "map" | "maintenance" | "checklist";
 type Stage = "all" | "Open" | "Doing" | "Review" | "ready";
 const CLEANING: TaskKind[] = ["Check-out clean", "Stay-over", "Deep clean", "Inspection"];
 const STAGE: Record<Task["status"], { label: string; dot: string; text: string }> = {
@@ -80,12 +80,13 @@ function HousekeepingBoard() {
         </div>
       </div>
       <div role="tablist" aria-label="Housekeeping sections" className="mt-4 flex gap-6 border-b border-hms-line">
-        {([["tasks", "Tasks"], ["maintenance", "Maintenance"], ["checklist", "Checklist"]] as [Tab, string][]).map(([id, l]) => (
+        {([["tasks", "Tasks"], ["map", "Floor map"], ["maintenance", "Maintenance"], ["checklist", "Checklist"]] as [Tab, string][]).map(([id, l]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={clsx("-mb-px border-b-2 pb-2.5 text-[14.5px] font-semibold transition-colors", tab === id ? "border-[#c8232e] text-[#c8232e]" : "border-transparent text-[#4d5664] hover:text-hms-ink")}>{l}</button>
         ))}
       </div>
       <div className="mt-5">
         {tab === "tasks" && <Tasks hk={hk} say={say} />}
+        {tab === "map" && <FloorMap hk={hk} say={say} />}
         {tab === "maintenance" && <Maintenance hk={hk} rooms={rooms} say={say} />}
         {tab === "checklist" && <Checklists hk={hk} say={say} />}
       </div>
@@ -94,6 +95,117 @@ function HousekeepingBoard() {
         : <AddTask hk={hk} onClose={() => setAdding(false)} say={say} />)}
       {toast && <Toast text={toast} />}
     </FocusView>
+  );
+}
+
+// ---------------------------------------------------------------- Floor map
+// The building drawn floor by floor (top floor first, like the real building), each room a tile coloured by its
+// cleaning state, with who is in it today. Tap a room: its task (open the task sheet) or a quick action.
+type MapState = "ready" | "dirty" | "cleaning" | "review" | "ooo";
+const MAP: Record<MapState, { label: string; tile: string; edge: string; ink: string; dot: string }> = {
+  ready: { label: "Ready", tile: "bg-[#eaf7ef]", edge: "border-[#9fd4b3]", ink: "text-[#16693a]", dot: "#16a34a" },
+  dirty: { label: "Dirty", tile: "bg-[#fff1e8]", edge: "border-[#f3b98f]", ink: "text-[#a4400f]", dot: "#ea580c" },
+  cleaning: { label: "Cleaning", tile: "bg-[#eaf1ff]", edge: "border-[#9dbaf5]", ink: "text-[#1d4ed8]", dot: "#2563eb" },
+  review: { label: "Awaiting inspection", tile: "bg-[#f1eefe]", edge: "border-[#c3b8f3]", ink: "text-[#5140aa]", dot: "#6d5bd0" },
+  ooo: { label: "Out of order", tile: "bg-[repeating-linear-gradient(135deg,#f1f3f5_0_6px,#e6e9ed_6px_12px)]", edge: "border-[#cfd4da]", ink: "text-[#4d5664]", dot: "#8a919c" },
+};
+const OCC_TAG: Record<string, string> = { Occupied: "Guest in", Arriving: "Arriving", Leaving: "Leaving" };
+
+function FloorMap({ hk, say }: { hk: HK; say: (t: string) => void }) {
+  const h = useProperty();
+  const rooms = useRooms(h);
+  const info = useRoomInfo();
+  const [only, setOnly] = useState<MapState | "">("");
+  const [pick, setPick] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const taskOf = (room: string) => hk.st.tasks.find((t) => t.room === room && t.status !== "Done" && CLEANING.includes(t.kind));
+  const stateOf = (room: string): MapState => {
+    if (info.get(room)?.ooo) return "ooo";
+    const t = taskOf(room);
+    if (t?.status === "Doing") return "cleaning";
+    if (t?.status === "Review") return "review";
+    return hk.isReady(room) ? "ready" : "dirty";
+  };
+  // Floors from the property setup (building › floor); top floor first.
+  const floors = useMemo(() => {
+    const cfg = rooms.st.config;
+    const by = new Map<string, { name: string; level: number; codes: string[] }>();
+    for (const u of rooms.st.units.filter((x) => x.status === "published" && hk.units.includes(x.code))) {
+      const n = cfg.nodes.find((x) => x.id === u.node);
+      const k = n?.id ?? "other";
+      if (!by.has(k)) by.set(k, { name: n ? nodePath(cfg, n.id) : "Other rooms", level: n?.level ?? 0, codes: [] });
+      by.get(k)!.codes.push(u.code);
+    }
+    return [...by.values()].map((f) => ({ ...f, codes: f.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })) })).sort((a, b) => b.level - a.level || b.name.localeCompare(a.name));
+  }, [rooms.st, hk.units]);
+  const all = floors.flatMap((f) => f.codes);
+  const count = (s: MapState) => all.filter((c) => stateOf(c) === s).length;
+  const task = open ? hk.st.tasks.find((t) => t.id === open) : undefined;
+  const sel = pick ? { code: pick, st: stateOf(pick), r: info.get(pick), t: taskOf(pick) } : null;
+  return (
+    <>
+      <div role="radiogroup" aria-label="Show rooms" className="flex flex-wrap gap-2">
+        {(Object.keys(MAP) as MapState[]).map((s) => (
+          <button key={s} role="radio" aria-checked={only === s} onClick={() => setOnly(only === s ? "" : s)}
+            className={clsx("inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-[13.5px] font-semibold transition-colors", only === s ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>
+            <span className="size-2.5 rounded-full" style={{ background: MAP[s].dot }} aria-hidden />{MAP[s].label}<b className="tabular-nums">{count(s)}</b>
+          </button>
+        ))}
+      </div>
+
+      {/* the building */}
+      <div className="mt-4 overflow-x-auto">
+        <div className="min-w-[560px]">
+          <div aria-hidden className="mx-6 h-5 rounded-t-[28px] border border-b-0 border-[#d9cbb6] bg-gradient-to-b from-[#efe5d6] to-[#e6d9c5]" />
+          <div className="rounded-2xl border border-[#d9cbb6] bg-[#fbf8f3] p-2 shadow-[0_8px_24px_-12px_rgb(60_40_20/0.25)]">
+            {floors.map((f, fi) => (
+              <section key={f.name} aria-label={f.name} className={clsx("flex items-stretch gap-3 p-2.5", fi > 0 && "border-t-[3px] border-[#e8dccb]")}>
+                <div className="flex w-[92px] shrink-0 flex-col justify-center rounded-xl bg-white px-2.5 py-2 ring-1 ring-[#ece3d6]">
+                  <b className="text-[13.5px] leading-tight">{f.name.replace(/^.* › /, "")}</b>
+                  <span className="text-[11.5px] text-hms-muted">{f.codes.filter((c) => stateOf(c) === "ready").length}/{f.codes.length} ready</span>
+                </div>
+                <ul className="flex flex-1 flex-wrap gap-2">{f.codes.map((c) => { const st = stateOf(c); const m = MAP[st]; const r = info.get(c); const t = taskOf(c); const dim = only && only !== st; return (
+                  <li key={c}><button onClick={() => setPick(c)} aria-label={`Room ${c} · ${m.label}${r && OCC_TAG[r.occ] ? ` · ${OCC_TAG[r.occ]}` : ""}`}
+                    className={clsx("relative flex h-[78px] w-[92px] flex-col rounded-xl border-2 px-2 pb-1.5 pt-2 text-left transition-[transform,opacity] hover:-translate-y-0.5", m.tile, m.edge, dim && "opacity-25", pick === c && "ring-2 ring-hms-ink ring-offset-2")}>
+                    <span aria-hidden className="absolute inset-x-3 top-0 h-1 rounded-b-full" style={{ background: m.dot }} />
+                    <span className="flex items-center justify-between gap-1"><b className="text-[17px] leading-none tabular-nums">{c}</b>
+                      {st === "cleaning" ? <Brush className={clsx("size-3.5", m.ink)} aria-hidden /> : st === "review" ? <ShieldCheck className={clsx("size-3.5", m.ink)} aria-hidden /> : st === "ooo" ? <Wrench className={clsx("size-3.5", m.ink)} aria-hidden /> : st === "ready" ? <Check className={clsx("size-3.5", m.ink)} aria-hidden /> : <Sparkles className={clsx("size-3.5", m.ink)} aria-hidden />}</span>
+                    <span className={clsx("mt-0.5 truncate text-[11px] font-semibold", m.ink)}>{m.label === "Awaiting inspection" ? "Inspect" : m.label}</span>
+                    <span className="mt-auto flex items-center justify-between gap-1">
+                      {r && OCC_TAG[r.occ] ? <span className={clsx("truncate rounded px-1 text-[10px] font-bold", r.occ === "Arriving" ? "bg-[#fff3d6] text-[#8a5300]" : r.occ === "Leaving" ? "bg-[#ffe4e1] text-[#a3302a]" : "bg-white/80 text-[#3a414c]")}>{OCC_TAG[r.occ]}</span> : <span />}
+                      {t?.who && <span title={t.who} className="grid size-5 shrink-0 place-items-center rounded-full bg-white text-[9px] font-bold ring-1 ring-black/10">{initials(t.who)}</span>}
+                    </span>
+                  </button></li>
+                ); })}</ul>
+              </section>
+            ))}
+          </div>
+          <div aria-hidden className="mx-2 h-2 rounded-b-xl bg-[#e1d4c1]" />
+        </div>
+      </div>
+      <p className="mt-3 text-[13px] text-hms-muted">Top floor first. Tap a room to see its task. &ldquo;Arriving&rdquo; rooms that are not ready come first in Tasks.</p>
+
+      {sel && (
+        <Drawer title={`Room ${sel.code}`} onClose={() => setPick(null)} footer={<div className="flex gap-2">
+          {sel.t ? <button onClick={() => { setOpen(sel.t!.id); setPick(null); }} className={clsx(bMain, "flex-1")}>{sel.t.status === "Review" ? "Inspect" : "Open task"}</button>
+            : sel.st === "dirty" ? <button onClick={() => { hk.addTask(sel.code, "Check-out clean", { priority: sel.r?.occ === "Arriving" ? "High" : "Normal" }); say(`Cleaning task added · Room ${sel.code}`); setPick(null); }} className={clsx(bMain, "flex-1")}>Add cleaning task</button>
+            : sel.st === "ready" ? <button onClick={() => { hk.setClean(sel.code, "Dirty"); say(`Room ${sel.code} marked dirty`); setPick(null); }} className={clsx(bSoft, "flex-1")}>Mark dirty</button> : null}
+          <button onClick={() => setPick(null)} className={bSoft}>Close</button>
+        </div>}>
+          <div className="space-y-3 text-[14px]">
+            <p className="flex items-center gap-2"><span className="size-3 rounded-full" style={{ background: MAP[sel.st].dot }} aria-hidden /><b>{MAP[sel.st].label}</b></p>
+            <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
+              <dt className="text-hms-muted">Type</dt><dd>{sel.r?.type || "—"}</dd>
+              <dt className="text-hms-muted">Where</dt><dd>{sel.r?.where || "—"}</dd>
+              <dt className="text-hms-muted">Today</dt><dd>{sel.r ? (OCC_TAG[sel.r.occ] ?? "Empty") : "—"}{sel.r?.guest ? ` · ${sel.r.guest}` : ""}</dd>
+              {sel.t && <><dt className="text-hms-muted">Task</dt><dd>{KIND_LABEL[sel.t.kind]} · {STAGE[sel.t.status].label}{sel.t.who ? ` · ${sel.t.who}` : ""}{sel.t.due ? ` · due ${sel.t.due}` : ""}</dd></>}
+              {sel.st === "ooo" && <><dt className="text-hms-muted">Reason</dt><dd>{sel.r?.reason || "Out of order"}</dd></>}
+            </dl>
+          </div>
+        </Drawer>
+      )}
+      {task && <TaskSheet t={task} hk={hk} info={info.get(task.room)} onClose={() => setOpen(null)} say={say} />}
+    </>
   );
 }
 
