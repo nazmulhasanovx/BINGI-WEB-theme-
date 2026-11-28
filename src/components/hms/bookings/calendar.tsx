@@ -37,8 +37,9 @@ const effTo = (b: Booking) => (b.status === "Checked in" && b.to < TODAY ? addDa
 
 type Drag = { code: string; kind: "move" | "end"; x0: number; y0: number; dx: number; dy: number; room: string; moved: boolean };
 type Pending = { code: string; unit: string; from: string; to: string };
-type Pick = { r0: number; d0: string; r1: number; d1: string; base: Set<string> };
-const key = (room: string, d: string) => `${room}|${d}`;
+/** One stay for one guest: every picked room has the same nights, with no gaps. `to` = check-out day. */
+type Sel = { rooms: string[]; from: string; to: string };
+type PickDrag = { room: string; d0: string; r1: number; d1: string; moved: boolean };
 
 function Calendar() {
   const { bk, guests, open, toast } = useBk();
@@ -50,8 +51,9 @@ function Calendar() {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [perr, setPerr] = useState("");
-  const [sel, setSel] = useState<Set<string>>(new Set());
-  const [pick, setPick] = useState<Pick | null>(null);
+  const [sel, setSel] = useState<Sel | null>(null);
+  const [pick, setPick] = useState<PickDrag | null>(null);
+  const [selErr, setSelErr] = useState("");
   const [focus, setFocus] = useState<SK | null>(null);
   const [hover, setHover] = useState<{ code: string; x: number; y: number } | null>(null);
   const justDragged = useRef(false);
@@ -159,48 +161,52 @@ function Calendar() {
   const newTotal = pending && pb ? (() => { const old = new Map(pb.nights.map((n) => [n.date, n.base])); const f = priceAt(pending.unit); let s0 = 0; for (let d = pending.from; d < pending.to; d = addDays(d, 1)) s0 += old.get(d) ?? f(d); return s0; })() : 0;
   const oldTotal = pb ? pb.nights.reduce((s0, n) => s0 + n.base, 0) : 0;
 
-  /* ---------- select free nights: click one, drag a box across rooms and days, Ctrl/⌘ or Shift to add more ---------- */
-  const boxOf = (p: Pick) => {
-    const [ra, rb] = p.r0 <= p.r1 ? [p.r0, p.r1] : [p.r1, p.r0];
-    const [da, db] = p.d0 <= p.d1 ? [p.d0, p.d1] : [p.d1, p.d0];
-    const out = new Set(p.base);
-    for (let r = ra; r <= rb; r++) { const u = bk.unitByCode.get(order[r]); if (!u) continue; for (let d = da; d <= db; d = addDays(d, 1)) if (freeAt(u, d)) out.add(key(u.code, d)); }
-    return out;
+  /* ---------- select one stay: first night, then last night (all nights between are filled); tap other rooms to add them on the same dates ---------- */
+  const nightsOf = (from: string, to: string) => { const o: string[] = []; for (let d = from; d < to; d = addDays(d, 1)) o.push(d); return o; };
+  const blockedOn = (room: string, from: string, to: string) => { const u = bk.unitByCode.get(room); if (!u) return from; return nightsOf(from, to).find((d) => !freeAt(u, d)); };
+  const tryRange = (rooms: string[], from: string, to: string): string => {
+    for (const r of rooms) { const d = blockedOn(r, from, to); if (d) return `Room ${r} is not free on ${dm(d)}. Pick dates around it, or another room.`; }
+    return "";
   };
-  const live2 = pick ? boxOf(pick) : sel;
+  const apply = (next: Sel | null) => {
+    if (!next || !next.rooms.length) { setSel(null); setSelErr(""); return; }
+    const e = tryRange(next.rooms, next.from, next.to);
+    if (e) { setSelErr(e); return; }
+    setSelErr(""); setSel(next);
+  };
+  const tapNight = (room: string, d: string) => {
+    if (!sel) return apply({ rooms: [room], from: d, to: addDays(d, 1) });
+    if (!sel.rooms.includes(room)) return apply({ ...sel, rooms: [...sel.rooms, room].sort((a, b) => order.indexOf(a) - order.indexOf(b)) });
+    // Same room: tap before = new first night, tap after = new last night, tap inside = stay ends that night.
+    if (d < sel.from) return apply({ ...sel, from: d });
+    if (d >= sel.to) return apply({ ...sel, to: addDays(d, 1) });
+    if (d === sel.from && sel.to === addDays(d, 1)) return apply({ ...sel, rooms: sel.rooms.filter((r) => r !== room) });
+    return apply({ ...sel, to: addDays(d, 1) });
+  };
+  // Drag = the same rule in one move: across days sets the nights, down/up adds the rooms passed over.
+  const dragSel = (p: PickDrag): Sel => {
+    const from = p.d0 <= p.d1 ? p.d0 : p.d1, to = addDays(p.d0 <= p.d1 ? p.d1 : p.d0, 1);
+    const r0 = order.indexOf(p.room); const [ra, rb] = r0 <= p.r1 ? [r0, p.r1] : [p.r1, r0];
+    const rooms = order.slice(ra, rb + 1).filter((r) => r === p.room || !blockedOn(r, from, to));
+    return { rooms, from, to };
+  };
+  const view = pick && pick.moved ? dragSel(pick) : sel;
+  const inSel = (room: string, d: string) => !!view && view.rooms.includes(room) && d >= view.from && d < view.to;
   useEffect(() => {
     if (!pick) return;
-    const up = () => {
-      const p = pick; setPick(null);
-      if (p.r0 === p.r1 && p.d0 === p.d1) { const k = key(order[p.r0], p.d0); const n = new Set(p.base); if (n.has(k)) n.delete(k); else n.add(k); setSel(n); return; }
-      setSel(boxOf(p));
-    };
-    window.addEventListener("pointerup", up); return () => window.removeEventListener("pointerup", up);
+    const up = () => { const p = pick; setPick(null); if (!p.moved) return tapNight(p.room, p.d0); justDragged.current = true; setTimeout(() => { justDragged.current = false; }, 0); apply(dragSel(p)); };
+    const cancel = () => setPick(null);
+    window.addEventListener("pointerup", up); window.addEventListener("pointercancel", cancel);
+    return () => { window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", cancel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pick]);
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === "Escape") { setSel(new Set()); setFocus(null); } }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
-  const startPick = (e: React.PointerEvent, room: string, d: string) => {
-    if (e.button !== 0) return;
-    const r = order.indexOf(room);
-    const keep = e.ctrlKey || e.metaKey || e.shiftKey || sel.has(key(room, d));
-    setPick({ r0: r, d0: d, r1: r, d1: d, base: keep ? new Set(sel) : new Set() });
-  };
-  const extendPick = (room: string, d: string) => { if (pick) setPick({ ...pick, r1: order.indexOf(room), d1: d }); };
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === "Escape") { setSel(null); setSelErr(""); setFocus(null); } }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
+  const startPick = (e: React.PointerEvent, room: string, d: string) => { if (e.button !== 0) return; setPick({ room, d0: d, r1: order.indexOf(room), d1: d, moved: false }); };
+  const extendPick = (room: string, d: string) => { if (pick) { const r1 = order.indexOf(room); if (r1 !== pick.r1 || d !== pick.d1) setPick({ ...pick, r1, d1: d, moved: true }); } };
 
-  // Selection summary: per room, its nights; the rooms can be booked together when they share one unbroken stay.
-  const picked = useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const k of sel) { const [r, d] = k.split("|"); m.set(r, [...(m.get(r) ?? []), d]); }
-    return [...m.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])).map(([room, ds]) => {
-      ds.sort();
-      const gap = ds.some((d, i) => i > 0 && addDays(ds[i - 1], 1) !== d);
-      const f = priceAt(room);
-      return { room, from: ds[0], to: addDays(ds[ds.length - 1], 1), nights: ds.length, gap, total: ds.reduce((s, d) => s + f(d), 0) };
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sel, order, rates]);
-  const together = picked.length > 0 && !picked.some((p) => p.gap) && picked.every((p) => p.from === picked[0].from && p.to === picked[0].to);
-  const selTotal = picked.reduce((s, p) => s + p.total, 0);
+  const nights = sel ? nightsOf(sel.from, sel.to).length : 0;
+  const lines = sel ? sel.rooms.map((r) => { const f = priceAt(r); return { room: r, total: nightsOf(sel.from, sel.to).reduce((t, d) => t + f(d), 0) }; }) : [];
+  const selTotal = lines.reduce((t, l) => t + l.total, 0);
   const book = (rooms: string[], from: string, to: string) => router.push(`/hms/bookings/new?${rooms.length > 1 ? `rooms=${rooms.map(encodeURIComponent).join(",")}` : `room=${encodeURIComponent(rooms[0])}`}&from=${from}&to=${to}`);
 
   const hb = hover ? bk.list.find((x) => x.code === hover.code) : undefined;
@@ -309,8 +315,8 @@ function Calendar() {
                       {dates.map((d) => {
                         const off = oooOn(u, d, addDays(d, 1));
                         const can = freeAt(u, d);
-                        const on = live2.has(key(u.code, d));
-                        const cls = clsx("h-full shrink-0 border-r border-hms-line last:border-r-0", off && "hms-hatch", d === TODAY && "bg-hms-coral-soft/40", d < TODAY && "bg-[#fafbfc]", can && !on && "hover:bg-[#f0f4ff]", on && "!bg-[#dfe8ff] ring-2 ring-inset ring-[#2f6fed]");
+                        const on = inSel(u.code, d);
+                        const cls = clsx("h-full shrink-0 border-r border-hms-line last:border-r-0", off && "hms-hatch", d === TODAY && "bg-hms-coral-soft/40", d < TODAY && "bg-[#fafbfc]", can && !on && "hover:bg-[#f0f4ff]", on && "!bg-[#e6eeff]");
                         if (!can) return <div key={d} style={{ width: W }} className={cls} onPointerEnter={() => extendPick(u.code, d)} />;
                         const p = details ? priceAt(u.code)(d) : 0;
                         // Morning of a check-out day: the left half is under the leaving guest's bar, so the price sits on the right.
@@ -319,12 +325,16 @@ function Calendar() {
                         return (
                           <button key={d} tabIndex={-1} aria-pressed={on} aria-label={`Room ${u.code}, ${dm(d)}${details ? `, ${tk(p)}` : ""}, ${on ? "selected" : "free"}`}
                             onPointerDown={(e) => startPick(e, u.code, d)} onPointerEnter={() => extendPick(u.code, d)}
-                            onDoubleClick={() => book([u.code], d, addDays(d, 1))}
                             style={{ width: W }} className={clsx(cls, "relative", half ? "pr-1.5 text-right" : "text-center")}>
                             {details && <span className={clsx("pointer-events-none tabular-nums", half ? "text-[10.5px]" : "text-[11.5px]", dl ? "font-semibold text-[#16693a]" : on ? "font-semibold text-[#173a8a]" : "text-[#8a929e]")}>{half ? `${Math.round(p / 100) / 10}k` : fmt(p)}</span>}
                           </button>
                         );
                       })}
+                      {view && view.rooms.includes(u.code) && view.from < end && view.to > start && (() => {
+                        const f = view.from < start ? start : view.from, t = view.to > end ? end : view.to;
+                        const n = nightsOf(view.from, view.to).length;
+                        return <span aria-hidden className="pointer-events-none absolute inset-y-1 z-[2] flex items-center justify-end rounded-lg border-2 border-[#2f6fed] bg-[#2f6fed]/[0.06] px-2" style={{ left: ((Date.parse(f) - Date.parse(start)) / 864e5) * W + 1, width: ((Date.parse(t) - Date.parse(f)) / 864e5) * W - 2 }}>{W * n > 90 && <span className="rounded bg-[#2f6fed] px-1.5 text-[11px] font-bold text-white">{n} night{n > 1 ? "s" : ""}</span>}</span>;
+                      })()}
                       {bk.list.filter((b) => b.unit === u.code && inRange(b)).map(bar)}
                       {u.ooo && oooOn(u, start, end) && <span style={{ left: Math.max(0, (Date.parse(u.ooo.since.slice(0, 10) > start ? u.ooo.since.slice(0, 10) : start) - Date.parse(start)) / 864e5) * W + 8 }} className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded bg-white/90 px-1.5 text-[12px] font-semibold text-[#8a4b00]">Out of order · {u.ooo.reason}{u.ooo.until ? ` → ${dm(u.ooo.until)}` : ""}</span>}
                     </div>
@@ -336,27 +346,31 @@ function Calendar() {
         </div>
       </div>
 
-      {/* selection tray */}
-      {picked.length > 0 ? (
-        <div role="region" aria-label="Selected nights" className="hms-up fixed bottom-4 left-1/2 z-40 flex w-[min(1080px,calc(100vw-2rem))] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-hms-line bg-white px-4 py-3 shadow-[0_12px_40px_rgb(16_24_40/0.18)]">
+      {/* selection tray: one stay, same nights for every room */}
+      {sel || selErr ? (
+        <div role="region" aria-label="Selected stay" className="hms-up fixed bottom-4 left-1/2 z-40 flex w-[min(1080px,calc(100vw-2rem))] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-hms-line bg-white px-4 py-3 shadow-[0_12px_40px_rgb(16_24_40/0.18)]">
           <div className="min-w-0 flex-1">
-            <p className="text-[14.5px] font-bold">{picked.length} room{picked.length > 1 ? "s" : ""} · {together ? `${dm(picked[0].from)} → ${dm(picked[0].to)} · ${picked[0].nights} night${picked[0].nights > 1 ? "s" : ""}` : `${picked.reduce((s, p) => s + p.nights, 0)} room-nights`} · <span className="tabular-nums">{tk(selTotal)}</span> <span className="text-[12.5px] font-normal text-hms-muted">before VAT &amp; service</span></p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {picked.map((p) => (
-                <span key={p.room} className={clsx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold", p.gap ? "bg-[#fde3e1] text-[#8f1d14]" : "bg-[#eef3fe] text-[#1e3a8a]")}>
-                  {p.room} · {dm(p.from)}–{dm(p.to)}{p.gap && " · gap"}
-                  {!together && !p.gap && <button onClick={() => book([p.room], p.from, p.to)} className="ml-0.5 underline">Book</button>}
-                  <button aria-label={`Remove ${p.room}`} onClick={() => setSel(new Set([...sel].filter((k) => !k.startsWith(`${p.room}|`))))} className="opacity-60 hover:opacity-100"><X className="size-3.5" /></button>
-                </span>
-              ))}
-            </div>
-            {!together && <p className="mt-1 text-[12.5px] text-[#8a4b00]">{picked.some((p) => p.gap) ? "Pick nights next to each other for each room." : "Rooms have different dates — book each one, or select the same nights for all to book them together."}</p>}
+            {sel ? (
+              <>
+                <p className="text-[14.5px] font-bold">{sel.rooms.length} room{sel.rooms.length > 1 ? "s" : ""} · {dm(sel.from)} → {dm(sel.to)} · {nights} night{nights > 1 ? "s" : ""} · <span className="tabular-nums">{tk(selTotal)}</span> <span className="text-[12.5px] font-normal text-hms-muted">before VAT &amp; service</span></p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {lines.map((l) => (
+                    <span key={l.room} className="inline-flex items-center gap-1.5 rounded-full bg-[#eef3fe] px-2.5 py-1 text-[12.5px] font-semibold text-[#1e3a8a]">
+                      Room {l.room} · <span className="tabular-nums">{tk(l.total)}</span>
+                      <button aria-label={`Remove room ${l.room}`} onClick={() => apply({ ...sel, rooms: sel.rooms.filter((r) => r !== l.room) })} className="opacity-60 hover:opacity-100"><X className="size-3.5" /></button>
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-1 text-[12.5px] text-hms-muted">Tap another night in a picked room to change the dates · tap another room to add it on the same dates.</p>
+              </>
+            ) : <p className="text-[14px] font-semibold">Pick a free night to start.</p>}
+            {selErr && <p role="alert" className="mt-1 text-[13px] font-semibold text-[#b42318]">{selErr}</p>}
           </div>
-          <button onClick={() => setSel(new Set())} className="h-10 rounded-xl bg-white px-4 text-[14px] font-semibold ring-1 ring-hms-line hover:bg-hms-hover">Clear</button>
-          <button disabled={!together} onClick={() => book(picked.map((p) => p.room), picked[0].from, picked[0].to)} className="btn-glow h-10 rounded-xl px-4 text-[14px] font-semibold text-white disabled:opacity-40">Book {picked.length > 1 ? `${picked.length} rooms together` : "this room"}</button>
+          <button onClick={() => { setSel(null); setSelErr(""); }} className="h-10 rounded-xl bg-white px-4 text-[14px] font-semibold ring-1 ring-hms-line hover:bg-hms-hover">Clear</button>
+          {sel && <button onClick={() => book(sel.rooms, sel.from, sel.to)} className="btn-glow h-10 rounded-xl px-4 text-[14px] font-semibold text-white">Book {sel.rooms.length > 1 ? `${sel.rooms.length} rooms` : `room ${sel.rooms[0]}`} · {nights} night{nights > 1 ? "s" : ""}</button>}
         </div>
       ) : (
-        <p className="border-t border-hms-line px-4 py-2.5 text-[12.5px] text-hms-muted">Tap free nights to select them — drag a box across rooms and days, hold Ctrl/⌘ to add more, then <b>Book</b>. Double-tap a night to book it at once. Drag a booking to move it; drag its right edge to change check-out. Prices are per night before VAT &amp; service.</p>
+        <p className="border-t border-hms-line px-4 py-2.5 text-[12.5px] text-hms-muted">To book: tap the first night, then the last night — every night between is included. Tap other rooms to add them on the same dates, then <b>Book</b>. Or drag across days and rooms. Drag a booking to move it; drag its right edge to change check-out. Prices are per night before VAT &amp; service.</p>
       )}
 
       {/* hover card */}

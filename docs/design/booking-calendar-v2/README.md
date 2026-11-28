@@ -15,10 +15,12 @@ lists 17 "Not live" draft units first, and cuts guest names to "Q.".
 3. A guest past check-out still blocks the room until checked out (effTo = tonight). Free counts use the same rule.
 4. Simple / Details switch (saved per browser). Details: price per category per night + free count,
    price in every free room-night (deal price green), due amount on bars.
-5. Select and book together: tap free nights, drag a box across rooms and days, Ctrl/Cmd/Shift to add.
-   Tray shows rooms, dates, nights and total before VAT & service. Same dates for all rooms →
-   "Book N rooms together" opens New booking with ?rooms=a,b,c&from&to (New booking reads `rooms`).
-   Different dates → book each room from its chip. Double-tap a night = book it at once.
+5. Select and book (one guest, one stay): tap the first night, then the last night — every night between
+   is included, no gaps. Tap another room to add it on the SAME dates. Tap a night inside the range = stay ends
+   that night; tap before/after = move first/last night. If any picked room is not free on a night, the tray
+   says "Room X is not free on <date>" and keeps the old selection. Drag across days and rooms does the same in
+   one move. Tray: rooms, dates, nights, total before VAT & service → "Book N rooms · M nights" opens
+   New booking with ?rooms=a,b&from&to (New booking reads `rooms`).
 6. Hover card on a bar: state, room, stay, guests, source, total, paid, due.
 7. Drag-to-move and drag-to-extend kept as before.
 
