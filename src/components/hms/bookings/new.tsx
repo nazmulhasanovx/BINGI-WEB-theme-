@@ -6,7 +6,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, Clock, Minus, Pencil, Plus, Search, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock, Eye, Minus, Pencil, Plus, Search, Send, UserRound } from "lucide-react";
 import { TODAY, taxOf, type Category as RoomCat, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { CHANNELS, METHODS, OTAS, bill, holdClock, stamp, dm, dow, nightsBetween, preMealTotal, tk, useBookings, type Channel, type NewBooking, type Night, type PayMethod, type PreMeal } from "@/lib/bookings/store";
@@ -20,6 +20,8 @@ import { useProperty } from "../property";
 import { useCashboxData } from "../cashbox/pages";
 import { input, lbl } from "../guests/ui";
 import { ChannelBadge, ModeSwitch, bMain, bSoft, channelIcon } from "./ui";
+import { DocPeek, SendSheet, smsSafe, type SendSpec } from "./send";
+import { useCommData } from "../communication/data";
 import { ExtrasList, ExtrasPicker, MealPlan, type SvcDraft } from "./extras";
 import { HoldFields, HoldSheet, addMin, holdMax, type HoldValue } from "./hold";
 import { GuestFields, StayFields, emptyGuest, emptyStay, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
@@ -78,6 +80,11 @@ export function NewBookingPage() {
   const [plan, setPlan] = useState<("breakfast" | "lunch" | "dinner")[]>([]);
   const [tried, setTried] = useState<Record<number, boolean>>({});
   const [err, setErr] = useState("");
+  const { comm } = useCommData();
+  const [peek, setPeek] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sentNote, setSentNote] = useState("");
+  const [after, setAfter] = useState<{ sms: boolean; email: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [holdOpen, setHoldOpen] = useState(false);
   const [hold, setHold] = useState<HoldValue>(() => ({ until: "", reason: "" }));
@@ -166,6 +173,22 @@ export function NewBookingPage() {
     if (found && !guest) setUseId(found.id);
     save({ hold: { until: hold.until, reason: hold.reason.trim() } });
   };
+  const guestName = guest?.name ?? (showForm ? shown.name : "");
+  // ---- show & send before confirming: the guest sees exactly what will be booked
+  const contactPhone = shown.phone.trim(), contactEmail = shown.email.trim();
+  const autoSend = after ?? { sms: !!contactPhone, email: !!contactEmail };
+  const stayLine = `${lines.map((l) => `Room ${l.code} (${l.cat.name})`).join(", ")} · ${datesOk ? `${dm(from)} → ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : ""} · ${adults} adult${adults > 1 ? "s" : ""}${children ? `, ${children} child` : ""}`;
+  const quoteText = `Dear ${guestName || "Guest"}, here are your booking details at ${h.name} (not confirmed yet):\n${stayLine}\nTotal ${tk(total)} incl. VAT & service${adv > 0 ? ` · advance ${tk(adv)}` : ""}. Check-in from ${bk.settings.checkIn}.\nReply or call us to confirm.`;
+  const quoteHtml = () => {
+    const rows = lines.map((l, i) => `<tr><td>Room ${l.code} · ${l.cat.name}</td><td>${l.nights.length}</td><td style="text-align:right">${tk(bills[i].total)}</td></tr>`).join("");
+    const extra = (mealsTotal ? `<tr><td>Meals</td><td></td><td style="text-align:right">${tk(mealsTotal)}</td></tr>` : "") + (svcTotal ? `<tr><td>Services</td><td></td><td style="text-align:right">${tk(svcTotal)}</td></tr>` : "");
+    return `<!doctype html><meta charset="utf-8"><title>Booking details</title><style>body{font:14px/1.5 system-ui,sans-serif;color:#111;margin:32px;max-width:720px}h1{font-size:22px;margin:0}.tag{display:inline-block;background:#fdf3d9;color:#7a4a0b;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{padding:8px;border-bottom:1px solid #e6e8ec;text-align:left}th{font-size:12px;color:#686466;text-transform:uppercase}.tot td{font-weight:700;font-size:16px;border-bottom:0}</style>
+<h1>${h.name}</h1><p>Booking details <span class="tag">Not confirmed yet</span></p>
+<p><b>${guestName || "Guest"}</b>${contactPhone ? ` · ${contactPhone}` : ""}${contactEmail ? ` · ${contactEmail}` : ""}<br>${datesOk ? `${dow(from)} ${dm(from)} → ${dow(to)} ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : ""} · ${adults} adult${adults > 1 ? "s" : ""}${children ? `, ${children} child` : ""} · check-in from ${bk.settings.checkIn}</p>
+<table><tr><th>Room</th><th>Nights</th><th style="text-align:right">Amount</th></tr>${rows}${extra}${disc ? `<tr><td>Discount (before VAT)</td><td></td><td style="text-align:right">−${tk(disc)}</td></tr>` : ""}<tr class="tot"><td>Total incl. VAT &amp; service</td><td></td><td style="text-align:right">${tk(total)}</td></tr>${adv > 0 ? `<tr><td>Advance</td><td></td><td style="text-align:right">${tk(adv)}</td></tr><tr><td><b>Due at the hotel</b></td><td></td><td style="text-align:right"><b>${tk(total - adv)}</b></td></tr>` : ""}</table>
+<p style="color:#686466;font-size:12px;margin-top:24px">Prices may change until the booking is confirmed.</p>`;
+  };
+  const quoteSpec: SendSpec = { title: "Send booking details", code: "", guest: guestName || "Guest", phone: contactPhone, email: contactEmail, update: quoteText, link: "", docs: [{ id: "quote", label: "Booking details (not confirmed)", note: "Rooms, dates and price", html: quoteHtml }] };
   const submit = () => {
     for (let i = 0; i < 3; i++) if (errors[i].length) { setTried({ ...tried, [i]: true }); setStep(i); return; }
     save({});
@@ -202,13 +225,18 @@ export function NewBookingPage() {
       const res = svc.saveOrder({ service: s.service, qty: s.qty, unitPrice: s.unitPrice, method: "booking", booking: { code: r.codes[0], guest: base.name, room: room0, phone: base.phone }, when: { date: s.date, time: s.time }, payment: "Unpaid", sc: s.sc, vat: s.vat, status: "confirmed", source: "staff" });
       if ("error" in res) svcFail++;
     }
-    const msg = `${r.codes.length > 1 ? `${r.codes.length} rooms booked` : `${r.codes[0]} booked`} for ${base.name}${svcFail ? ` · ${svcFail} service not scheduled` : ""}`;
+    // Confirmation to the guest, if ticked on the review step (SMS / email via Messaging).
+    const sentBy: string[] = [];
+    const conf = `Dear ${base.name}, your booking ${r.codes.join(", ")} at ${h.name} is confirmed.\n${stayLine}\nTotal ${tk(total)}${adv > 0 ? ` · paid ${tk(adv)} · due ${tk(total - adv)}` : ""}. Check-in from ${bk.settings.checkIn}.`;
+    if (autoSend.sms && base.phone && !comm.send({ channel: "sms", to: base.phone, guest: base.name, booking: r.codes[0], event: "Booking confirmation", text: smsSafe(conf) })) sentBy.push("SMS");
+    if (autoSend.email && base.email && !comm.send({ channel: "email", to: base.email, guest: base.name, booking: r.codes[0], event: "Booking confirmation", text: conf })) sentBy.push("email");
+    if (sentBy.length) bk.update(r.codes[0], {}, `Confirmation sent to guest · ${sentBy.join(" + ")}`);
+    const msg = `${r.codes.length > 1 ? `${r.codes.length} rooms booked` : `${r.codes[0]} booked`} for ${base.name}${sentBy.length ? ` · confirmation sent by ${sentBy.join(" + ")}` : ""}${svcFail ? ` · ${svcFail} service not scheduled` : ""}`;
     router.push(`/hms/bookings/view?b=${r.codes[0]}&made=${encodeURIComponent(msg)}`);
   };
   const toggle = (c: string) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   const errList = (k: number) => tried[k] && errors[k].length > 0 && <ul role="alert" className="space-y-1 rounded-xl bg-[#fdecec] px-4 py-2.5 text-[13.5px] font-medium text-[#b42318]">{errors[k].map((e) => <li key={e}>{e}</li>)}</ul>;
   const photo0 = lines[0] ? lines[0].cat.photos?.[0] ?? lines[0].cat.photo : undefined;
-  const guestName = guest?.name ?? (showForm ? shown.name : "");
 
   const summary = (
     <div className="overflow-hidden rounded-2xl border border-hms-line bg-white">
@@ -363,6 +391,25 @@ export function NewBookingPage() {
                 <Review title="Register" onEdit={() => go(1)}>{[stay.purpose, stay.comingFrom && `from ${stay.comingFrom}`, stay.eta && `arrives ${stay.eta}`, stay.payer.kind === "Company" && `paid by ${stay.payer.name || "company"}`, stay.booker?.name && `booked by ${stay.booker.name}`].filter(Boolean).join(" · ") || "—"}</Review>
               </div>
             </Card>
+            <Card title="Show & send to the guest" action={<span className="text-[13px] text-hms-muted">Before you confirm</span>}>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setPeek(true)} disabled={!lines.length} className={clsx(bSoft, "disabled:opacity-40")}><Eye className="size-4" />Preview booking details</button>
+                <button type="button" onClick={() => setSendOpen(true)} disabled={!lines.length} className={clsx(bSoft, "disabled:opacity-40")}><Send className="size-4" />Send details now</button>
+              </div>
+              {sentNote && <p className="mt-2 rounded-lg bg-[#e8f6ee] px-3 py-2 text-[13px] font-medium text-[#16693a]">{sentNote}</p>}
+              <div className="mt-3 border-t border-hms-line pt-3">
+                <p className="text-[13.5px] font-semibold">When I confirm, send the confirmation to the guest</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {([["sms", "SMS", contactPhone], ["email", "Email", contactEmail]] as const).map(([k, l, to]) => (
+                    <label key={k} className={clsx("inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[13.5px]", !to ? "border-hms-line text-hms-muted" : autoSend[k] ? "border-hms-ink" : "border-hms-line")}>
+                      <input type="checkbox" disabled={!to} checked={!!to && autoSend[k]} onChange={(e) => setAfter({ ...autoSend, [k]: e.target.checked })} className="size-4 accent-[#b11c29]" />
+                      <b>{l}</b><span className="text-hms-muted">{to || (k === "sms" ? "no phone" : "no email — add one in Guest")}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[12px] text-hms-muted">Uses Messaging credits (plan credits first). Prototype: saved in Messaging › History.</p>
+              </div>
+            </Card>
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-3 text-[14px] text-[#6b4309]"><Clock className="size-4 shrink-0" /><p className="min-w-0 flex-1">Guest not ready to confirm? Hold the room for a few hours instead.</p><button onClick={openHold} className="h-9 rounded-xl border border-[#f1dfb8] bg-white px-3 text-[13.5px] font-semibold text-hms-ink hover:bg-[#fffaf0]">Hold instead</button></div>
             <Card title="Advance payment" action={<span className="text-[13px] text-hms-muted">Optional</span>}>
               <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
@@ -382,6 +429,8 @@ export function NewBookingPage() {
         {lines.length > 0 && <button onClick={openHold} aria-label="Hold room for later" className={clsx(bSoft, "px-3")}><Clock className="size-4" /><span className="max-[380px]:hidden">Hold</span></button>}
         {step < 3 ? <button onClick={() => go(step + 1)} className={bMain}>Next<ArrowRight className="size-4" /></button> : <button onClick={submit} disabled={busy} className={bMain}>Confirm</button>}
       </div>
+      {peek && <DocPeek doc={{ label: "Booking details (not confirmed)", html: quoteHtml }} onClose={() => setPeek(false)} />}
+      {sendOpen && <SendSheet spec={quoteSpec} onClose={() => setSendOpen(false)} onSent={(m) => { setSendOpen(false); setSentNote(`Sent · ${m}`); }} />}
       {holdOpen && (
         <HoldSheet title={`Hold ${lines.length > 1 ? `${lines.length} rooms` : `Room ${room0}`}`} onClose={() => setHoldOpen(false)} onSave={saveHold} busy={busy} error={holdErr}
           saveLabel={hold.until ? `Hold until ${holdClock(hold.until)}` : "Hold room"}>

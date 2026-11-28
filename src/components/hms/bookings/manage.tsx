@@ -5,7 +5,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, CalendarRange, Check, Clock, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Undo2, UserRound, X as XIcon } from "lucide-react";
+import { ArrowLeft, CalendarRange, Check, Clock, Copy, CreditCard, LogIn, LogOut, MessageCircle, MoreHorizontal, MoveRight, Phone, Printer, Send, Undo2, UserRound, X as XIcon } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { bill, holdClock, holdLeft, holdLive, stamp, channelLabel, chargesOf, dm, dmy, dow, heldMeals, paidOf, preMealTotal, timeOf, tk, totalOf, useBookings, type Booking, type Companion } from "@/lib/bookings/store";
 import { agreementHtml, cancellationNoteHtml, companyInvoiceHtml, confirmationHtml, depositReceiptHtml, fillMsg, invoiceHtml, precheckUrl, receiptHtml, refundReceiptHtml, regCardHtml } from "@/lib/bookings/docs";
@@ -23,6 +23,7 @@ import { BkCtx, ChannelBadge, Flags, ModeSwitch, PayPill, StatusPill, Toast, bMa
 import { HoldFields, HoldSheet, addMin, holdMax, type HoldValue } from "./hold";
 import { CancelView, CheckInView, CheckOutView, DatesView, DetailsEdit, MoveView, PayView, Row, useExtras } from "./actions";
 import { ExtrasList, ExtrasPicker, MealPlan, hasRestaurant } from "./extras";
+import { SendSheet, type SendDoc, type SendSpec } from "./send";
 import { GuestFields, StayFields, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
 
 type Panel = null | "checkin" | "checkout" | "pay" | "move" | "dates" | "cancel";
@@ -70,6 +71,8 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
   const [panel, setPanel] = useState<Panel>(start === "checkin" && b.status === "Confirmed" && b.from <= TODAY ? "checkin" : start === "checkout" && b.status === "Checked in" ? "checkout" : start === "pay" ? "pay" : null);
   const [tab, setTab] = useState<Tab>("overview");
   const [more, setMore] = useState(false);
+  const [sendPick, setSendPick] = useState<{ pick?: string[]; text?: string; title?: string } | null>(null);
+  const docList = useBookingDocs(b, ex);
   const [extend, setExtend] = useState<HoldValue | null>(null);
   const [holdErr, setHoldErr] = useState("");
   const [, tick] = useState(0);
@@ -110,6 +113,7 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
           <div className="flex flex-wrap items-center gap-2">
             {primary}
             {active && <button onClick={() => open("pay")} className={bSoft}><CreditCard className="size-4" />Payment</button>}
+            <button onClick={() => setSendPick({})} className={bSoft} title="Send a booking update or documents by SMS, email or WhatsApp"><Send className="size-4" />Send to guest</button>
             {(active || (b.status === "Checked in" && b.checkedInAt?.startsWith(TODAY))) && (
               <div className="relative">
                 <button onClick={() => setMore(!more)} aria-expanded={more} aria-label="More actions" className={clsx(bSoft, "px-3")}><MoreHorizontal className="size-5" /></button>
@@ -171,7 +175,9 @@ function Manage({ b, start }: { b: Booking; start: string | null }) {
         {tab === "guest" && <GuestTab b={b} />}
         {tab === "extras" && <ExtrasTab b={b} ex={ex} />}
         {tab === "bill" && <BillTab b={b} ex={ex} balance={balance} openPanel={open} />}
-        {tab === "docs" && <DocsTab b={b} ex={ex} />}
+        {tab === "docs" && <DocsTab b={b} ex={ex} onSend={(pick, text, title) => setSendPick({ pick, text, title })} />}
+        {sendPick && <SendSheet spec={{ ...sendSpec(h, b, guest, bk.settings, folio, paid, docList.send), ...(sendPick.text ? { update: sendPick.text } : {}), ...(sendPick.title ? { title: sendPick.title } : {}), pick: sendPick.pick }} onClose={() => setSendPick(null)}
+          onSent={(m) => { bk.update(b.code, {}, `Sent to guest · ${m}`); setSendPick(null); toast(m); }} />}
         {tab === "activity" && <Activity b={b} />}
       </div>
     </>
@@ -376,9 +382,10 @@ function BillTab({ b, ex, balance, openPanel }: { b: Booking; ex: Ex; balance: n
   );
 }
 
-function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
+/** Every document this booking can print or send. */
+function useBookingDocs(b: Booking, ex: Ex) {
   const h = useProperty();
-  const { bk, guests, toast } = useCtx();
+  const { bk, guests } = useCtx();
   const g = guests.get(b.guestId);
   const S = bk.settings;
   const extras = (b.status === "Confirmed" || b.status === "Checked in") ? ex.lines : [];
@@ -399,6 +406,26 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
     const billTo = company || b.booker?.name || g?.name || "Guest";
     docs.push([`${b.group ? "Group" : "Company"} invoice · ${together.length} booking${together.length > 1 ? "s" : ""}`, `One bill to ${billTo}: a line per room and guest`, () => companyInvoiceHtml(h, { company: { name: billTo, phone: company ? undefined : b.booker?.phone }, rows: together.map((x) => ({ b: x, g: guests.get(x.guestId) })) })]);
   }
+  const receipts: SendDoc[] = b.payments.map((p) => ({ id: `pay-${p.id}`, label: `${p.amount < 0 ? "Refund" : "Receipt"} · ${tk(Math.abs(p.amount))}`, note: `${p.method} · ${dm(p.at.slice(0, 10))} ${timeOf(p.at)}`, html: () => (p.amount < 0 ? refundReceiptHtml(h, b, g, p) : receiptHtml(h, b, g, p)) }));
+  const send: SendDoc[] = [...docs.map(([t, n, f]) => ({ id: t, label: t, note: n, html: f })), ...receipts];
+  return { docs, send };
+}
+
+/** What the guest gets as "Booking update": status, room, dates, money, link. */
+function sendSpec(h: ReturnType<typeof useProperty>, b: Booking, g: { name: string; phone: string; email: string } | undefined, S: Parameters<typeof fillMsg>[4], folio: number, paid: number, docs: SendDoc[]): SendSpec {
+  const due = folio - paid;
+  const state = b.status === "Checked in" ? "checked in" : b.status === "Checked out" ? "checked out" : b.status === "On hold" ? "on hold" : b.status === "Cancelled" ? "cancelled" : b.status === "No-show" ? "marked no-show" : "confirmed";
+  const link = precheckUrl(h, b);
+  const update = `Dear ${g?.name ?? "Guest"}, your booking ${b.code} at ${h.name} is ${state}.\n${b.unit ? `Room ${b.unit} (${b.type})` : b.type} · ${dmy(b.from)} → ${dmy(b.to)} · ${b.nights.length} night${b.nights.length > 1 ? "s" : ""} · check-in from ${S.checkIn}.\nTotal ${tk(folio)} · paid ${tk(paid)}${due > 0 ? ` · due ${tk(due)}` : due < 0 ? ` · refund ${tk(-due)}` : ""}.\nDetails: ${link}`;
+  return { title: "Send to guest", code: b.code, guest: g?.name ?? "Guest", phone: g?.phone ?? "", email: g?.email ?? "", update, link, docs };
+}
+
+function DocsTab({ b, ex, onSend }: { b: Booking; ex: Ex; onSend: (pick?: string[], text?: string, title?: string) => void }) {
+  const h = useProperty();
+  const { bk, guests, toast } = useCtx();
+  const g = guests.get(b.guestId);
+  const S = bk.settings;
+  const { docs } = useBookingDocs(b, ex);
   const link = precheckUrl(h, b);
   const msgs: [string, string][] = [["Confirmation message", fillMsg(S.confirmMsg, h, b, g, S)], ["Pre-arrival message", fillMsg(S.preArrivalMsg, h, b, g, S)]];
   const wa = (t: string) => `https://wa.me/${(g?.phone ?? "").replace(/\D/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(t)}`;
@@ -407,8 +434,8 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
     <div className="grid gap-4 lg:grid-cols-2">
       <Box title="Documents">
         <ul className="divide-y divide-hms-line">
-          {docs.map(([t, s, f]) => <li key={t} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{t}</b><span className="text-[12.5px] text-hms-muted">{s}</span></span><button onClick={() => printHtml(f())} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print / PDF</button></li>)}
-          {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(p.amount < 0 ? refundReceiptHtml(h, b, g, p) : receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button></li>)}
+          {docs.map(([t, s, f]) => <li key={t} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{t}</b><span className="text-[12.5px] text-hms-muted">{s}</span></span><button onClick={() => onSend([t])} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Send className="size-4" />Send</button><button onClick={() => printHtml(f())} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print / PDF</button></li>)}
+          {b.payments.map((p) => <li key={p.id} className="flex items-center gap-3 py-2.5"><span className="min-w-0 flex-1"><b className="block text-[14px]">{p.amount < 0 ? "Refund" : "Receipt"} · {tk(Math.abs(p.amount))}</b><span className="text-[12.5px] text-hms-muted">{p.method} · {dm(p.at.slice(0, 10))} {timeOf(p.at)}</span></span><button onClick={() => printHtml(p.amount < 0 ? refundReceiptHtml(h, b, g, p) : receiptHtml(h, b, g, p))} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Printer className="size-4" />Print</button><button onClick={() => onSend([`pay-${p.id}`])} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Send className="size-4" />Send</button></li>)}
         </ul>
         <p className="mt-2 text-[12.5px] text-hms-muted">Choose “Save as PDF” in the print dialog to keep or send a file.</p>
         {b.status === "Confirmed" && <div className="mt-3 rounded-xl bg-[#f7f8fa] p-3">
@@ -423,7 +450,7 @@ function DocsTab({ b, ex }: { b: Booking; ex: Ex }) {
           <div key={t} className="mb-3 rounded-xl bg-[#f7f8fa] p-3 last:mb-0">
             <p className="text-[13px] font-semibold">{t}</p>
             <p className="mt-1 whitespace-pre-wrap text-[13.5px] text-[#3a414c]">{m}</p>
-            <div className="mt-2 flex flex-wrap gap-2"><button onClick={() => copy(m)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy</button>{g?.phone && <a href={wa(m)} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><MessageCircle className="size-4" />WhatsApp</a>}</div>
+            <div className="mt-2 flex flex-wrap gap-2"><button onClick={() => onSend([], m, t)} className={clsx(bMain, "!h-9 px-3 text-[13.5px]")}><Send className="size-4" />SMS / Email</button><button onClick={() => copy(m)} className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><Copy className="size-4" />Copy</button>{g?.phone && <a href={wa(m)} target="_blank" rel="noreferrer" className={clsx(bSoft, "!h-9 px-3 text-[13.5px]")}><MessageCircle className="size-4" />WhatsApp</a>}</div>
           </div>
         ))}
         <p className="text-[12.5px] text-hms-muted">WhatsApp opens on this device. Edit these texts and automatic email / SMS in <Link href="/hms/communication?tab=auto" className="underline underline-offset-2">Messaging</Link> · <Link href={`/hms/chat?b=${b.code}`} className="font-semibold text-hms-red underline underline-offset-2">Chat with guest</Link></p>
