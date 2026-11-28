@@ -4,14 +4,15 @@
 import clsx from "clsx";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BedDouble, CircleCheck, Clock, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { BedDouble, CircleCheck, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
-import { SERVICE_LABEL, bill, roomServiceOutlet, tk, type Item, type Line, type Order, type Service } from "@/lib/meals/seed";
+import { PLACE_KIND, SERVICE_LABEL, bill, isSeated, roomServiceOutlet, seatsTaken, sharesSeats, tk, type Item, type Line, type Order, type Place, type Service } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
 import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "./frame";
 import { Dish, PaySheet, SERVICE_ICON, StatusChip, useRestaurant, useToast, type Restaurant } from "./shared";
 import { billHtml, kotHtml, printHtml } from "./print";
+import { SeatLegend, TablePreview } from "./table-preview";
 
 const key = (l: Pick<Line, "item" | "size">) => `${l.item}|${l.size ?? ""}`;
 const openOrder = (o: Order) => o.at.slice(0, 10) === TODAY && o.pay === "unpaid" && !["cancelled", "declined"].includes(o.status);
@@ -33,6 +34,7 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [svc, setSvc] = useState<Service>(services[0] ?? "dinein");
   const [place, setPlace] = useState("");
+  const [seats, setSeats] = useState<string[]>([]);
   const [room, setRoom] = useState("");
   const [guest, setGuest] = useState("");
   const [notes, setNotes] = useState<Record<string, boolean>>({});
@@ -54,13 +56,21 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const setLineQty = (l: Line, n: number) => setLines((ls) => (n <= 0 ? ls.filter((x) => key(x) !== key(l)) : ls.map((x) => (key(x) === key(l) ? { ...x, qty: n } : x))));
   const base = running ?? { lines: [] as Line[], sc: st.settings.sc, vat: st.settings.vat, discount: undefined };
   const b = bill({ lines: [...base.lines, ...lines], sc: base.sc, vat: base.vat, discount: base.discount });
-  const tables = st.places.filter((p) => p.kind === "table");
+  const tables = st.places.filter(isSeated);
+  const openNow = st.orders.filter(openOrder);
+  const seatInfo = (p: Place) => seatsTaken(p, openNow);
+  const placeObj = tables.find((t) => t.id === place);
+  // Private tables (or a table that does not share) are taken whole; others take the seats picked.
+  const choosePlace = (id: string) => {
+    setPlace(id); const p = tables.find((t) => t.id === id);
+    setSeats(p && !sharesSeats(p) ? seatInfo(p).free : []);
+  };
   const where = (o: Order) => r.placeName(o);
   const errs = {
     lines: !lines.length ? "Add at least one dish" : "",
-    where: running ? "" : service === "dinein" && !place ? "Choose a table" : service === "room" && !room ? "Choose the room" : (service === "takeaway" || service === "delivery") && !guest.trim() ? "Add the guest's name" : "",
+    where: running ? "" : service === "dinein" && !place ? "Choose a table" : service === "dinein" && placeObj && seatInfo(placeObj).all.length > 0 && !seats.length ? "Pick the seats for this order" : service === "room" && !room ? "Choose the room" : (service === "takeaway" || service === "delivery") && !guest.trim() ? "Add the guest's name" : "",
   };
-  const reset = () => { setLines([]); setNotes({}); setTried(false); setGuest(""); setPlace(""); setRoom(""); };
+  const reset = () => { setLines([]); setNotes({}); setTried(false); setGuest(""); setPlace(""); setSeats([]); setRoom(""); };
   const send = () => {
     setTried(true);
     if (errs.lines || errs.where) return;
@@ -71,16 +81,21 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
       reset(); return;
     }
     const g = service === "room" ? r.inHouse.find((x) => x.room === room)?.guest : guest.trim() || undefined;
-    const o = r.m.create({ outlet: service === "room" ? roomServiceOutlet(r.h) ?? r.outlet : r.outlet, source: "pos", service, place: service === "dinein" ? place : undefined, room: service === "room" ? room : undefined, guest: g, lines });
+    const o = r.m.create({ outlet: service === "room" ? roomServiceOutlet(r.h) ?? r.outlet : r.outlet, source: "pos", service, place: service === "dinein" ? place : undefined, seats: service === "dinein" && seats.length ? seats : undefined, room: service === "room" ? room : undefined, guest: g, lines });
     setDone({ id: o.id, round: 1 }); setRun(service === "dinein" ? o.id : null);
     show(o.status === "approval" ? `${o.no} sent for approval` : `${o.no} sent to the kitchen`);
     reset();
   };
+  // Tap a table: new order on its free seats; when every seat is taken by one order, open that order.
   const pickTable = (id: string) => {
-    const busy = st.orders.find((o) => o.place === id && openOrder(o));
-    if (busy) { setRun(busy.id); setDone(null); } else { setRun(null); setSvc("dinein"); setPlace(id); setDone(null); }
+    const t = tables.find((x) => x.id === id)!; const info = seatInfo(t);
+    const here = openNow.filter((o) => o.place === id);
+    if (!info.free.length && here.length === 1) { setRun(here[0].id); setDone(null); }
+    else if (info.free.length) { setRun(null); setSvc("dinein"); choosePlace(id); setDone(null); }
+    else return;
     setLines([]); setView("menu");
   };
+  const openRun = (id: string) => { setRun(id); setDone(null); setLines([]); setView("menu"); };
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const doneOrder = done ? st.orders.find((o) => o.id === done.id) : undefined;
   return (
@@ -96,17 +111,31 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
 
           {view === "tables" ? (
             <div className="hms-fade">
-              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{tables.map((t) => {
-                const o = st.orders.find((x) => x.place === t.id && openOrder(x));
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-hms-muted">
+                <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded border border-[#86cfa3] bg-[#e8f6ee]" />Free seat</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-[#d6453c]" />Taken</span>
+                <span>Tap a table to order on its free seats · tap an order to add dishes</span>
+              </div>
+              <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{tables.map((t) => {
+                const info = seatInfo(t);
+                const here = openNow.filter((x) => x.place === t.id);
+                const full = info.all.length > 0 && !info.free.length;
                 return (
-                  <li key={t.id}><button disabled={!t.accepting && !o} onClick={() => pickTable(t.id)} className={clsx("flex h-[124px] w-full flex-col rounded-2xl border p-3.5 text-left transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none",
-                    o ? "border-[#f3c4c0] bg-[#fff1ef]" : "border-hms-line bg-white")}>
-                    <span className="flex items-center justify-between"><b className="text-[20px]">{t.name}</b><span className="text-[12.5px] text-hms-muted">{t.seats} seats</span></span>
-                    {o ? <>
-                      <span className="mt-auto text-[13px] text-hms-muted">{o.no} · <Clock className="inline size-3.5" aria-hidden /> {ageOf(o)} min</span>
-                      <span className="flex items-center justify-between gap-2"><b className="text-[17px] tabular-nums">{tk(bill(o).total)}</b><StatusChip s={o.status} /></span>
-                    </> : <span className="mt-auto text-[14px] font-semibold text-[#1c7d45]">{t.accepting ? "Free" : "Closed"}{t.note ? <span className="block text-[12.5px] font-normal text-hms-muted">{t.note}</span> : null}</span>}
-                  </button></li>
+                  <li key={t.id} className={clsx("flex flex-col rounded-2xl border p-3 transition-shadow", !t.accepting && !here.length ? "border-hms-line bg-white opacity-50" : full ? "border-[#f3c4c0] bg-[#fff1ef]" : here.length ? "border-[#f5d9a8] bg-[#fffaf0]" : "border-hms-line bg-white hover:shadow-md")}>
+                    <button disabled={(!t.accepting && !here.length) || (full && here.length !== 1)} onClick={() => pickTable(t.id)} className="text-left disabled:cursor-default">
+                      <span className="flex items-center justify-between gap-2"><b className="text-[19px]">{t.name}</b><span className="text-right text-[11.5px] leading-tight text-hms-muted">{PLACE_KIND[t.kind].label.replace(" table", "")}<br />{info.all.length} seats</span></span>
+                      <span className="mt-2 flex flex-wrap gap-1" aria-label={`${info.free.length} of ${info.all.length} seats free`}>
+                        {info.all.map((c) => <span key={c} className={clsx("grid h-6 min-w-8 place-items-center rounded-md px-1 text-[11px] font-bold", info.taken.has(c) ? "bg-[#d6453c] text-white" : "border border-[#86cfa3] bg-[#e8f6ee] text-[#16693a]")}>{c}</span>)}
+                      </span>
+                      <span className={clsx("mt-1.5 block text-[13px] font-semibold", full ? "text-[#b42318]" : "text-[#1c7d45]")}>{!t.accepting ? "Closed" : full ? "Full" : `${info.free.length} of ${info.all.length} free`}{!sharesSeats(t) && !full && <span className="font-normal text-hms-muted"> · whole table</span>}</span>
+                      {t.note && <span className="block text-[12px] text-hms-muted">{t.note}</span>}
+                    </button>
+                    {here.length > 0 && <div className="mt-2 space-y-1 border-t border-black/5 pt-2">
+                      {here.map((o) => <button key={o.id} onClick={() => openRun(o.id)} className="flex w-full items-center gap-2 rounded-lg bg-white/80 px-2 py-1.5 text-left text-[12.5px] ring-1 ring-black/5 hover:bg-white">
+                        <b className="shrink-0">{o.seats?.length && sharesSeats(t) ? o.seats.join(" ") : "All"}</b><span className="min-w-0 flex-1 truncate text-hms-muted">{o.no} · {ageOf(o)} min</span><b className="tabular-nums">{tk(bill(o).total)}</b>
+                      </button>)}
+                    </div>}
+                  </li>
                 );
               })}</ul>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -162,7 +191,15 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
             <div className="max-h-[calc(100dvh-210px)] space-y-3 overflow-y-auto p-4">
               {!running && <>
                 <div role="radiogroup" aria-label="Service type" className="flex flex-wrap gap-1.5">{services.map((s) => { const I = SERVICE_ICON[s]; return <button key={s} type="button" role="radio" aria-checked={service === s} onClick={() => setSvc(s)} className={clsx("flex h-10 min-w-[110px] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-2 text-[13px] font-semibold", service === s ? "border-[#b11c29] bg-[#ffe7e4] text-[#8e1621]" : "border-hms-line")}><I className="size-4" aria-hidden />{SERVICE_LABEL[s]}</button>; })}</div>
-                {service === "dinein" && <div><label htmlFor="pos-t" className={lbl}>Table</label><select id="pos-t" value={place} onChange={(e) => setPlace(e.target.value)} className={input}><option value="">Choose a table</option>{tables.filter((t) => t.accepting && !st.orders.some((o) => o.place === t.id && openOrder(o))).map((t) => <option key={t.id} value={t.id}>{t.name}{t.seats ? ` · ${t.seats} seats` : ""}{t.note ? ` · ${t.note}` : ""}</option>)}</select></div>}
+                {service === "dinein" && <div><label htmlFor="pos-t" className={lbl}>Table</label><select id="pos-t" value={place} onChange={(e) => choosePlace(e.target.value)} className={input}><option value="">Choose a table</option>{tables.filter((t) => t.accepting).map((t) => { const i = seatInfo(t); return <option key={t.id} value={t.id} disabled={i.all.length > 0 && !i.free.length}>{t.name} · {i.all.length ? `${i.free.length} of ${i.all.length} seats free` : "no seats"}{!sharesSeats(t) ? " · whole table" : ""}{t.note ? ` · ${t.note}` : ""}</option>; })}</select></div>}
+                {service === "dinein" && placeObj && seatInfo(placeObj).all.length > 0 && (() => { const i = seatInfo(placeObj); const share = sharesSeats(placeObj); return (
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between"><p className={lbl}>Seats <span className="font-normal text-hms-muted">{seats.length ? `· ${seats.length} picked` : "· pick who is ordering"}</span></p>{share && i.free.length > 1 && <button type="button" onClick={() => setSeats(seats.length === i.free.length ? [] : i.free)} className="text-[12.5px] font-semibold text-hms-red">{seats.length === i.free.length ? "Clear" : "All free seats"}</button>}</div>
+                    <TablePreview kind={placeObj.kind} name={placeObj.name} codes={i.all} taken={[...i.taken]} picked={share ? seats : i.free}
+                      onSeat={share ? (c) => setSeats(seats.includes(c) ? seats.filter((x) => x !== c) : [...seats, c].sort((a, b) => i.all.indexOf(a) - i.all.indexOf(b))) : undefined}
+                      caption={<><SeatLegend picked /><span>{share ? "Tap a seat to pick it" : "Whole table"}</span></>} />
+                    <p className="mt-1 text-[12px] text-hms-muted">{share ? "Only the seats you pick are blocked — the rest of the table stays free for other guests." : `${PLACE_KIND[placeObj.kind].label}: the whole table is taken by this order.`}</p>
+                  </div>); })()}
                 {service === "room" && <div><label htmlFor="pos-r" className={lbl}>Room</label><select id="pos-r" value={room} onChange={(e) => setRoom(e.target.value)} className={input}><option value="">Choose the room</option>{r.inHouse.map((g) => <option key={g.room} value={g.room}>Room {g.room} · {g.guest}</option>)}</select></div>}
                 {service !== "room" && <div><label htmlFor="pos-g" className={lbl}>Guest {service === "dinein" && <span className="font-normal text-hms-muted">optional</span>}</label><input id="pos-g" value={guest} onChange={(e) => setGuest(e.target.value)} placeholder={service === "delivery" ? "Name, phone and address" : "Name"} className={input} /></div>}
                 {tried && errs.where && <p className="text-[13px] font-medium text-[#c81e1e]">{errs.where}</p>}

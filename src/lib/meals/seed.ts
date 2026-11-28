@@ -13,13 +13,35 @@ export type Category = { id: string; name: string };
 export type Size = { name: string; price: number };
 /** sizes: e.g. Half / Full — when set, each size has its own price and `price` is the smallest. */
 export type Item = { id: string; name: string; cat: string; price: number; prep: number; available: boolean; pos: boolean; qr: boolean; veg?: boolean; short?: string; photo?: string; sizes?: Size[] };
-export type Place = { id: string; name: string; kind: "table" | "room" | "general"; seats?: number; note?: string; visible: boolean; accepting: boolean };
+export type PlaceKind = "table" | "private" | "bar" | "room" | "general" | "event";
+/** A place guests order from. Seated places have seat codes (1S, 2S …): an order takes the seats it uses, so a shared table can hold several groups. */
+export type Place = { id: string; name: string; kind: PlaceKind; seats?: number; seatCodes?: string[]; shared?: boolean; note?: string; visible: boolean; accepting: boolean };
+export const PLACE_KIND: Record<PlaceKind, { label: string; hint: string; seated: boolean; qr: "table" | "room" | "spot" }> = {
+  table: { label: "Public table", hint: "Restaurant table — seats can be shared by different guests", seated: true, qr: "table" },
+  private: { label: "Private / VIP table", hint: "One group takes the whole table", seated: true, qr: "table" },
+  bar: { label: "Bar counter", hint: "Counter seats, one guest each", seated: true, qr: "table" },
+  event: { label: "Event / banquet", hint: "Hall or group table for an event", seated: true, qr: "table" },
+  room: { label: "Room QR", hint: "In-room menu — the bill goes to the room", seated: false, qr: "room" },
+  general: { label: "Other spot", hint: "Pool, lobby, garden — no seats", seated: false, qr: "spot" },
+};
+export const isSeated = (p: Pick<Place, "kind">) => PLACE_KIND[p.kind]?.seated ?? false;
+/** Seat codes of a place: custom codes, or 1S…nS from the seat count. */
+export const seatCodesOf = (p: Place) => (isSeated(p) ? (p.seatCodes?.length ? p.seatCodes : Array.from({ length: p.seats ?? 0 }, (_, i) => `${i + 1}S`)) : []);
+/** Can two different groups sit at this place at the same time? */
+export const sharesSeats = (p: Place) => p.kind === "bar" || ((p.kind === "table" || p.kind === "event") && p.shared !== false);
+/** Seats used by the given open orders. An order with no seats uses the whole place (older orders, private tables). */
+export function seatsTaken(p: Place, open: Pick<Order, "place" | "seats">[]) {
+  const all = seatCodesOf(p);
+  const taken = new Set<string>();
+  for (const o of open) if (o.place === p.id) (o.seats?.length && sharesSeats(p) ? o.seats : all).forEach((x) => taken.add(x));
+  return { all, taken, free: all.filter((x) => !taken.has(x)) };
+}
 /** round: 1 = first order, 2+ = items added later to the same (running) order. */
 export type Line = { item: string; name: string; price: number; qty: number; note?: string; size?: string; round?: number };
 export type Discount = { kind: "percent" | "fixed"; value: number; reason: string };
 export type Payment = { method: Exclude<PayMethod, "split">; amount: number };
 export type Order = {
-  id: string; no: string; outlet: string; at: string; source: Source; service: Service; place?: string; room?: string; guest?: string;
+  id: string; no: string; outlet: string; at: string; source: Source; service: Service; place?: string; seats?: string[]; room?: string; guest?: string;
   lines: Line[]; sc: number; vat: number; status: Status; pay: PayState; method?: PayMethod; paidAt?: string; reason?: string; by: string;
   round?: number; discount?: Discount; payments?: Payment[];
 };
@@ -78,7 +100,8 @@ export function seedMenu(h: Hotel): { categories: Category[]; items: Item[] } {
 }
 
 export function seedPlaces(roomCodes: string[]): Place[] {
-  const t: Place[] = Array.from({ length: 8 }, (_, i) => ({ id: `t${i + 1}`, name: `T${i + 1}`, kind: "table", seats: i < 2 ? 2 : i < 6 ? 4 : 6, note: i >= 6 ? "Beach side" : undefined, visible: true, accepting: i !== 7 }));
+  const t: Place[] = Array.from({ length: 8 }, (_, i) => ({ id: `t${i + 1}`, name: `T${i + 1}`, kind: i === 6 ? "private" : "table", seats: i < 2 ? 2 : i < 6 ? 4 : 6, shared: i !== 6, note: i === 6 ? "VIP · beach side" : i === 7 ? "Beach side" : undefined, visible: true, accepting: i !== 7 }));
+  t.push({ id: "bar1", name: "Bar", kind: "bar", seats: 6, seatCodes: ["B1", "B2", "B3", "B4", "B5", "B6"], visible: true, accepting: true });
   const r: Place[] = roomCodes.slice(0, 6).map((c) => ({ id: `r${c}`, name: `Room ${c}`, kind: "room", visible: true, accepting: true }));
   return [...t, ...r, { id: "g1", name: "Pool side", kind: "general", note: "Menu QR at the pool bar", visible: true, accepting: true }];
 }
@@ -117,9 +140,9 @@ export function seedOrders(h: Hotel, inHouse: { room: string; guest: string }[],
     mk({ outlet: rso, at: T("12:30"), source: "room_qr", service: "room", room: room(1)?.room ?? "102", guest: room(1)?.guest, lines: pick(95, 2), status: "served", pay: "room", method: "room", paidAt: T("13:00") }),
     mk({ outlet, at: T("13:05"), source: "pos", service: "dinein", place: "t3", lines: pick(96, 3), status: "served", pay: "unpaid" }),
     mk({ outlet, at: T(hm(clock - 26)), source: "pos", service: "takeaway", guest: "Walk-in", lines: pick(97, 2), status: "ready", pay: "unpaid" }),
-    mk({ outlet, at: T(hm(clock - 14)), source: "table_qr", service: "dinein", place: "t6", lines: pick(98, 3), status: "preparing", pay: "unpaid" }),
+    mk({ outlet, at: T(hm(clock - 14)), source: "table_qr", service: "dinein", place: "t6", seats: ["1S", "2S"], lines: pick(98, 3), status: "preparing", pay: "unpaid" }),
     mk({ outlet: rso, at: T(hm(clock - 9)), source: "room_qr", service: "room", room: room(2)?.room ?? "103", guest: room(2)?.guest, lines: pick(99, 2), status: "preparing", pay: "unpaid" }),
-    mk({ outlet, at: T(hm(clock - 5)), source: "pos", service: "dinein", place: "t1", lines: pick(100, 2), status: "queued", pay: "unpaid" }),
+    mk({ outlet, at: T(hm(clock - 5)), source: "pos", service: "dinein", place: "t1", seats: ["1S"], lines: pick(100, 2), status: "queued", pay: "unpaid" }),
     mk({ outlet, at: T(hm(clock - 1)), source: "table_qr", service: "dinein", place: "t7", lines: pick(101, 2), status: "approval", pay: "unpaid" }),
   );
   return out;

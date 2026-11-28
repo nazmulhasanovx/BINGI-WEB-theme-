@@ -10,7 +10,7 @@ import { DEFAULT_SETTINGS, nowMin, outletsOf, seedMenu, seedOrders, seedPlaces, 
 type State = { v: 1; categories: Category[]; items: Item[]; places: Place[]; orders: Order[]; settings: Settings; next: number };
 export type InHouse = { room: string; guest: string };
 
-const KEY = (slug: string) => `bingi-meals-v1-${slug}`;
+const KEY = (slug: string) => `bingi-meals-v2-${slug}`; // v2: seat codes + place types
 const cache = new Map<string, { raw: string | null; sig: string; st: State }>();
 const seeds = new Map<string, State>();
 const listeners = new Set<() => void>();
@@ -41,7 +41,7 @@ export const stamp = () => `${TODAY}T${hm(nowMin())}`;
 export const ageOf = (o: Order) => (o.at.slice(0, 10) === TODAY ? Math.max(0, nowMin() - (Number(o.at.slice(11, 13)) * 60 + Number(o.at.slice(14, 16)))) : 0);
 export const uid = (p: string) => `${p}${Math.random().toString(36).slice(2, 8)}`;
 
-export type NewOrder = { outlet: string; source: Source; service: Service; place?: string; room?: string; guest?: string; lines: Line[] };
+export type NewOrder = { outlet: string; source: Source; service: Service; place?: string; seats?: string[]; room?: string; guest?: string; lines: Line[] };
 export function useMeals(h: Hotel, inHouse: InHouse[], rooms: string[]) {
   const st = useSyncExternalStore(sub, () => read(h, inHouse, rooms), () => EMPTY);
   const update = useCallback((fn: (s: State) => void) => { const n = structuredClone(read(h, inHouse, rooms)); fn(n); write(h.slug, n); }, [h, inHouse, rooms]);
@@ -74,6 +74,8 @@ export function useMeals(h: Hotel, inHouse: InHouse[], rooms: string[]) {
     removeItem: (id: string) => update((s) => { s.items = s.items.filter((x) => x.id !== id); }),
     saveCategory: (c: Category) => update((s) => { const i = s.categories.findIndex((x) => x.id === c.id); if (i >= 0) s.categories[i] = c; else s.categories.push(c); }),
     removeCategory: (id: string) => update((s) => { s.categories = s.categories.filter((x) => x.id !== id); }),
+    /** Move / resize the seats an open order uses (e.g. a friend joins). */
+    setSeats: (id: string, seats: string[]) => setOrder(id, (o) => { o.seats = seats; }),
     savePlace: (p: Place) => update((s) => { const i = s.places.findIndex((x) => x.id === p.id); if (i >= 0) s.places[i] = p; else s.places.push(p); }),
     saveSettings: (x: Settings) => update((s) => { s.settings = x; }),
     reset: () => { try { localStorage.removeItem(KEY(h.slug)); } catch {} cache.delete(h.slug); listeners.forEach((l) => l()); },
