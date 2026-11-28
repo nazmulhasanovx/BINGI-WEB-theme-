@@ -13,6 +13,14 @@ Problem (live): one open order marks the whole table busy; a 4-seat table with 1
 - Bill / KOT / order lists show "T1 · 2S".
 - Older orders with no seats count as the whole table.
 
+## Live table drawing (Remotion)
+- `table-scene.tsx` (Remotion composition, same style as the onboarding property drawing) + `table-preview.tsx` (`<Player>`).
+- Shapes: round (≤ 4 seats, VIP), long table with chairs on both sides (5+), bar counter with stools, event table.
+- Each chair shows its code and state — free (green), taken (red), this order (dark). The table builds in when type
+  or seat count changes; picking a seat updates instantly. Reduced motion = no animation.
+- Used in: Tables & QR › Add/Edit (live drawing on top, seat stepper, type tiles, seat codes folded) and
+  POS › New order (tap chairs on the drawing to pick seats).
+
 ## Place types (Tables & QR)
 | Type | Seats | Sharing |
 |---|---|---|

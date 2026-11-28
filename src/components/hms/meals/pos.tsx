@@ -4,7 +4,7 @@
 import clsx from "clsx";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BedDouble, CircleCheck, Clock, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { BedDouble, CircleCheck, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { PLACE_KIND, SERVICE_LABEL, bill, isSeated, roomServiceOutlet, seatsTaken, sharesSeats, tk, type Item, type Line, type Order, type Place, type Service } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
@@ -12,6 +12,7 @@ import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "./frame";
 import { Dish, PaySheet, SERVICE_ICON, StatusChip, useRestaurant, useToast, type Restaurant } from "./shared";
 import { billHtml, kotHtml, printHtml } from "./print";
+import { SeatLegend, TablePreview } from "./table-preview";
 
 const key = (l: Pick<Line, "item" | "size">) => `${l.item}|${l.size ?? ""}`;
 const openOrder = (o: Order) => o.at.slice(0, 10) === TODAY && o.pay === "unpaid" && !["cancelled", "declined"].includes(o.status);
@@ -194,9 +195,9 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
                 {service === "dinein" && placeObj && seatInfo(placeObj).all.length > 0 && (() => { const i = seatInfo(placeObj); const share = sharesSeats(placeObj); return (
                   <div>
                     <div className="mb-1.5 flex items-center justify-between"><p className={lbl}>Seats <span className="font-normal text-hms-muted">{seats.length ? `· ${seats.length} picked` : "· pick who is ordering"}</span></p>{share && i.free.length > 1 && <button type="button" onClick={() => setSeats(seats.length === i.free.length ? [] : i.free)} className="text-[12.5px] font-semibold text-hms-red">{seats.length === i.free.length ? "Clear" : "All free seats"}</button>}</div>
-                    <div role="group" aria-label="Seats" className="flex flex-wrap gap-1.5">{i.all.map((c) => { const taken = i.taken.has(c); const on = seats.includes(c); return (
-                      <button key={c} type="button" disabled={taken || !share} aria-pressed={on} onClick={() => setSeats(on ? seats.filter((x) => x !== c) : [...seats, c].sort((a, b) => i.all.indexOf(a) - i.all.indexOf(b)))}
-                        className={clsx("h-10 min-w-12 rounded-lg px-2 text-[13.5px] font-bold", taken ? "cursor-not-allowed bg-[#f3d1ce] text-[#a3302a] line-through" : on ? "bg-hms-ink text-white" : "border border-hms-line bg-white hover:border-hms-ink", !share && !taken && "!bg-hms-ink !text-white")}>{c}</button>); })}</div>
+                    <TablePreview kind={placeObj.kind} name={placeObj.name} codes={i.all} taken={[...i.taken]} picked={share ? seats : i.free}
+                      onSeat={share ? (c) => setSeats(seats.includes(c) ? seats.filter((x) => x !== c) : [...seats, c].sort((a, b) => i.all.indexOf(a) - i.all.indexOf(b))) : undefined}
+                      caption={<><SeatLegend picked /><span>{share ? "Tap a seat to pick it" : "Whole table"}</span></>} />
                     <p className="mt-1 text-[12px] text-hms-muted">{share ? "Only the seats you pick are blocked — the rest of the table stays free for other guests." : `${PLACE_KIND[placeObj.kind].label}: the whole table is taken by this order.`}</p>
                   </div>); })()}
                 {service === "room" && <div><label htmlFor="pos-r" className={lbl}>Room</label><select id="pos-r" value={room} onChange={(e) => setRoom(e.target.value)} className={input}><option value="">Choose the room</option>{r.inHouse.map((g) => <option key={g.room} value={g.room}>Room {g.room} · {g.guest}</option>)}</select></div>}

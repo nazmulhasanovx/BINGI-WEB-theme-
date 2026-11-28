@@ -3,13 +3,14 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { BedDouble, Camera, ImagePlus, Pencil, Plus, QrCode, Search, Trash2, UtensilsCrossed } from "lucide-react";
+import { BedDouble, Camera, Crown, ImagePlus, Martini, Minus, PartyPopper, Pencil, Plus, QrCode, Search, Trash2, Trees, UtensilsCrossed } from "lucide-react";
 import { PLACE_KIND, isSeated, seatCodesOf, sharesSeats, tk, type Category, type Item, type Place, type PlaceKind } from "@/lib/meals/seed";
 import { uid } from "@/lib/meals/store";
 import { PhotoButton } from "../photo";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "./frame";
 import { Dish, useRestaurant, useToast, type Restaurant } from "./shared";
+import { SeatLegend, TablePreview } from "./table-preview";
 
 const card = "rounded-2xl border border-hms-line bg-white";
 function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
@@ -140,6 +141,7 @@ function ItemSheet({ r, it, onClose, onDone }: { r: Restaurant; it?: Item; onClo
 // =================== Tables & QR ===================
 const KIND_LABEL: Record<PlaceKind, string> = Object.fromEntries(Object.entries(PLACE_KIND).map(([k, v]) => [k, v.label])) as Record<PlaceKind, string>;
 type Group = "seated" | "room" | "general";
+const KIND_ICON: Record<PlaceKind, typeof UtensilsCrossed> = { table: UtensilsCrossed, private: Crown, bar: Martini, event: PartyPopper, room: BedDouble, general: Trees };
 const groupOf = (k: PlaceKind): Group => (k === "room" ? "room" : k === "general" ? "general" : "seated");
 export function TablesPage() {
   const r = useRestaurant();
@@ -199,24 +201,34 @@ function PlaceSheet({ r, p, onClose, onDone }: { r: Restaurant; p?: Place; onClo
     <Sheet title={p ? `Edit ${p.name}` : "Add table or QR"} sub="Each table, room or spot gets its own QR" onClose={onClose}
       footer={<><button onClick={onClose} className={clsx(btnLine, "flex-1")}>Cancel</button><button onClick={save} className={clsx(btnPrimary, "flex-[1.4]")}>Save</button></>}>
       <div className="space-y-4">
+        {seated ? <TablePreview kind={f.kind} name={f.name.trim() || "T?"} codes={shown} caption={<><SeatLegend /><span className="tabular-nums">{shown.length} seats · {f.kind === "private" ? "whole table" : sharesSeats({ ...f, shared: f.shared }) ? "shared" : "whole table"}</span></>} />
+          : <div className="flex items-center gap-3 rounded-2xl border border-[#e3e7ec] bg-[#f4f6f8] p-4"><span className="grid size-12 place-items-center rounded-xl bg-white text-hms-muted ring-1 ring-hms-line">{f.kind === "room" ? <BedDouble className="size-6" /> : <Trees className="size-6" />}</span><p className="text-[13.5px] text-[#3a414c]"><b className="block text-[14.5px] text-hms-ink">{f.name.trim() || (f.kind === "room" ? "Room 305" : "Pool side")}</b>{PLACE_KIND[f.kind].hint}. No seats — one QR for the whole {f.kind === "room" ? "room" : "spot"}.</p></div>}
         <div><p className={lbl}>Type</p>
-          <div role="radiogroup" aria-label="Type" className="grid grid-cols-2 gap-2">{(Object.keys(PLACE_KIND) as PlaceKind[]).map((x) => (
-            <button key={x} type="button" role="radio" aria-checked={f.kind === x} onClick={() => setF({ ...f, kind: x, seats: PLACE_KIND[x].seated ? f.seats ?? (x === "bar" ? 6 : 4) : undefined, shared: x !== "private" })}
-              className={clsx("rounded-xl border p-2.5 text-left", f.kind === x ? "border-hms-ink shadow-[inset_0_0_0_1px] shadow-hms-ink" : "border-hms-line hover:border-[#858c97]")}>
-              <b className="block text-[13.5px]">{PLACE_KIND[x].label}</b><span className="text-[12px] leading-snug text-hms-muted">{PLACE_KIND[x].hint}</span>
-            </button>))}</div>
+          <div role="radiogroup" aria-label="Type" className="grid grid-cols-3 gap-1.5">{(Object.keys(PLACE_KIND) as PlaceKind[]).map((x) => { const I = KIND_ICON[x]; return (
+            <button key={x} type="button" role="radio" aria-checked={f.kind === x} title={PLACE_KIND[x].hint} onClick={() => setF({ ...f, kind: x, seats: PLACE_KIND[x].seated ? f.seats ?? (x === "bar" ? 6 : 4) : undefined, shared: x !== "private" })}
+              className={clsx("flex h-[68px] flex-col items-center justify-center gap-1 rounded-xl border text-[12.5px] font-semibold", f.kind === x ? "border-hms-ink bg-white shadow-[inset_0_0_0_1px] shadow-hms-ink" : "border-hms-line text-[#4d5664] hover:border-[#858c97]")}>
+              <I className="size-5" aria-hidden />{PLACE_KIND[x].label.replace(" / VIP table", " / VIP").replace(" table", "")}
+            </button>); })}</div>
+          <p className="mt-1.5 text-[12.5px] text-hms-muted">{PLACE_KIND[f.kind].hint}</p>
         </div>
-        <div><label htmlFor="pl-n" className={lbl}>Name</label><input id="pl-n" autoFocus value={f.name} onChange={(x) => setF({ ...f, name: x.target.value })} placeholder={f.kind === "room" ? "e.g. Room 305" : f.kind === "general" ? "e.g. Pool side" : f.kind === "bar" ? "e.g. Bar" : f.kind === "event" ? "e.g. Banquet hall" : "e.g. T9"} className={input} />{tried && (dup ? <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">This name is already used</p> : !f.name.trim() && <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">Enter a name</p>)}</div>
-        {seated && <div className="rounded-xl bg-[#f7f8fa] p-3">
-          <div className="grid grid-cols-[110px_1fr] gap-3">
-            <div><label htmlFor="pl-s" className={lbl}>Seats</label><input id="pl-s" inputMode="numeric" value={f.seats ?? ""} onChange={(x) => setF({ ...f, seats: Math.min(40, Number(x.target.value.replace(/\D/g, "")) || 0) || undefined })} className={input} /></div>
-            <div><label htmlFor="pl-c" className={lbl}>Seat codes <span className="font-normal text-hms-muted">optional</span></label><input id="pl-c" value={codes} onChange={(x) => setCodes(x.target.value)} placeholder={`${Array.from({ length: Math.min(f.seats ?? 4, 4) }, (_, i) => `${i + 1}S`).join(", ")}…`} className={input} /></div>
-          </div>
-          {tried && badSeats && <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">{!(f.seats ?? 0) ? "Enter the number of seats" : dupCode ? "Each seat code must be different" : `Give ${f.seats} codes, or leave codes empty for ${f.seats ? `1S…${f.seats}S` : "1S, 2S…"}`}</p>}
-          <div className="mt-2 flex flex-wrap gap-1">{shown.map((c) => <span key={c} className="grid h-7 min-w-9 place-items-center rounded-md border border-[#86cfa3] bg-white px-1.5 text-[12px] font-bold text-[#16693a]">{c}</span>)}</div>
-          {(f.kind === "table" || f.kind === "event") && <label className="mt-3 flex items-start gap-2.5 text-[13.5px]"><input type="checkbox" checked={f.shared !== false} onChange={(x) => setF({ ...f, shared: x.target.checked })} className="mt-0.5 size-4 accent-[#b11c29]" /><span><b>Share the table</b><span className="block text-[12.5px] text-hms-muted">An order takes only the seats it uses; other guests can order on the free seats. Off = one order takes the whole table.</span></span></label>}
-          {f.kind === "private" && <p className="mt-2 text-[12.5px] text-hms-muted">A private table is taken whole by one order.</p>}
-        </div>}
+        <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+          <div><label htmlFor="pl-n" className={lbl}>Name</label><input id="pl-n" autoFocus value={f.name} onChange={(x) => setF({ ...f, name: x.target.value })} placeholder={f.kind === "room" ? "e.g. Room 305" : f.kind === "general" ? "e.g. Pool side" : f.kind === "bar" ? "e.g. Bar" : f.kind === "event" ? "e.g. Banquet hall" : "e.g. T9"} className={input} /></div>
+          {seated && <div><p className={lbl}>Seats</p><div className="flex h-11 items-center rounded-xl border border-hms-line">
+            <button type="button" aria-label="One seat less" onClick={() => setF({ ...f, seats: Math.max(1, (f.seats ?? 1) - 1) })} className="grid h-full w-10 place-items-center hover:bg-hms-hover"><Minus className="size-4" /></button>
+            <span className="w-8 text-center text-[16px] font-bold tabular-nums" aria-live="polite">{f.seats ?? 0}</span>
+            <button type="button" aria-label="One seat more" onClick={() => setF({ ...f, seats: Math.min(f.kind === "bar" ? 12 : 16, (f.seats ?? 0) + 1) })} className="grid h-full w-10 place-items-center hover:bg-hms-hover"><Plus className="size-4" /></button>
+          </div></div>}
+        </div>
+        {tried && (dup ? <p className="-mt-2 text-[13px] font-medium text-[#c81e1e]">This name is already used</p> : !f.name.trim() && <p className="-mt-2 text-[13px] font-medium text-[#c81e1e]">Enter a name</p>)}
+        {seated && <>
+          {(f.kind === "table" || f.kind === "event") && <label className="flex items-start gap-2.5 rounded-xl border border-hms-line p-3 text-[13.5px]"><input type="checkbox" checked={f.shared !== false} onChange={(x) => setF({ ...f, shared: x.target.checked })} className="mt-0.5 size-4 accent-[#b11c29]" /><span><b>Share the table</b><span className="block text-[12.5px] text-hms-muted">An order blocks only its seats; other guests can sit on the free ones. Off = one order takes the whole table.</span></span></label>}
+          <details className="rounded-xl border border-hms-line px-3 py-2.5 text-[13.5px]" open={!!codes}>
+            <summary className="cursor-pointer font-semibold">Seat codes <span className="font-normal text-hms-muted">· {shown.join(", ")}</span></summary>
+            <input id="pl-c" aria-label="Custom seat codes" value={codes} onChange={(x) => setCodes(x.target.value)} placeholder={`Leave empty for 1S…${f.seats ?? 4}S, or e.g. A1, A2, A3`} className={clsx(input, "mt-2")} />
+            <p className="mt-1 text-[12px] text-hms-muted">Comma-separated, one per seat.</p>
+          </details>
+          {tried && badSeats && <p className="text-[13px] font-medium text-[#c81e1e]">{!(f.seats ?? 0) ? "Add at least one seat" : dupCode ? "Each seat code must be different" : `Give ${f.seats} codes, or leave codes empty`}</p>}
+        </>}
         <div><label htmlFor="pl-note" className={lbl}>Note <span className="font-normal text-hms-muted">optional</span></label><input id="pl-note" value={f.note ?? ""} onChange={(x) => setF({ ...f, note: x.target.value || undefined })} placeholder="e.g. Beach side" className={input} /></div>
       </div>
     </Sheet>
