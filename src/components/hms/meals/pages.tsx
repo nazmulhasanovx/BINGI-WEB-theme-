@@ -2,8 +2,8 @@
 // Restaurant & Bar — Overview, Orders, Kitchen, Reports, Settings. POS in pos.tsx; Menu and Tables & QR in setup.tsx.
 import Link from "next/link";
 import clsx from "clsx";
-import { useState } from "react";
-import { BellRing, ChefHat, Clock, Pause, Search, Wallet } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Bell, BellOff, BellRing, ChefHat, Clock, Pause, Search, Wallet } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { METHOD_LABEL, SERVICE_LABEL, SOURCE_LABEL, addDays, bill, tk, type Order, type Service, type Settings, type Status } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
@@ -155,6 +155,44 @@ export function OrdersPage() {
 }
 
 // =================== Kitchen ===================
+// Kitchen bell: plays a short chime when a new ticket (or a new round of added items) reaches Queued.
+// Off by default; the choice is remembered on this device. Browsers only allow sound after one tap on the page.
+const BELL = "bingi.meals.kitchen.bell";
+const bellSubs = new Set<() => void>();
+function KitchenBell({ tickets }: { tickets: string[] }) {
+  const on = useSyncExternalStore((f) => (bellSubs.add(f), () => void bellSubs.delete(f)), () => { try { return localStorage.getItem(BELL) === "1"; } catch { return false; } }, () => false);
+  const seen = useRef<Set<string> | null>(null);
+  const sig = tickets.join(",");
+  useEffect(() => {
+    const now = new Set(sig ? sig.split(",") : []);
+    const prev = seen.current; seen.current = now;
+    if (!prev || !on) return;
+    if ([...now].some((t) => !prev.has(t))) chime();
+  }, [sig, on]);
+  const toggle = () => { const v = !on; try { localStorage.setItem(BELL, v ? "1" : "0"); } catch {} bellSubs.forEach((f) => f()); if (v) chime(); };
+  return (
+    <div className="mb-2 flex justify-end">
+      <button onClick={toggle} aria-pressed={on} className={clsx("inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13.5px] font-semibold", on ? "border-[#cfe7da] bg-[#eef8f2] text-[#165f37]" : "border-hms-line bg-white text-hms-muted hover:bg-hms-hover")}>
+        {on ? <Bell className="size-4" aria-hidden /> : <BellOff className="size-4" aria-hidden />}{on ? "Sound on for new orders" : "Sound off"}
+      </button>
+    </div>
+  );
+}
+function chime() {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ac = new Ctx();
+    [880, 1320].forEach((f, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = f; o.type = "sine";
+      const t = ac.currentTime + i * 0.18;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.4);
+    });
+    setTimeout(() => ac.close(), 1000);
+  } catch { /* no audio */ }
+}
+
 export function KitchenPage() {
   const r = useRestaurant();
   const [toast, show] = useToast();
@@ -168,6 +206,7 @@ export function KitchenPage() {
   const prepOf = (o: Order) => Math.max(...o.lines.map((l) => r.m.st.items.find((i) => i.id === l.item)?.prep ?? 10));
   return (
     <MealsFrame tab="kitchen" toast={toast} outlets={r.m.outlets} wide>
+      <KitchenBell tickets={today.filter((o) => o.status === "queued").map((o) => `${o.id}:${o.round ?? 1}`)} />
       <p className="mb-3 text-[13.5px] text-hms-muted">Oldest first. A ticket turns red when it takes longer than its dishes&apos; prep time. {today.filter((o) => o.status === "approval").length > 0 && <Link href="/hms/meals/orders" className="font-semibold text-[#8a5300] underline">{today.filter((o) => o.status === "approval").length} waiting for approval</Link>}</p>
       <div className="grid gap-4 lg:grid-cols-3">
         {cols.map(([s, l, tone, btn, to, msg]) => { const list = today.filter((o) => o.status === s); return (

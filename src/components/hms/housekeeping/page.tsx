@@ -2,6 +2,7 @@
 // Housekeeping — follows the live HMS structure: Tasks · Maintenance · Checklist.
 // Tasks: one status strip (Pending → Cleaning → Awaiting inspection → Ready), who is working where right now,
 // task cards (person, step, checklist progress, target time) and one task sheet that walks through the steps.
+import { FocusButton, FocusView } from "../focus";
 import Link from "next/link";
 import clsx from "clsx";
 import { useMemo, useRef, useState } from "react";
@@ -68,10 +69,11 @@ function HousekeepingBoard() {
 
   if (!hk.ready || !bk.ready) return <div className="hms-page"><p role="status" className="py-10 text-[14px] text-hms-muted">Loading housekeeping…</p></div>;
   return (
-    <div className="h-full overflow-y-auto"><div className="hms-page">
+    <FocusView id="housekeeping" title="Housekeeping">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h1 className="text-[24px] font-bold tracking-[-0.01em]">Housekeeping</h1><p className="text-[14px] text-hms-muted">Cleaning tasks, maintenance and room checklists · {dm(TODAY)}</p></div>
-        <div className="flex items-center gap-2">
+        <div className="focus-hide"><h1 className="text-[24px] font-bold tracking-[-0.01em]">Housekeeping</h1><p className="text-[14px] text-hms-muted">Cleaning tasks, maintenance and room checklists · {dm(TODAY)}</p></div>
+        <div className="ml-auto flex items-center gap-2">
+          <FocusButton id="housekeeping" label="Housekeeping" className="h-11 rounded-xl" />
           <Link href="/hms/settings/housekeeping" aria-label="Housekeeping rules" className="grid size-11 place-items-center rounded-xl border border-hms-line bg-white hover:bg-hms-hover"><Settings2 className="size-[18px]" /></Link>
           {tab === "tasks" && <button onClick={printSheet} className={bSoft}><Printer className="size-4" aria-hidden />Room sheet</button>}
           {tab !== "checklist" && <button onClick={() => setAdding(true)} className={bMain}><Plus className="size-4" />{tab === "maintenance" ? "Add maintenance" : "Add task"}</button>}
@@ -91,7 +93,7 @@ function HousekeepingBoard() {
         ? <AddMaintenance hk={hk} rooms={rooms} onClose={() => setAdding(false)} say={say} />
         : <AddTask hk={hk} onClose={() => setAdding(false)} say={say} />)}
       {toast && <Toast text={toast} />}
-    </div></div>
+    </FocusView>
   );
 }
 

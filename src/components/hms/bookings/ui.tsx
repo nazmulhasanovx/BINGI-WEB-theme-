@@ -1,4 +1,5 @@
 "use client";
+import { FocusButton, FocusView } from "../focus";
 import Link from "next/link";
 import clsx from "clsx";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -78,14 +79,15 @@ export function BookingsFrame({ tab, children, sub, bar }: { tab: BkTab; childre
   useEffect(() => { if (msg) { const q = new URLSearchParams(sp.toString()); q.delete("made"); router.replace(`${path}?${q}`, { scroll: false }); } }, [msg, sp, router, path]);
   return (
     <C.Provider value={{ bk, guests, g, mode, open, toast: setToast }}>
-      <div className="h-full overflow-y-auto"><div className="hms-page">
+      <FocusView id="bookings" title="Bookings">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="focus-hide min-w-0">
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">Bookings</h1>
             <p className="text-[14px] text-hms-muted">Manage your hotel reservations · Today {dow(TODAY)}, {dmy(TODAY)}</p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <Link href="/hms/bookings/walkin" className={clsx(bSoft, "ml-auto sm:ml-0")}><UserPlus className="size-4" /><span className="hidden sm:inline">Walk-in</span><span className="sr-only sm:hidden">Walk-in</span></Link>
+<FocusButton id="bookings" label="Bookings" />
             <Link href="/hms/bookings/new" className={bMain}><Plus className="size-4" />New booking</Link>
             <Menu label="More actions" items={[{ label: "Reset demo bookings", onClick: () => { bk.reset(); setToast("Demo bookings reset"); }, danger: true }]} />
           </div>
@@ -96,7 +98,7 @@ export function BookingsFrame({ tab, children, sub, bar }: { tab: BkTab; childre
           <div className="no-scrollbar flex max-w-full overflow-x-auto"><ViewBar tab={tab} /></div>
         </div>
         <div className="mt-4">{bk.ready ? children : <p role="status" className="py-10 text-[14px] text-hms-muted">Loading bookings…</p>}</div>
-      </div></div>
+      </FocusView>
       {toastText && <Toast text={toastText} />}
     </C.Provider>
   );

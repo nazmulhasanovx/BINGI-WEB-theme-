@@ -1,4 +1,5 @@
 "use client";
+import { FocusButton, FocusView } from "./focus";
 import { can } from "@/lib/plan";
 // HMS Dashboard (operating property). Layout from Nazmul's reference (10 Nov 2026):
 // greeting → 4 KPIs → Today's priorities + Website & booking → Arriving today + plan card.
@@ -121,14 +122,14 @@ function PlanDashboard() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="hms-page space-y-4">
+    <FocusView id="dashboard" title="Dashboard" page="hms-page space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
+          <div className="focus-hide">
             <h1 className="text-[24px] font-bold tracking-[-0.01em]">{hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, Md Yeapas</h1>
             <p className="text-[14px] text-hms-muted">{day}</p>
           </div>
-          <Link href="/hms/bookings/new" className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-glow px-4 text-[14px] font-semibold text-white"><Plus className="size-4" />New booking</Link>
+          <div className="ml-auto flex items-center gap-2"><FocusButton id="dashboard" label="Dashboard" />
+          <Link href="/hms/bookings/new" className="inline-flex h-10 items-center gap-1.5 rounded-lg btn-glow px-4 text-[14px] font-semibold text-white"><Plus className="size-4" />New booking</Link></div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -198,8 +199,7 @@ function PlanDashboard() {
           </section>
           <PlanCard onDuty={onDuty} lowStock={lowStock} hasHrm={hasHrm} hasRestaurant={hasRestaurant} qr={qrWaiting} orders={ordersToday} menu={menuItems} sources={sources} />
         </div>
-      </div>
-    </div>
+    </FocusView>
   );
 }
 

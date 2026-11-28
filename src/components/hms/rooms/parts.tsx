@@ -1,5 +1,6 @@
 "use client";
 // Rooms / Accommodations — shared frame and pieces. Visual language follows the HRM module (same kit).
+import { FocusButton, FocusView } from "../focus";
 import Link from "next/link";
 import clsx from "clsx";
 import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -55,14 +56,14 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
   const toast = useSyncExternalStore((f) => (subs.add(f), () => void subs.delete(f)), () => toastText, () => null);
   return (
     <>
-      <div className="h-full overflow-y-auto bg-[#f4f6f8]">
-        <div className="hms-page">
+      <FocusView id="rooms" title="Accommodations">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
+            <div className="focus-hide min-w-0">
               <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em]">{title}</h1>
               <p className="mt-0.5 text-[15.5px] text-[#4d5664]">Manage your rooms, prices and availability · {h.name}</p>
             </div>
             <div className="flex items-center gap-2.5">
+              {st.config.configured && <FocusButton id="rooms" label="Accommodations" className="h-11 rounded-xl" />}
               {st.config.configured && <Link href="/hms/rooms/new" className="inline-flex h-11 items-center gap-2 rounded-xl btn-glow px-5 text-[14.5px] font-semibold text-white"><Plus className="size-[18px]" /> Add room type</Link>}
               <Menu label="More actions" items={[
                 { label: "Reset demo data", onClick: () => { reset(); showToast("Demo data reset"); } },
@@ -78,8 +79,7 @@ export function RoomsFrame({ tab, children }: { tab: RoomsTab; children: ReactNo
             </nav>
           )}
           <div key={tab} className="hms-page-in mt-4">{st.config.configured ? children : <SetupIntro />}</div>
-        </div>
-      </div>
+      </FocusView>
       {toast && <Toast key={toast} text={toast} onDone={() => showToast(null)} />}
     </>
   );
