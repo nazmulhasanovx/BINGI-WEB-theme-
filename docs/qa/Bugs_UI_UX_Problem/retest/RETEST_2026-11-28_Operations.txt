@@ -1,0 +1,172 @@
+================================================================
+ RE-TEST + MODULE RECONCILIATION  28 Nov 2026   hms.bingi.app
+================================================================
+ Property: HTL-000001 Pan Pacific Sonargaon Dhaka (owner user 75)
+ Business date 28 Nov 2026. Evidence = API responses + screens.
+ Scope: property operations only (no pricing / plans / Super Admin).
+
+ OLD P0 vs 25 Nov:  FIXED 17 | PARTLY 2 | NOT TESTED 3
+ NEW: 4 P0, 14 P1, 10 P2  (occupancy mismatch C5 = top P1)
+
+================================================================
+ A. OLD P0 - RESULT
+================================================================
+ ID            25 Nov      28 Nov
+ ------------- ----------- --------------------------------------
+ BKG-P0-01     NOT FIXED   FIXED  tonight list skips 206/208/209/
+                                  102/104/207
+ BKG-P0-02     NOT FIXED   FIXED  no-email booking WBK-2026-000103
+ BKG-P0-03     NOT FIXED   FIXED  tonight API: 206 booked, 207 ooo
+ BKG-P0-04     PARTLY      FIXED  Move room opens, only free rooms
+ ROOM-P0-02    NOT FIXED   FIXED  overdue count 7 + list chip
+ ROOM-P0-03    NOT FIXED   FIXED
+ ROOM-P0-04    NOT FIXED   FIXED  Deluxe 16 -> 16,000 saved
+ ROOM-P0-05    NOT FIXED   FIXED  207 OOO, not sold
+ MEAL-P0-01    NOT FIXED   FIXED  VAT 15 / service 10 saved
+                                  (set back to 0 after test)
+ MEAL-P0-03    NOT FIXED   FIXED  FO-074 paid, Cashbox +250
+ EXP-P0-01     NOT FIXED   FIXED  pay before approval -> 422
+ EXP-P0-03     NOT FIXED   FIXED  status->completed before
+                                  approval -> 422
+ EXP-P0-04     PARTLY      FIXED  paid expense: reject 422
+ NEW-EXP-P0-01 (25 Nov)    FIXED  paid expense: delete 422
+ MON-P0-03     PARTLY      FIXED  expense cash out moves drawer;
+                                  cash expense > drawer -> 409
+ DOC-P0-01     NOT FIXED   FIXED  contract letter: 0 x "KeyHost"
+ EXP-P0-05     NOT FIXED   FIXED  card renamed "Net (collected -
+                                  expenses)", rejected excluded
+ MON-P0-01     NOT FIXED   PARTLY new walk-in cash makes no
+                                  "hotel payable" row (good), but
+                                  old rows stay: see NEW-MON-P0-02
+ MON-P0-02     NOT FIXED   PARTLY TXN-2026-000001 still pays out
+                                  295 too much (see C1)
+ MEAL-P0-02    NOT FIXED   NOT TESTED (needs a guest QR order)
+ DOC-P0-02, ONB-P0-05      NOT TESTED (manual)
+
+================================================================
+ B. NEW P0
+================================================================
+ NEW-BKG-P0-01  Availability for any date except tonight never
+   loads. GET /api/rooms?check_in=2026-11-29 (also 12-01, 12-10)
+   gave no answer in 20-35 s. New booking keeps TONIGHT's rooms
+   with no message. On 10 Dec it offers 505, which QA Guest 20
+   holds 10-12 Dec. Risk: double booking for every future date.
+
+ NEW-CASH-P0-01  Cashbox never closes and never carries cash over.
+   22 cashboxes, "Closed days" is empty. 25 Nov box is still
+   "open" with Tk 3,03,000. Today a new box opened at 0 + 500
+   float. Yesterday's drawer cash disappears from the screen,
+   and cash expenses today are blocked ("not enough physical
+   cash") although the hotel holds Tk 3 lakh.
+   Fix: block opening a new day while an older day is open;
+   opening float = last counted closing.
+
+ NEW-ROOM-P0-01  Price edit unpublishes the room type. Saving
+   Deluxe price sent it to "Waiting for approval - units stay
+   drafts" (approval_status PENDING). Deluxe vanished from New
+   booking for 10 Dec. A price change must not need re-approval.
+
+ NEW-MON-P0-02  Finance still says "Available balance Tk 6,97,591
+   - ready to request as a payout". It is old desk cash and bKash
+   the hotel already holds (Cash 5,41,457 + bKash 2,92,891 of
+   8,35,552 collected; EPS online = Tk 69). A payout request
+   SET-2026-000001 for Tk 1,38,071 is "requested". BinGi would
+   owe money it never received. Fix: clean old ledger rows;
+   Finance = online money only.
+
+================================================================
+ C. MODULE-TO-MODULE CHECK (numbers)
+================================================================
+ C1 Bookings <-> Payments <-> Finance            RESULT
+   Booking paid (50 bookings)  8,34,412.14
+   + meal/service payments        1,140.00
+   = Finance collected          8,35,552.14      MATCH
+   Payments page by method: Cash 5,39,321.14 + bKash 2,95,027
+   + EPS 64 = 8,34,412.14                         MATCH
+   Outstanding due 8,34,025 / 21 bookings (live)  MATCH Bookings
+   Finance hotel payable 8,35,699.38 vs collected - commission
+   - gateway = 8,35,404.38                        +295.00 WRONG
+     cause: TXN-2026-000001 (SIN-2026-000002): collected 5,
+     commission 3, gateway 0.13, payable 296.87
+   Payments "Total Revenue Tk 1,897K" counts 10 CANCELLED
+   bookings (2,39,048). Live revenue = 16,58,283  WRONG (P1)
+
+ C2 Bookings <-> Reports (This month)
+   Report collections 7,98,606.14; ledger Nov 7,97,088.14
+   -> 1,518 extra, shown as a second "Cash" row  WRONG (P1)
+   Report Expenses 30,474 = all 8 expenses incl. pending 99 and
+   REJECTED 6,000. Operations says 31,375 (approved+paid).
+   Same month, two numbers                        WRONG (P1)
+   "Net Cash 7,68,132" = collections - expenses, includes
+   bKash and unpaid expenses; not cash            WRONG (P1)
+   Outstanding due: Reports 8,36,341 vs Bookings 8,34,025
+   (diff 2,316 = open food orders?)               CHECK (P2)
+
+ C3 Restaurant <-> folio <-> payments <-> Cashbox
+   Food cash payment -> Cashbox +250              MATCH
+   Restaurant cash order FO-074 -> ledger
+   "commission_receivable 12.5" (5%), deducted from Finance
+   balance. Commission on the hotel's own restaurant cash
+   sales                                          WRONG (P1,
+   founder: commission only on marketplace bookings)
+   Cancelled room-bill order FO-068 (154, paid) -> booking
+   WBK-077 collected 3,123.14 on a 2,969.14 bill. Guest overpaid
+   154, Balance shows 0, no refund/credit         WRONG (P1)
+   Room-bill food orders are not lines in Bill & folio; only a
+   note "Some order amounts are separate"         WRONG (P1)
+   3 room-bill orders "counter_pending" since Nov (FO-009, 072,
+   073); FO-008 is "paid" but still counter_pending  (P1)
+   7 delivered direct-payment orders unpaid (1,628)   (P2)
+
+ C4 Expenses <-> Cashbox <-> Operations
+   Pay 500 cash: Cashbox 500 -> 0                 MATCH
+   Operations: approved+paid 31,375, paid 10,000, due 21,375
+                                                  MATCH (own data)
+   Approval: owner approves via status, approved_by set  OK
+   EXP-2026-000007 rejected but paid 6,000 (old data)   (P2)
+   EXP-2026-000009 approved with amount 0 allowed       (P2)
+   Payroll -> Expenses: not testable (1 staff, no payroll run)
+
+ C5 Rooms <-> Housekeeping <-> Dashboard <-> Reports
+   Same moment, four numbers:                     WRONG (P1, top)
+     Dashboard      : 25 of 29 occupied (82.8%), 4 available
+     Rooms/tonight  : 13 booked, 14 available, 1 OOO
+     Bookings       : 8 in house
+     Occupancy rep. : 3 in house, 3 ready, 0 blocked, 5 reserved
+   Dashboard "Room revenue today BDT 16" = only the new booking;
+   8 in-house stays earn nothing today            WRONG (P1)
+   Occupancy report "Blocked 0" while 207 is OOO  WRONG (P1)
+   Housekeeping "105 guest arriving, not ready"   MATCH Bookings
+
+================================================================
+ D. NEW P1 / P2 (UI, function)
+================================================================
+ P1 New booking shows "Breakfast + Lunch + Dinner included" on
+    every type; data = breakfast only (most) or none.
+ P1 Room card "Single 312 - Out of order"; 312 is only dirty and
+    is sold.
+ P1 Dashboard fees still "Marketplace 5% / Web 1% / Walk-in
+    0.01%"; ledger charged 0.01% on 25 cash + bKash payments.
+ P1 Restaurant hours 07:17 PM open / 06:18 PM close (test data,
+    but no check that close > open).
+ P2 Room type cards still titled by bed (Twin, Single).
+ P2 Edit Room drawer: "Update Room" below the screen at 741 px.
+ P2 Booking header "Room 105 · Room"; room card "Occupied" before
+    check-in.
+ P2 Payment methods "Cash, bKash, bKash" (duplicate) in booking
+    and restaurant.
+ P2 Payments "Average Transaction Tk 29,800.434" (3 decimals).
+ P2 Housekeeping floor filter lists 10th/20th/40th/96th floors
+    (test data, 5-floor hotel).
+
+================================================================
+ Test data added 28 Nov (clean when you like)
+================================================================
+ WBK-2026-000103 QA Retest NoEmail, room 105, 28-29 Nov, Tk 16,
+   paid cash 16 (received 20).
+ EXP-2026-000015 7,000 approved, paid 500 cash.
+ EXP-2026-000016 6,000 draft.
+ FO-2026-000074 now paid 250 cash.
+ Deluxe (101-105) price 16,000, PENDING approval -> approve it in
+   Super Admin or it stays unsellable for future dates.
+ Restaurant VAT/service set 15/10 then back to 0/0.
