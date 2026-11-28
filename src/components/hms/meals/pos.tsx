@@ -2,9 +2,10 @@
 // Restaurant & Bar — POS. Two views on the left: Tables (who is sitting where, running bills) and Menu (dishes).
 // Right: the order. Tap a free table → new order; tap a busy table → add more dishes to its running order.
 import clsx from "clsx";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
-import { BedDouble, CircleCheck, LayoutGrid, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { BedDouble, CircleCheck, LayoutGrid, Maximize2, Minimize2, Minus, Plus, Printer, Search, ShoppingBag, StickyNote, Trash2, UtensilsCrossed, X } from "lucide-react";
 import { TODAY } from "@/lib/rooms/store";
 import { PLACE_KIND, SERVICE_LABEL, bill, isSeated, roomServiceOutlet, seatsTaken, sharesSeats, tk, type Item, type Line, type Order, type Place, type Service } from "@/lib/meals/seed";
 import { ageOf } from "@/lib/meals/store";
@@ -12,6 +13,25 @@ import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { MealsFrame } from "./frame";
 import { Dish, PaySheet, SERVICE_ICON, StatusChip, useRestaurant, useToast, type Restaurant } from "./shared";
 import { billHtml, kotHtml, printHtml } from "./print";
+import { imgSrc } from "@/lib/img";
+
+// Full-screen restaurant mode: remembered per device, so a restaurant tablet or counter PC keeps opening the POS full screen.
+const FKEY = "bingi.meals.pos.full";
+const fsubs = new Set<() => void>();
+function useFullPos() {
+  const on = useSyncExternalStore((f) => (fsubs.add(f), () => void fsubs.delete(f)), () => { try { return localStorage.getItem(FKEY) === "1"; } catch { return false; } }, () => false);
+  const set = (v: boolean) => {
+    try { localStorage.setItem(FKEY, v ? "1" : "0"); } catch {}
+    try { if (v && !document.fullscreenElement) document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {}); else if (!v && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch { /* browser blocked it — the full-screen layout still fills the window */ }
+    fsubs.forEach((f) => f());
+  };
+  return [on, set] as const;
+}
+function useClock() {
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => { const i = setInterval(() => setT(new Date()), 30_000); return () => clearInterval(i); }, []);
+  return t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
 
 const key = (l: Pick<Line, "item" | "size">) => `${l.item}|${l.size ?? ""}`;
 const openOrder = (o: Order) => o.at.slice(0, 10) === TODAY && o.pay === "unpaid" && !["cancelled", "declined"].includes(o.status);
@@ -42,6 +62,9 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const [done, setDone] = useState<{ id: string; round: number } | null>(null);
   const [pay, setPay] = useState<string | null>(null);
   const cartRef = useRef<HTMLElement>(null);
+  const [full, setFull] = useFullPos();
+  const clock = useClock();
+  useEffect(() => { if (!full) return; const k = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.fullscreenElement && !pay) setFull(false); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [full, pay, setFull]);
   const running = run ? st.orders.find((o) => o.id === run) : undefined;
   const items = useMemo(() => st.items.filter((i) => i.pos && (cat === "all" || i.cat === cat) && (!q || i.name.toLowerCase().includes(q.toLowerCase()))), [st.items, cat, q]);
   const service = running?.service ?? (services.includes(svc) ? svc : services[0]);
@@ -98,14 +121,15 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const doneOrder = done ? st.orders.find((o) => o.id === done.id) : undefined;
   return (
-    <MealsFrame tab="pos" toast={toast} outlets={r.m.outlets}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="min-w-0">
+    <PosShell full={full} setFull={setFull} toast={toast} outlets={r.m.outlets} hotel={r.h.name} outlet={r.outlet} clock={clock}>
+      <div className={clsx("grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]", full && "lg:h-full lg:min-h-0")}>
+        <div className={clsx("min-w-0", full && "lg:min-h-0 lg:overflow-y-auto lg:pb-4 lg:pr-1")}>
           <div className="flex flex-wrap items-center gap-2">
             <div role="tablist" aria-label="POS view" className="flex rounded-xl bg-[#e9edf2] p-1">
               {([["tables", "Tables", LayoutGrid], ["menu", "Menu", UtensilsCrossed]] as const).map(([v, l, I]) => <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={clsx("flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[14px] font-semibold transition-colors", view === v ? "bg-white shadow-sm" : "text-[#4d5664] hover:text-hms-ink")}><I className="size-4" aria-hidden />{l}</button>)}
             </div>
-            {view === "menu" && <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-lg border border-hms-line bg-white px-3 sm:w-[240px]"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search dishes" aria-label="Search dishes" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>}
+            {view === "menu" && <label className="ml-auto flex h-10 w-full items-center gap-2 rounded-lg border border-hms-line bg-white px-3 sm:w-[220px]"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search dishes" aria-label="Search dishes" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>}
+            {!full && <button onClick={() => setFull(true)} className={clsx(btnLine, "h-10 px-3", view !== "menu" && "ml-auto")} aria-label="Open POS in full screen" title="Full screen for the restaurant team — hides the HMS menu"><Maximize2 className="size-4" aria-hidden /><span className="hidden sm:inline">Full screen</span></button>}
           </div>
 
           {view === "tables" ? (
@@ -115,7 +139,7 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
                 <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-[#d6453c]" />Taken</span>
                 <span>Tap a table to order on its free seats · tap an order to add dishes</span>
               </div>
-              <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{tables.map((t) => {
+              <ul className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-2.5">{tables.map((t) => {
                 const info = seatInfo(t);
                 const here = openNow.filter((x) => x.place === t.id);
                 const full = info.all.length > 0 && !info.free.length;
@@ -155,22 +179,22 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
                 {[{ id: "all", name: "All" }, ...st.categories].map((c) => <button key={c.id} role="tab" aria-selected={cat === c.id} onClick={() => setCat(c.id)} className={clsx("h-9 shrink-0 rounded-full border px-3.5 text-[13.5px] font-semibold transition-colors", cat === c.id ? "border-[#b11c29] bg-[#b11c29] text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{c.name}</button>)}
               </div>
               {items.length ? (
-                <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{items.map((it) => { const total = it.sizes ? it.sizes.reduce((s, z) => s + qty(it, z.name), 0) : qty(it); return (
-                  <li key={it.id} className={clsx("flex flex-col overflow-hidden rounded-2xl border bg-white transition-shadow", total ? "border-[#b11c29] shadow-[0_0_0_1px] shadow-[#b11c29]" : "border-hms-line hover:shadow-md", !it.available && "opacity-60")}>
+                <ul className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">{items.map((it) => { const total = it.sizes ? it.sizes.reduce((s, z) => s + qty(it, z.name), 0) : qty(it); return (
+                  <li key={it.id} className={clsx("flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow", total ? "border-[#b11c29] shadow-[0_0_0_1px] shadow-[#b11c29]" : "border-hms-line hover:shadow-md", !it.available && "opacity-60")}>
                     <button type="button" disabled={!it.available || !!it.sizes} onClick={() => setQty(it, qty(it) + 1)} aria-label={it.sizes || !it.available ? undefined : `Add ${it.name}`} aria-hidden={it.sizes || !it.available ? true : undefined} tabIndex={it.sizes || !it.available ? -1 : undefined} className="relative block disabled:cursor-default">
-                      <Dish it={it} className="aspect-[4/3] w-full rounded-none" />
-                      {total > 0 && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#b11c29] text-[13px] font-bold text-white">{total}</span>}
+                      <Dish it={it} className="aspect-[16/10] w-full rounded-none" />
+                      {total > 0 && <span className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-[#b11c29] text-[13px] font-bold text-white">{total}</span>}
                     </button>
-                    <div className="flex flex-1 flex-col p-3">
-                      <b className="text-[14.5px] leading-snug">{it.name}</b>
-                      <span className="text-[12.5px] text-hms-muted">{it.available ? `${it.prep} min` : "Sold out"}</span>
+                    <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2">
+                      <b className="line-clamp-2 text-[13.5px] leading-snug">{it.name}</b>
+                      <span className="text-[12px] text-hms-muted">{it.available ? `${it.prep} min` : "Sold out"}</span>
                       {!it.available ? null : it.sizes ? (
-                        <div className="mt-auto flex flex-wrap gap-1.5 pt-2">{it.sizes.map((z) => <button key={z.name} onClick={() => setQty(it, qty(it, z.name) + 1, z.name)} aria-label={`Add ${it.name} ${z.name}`} className="flex-1 rounded-lg border border-hms-line px-2 py-1.5 text-center text-[12.5px] font-semibold hover:border-[#b11c29] hover:text-[#b11c29]">{z.name}<span className="block tabular-nums text-[#b11c29]">{tk(z.price)}</span></button>)}</div>
+                        <div className="mt-auto flex flex-wrap gap-1 pt-1.5">{it.sizes.map((z) => <button key={z.name} onClick={() => setQty(it, qty(it, z.name) + 1, z.name)} aria-label={`Add ${it.name} ${z.name}`} className="flex-1 rounded-lg border border-hms-line px-1.5 py-1 text-center text-[12px] font-semibold hover:border-[#b11c29] hover:text-[#b11c29]">{z.name}<span className="block tabular-nums text-[#b11c29]">{tk(z.price)}</span></button>)}</div>
                       ) : (
-                        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                          <b className="text-[15px] text-[#b11c29] tabular-nums">{tk(it.price)}</b>
-                          {qty(it) ? <span className="flex items-center gap-1"><button onClick={() => setQty(it, qty(it) - 1)} aria-label={`Remove one ${it.name}`} className="grid size-8 place-items-center rounded-lg border border-hms-line"><Minus className="size-4" /></button><b className="w-5 text-center tabular-nums">{qty(it)}</b><button onClick={() => setQty(it, qty(it) + 1)} aria-label={`Add one more ${it.name}`} className="grid size-8 place-items-center rounded-lg bg-[#b11c29] text-white"><Plus className="size-4" /></button></span>
-                            : <span aria-hidden className="grid size-9 place-items-center rounded-full border border-hms-line"><Plus className="size-4" /></span>}
+                        <div className="mt-auto flex items-center justify-between gap-1 pt-1.5">
+                          <b className="text-[14px] text-[#b11c29] tabular-nums">{tk(it.price)}</b>
+                          {qty(it) ? <span className="flex items-center gap-1"><button onClick={() => setQty(it, qty(it) - 1)} aria-label={`Remove one ${it.name}`} className="grid size-7 place-items-center rounded-lg border border-hms-line"><Minus className="size-3.5" /></button><b className="w-4 text-center text-[13.5px] tabular-nums">{qty(it)}</b><button onClick={() => setQty(it, qty(it) + 1)} aria-label={`Add one more ${it.name}`} className="grid size-7 place-items-center rounded-lg bg-[#b11c29] text-white"><Plus className="size-3.5" /></button></span>
+                            : <span aria-hidden className="grid size-8 place-items-center rounded-full border border-hms-line"><Plus className="size-4" /></span>}
                         </div>
                       )}
                     </div>
@@ -181,22 +205,22 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
           )}
         </div>
 
-        <section ref={cartRef} aria-label="Order" className="scroll-mt-4 lg:sticky lg:top-4 lg:self-start">
-          <div className="rounded-2xl border border-hms-line bg-white">
-            <div className="flex items-start justify-between gap-2 border-b border-hms-line px-4 py-3">
-              <div><h2 className="text-[17px] font-bold">{running ? `${where(running)} · ${running.no}` : "New order"}</h2><p className="text-[13px] text-hms-muted">{running ? `Running bill · add more dishes` : `Staff POS · ${r.outlet}`}</p></div>
+        <section ref={cartRef} aria-label="Order" className={clsx("scroll-mt-4", full ? "lg:min-h-0" : "lg:sticky lg:top-4 lg:self-start")}>
+          <div className={clsx("flex flex-col rounded-2xl border border-hms-line bg-white", full ? "lg:h-full" : "lg:max-h-[calc(100dvh-140px)]")}>
+            <div className="flex shrink-0 items-start justify-between gap-2 border-b border-hms-line px-3.5 py-2.5">
+              <div><h2 className="text-[16px] font-bold">{running ? `${where(running)} · ${running.no}` : "New order"}</h2><p className="text-[12.5px] text-hms-muted">{running ? `Running bill · add more dishes` : `Staff POS · ${r.outlet}`}</p></div>
               {running && <button onClick={() => { setRun(null); setLines([]); setDone(null); setView("tables"); }} aria-label="Leave this order" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><X className="size-4" /></button>}
             </div>
-            <div className="max-h-[calc(100dvh-210px)] space-y-3 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-3.5">
               {!running && <>
-                <div role="radiogroup" aria-label="Service type" className="flex flex-wrap gap-1.5">{services.map((s) => { const I = SERVICE_ICON[s]; return <button key={s} type="button" role="radio" aria-checked={service === s} onClick={() => setSvc(s)} className={clsx("flex h-10 min-w-[110px] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-2 text-[13px] font-semibold", service === s ? "border-[#b11c29] bg-[#ffe7e4] text-[#8e1621]" : "border-hms-line")}><I className="size-4" aria-hidden />{SERVICE_LABEL[s]}</button>; })}</div>
+                <div role="radiogroup" aria-label="Service type" className="flex flex-wrap gap-1.5">{services.map((s) => { const I = SERVICE_ICON[s]; return <button key={s} type="button" role="radio" aria-checked={service === s} onClick={() => setSvc(s)} className={clsx("flex h-9 min-w-[96px] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-2 text-[12.5px] font-semibold", service === s ? "border-[#b11c29] bg-[#ffe7e4] text-[#8e1621]" : "border-hms-line")}><I className="size-4" aria-hidden />{SERVICE_LABEL[s]}</button>; })}</div>
                 {service === "dinein" && <div><label htmlFor="pos-t" className={lbl}>Table</label><select id="pos-t" value={place} onChange={(e) => choosePlace(e.target.value)} className={input}><option value="">Choose a table</option>{tables.filter((t) => t.accepting).map((t) => { const i = seatInfo(t); return <option key={t.id} value={t.id} disabled={i.all.length > 0 && !i.free.length}>{t.name} · {i.all.length ? `${i.free.length} of ${i.all.length} seats free` : "no seats"}{!sharesSeats(t) ? " · whole table" : ""}{t.note ? ` · ${t.note}` : ""}</option>; })}</select></div>}
                 {service === "dinein" && placeObj && seatInfo(placeObj).all.length > 0 && (() => { const i = seatInfo(placeObj); const share = sharesSeats(placeObj); return (
                   <div>
                     <div className="mb-1.5 flex items-center justify-between"><p className={lbl}>Seats <span className="font-normal text-hms-muted">{seats.length ? `· ${seats.length} picked` : "· pick who is ordering"}</span></p>{share && i.free.length > 1 && <button type="button" onClick={() => setSeats(seats.length === i.free.length ? [] : i.free)} className="text-[12.5px] font-semibold text-hms-red">{seats.length === i.free.length ? "Clear" : "All free seats"}</button>}</div>
                     <div role="group" aria-label="Seats" className="flex flex-wrap gap-1.5">{i.all.map((c) => { const taken = i.taken.has(c); const on = seats.includes(c); return (
                       <button key={c} type="button" disabled={taken || !share} aria-pressed={on} onClick={() => setSeats(on ? seats.filter((x) => x !== c) : [...seats, c].sort((a, b) => i.all.indexOf(a) - i.all.indexOf(b)))}
-                        className={clsx("h-10 min-w-12 rounded-lg px-2 text-[13.5px] font-bold", taken ? "cursor-not-allowed bg-[#f3d1ce] text-[#a3302a] line-through" : on ? "bg-hms-ink text-white" : "border border-hms-line bg-white hover:border-hms-ink", !share && !taken && "!bg-hms-ink !text-white")}>{c}</button>); })}</div>
+                        className={clsx("h-9 min-w-11 rounded-lg px-2 text-[13px] font-bold", taken ? "cursor-not-allowed bg-[#f3d1ce] text-[#a3302a] line-through" : on ? "bg-hms-ink text-white" : "border border-hms-line bg-white hover:border-hms-ink", !share && !taken && "!bg-hms-ink !text-white")}>{c}</button>); })}</div>
                     <p className="mt-1 text-[12px] text-hms-muted">{share ? "Only the seats you pick are blocked — the rest of the table stays free for other guests." : `${PLACE_KIND[placeObj.kind].label}: the whole table is taken by this order.`}</p>
                   </div>); })()}
                 {service === "room" && <div><label htmlFor="pos-r" className={lbl}>Room</label><select id="pos-r" value={room} onChange={(e) => setRoom(e.target.value)} className={input}><option value="">Choose the room</option>{r.inHouse.map((g) => <option key={g.room} value={g.room}>Room {g.room} · {g.guest}</option>)}</select></div>}
@@ -212,22 +236,23 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
               )}
 
               {lines.length ? <ul className="divide-y divide-hms-line rounded-xl border border-hms-line">{lines.map((l) => (
-                <li key={key(l)} className="px-3 py-2.5">
-                  <div className="flex items-center gap-1.5"><span className="min-w-0 flex-1 text-[14px]"><b className="block truncate">{l.name}</b><span className="text-[12.5px] text-hms-muted tabular-nums">{tk(l.price)} × {l.qty} = {tk(l.price * l.qty)}</span></span>
-                    <button onClick={() => setLineQty(l, l.qty - 1)} aria-label={`Remove one ${l.name}`} className="grid size-8 place-items-center rounded-lg border border-hms-line"><Minus className="size-4" /></button><b className="w-5 text-center tabular-nums">{l.qty}</b><button onClick={() => setLineQty(l, l.qty + 1)} aria-label={`Add one more ${l.name}`} className="grid size-8 place-items-center rounded-lg border border-hms-line"><Plus className="size-4" /></button>
-                    <button onClick={() => setNotes({ ...notes, [key(l)]: !notes[key(l)] })} aria-label={`Note for ${l.name}`} aria-pressed={!!notes[key(l)] || !!l.note} className={clsx("grid size-8 place-items-center rounded-lg", l.note ? "text-[#a4500f]" : "text-hms-muted hover:bg-hms-hover")}><StickyNote className="size-4" /></button>
-                    <button onClick={() => setLineQty(l, 0)} aria-label={`Remove ${l.name}`} className="grid size-8 place-items-center rounded-lg text-hms-muted hover:bg-hms-hover"><Trash2 className="size-4" /></button></div>
+                <li key={key(l)} className="px-2.5 py-2">
+                  <div className="flex items-center gap-1.5"><span className="min-w-0 flex-1 text-[13.5px]"><b className="block truncate">{l.name}</b><span className="text-[12px] text-hms-muted tabular-nums">{tk(l.price)} × {l.qty} = {tk(l.price * l.qty)}</span></span>
+                    <button onClick={() => setLineQty(l, l.qty - 1)} aria-label={`Remove one ${l.name}`} className="grid size-7 place-items-center rounded-lg border border-hms-line"><Minus className="size-4" /></button><b className="w-5 text-center tabular-nums">{l.qty}</b><button onClick={() => setLineQty(l, l.qty + 1)} aria-label={`Add one more ${l.name}`} className="grid size-7 place-items-center rounded-lg border border-hms-line"><Plus className="size-4" /></button>
+                    <button onClick={() => setNotes({ ...notes, [key(l)]: !notes[key(l)] })} aria-label={`Note for ${l.name}`} aria-pressed={!!notes[key(l)] || !!l.note} className={clsx("grid size-7 place-items-center rounded-lg", l.note ? "text-[#a4500f]" : "text-hms-muted hover:bg-hms-hover")}><StickyNote className="size-4" /></button>
+                    <button onClick={() => setLineQty(l, 0)} aria-label={`Remove ${l.name}`} className="grid size-7 place-items-center rounded-lg text-hms-muted hover:bg-hms-hover"><Trash2 className="size-4" /></button></div>
                   {(notes[key(l)] || l.note) && <input aria-label={`Kitchen note for ${l.name}`} value={l.note ?? ""} onChange={(e) => setLines(lines.map((x) => (key(x) === key(l) ? { ...x, note: e.target.value || undefined } : x)))} placeholder="e.g. Less spicy, no onion" className="mt-2 h-9 w-full rounded-lg border border-[#858c97] px-2.5 text-[13.5px] outline-none focus:border-hms-ink" />}
                 </li>
               ))}</ul> : <p className="rounded-xl border border-dashed border-hms-line px-3 py-5 text-center text-[14px] text-hms-muted">{view === "tables" && !running ? "Pick a table, or switch to Menu." : running ? "Tap dishes to add to this bill." : "Tap dishes to add them."}</p>}
               {tried && errs.lines && <p className="text-[13px] font-medium text-[#c81e1e]">{errs.lines}</p>}
-
-              <dl className="space-y-1 text-[14px]">
+            </div>
+            <div className="shrink-0 space-y-2.5 border-t border-hms-line p-3.5">
+              <dl className="space-y-0.5 text-[13.5px]">
                 <div className="flex justify-between"><dt className="text-hms-muted">Subtotal</dt><dd className="tabular-nums">{tk(b.sub)}</dd></div>
                 {b.disc > 0 && <div className="flex justify-between text-[#1c7d45]"><dt>Discount</dt><dd className="tabular-nums">−{tk(b.disc)}</dd></div>}
                 <div className="flex justify-between"><dt className="text-hms-muted">Service charge ({base.sc}%)</dt><dd className="tabular-nums">{tk(b.sc)}</dd></div>
                 <div className="flex justify-between"><dt className="text-hms-muted">VAT ({base.vat}%)</dt><dd className="tabular-nums">{tk(b.vat)}</dd></div>
-                <div className="flex justify-between rounded-lg bg-[#fff1ef] px-3 py-2 text-[16px] font-bold"><dt>{running ? "Bill so far" : "Total"}</dt><dd className="tabular-nums">{tk(b.total)}</dd></div>
+                <div className="mt-1 flex justify-between rounded-lg bg-[#fff1ef] px-3 py-1.5 text-[16px] font-bold"><dt>{running ? "Bill so far" : "Total"}</dt><dd className="tabular-nums">{tk(b.total)}</dd></div>
               </dl>
               {(lines.length > 0 || !running) && <button onClick={send} className={clsx(btnPrimary, "h-11 w-full")}>{running ? `Send ${count || ""} added item${count === 1 ? "" : "s"} to kitchen` : st.settings.posApproval ? "Send for approval" : "Send to kitchen"}</button>}
               {running && !lines.length && <div className="grid grid-cols-2 gap-2"><button onClick={() => printHtml(billHtml(r.h, running, where(running)))} className={clsx(btnLine, "h-11")}><Printer className="size-4" aria-hidden />Print bill</button><button onClick={() => setPay(running.id)} className={clsx(btnPrimary, "h-11")}>Bill &amp; pay</button></div>}
@@ -244,8 +269,26 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
           </div>
         </section>
       </div>
-      {count > 0 && <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })} className="fixed inset-x-4 bottom-20 z-40 flex h-12 items-center justify-between rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white shadow-lg lg:hidden"><span>Order · {count} item{count > 1 ? "s" : ""}</span><span className="tabular-nums">{tk(b.total)}</span></button>}
+      {count > 0 && <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })} className={clsx("fixed inset-x-4 z-[86] flex h-12 items-center justify-between rounded-xl bg-[#0f1720] px-4 text-[14.5px] font-semibold text-white shadow-lg lg:hidden", full ? "bottom-4" : "bottom-20")}><span>Order · {count} item{count > 1 ? "s" : ""}</span><span className="tabular-nums">{tk(b.total)}</span></button>}
       {pay && <PaySheet r={r} id={pay} onClose={() => setPay(null)} onDone={(m) => { show(m); setPay(null); setDone(null); setRun(null); setView("tables"); }} />}
-    </MealsFrame>
+    </PosShell>
   );
+}
+
+/** Normal: inside the Restaurant & Bar frame. Full screen: only the POS, over the whole window (HMS menu and header hidden). */
+function PosShell({ full, setFull, toast, outlets, hotel, outlet, clock, children }: { full: boolean; setFull: (v: boolean) => void; toast?: string; outlets: string[]; hotel: string; outlet: string; clock: string; children: React.ReactNode }) {
+  if (!full) return <MealsFrame tab="pos" toast={toast} outlets={outlets}>{children}</MealsFrame>;
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-label="Restaurant POS — full screen" className="hms-app fixed inset-0 z-[85] flex flex-col bg-[#f4f6f8]">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-hms-line bg-white px-4">
+        {/* eslint-disable-next-line @next/next/no-img-element -- brand asset */}
+        <img src={imgSrc("/brand/bingi-hms.svg")} alt="BinGi HMS" className="h-6 w-auto" />
+        <span className="h-6 w-px bg-hms-line" aria-hidden />
+        <div className="min-w-0 leading-tight"><b className="block truncate text-[14.5px]">Restaurant POS · {outlet}</b><span className="block truncate text-[12px] text-hms-muted">{hotel}</span></div>
+        <span className="ml-auto hidden text-[14px] font-semibold tabular-nums text-hms-muted sm:block" aria-label="Time">{clock}</span>
+        <button onClick={() => setFull(false)} aria-label="Exit full screen" className={clsx(btnLine, "ml-auto h-10 shrink-0 px-3 sm:ml-0")}><Minimize2 className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Exit full screen</span></button>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:overflow-hidden lg:pb-4">{children}</div>
+      {toast && <div role="status" className="hms-up fixed bottom-6 left-1/2 z-[95] flex max-w-[92vw] -translate-x-1/2 items-center gap-2 rounded-xl bg-[#0f1720] px-4 py-2.5 text-[14px] font-medium text-white shadow-lg"><CircleCheck className="size-4 shrink-0 text-[#7ee2a8]" />{toast}</div>}
+    </div>, document.body);
 }
