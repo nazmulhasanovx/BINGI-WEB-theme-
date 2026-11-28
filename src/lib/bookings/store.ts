@@ -40,7 +40,9 @@ export const DEFAULT_SETTINGS: Settings = {
   confirmMsg: "Dear {guest}, your booking {code} at {hotel} is confirmed: {room}, {from} to {to} ({nights} nights). Total {total}, paid {paid}. Check-in from {checkin}. See you soon!",
   preArrivalMsg: "Hi {guest}, we look forward to welcoming you at {hotel} on {from}. Check-in is from {checkin}. Save time at the desk — pre-check-in here: {link} . Booking {code}.",
 };
-export type Audit = { date: string; at: string; by: string; arrivals: number; departures: number; noShows: number; inHouse: number; revenue: number; collected: number };
+/** Day close record. revenue = room revenue NET (after discount, before service + VAT); gross = incl. service + VAT.
+ *  Records saved before this rule have no `gross` and their `revenue` was the gross figure. */
+export type Audit = { date: string; at: string; by: string; arrivals: number; departures: number; noShows: number; inHouse: number; revenue: number; collected: number; service?: number; vat?: number; gross?: number; sold?: number };
 export type Wait = { id: string; name: string; phone: string; from: string; to: string; category?: string; adults: number; note: string; at: string; done?: string };
 export type Companion = { name: string; idType: string; idNo: string; relation: string; age?: string };
 export const PURPOSES = ["Holiday", "Business", "Family visit", "Event / wedding", "Medical", "Other"];
@@ -113,6 +115,21 @@ export const paidOf = (b: Booking) => b.payments.reduce((s, p) => s + p.amount, 
 /** What the guest owes for the room bill. Cancelled: only what was kept as a fee counts. */
 export const chargesOf = (b: Pick<Booking, "charges">) => (b.charges ?? []).reduce((s, c) => s + c.amount, 0);
 export const totalOf = (b: Booking) => (b.status === "Cancelled" || b.status === "No-show" ? b.cancel?.keep ?? 0 : bill(b).total + heldMeals(b).reduce((s, m) => s + preMealTotal(m), 0) + chargesOf(b));
+/** Room revenue for one night (Day close screen + night audit print use this, so they match).
+ *  Each stay in house that night (checked in, or checked out early) counts its price for that night, less a
+ *  share of the booking discount in proportion to the night's price; then service charge and VAT as on the bill. */
+export function roomRevenueOn(list: Booking[], date: string) {
+  let net = 0, service = 0, vat = 0; const rooms = new Set<string>();
+  for (const b of list) {
+    if (b.status !== "Checked in" && b.status !== "Checked out") continue;
+    const n = b.nights.find((k) => k.date === date); if (!n) continue;
+    const all = bill(b); const one = n.base + (b.mealPlan?.perNight ?? 0);
+    const share = all.rooms ? Math.round((all.discount * one) / all.rooms) : 0;
+    const r = bill({ nights: [n], tax: b.tax, discount: share, mealPlan: b.mealPlan });
+    net += r.base; service += r.service; vat += r.vat; rooms.add(b.unit || b.code);
+  }
+  return { net, service, vat, gross: net + service + vat, sold: rooms.size };
+}
 /** Cancellation / no-show fee by the property's policy (share of the first night's price incl. VAT). */
 export function policyFee(b: Booking, kind: "Cancelled" | "No-show", s: Settings, today = TODAY) {
   const first = bill({ ...b, nights: b.nights.slice(0, 1), discount: 0 }).total;

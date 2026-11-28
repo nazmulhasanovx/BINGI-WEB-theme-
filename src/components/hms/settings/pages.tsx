@@ -10,7 +10,8 @@ import { useSettings, bookingOf, AREAS, type Settings, type Perm, type Role, typ
 import { FONTS, usePrefs } from "@/lib/settings/prefs";
 import { AppCard, InstallSheet } from "../app-install";
 import { useBookings, OTAS, tk, type Settings as BkSettings } from "@/lib/bookings/store";
-import { invoiceHtml, regCardHtml } from "@/lib/bookings/docs";
+import { invoiceHtml, agreementHtml, withDocsDraft, DOC_TEMPLATES, DOC_ACCENTS, type DocDesign } from "@/lib/bookings/docs";
+import { normaliseDesign } from "@/lib/bookings/doc-kit";
 import { useGuestNames } from "@/lib/guests/store";
 import { useRooms, priceBreak } from "@/lib/rooms/store";
 import { useHousekeeping } from "@/lib/housekeeping/store";
@@ -455,6 +456,23 @@ export function PaymentsPage() {
   );
 }
 
+/** Small drawing of each template for the picker (not a real document). */
+function TemplateThumb({ t, accent }: { t: DocDesign["template"]; accent: string }) {
+  const ln = (w: string, c = "#dfe2e7", h = 3) => <div className="rounded" style={{ width: w, height: h, background: c }} />;
+  const rows = (n: number, head?: string) => <div className="space-y-[4px]">{head && <div className="h-[5px] rounded-sm" style={{ background: head }} />}{Array.from({ length: n }, (_, i) => <div key={i}>{ln("100%")}</div>)}</div>;
+  const dot = (sz: number) => <div className="shrink-0 rounded-full border-[1.5px]" style={{ width: sz, height: sz, borderColor: accent }} />;
+  return (
+    <div className="relative h-[100px] overflow-hidden rounded-lg border border-hms-line bg-white p-2.5" aria-hidden>
+      {t === "folio" && <><div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: accent }} /><div className="flex justify-between">{dot(14)}<div className="space-y-1">{ln("30px", "#b9bec7")}{ln("24px")}</div></div><div className="mt-1.5 h-[5px] w-10 rounded" style={{ background: accent }} /><div className="mt-1.5 grid grid-cols-3 gap-1 rounded border border-[#e3e6ea] p-1">{ln("90%")}{ln("80%")}{ln("85%")}</div><div className="mt-1.5">{rows(2, "#1c2230")}</div><div className="mt-1 ml-auto h-[5px] w-1/3 rounded" style={{ background: accent }} /></>}
+      {t === "classic" && <><div className="flex flex-col items-center gap-1">{dot(13)}{ln("45%", "#b9bec7")}{ln("32%")}</div><div className="my-1.5 border-y border-[#1c2230] py-[3px]"><div className="mx-auto h-[4px] w-1/3 rounded" style={{ background: accent }} /></div>{rows(3)}</>}
+      {t === "modern" && <><div className="-mx-2.5 -mt-2.5 mb-2 flex items-center justify-between px-2.5 py-2" style={{ background: accent }}><div className="size-[14px] rounded bg-white" />{ln("40px", "rgba(255,255,255,.7)")}</div><div className="mb-1.5 h-[5px] w-10 rounded bg-[#1c2230]" /><div className="mb-1.5 h-[12px] rounded bg-[#f1f3f6]" />{rows(2, accent)}</>}
+      {t === "elegant" && <><div className="flex flex-col items-center gap-1">{dot(12)}<div className="font-serif text-[9px] leading-none text-[#1c2230]">Hotel</div>{ln("30%")}</div><div className="mx-auto mt-2 h-[4px] w-1/4 rounded" style={{ background: accent }} /><div className="mx-auto mb-1.5 mt-1 h-px w-8" style={{ background: accent }} />{rows(3)}</>}
+      {t === "compact" && <><div className="flex items-center justify-between">{dot(10)}{ln("34px", "#b9bec7")}</div><div className="my-1 flex justify-between border-b border-[#1c2230] pb-1"><div className="h-[4px] w-8 rounded" style={{ background: accent }} /></div>{rows(7)}</>}
+      {t === "minimal" && <><div className="flex justify-between">{dot(11)}{ln("30px")}</div><div className="mt-2 flex items-end justify-between">{ln("30px", "#9aa0aa")}<div className="h-[9px] w-12 rounded" style={{ background: accent }} /></div><div className="mt-2.5">{rows(3)}</div></>}
+    </div>
+  );
+}
+
 export function DocumentsPage() {
   const { h, s, save, toast } = useS();
   const bk = useBookings(h);
@@ -463,19 +481,45 @@ export function DocumentsPage() {
   const f = useDraft({ docs: s.docs, printers: s.printers }); const d = f.d.docs; const pr = f.d.printers;
   const setD = (patch: Partial<Settings["docs"]>) => f.setD({ ...f.d, docs: { ...d, ...patch } });
   const setC = (patch: Partial<Settings["docs"]["contract"]>) => setD({ contract: { ...d.contract, ...patch } });
-  const sample = bk.list.find((b) => b.status === "Checked in") ?? bk.list[0];
+  const ds: DocDesign = normaliseDesign(d.design);
+  const setDs = (patch: Partial<DocDesign>) => setD({ design: { ...ds, ...patch } });
+  const sample = bk.list.find((b) => b.status === "Checked out" && b.payments.length > 1) ?? bk.list.find((b) => b.status === "Checked in") ?? bk.list[0];
+  const preview = useMemo(() => (sample ? withDocsDraft(d, () => invoiceHtml(h, sample, names.get(sample.guestId), [])) : ""), [d, sample, h, names, s.branding.logo, s.profile]);
   const [pn, setPn] = useState(""); const [pk, setPk] = useState<Settings["printers"][number]["kind"]>("Receipt (80 mm)"); const [pw, setPw] = useState("Front desk");
   const doSave = () => { save((x) => { x.docs = d; x.printers = pr; }, "Invoices & documents updated"); toast("Saved"); };
   return (
     <>
       <PageHead title="Invoices & documents" actions={<Segmented value={tab} onChange={setTab} options={[{ v: "invoice", label: "Invoice" }, { v: "contract", label: "Stay agreement" }, { v: "printers", label: "Printers" }]} />} />
-      {tab === "invoice" && <div className="space-y-4">
-        <Card title="Invoice" action={sample && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(invoiceHtml(h, sample, names.get(sample.guestId), [])); }}><PrinterIcon className="size-4" />Preview</Btn>}>
+      {tab === "invoice" && <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
+        <div className="space-y-4">
+        <Card title="Design" desc="One look for invoices, receipts, confirmations and registration cards.">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Template">
+            {DOC_TEMPLATES.map((t) => { const on = ds.template === t.v; return (
+              <button key={t.v} type="button" role="radio" aria-checked={on} onClick={() => setDs({ template: t.v })} className={clsx("rounded-xl border p-3 text-left transition", on ? "border-hms-coral ring-2 ring-hms-coral/20" : "border-hms-line hover:bg-hms-hover")}>
+                <TemplateThumb t={t.v} accent={ds.accent} />
+                <p className="mt-2 text-[14px] font-medium">{t.label}</p><p className="text-[12.5px] leading-snug text-hms-muted">{t.hint}</p>
+              </button>); })}
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><Field label="Colour">
+              <div className="flex flex-wrap items-center gap-2">
+                {DOC_ACCENTS.map((c) => <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={ds.accent === c} onClick={() => setDs({ accent: c })} className={clsx("size-7 rounded-full border-2", ds.accent === c ? "border-hms-ink" : "border-white ring-1 ring-hms-line")} style={{ background: c }} />)}
+                <label className="relative grid size-7 cursor-pointer place-items-center rounded-full border border-dashed border-hms-line text-[11px] text-hms-muted" title="Your brand colour">+<input type="color" value={ds.accent} onChange={(e) => setDs({ accent: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" aria-label="Your brand colour" /></label>
+                {!DOC_ACCENTS.includes(ds.accent) && <span className="inline-flex items-center gap-1.5 text-[13px] text-hms-muted"><span className="size-7 rounded-full border-2 border-hms-ink" style={{ background: ds.accent }} />Your colour {ds.accent.toUpperCase()}</span>}
+              </div>
+            </Field></div>
+            <div className="sm:col-span-2"><Field label="Language"><Segmented value={ds.lang} onChange={(v) => setDs({ lang: v })} options={[{ v: "en", label: "English" }, { v: "bn", label: "বাংলা" }, { v: "mix", label: "Mix · English + বাংলা" }]} /></Field></div>
+            <Field label="Text size"><Segmented value={ds.textSize} onChange={(v) => setDs({ textSize: v })} options={[{ v: "S", label: "Small" }, { v: "M", label: "Normal" }, { v: "L", label: "Large" }]} /></Field>
+            <Field label="Logo size"><Segmented value={ds.logoSize} onChange={(v) => setDs({ logoSize: v })} options={[{ v: "S", label: "Small" }, { v: "M", label: "Medium" }, { v: "L", label: "Large" }]} /></Field>
+          </div>
+          {!s.branding.logo && <p className="mt-4 rounded-lg bg-hms-hover px-3 py-2 text-[13px] text-hms-muted">No logo yet - documents show your initials. <Link href="/hms/settings/branding" className="text-hms-blue underline underline-offset-2">Upload your logo</Link></p>}
+        </Card>
+        <Card title="Invoice" action={sample && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(invoiceHtml(h, sample, names.get(sample.guestId), [])); }}><PrinterIcon className="size-4" />Print</Btn>}>
           <p className="mb-4 text-[13.5px] text-hms-muted">Name, address and BIN from <Link href="/hms/settings/profile" className="text-hms-blue underline underline-offset-2">Property profile</Link>; logo from <Link href="/hms/settings/branding" className="text-hms-blue underline underline-offset-2">Branding</Link>.</p>
           <Grid cols={3}>
             <Field label="Number starts with"><Input value={d.prefix} onChange={(e) => setD({ prefix: e.target.value.slice(0, 8) })} /></Field>
             <Field label="Paper"><Segmented value={d.paper} onChange={(v) => setD({ paper: v })} options={[{ v: "A4", label: "A4" }, { v: "Thermal", label: "Receipt printer" }]} /></Field>
-            <Field label="Logo on invoice"><Toggle label="Logo on invoice" on={d.showLogo} onChange={(v) => setD({ showLogo: v })} /></Field>
+            <Field label="Logo on documents"><Toggle label="Logo on documents" on={d.showLogo} onChange={(v) => setD({ showLogo: v })} /></Field>
           </Grid>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Terms (optional)" count={`${d.terms.length}/500`}><TextArea value={d.terms} maxLength={500} onChange={(e) => setD({ terms: e.target.value })} /></Field>
@@ -483,8 +527,15 @@ export function DocumentsPage() {
           </div>
         </Card>
         <p className="text-[13px] text-hms-muted">Confirmation and pre-arrival texts: <Go href="/hms/settings/messages">Guest messages</Go></p>
+        </div>
+        <div className="xl:sticky xl:top-4">
+          <div className="mb-2 flex items-center justify-between"><p className="text-[13px] font-medium text-hms-muted">Live preview · {sample ? sample.code : "sample"}</p>{f.dirty && <span className="text-[12.5px] text-hms-amber">Not saved yet</span>}</div>
+          <div className="overflow-hidden rounded-xl border border-hms-line bg-white shadow-sm" style={{ height: 622 }}>
+            {preview ? <iframe title="Invoice preview" srcDoc={preview} className="origin-top-left border-0" style={{ width: 794, height: 1123, transform: "scale(0.554)" }} /> : <p className="p-6 text-[13.5px] text-hms-muted">Make a booking to see a preview.</p>}
+          </div>
+        </div>
       </div>}
-      {tab === "contract" && <Card title="Stay agreement" desc="Printed on the registration card for the guest to sign." action={sample && d.contract.on && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(regCardHtml(h, sample, names.get(sample.guestId))); }}><PrinterIcon className="size-4" />Preview</Btn>}>
+      {tab === "contract" && <Card title="Stay agreement" desc="Printed as its own page for the guest to sign (booking › Documents)." action={sample && d.contract.on && <Btn variant="outline" onClick={() => { if (f.dirty) doSave(); printHtml(agreementHtml(h, sample, names.get(sample.guestId), bk.settings)); }}><PrinterIcon className="size-4" />Preview</Btn>}>
         <ToggleRow title="Use a stay agreement" on={d.contract.on} onChange={(v) => setC({ on: v })} />
         {d.contract.on && <div className="mt-4 space-y-4">
           <Grid><Field label="Title"><Input value={d.contract.title} onChange={(e) => setC({ title: e.target.value })} /></Field>

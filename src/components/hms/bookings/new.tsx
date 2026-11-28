@@ -6,7 +6,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, Clock, Minus, Pencil, Plus, Search, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock, Eye, Minus, Pencil, Plus, Search, Send, UserRound } from "lucide-react";
 import { TODAY, taxOf, type Category as RoomCat, type Unit } from "@/lib/rooms/store";
 import { addDays } from "@/lib/bookings/demo";
 import { CHANNELS, METHODS, OTAS, bill, holdClock, stamp, dm, dow, nightsBetween, preMealTotal, tk, useBookings, type Channel, type NewBooking, type Night, type PayMethod, type PreMeal } from "@/lib/bookings/store";
@@ -20,6 +20,8 @@ import { useProperty } from "../property";
 import { useCashboxData } from "../cashbox/pages";
 import { input, lbl } from "../guests/ui";
 import { ChannelBadge, ModeSwitch, bMain, bSoft, channelIcon } from "./ui";
+import { DocPeek, SendSheet, smsSafe, type SendSpec } from "./send";
+import { useCommData } from "../communication/data";
 import { ExtrasList, ExtrasPicker, MealPlan, type SvcDraft } from "./extras";
 import { HoldFields, HoldSheet, addMin, holdMax, type HoldValue } from "./hold";
 import { GuestFields, StayFields, emptyGuest, emptyStay, guestErrors, guestToDraft, type GuestDraft, type StayDraft } from "./guestform";
@@ -78,6 +80,13 @@ export function NewBookingPage() {
   const [plan, setPlan] = useState<("breakfast" | "lunch" | "dinner")[]>([]);
   const [tried, setTried] = useState<Record<number, boolean>>({});
   const [err, setErr] = useState("");
+  const { comm } = useCommData();
+  const [peek, setPeek] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sentNote, setSentNote] = useState("");
+  const [after, setAfter] = useState<{ sms: boolean; email: boolean } | null>(null);
+  const [payMode, setPayMode] = useState<"later" | "advance" | "full">("later");
+  const [discReason, setDiscReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [holdOpen, setHoldOpen] = useState(false);
   const [hold, setHold] = useState<HoldValue>(() => ({ until: "", reason: "" }));
@@ -111,6 +120,7 @@ export function NewBookingPage() {
   const planOpts = (["breakfast", "lunch", "dinner"] as const).filter((k) => lines.some((l) => l.cat.meals?.[k] === "extra" && l.cat.mealPrices?.[k]));
   const bills = lines.map((l, i) => bill({ nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0, mealPlan: planOf(l.cat, lineAdults(i)) }));
   const roomTotal = bills.reduce((s, b) => s + b.total, 0);
+  const roomGross = lines.reduce((s, l, i) => s + bill({ nights: l.nights, tax: l.tax, discount: 0, mealPlan: planOf(l.cat, lineAdults(i)) }).total, 0);
   const mealsTotal = meals.reduce((s, m) => s + preMealTotal(m), 0);
   const svcTotal = services.reduce((s, x) => s + x.total, 0);
   const total = roomTotal + mealsTotal + svcTotal;
@@ -118,6 +128,7 @@ export function NewBookingPage() {
   const minStay = lines.map((l) => rates.st.cat[l.u.category]?.[from]?.minStay).find((m) => m && n < m);
   const adv = Math.min(Number(advance) || 0, total);
   const room0 = lines[0]?.code ?? "";
+  const setPay = (k: "later" | "advance" | "full") => { setPayMode(k); setAdvance(k === "later" ? "" : k === "full" ? String(Math.round(total)) : advance && Number(advance) < total ? advance : String(Math.round(total * 0.3))); };
 
   // ---- guest: phone first; a saved guest fills in, a new number opens the form
   const found = !useId && phoneKey(phone).length >= 8 ? g.findByPhone(phone) : undefined;
@@ -166,7 +177,24 @@ export function NewBookingPage() {
     if (found && !guest) setUseId(found.id);
     save({ hold: { until: hold.until, reason: hold.reason.trim() } });
   };
+  const guestName = guest?.name ?? (showForm ? shown.name : "");
+  // ---- show & send before confirming: the guest sees exactly what will be booked
+  const contactPhone = shown.phone.trim(), contactEmail = shown.email.trim();
+  const autoSend = after ?? { sms: !!contactPhone, email: !!contactEmail };
+  const stayLine = `${lines.map((l) => `Room ${l.code} (${l.cat.name})`).join(", ")} · ${datesOk ? `${dm(from)} → ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : ""} · ${adults} adult${adults > 1 ? "s" : ""}${children ? `, ${children} child` : ""}`;
+  const quoteText = `Dear ${guestName || "Guest"}, here are your booking details at ${h.name} (not confirmed yet):\n${stayLine}\nTotal ${tk(total)} incl. VAT & service${adv > 0 ? ` · advance ${tk(adv)}` : ""}. Check-in from ${bk.settings.checkIn}.\nReply or call us to confirm.`;
+  const quoteHtml = () => {
+    const rows = lines.map((l, i) => `<tr><td>Room ${l.code} · ${l.cat.name}</td><td>${l.nights.length}</td><td style="text-align:right">${tk(bills[i].total)}</td></tr>`).join("");
+    const extra = (mealsTotal ? `<tr><td>Meals</td><td></td><td style="text-align:right">${tk(mealsTotal)}</td></tr>` : "") + (svcTotal ? `<tr><td>Services</td><td></td><td style="text-align:right">${tk(svcTotal)}</td></tr>` : "");
+    return `<!doctype html><meta charset="utf-8"><title>Booking details</title><style>body{font:14px/1.5 system-ui,sans-serif;color:#111;margin:32px;max-width:720px}h1{font-size:22px;margin:0}.tag{display:inline-block;background:#fdf3d9;color:#7a4a0b;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{padding:8px;border-bottom:1px solid #e6e8ec;text-align:left}th{font-size:12px;color:#686466;text-transform:uppercase}.tot td{font-weight:700;font-size:16px;border-bottom:0}</style>
+<h1>${h.name}</h1><p>Booking details <span class="tag">Not confirmed yet</span></p>
+<p><b>${guestName || "Guest"}</b>${contactPhone ? ` · ${contactPhone}` : ""}${contactEmail ? ` · ${contactEmail}` : ""}<br>${datesOk ? `${dow(from)} ${dm(from)} → ${dow(to)} ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : ""} · ${adults} adult${adults > 1 ? "s" : ""}${children ? `, ${children} child` : ""} · check-in from ${bk.settings.checkIn}</p>
+<table><tr><th>Room</th><th>Nights</th><th style="text-align:right">Amount</th></tr>${rows}${extra}${disc ? `<tr><td>Discount (before VAT)</td><td></td><td style="text-align:right">−${tk(disc)}</td></tr>` : ""}<tr class="tot"><td>Total incl. VAT &amp; service</td><td></td><td style="text-align:right">${tk(total)}</td></tr>${adv > 0 ? `<tr><td>Advance</td><td></td><td style="text-align:right">${tk(adv)}</td></tr><tr><td><b>Due at the hotel</b></td><td></td><td style="text-align:right"><b>${tk(total - adv)}</b></td></tr>` : ""}</table>
+<p style="color:#686466;font-size:12px;margin-top:24px">Prices may change until the booking is confirmed.</p>`;
+  };
+  const quoteSpec: SendSpec = { title: "Send booking details", code: "", guest: guestName || "Guest", phone: contactPhone, email: contactEmail, update: quoteText, link: "", docs: [{ id: "quote", label: "Booking details (not confirmed)", note: "Rooms, dates and price", html: quoteHtml }] };
   const submit = () => {
+    if (disc > 0 && !discReason.trim()) { setErr("Add a reason for the discount"); document.querySelector<HTMLInputElement>('[aria-label="Discount reason"]')?.focus(); return; }
     for (let i = 0; i < 3; i++) if (errors[i].length) { setTried({ ...tried, [i]: true }); setStep(i); return; }
     save({});
   };
@@ -186,7 +214,7 @@ export function NewBookingPage() {
       guestId: guestId!, unit: l.code, categoryId: l.u.category, type: l.cat.name, from, to,
       adults: lineAdults(i), children: i === 0 ? children : 0, mealPlan: planOf(l.cat, lineAdults(i)),
       channel, ota: channel === "OTA" ? ota : undefined, channelRef: ref.trim() || undefined,
-      nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0, note: stay.note.trim(),
+      nights: l.nights, tax: l.tax, discount: i === 0 ? disc : 0, note: [stay.note.trim(), i === 0 && disc > 0 ? `Discount ${tk(disc)}: ${discReason.trim()}` : ""].filter(Boolean).join(" · "),
       purpose: stay.purpose || undefined, comingFrom: stay.comingFrom || undefined, goingTo: stay.goingTo || undefined, eta: stay.eta || undefined,
       companions: i === 0 && comps.length ? comps : undefined,
       booker: stay.booker?.name.trim() ? stay.booker : undefined, payer: stay.payer.kind === "Company" ? stay.payer : undefined,
@@ -202,30 +230,35 @@ export function NewBookingPage() {
       const res = svc.saveOrder({ service: s.service, qty: s.qty, unitPrice: s.unitPrice, method: "booking", booking: { code: r.codes[0], guest: base.name, room: room0, phone: base.phone }, when: { date: s.date, time: s.time }, payment: "Unpaid", sc: s.sc, vat: s.vat, status: "confirmed", source: "staff" });
       if ("error" in res) svcFail++;
     }
-    const msg = `${r.codes.length > 1 ? `${r.codes.length} rooms booked` : `${r.codes[0]} booked`} for ${base.name}${svcFail ? ` · ${svcFail} service not scheduled` : ""}`;
+    // Confirmation to the guest, if ticked on the review step (SMS / email via Messaging).
+    const sentBy: string[] = [];
+    const conf = `Dear ${base.name}, your booking ${r.codes.join(", ")} at ${h.name} is confirmed.\n${stayLine}\nTotal ${tk(total)}${adv > 0 ? ` · paid ${tk(adv)} · due ${tk(total - adv)}` : ""}. Check-in from ${bk.settings.checkIn}.`;
+    if (autoSend.sms && base.phone && !comm.send({ channel: "sms", to: base.phone, guest: base.name, booking: r.codes[0], event: "Booking confirmation", text: smsSafe(conf) })) sentBy.push("SMS");
+    if (autoSend.email && base.email && !comm.send({ channel: "email", to: base.email, guest: base.name, booking: r.codes[0], event: "Booking confirmation", text: conf })) sentBy.push("email");
+    if (sentBy.length) bk.update(r.codes[0], {}, `Confirmation sent to guest · ${sentBy.join(" + ")}`);
+    const msg = `${r.codes.length > 1 ? `${r.codes.length} rooms booked` : `${r.codes[0]} booked`} for ${base.name}${sentBy.length ? ` · confirmation sent by ${sentBy.join(" + ")}` : ""}${svcFail ? ` · ${svcFail} service not scheduled` : ""}`;
     router.push(`/hms/bookings/view?b=${r.codes[0]}&made=${encodeURIComponent(msg)}`);
   };
   const toggle = (c: string) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   const errList = (k: number) => tried[k] && errors[k].length > 0 && <ul role="alert" className="space-y-1 rounded-xl bg-[#fdecec] px-4 py-2.5 text-[13.5px] font-medium text-[#b42318]">{errors[k].map((e) => <li key={e}>{e}</li>)}</ul>;
   const photo0 = lines[0] ? lines[0].cat.photos?.[0] ?? lines[0].cat.photo : undefined;
-  const guestName = guest?.name ?? (showForm ? shown.name : "");
 
   const summary = (
     <div className="overflow-hidden rounded-2xl border border-hms-line bg-white">
       {/* eslint-disable-next-line @next/next/no-img-element -- room photo */}
-      {photo0 ? <img src={imgSrc(photo0)} alt="" className="h-32 w-full object-cover" /> : <div className="grid h-16 place-items-center bg-[#f4f6f8] text-[13px] text-hms-muted">No room picked yet</div>}
+      {photo0 ? <img src={imgSrc(photo0)} alt="" className="h-24 w-full object-cover" /> : <div className="grid h-14 place-items-center bg-[#f4f6f8] text-[13px] text-hms-muted">No room picked yet</div>}
       <div className="p-4">
-        <div className="flex items-start justify-between gap-2"><h2 className="text-[16px] font-bold">{lines.length ? lines.map((l) => `Room ${l.code}`).join(", ") : "Summary"}</h2><ChannelBadge b={{ channel, ota }} /></div>
+        <div className="flex items-start justify-between gap-2"><h2 className="text-[16px] font-bold">{lines.length > 1 ? `${lines.length} rooms` : lines.length ? `Room ${lines[0].code}` : "Summary"}</h2><ChannelBadge b={{ channel, ota }} /></div>
         <p className="text-[13.5px] text-[#4d5664]">{datesOk ? `${dow(from)} ${dm(from)} → ${dow(to)} ${dm(to)} · ${n} night${n > 1 ? "s" : ""}` : "Pick dates"} · {adults + children} guest{adults + children > 1 ? "s" : ""}</p>
         {guestName && <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold"><UserRound className="size-4 text-hms-muted" />{guestName}</p>}
         <div className="mt-3 space-y-1 border-t border-hms-line pt-3 text-[14px]">
-          <div className="flex justify-between"><span className="text-[#4d5664]">Rooms{plan.length && planOpts.length ? " + meal plan" : ""}</span><span className="tabular-nums">{tk(roomTotal)}</span></div>
-          {disc > 0 && <div className="flex justify-between text-[#16693a]"><span>Discount</span><span>−{tk(disc)}</span></div>}
-          {meals.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Meals ({meals.reduce((s, m) => s + m.qty, 0)})</span><span className="tabular-nums">{tk(mealsTotal)}</span></div>}
+          {lines.map((l, i) => <div key={l.code} className="flex justify-between gap-2"><span className="min-w-0 truncate text-[#4d5664]">Room {l.code} <span className="text-[12.5px]">· {l.cat.name}</span></span><span className="shrink-0 tabular-nums">{tk(bill({ nights: l.nights, tax: l.tax, discount: 0, mealPlan: planOf(l.cat, lineAdults(i)) }).total)}</span></div>)}
+          {meals.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Meals ({meals.reduce((t, m) => t + m.qty, 0)})</span><span className="tabular-nums">{tk(mealsTotal)}</span></div>}
           {services.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Services ({services.length})</span><span className="tabular-nums">{tk(svcTotal)}</span></div>}
+          {roomGross > roomTotal && <div className="flex justify-between text-[#16693a]"><span>Discount</span><span>−{tk(roomGross - roomTotal)}</span></div>}
           <div className="flex justify-between border-t border-hms-line pt-2 text-[17px] font-bold"><span>Total</span><span className="tabular-nums">{tk(total)}</span></div>
           <p className="text-[12px] text-hms-muted">Incl. VAT &amp; service charge</p>
-          {adv > 0 && <><div className="flex justify-between text-[#4d5664]"><span>Advance · {method}</span><span>−{tk(adv)}</span></div><div className="flex justify-between font-semibold"><span>Due at the hotel</span><span>{tk(total - adv)}</span></div></>}
+          {adv > 0 && <><div className="flex justify-between text-[#16693a]"><span>Paid now · {method}</span><span>−{tk(adv)}</span></div><div className="flex justify-between font-semibold"><span>Due at the hotel</span><span>{tk(total - adv)}</span></div></>}
         </div>
         {err && <p role="alert" className="mt-3 rounded-lg bg-[#fdecec] px-3 py-2 text-[13px] font-medium text-[#b42318]">{err}</p>}
         <div className="mt-4 hidden gap-2 lg:flex">
@@ -233,8 +266,9 @@ export function NewBookingPage() {
           {step < 3 ? <button onClick={() => go(step + 1)} className={clsx(bMain, "flex-1")}>Next: {STEPS[step + 1][0]}<ArrowRight className="size-4" /></button>
             : <button onClick={submit} disabled={busy} className={clsx(bMain, "flex-1")}><Check className="size-4" />Confirm booking</button>}
         </div>
-        {lines.length > 0 && <div className="mt-2 hidden lg:block">
-          <button onClick={openHold} className={clsx(bSoft, "w-full")}><Clock className="size-4" />Hold room{lines.length > 1 ? "s" : ""} for later</button>
+        {step === 3 && (autoSend.sms && contactPhone || autoSend.email && contactEmail) && <p className="mt-1.5 hidden text-center text-[12px] text-hms-muted lg:block">Confirmation goes by {[autoSend.sms && contactPhone && "SMS", autoSend.email && contactEmail && "email"].filter(Boolean).join(" + ")}</p>}
+        {lines.length > 0 && <div className="mt-3 hidden border-t border-hms-line pt-3 lg:block">
+          <button onClick={openHold} className={clsx(bSoft, "w-full")}><Clock className="size-4" />Not ready? Hold room{lines.length > 1 ? "s" : ""}</button>
           <p className="mt-1.5 text-center text-[12px] text-hms-muted">Keeps the room for a set time · only name &amp; phone needed</p>
         </div>}
       </div>
@@ -355,22 +389,84 @@ export function NewBookingPage() {
           </>}
 
           {step === 3 && <>
-            <Card title="Review">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Review title="Stay" onEdit={() => go(0)}>{lines.map((l) => `Room ${l.code} · ${l.cat.name}`).join(", ")}<br />{dm(from)} → {dm(to)} · {n} night{n > 1 ? "s" : ""} · {adults} adult{adults > 1 ? "s" : ""}{children ? `, ${children} child` : ""}<br /><span className="inline-flex items-center gap-1.5 pt-1"><ChannelBadge b={{ channel, ota }} />{ref && <span className="text-hms-muted">{ref}</span>}</span></Review>
-                <Review title="Guest" onEdit={() => go(1)}>{guestName}<br />{shown.phone} · {shown.country}<br />{shown.idNo ? `${shown.idType} ${shown.idNo}` : <span className="text-[#a15c00]">ID not added — add at check-in</span>}{stay.companions.filter((c) => c.name.trim()).length ? <><br />+ {stay.companions.filter((c) => c.name.trim()).length} other guest(s)</> : null}</Review>
-                <Review title="Meals & services" onEdit={() => go(2)}>{meals.length + services.length ? `${meals.reduce((s, m) => s + m.qty, 0)} meal(s) · ${services.length} service(s) · ${tk(mealsTotal + svcTotal)}` : "None"}</Review>
-                <Review title="Register" onEdit={() => go(1)}>{[stay.purpose, stay.comingFrom && `from ${stay.comingFrom}`, stay.eta && `arrives ${stay.eta}`, stay.payer.kind === "Company" && `paid by ${stay.payer.name || "company"}`, stay.booker?.name && `booked by ${stay.booker.name}`].filter(Boolean).join(" · ") || "—"}</Review>
+            {/* 1 · what is being booked */}
+            <Card title="Stay & guest" action={<span className="inline-flex items-center gap-1.5"><ChannelBadge b={{ channel, ota }} />{ref && <span className="text-[13px] text-hms-muted">{ref}</span>}</span>}>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#f7f8fa] px-3.5 py-2.5">
+                <p className="text-[14.5px] font-semibold">{dow(from)} {dm(from)} → {dow(to)} {dm(to)} <span className="font-normal text-hms-muted">· {n} night{n > 1 ? "s" : ""} · {adults} adult{adults > 1 ? "s" : ""}{children ? `, ${children} child` : ""}</span></p>
+                <button onClick={() => go(0)} className="inline-flex items-center gap-1 text-[13px] font-semibold text-hms-red"><Pencil className="size-3.5" />Change</button>
+              </div>
+              <ul className="mt-2 divide-y divide-hms-line rounded-xl border border-hms-line">
+                {lines.map((l, i) => (
+                  <li key={l.code} className="flex items-center gap-3 px-3.5 py-2.5">
+                    <span className="grid h-9 min-w-12 place-items-center rounded-lg bg-hms-coral-soft px-2 text-[14px] font-bold text-hms-red">{l.code}</span>
+                    <span className="min-w-0 flex-1"><b className="block truncate text-[14px]">{l.cat.name}</b><span className="text-[12.5px] text-hms-muted">{lineAdults(i)} adult{lineAdults(i) > 1 ? "s" : ""}{i === 0 && children ? `, ${children} child` : ""}{planOf(l.cat, lineAdults(i)) ? ` · ${planOf(l.cat, lineAdults(i))!.name}` : ""}</span></span>
+                    {(() => { const g0 = bill({ nights: l.nights, tax: l.tax, discount: 0, mealPlan: planOf(l.cat, lineAdults(i)) }).total; return <span className="text-right text-[14px] font-semibold tabular-nums">{tk(g0)}<span className="block text-[11.5px] font-normal text-hms-muted">{tk(g0 / Math.max(1, n))} / night · incl. VAT</span></span>; })()}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <Review title="Guest" onEdit={() => go(1)}>
+                  <b>{guestName}</b><br />{shown.phone}{shown.email && <> · {shown.email}</>}<br />
+                  {shown.idNo ? <span className="text-[#4d5664]">{shown.idType} •••• {shown.idNo.slice(-4)}</span> : <span className="text-[#a15c00]">ID not added — add at check-in</span>}
+                  {stay.companions.filter((c) => c.name.trim()).length ? <><br />+ {stay.companions.filter((c) => c.name.trim()).length} other guest(s)</> : null}
+                </Review>
+                <Review title="Extras & register" onEdit={() => go(meals.length + services.length ? 2 : 1)}>
+                  {meals.length + services.length ? `${meals.reduce((t, m) => t + m.qty, 0)} meal(s) · ${services.length} service(s) · ${tk(mealsTotal + svcTotal)}` : <span className="text-hms-muted">No meals or services</span>}
+                  <br />{[stay.purpose, stay.comingFrom && `from ${stay.comingFrom}`, stay.eta && `arrives ${stay.eta}`, stay.payer.kind === "Company" && `paid by ${stay.payer.name || "company"}`, stay.booker?.name && `booked by ${stay.booker.name}`].filter(Boolean).join(" · ") || <span className="text-hms-muted">No register details</span>}
+                </Review>
               </div>
             </Card>
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#f1dfb8] bg-[#fdf8ec] px-4 py-3 text-[14px] text-[#6b4309]"><Clock className="size-4 shrink-0" /><p className="min-w-0 flex-1">Guest not ready to confirm? Hold the room for a few hours instead.</p><button onClick={openHold} className="h-9 rounded-xl border border-[#f1dfb8] bg-white px-3 text-[13.5px] font-semibold text-hms-ink hover:bg-[#fffaf0]">Hold instead</button></div>
-            <Card title="Advance payment" action={<span className="text-[13px] text-hms-muted">Optional</span>}>
-              <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
-                <div><label htmlFor="nb-adv" className={lbl}>Amount (৳)</label><input id="nb-adv" inputMode="numeric" value={advance} onChange={(e) => setAdvance(e.target.value.replace(/\D/g, ""))} placeholder="0" className={input} /></div>
-                <div><p className={lbl}>Method</p><div role="radiogroup" aria-label="Advance method" className="grid grid-cols-4 gap-1.5">{METHODS.map((m) => <button key={m} type="button" role="radio" aria-checked={method === m} onClick={() => setMethod(m)} className={clsx("h-11 rounded-xl text-[14px] font-semibold", method === m ? "bg-hms-ink text-white" : "bg-[#eef0f3] text-[#3a414c] hover:bg-[#e3e6eb]")}>{m}</button>)}</div></div>
+
+            {/* 2 · price and payment now */}
+            <Card title="Price & payment">
+              <div className="grid gap-4 md:grid-cols-[1fr_260px]">
+                <div>
+                  <p className={lbl}>Take payment now</p>
+                  <div role="radiogroup" aria-label="Payment now" className="grid grid-cols-3 gap-1.5 rounded-xl bg-[#eef0f3] p-1">
+                    {([["later", "Pay later"], ["advance", "Advance"], ["full", "Full"]] as const).map(([k, l]) => (
+                      <button key={k} type="button" role="radio" aria-checked={payMode === k} onClick={() => setPay(k)} className={clsx("h-10 rounded-lg text-[14px] font-semibold", payMode === k ? "bg-white shadow-sm" : "text-[#4d5664]")}>{l}</button>
+                    ))}
+                  </div>
+                  {payMode !== "later" && <div className="mt-3 space-y-3">
+                    {payMode === "advance" && <div>
+                      <label htmlFor="nb-adv" className={lbl}>Advance (৳)</label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input id="nb-adv" inputMode="numeric" value={advance} onChange={(e) => setAdvance(e.target.value.replace(/\D/g, ""))} placeholder="0" className={clsx(input, "!w-40")} />
+                        {total > 0 && [0.3, 0.5].map((f) => <button key={f} type="button" onClick={() => setAdvance(String(Math.round(total * f)))} className="rounded-full bg-[#eef0f3] px-3 py-1.5 text-[13px] font-semibold hover:bg-[#e3e6eb]">{f * 100}% · {tk(total * f)}</button>)}
+                      </div>
+                    </div>}
+                    <div>
+                      <p className={lbl}>Method</p>
+                      <div role="radiogroup" aria-label="Payment method" className="flex flex-wrap gap-1.5">{METHODS.map((m) => <button key={m} type="button" role="radio" aria-checked={method === m} onClick={() => setMethod(m)} className={clsx("h-10 rounded-xl px-4 text-[14px] font-semibold", method === m ? "bg-hms-ink text-white" : "bg-[#eef0f3] text-[#3a414c] hover:bg-[#e3e6eb]")}>{m}</button>)}</div>
+                    </div>
+                  </div>}
+                </div>
+                <div className="rounded-xl bg-[#f7f8fa] p-3.5 text-[14px]">
+                  <div className="flex justify-between"><span className="text-[#4d5664]">Rooms</span><span className="tabular-nums">{tk(roomGross)}</span></div>
+                  {meals.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Meals</span><span className="tabular-nums">{tk(mealsTotal)}</span></div>}
+                  {services.length > 0 && <div className="flex justify-between"><span className="text-[#4d5664]">Services</span><span className="tabular-nums">{tk(svcTotal)}</span></div>}
+                  <div className="mt-1 flex items-center justify-between gap-2"><label htmlFor="nb-di" className="text-[#4d5664]">Discount</label><input id="nb-di" inputMode="numeric" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/\D/g, ""))} placeholder="0" aria-describedby="nb-di-note" className="h-8 w-24 rounded-lg border border-hms-line bg-white px-2 text-right text-[14px] tabular-nums" /></div>
+                  <p id="nb-di-note" className="mt-0.5 text-right text-[11.5px] text-hms-muted">{roomGross > roomTotal ? `= −${tk(roomGross - roomTotal)} incl. VAT` : "৳ before VAT"}</p>
+                  {disc > 0 && <input aria-label="Discount reason" value={discReason} onChange={(e) => setDiscReason(e.target.value)} placeholder="Reason (needed)" className={clsx("mt-1.5 h-8 w-full rounded-lg border bg-white px-2 text-[13px]", discReason.trim() ? "border-hms-line" : "border-[#e9a5a0]")} />}
+                  <div className="mt-2 flex justify-between border-t border-hms-line pt-2 text-[16px] font-bold"><span>Total</span><span className="tabular-nums">{tk(total)}</span></div>
+                  {adv > 0 && <><div className="flex justify-between text-[#16693a]"><span>Paid now · {method}</span><span className="tabular-nums">−{tk(adv)}</span></div><div className="flex justify-between font-semibold"><span>Due at the hotel</span><span className="tabular-nums">{tk(total - adv)}</span></div></>}
+                </div>
               </div>
-              {total > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{[0.3, 0.5, 1].map((f) => <button key={f} type="button" onClick={() => setAdvance(String(Math.round(total * f)))} className="rounded-full bg-[#eef0f3] px-3 py-1 text-[13px] font-semibold hover:bg-[#e3e6eb]">{f === 1 ? "Full" : `${f * 100}%`} · {tk(total * f)}</button>)}</div>}
-              {details && <div className="mt-4 border-t border-hms-line pt-4 sm:max-w-[260px]"><label htmlFor="nb-di" className={lbl}>Room discount (৳, before VAT)</label><input id="nb-di" inputMode="numeric" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/\D/g, ""))} placeholder="0" className={input} /></div>}
+            </Card>
+
+            {/* 3 · what the guest gets */}
+            <Card title="Send to the guest" action={<div className="flex gap-1.5"><button type="button" onClick={() => setPeek(true)} disabled={!lines.length} className={clsx(bSoft, "!h-9 px-3 text-[13.5px] disabled:opacity-40")}><Eye className="size-4" />Preview</button><button type="button" onClick={() => setSendOpen(true)} disabled={!lines.length} className={clsx(bSoft, "!h-9 px-3 text-[13.5px] disabled:opacity-40")}><Send className="size-4" />Send details now</button></div>}>
+              <p className="text-[13.5px] text-[#3a414c]">When I confirm, send the confirmation by</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([["sms", "SMS", contactPhone], ["email", "Email", contactEmail]] as const).map(([k, l, to]) => (
+                  <label key={k} className={clsx("inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[13.5px]", !to ? "border-dashed border-hms-line text-hms-muted" : autoSend[k] ? "border-hms-ink" : "border-hms-line")}>
+                    <input type="checkbox" disabled={!to} checked={!!to && autoSend[k]} onChange={(e) => setAfter({ ...autoSend, [k]: e.target.checked })} className="size-4 accent-[#b11c29]" />
+                    <b>{l}</b><span className="text-hms-muted">{to || (k === "sms" ? "no phone" : "no email")}</span>
+                  </label>
+                ))}
+              </div>
+              {sentNote && <p className="mt-2 rounded-lg bg-[#e8f6ee] px-3 py-2 text-[13px] font-medium text-[#16693a]">{sentNote}</p>}
+              <p className="mt-2 text-[12px] text-hms-muted">“Send details now” shares the booking before you confirm. Uses Messaging credits, plan credits first.</p>
             </Card>
           </>}
         </div>
@@ -382,6 +478,8 @@ export function NewBookingPage() {
         {lines.length > 0 && <button onClick={openHold} aria-label="Hold room for later" className={clsx(bSoft, "px-3")}><Clock className="size-4" /><span className="max-[380px]:hidden">Hold</span></button>}
         {step < 3 ? <button onClick={() => go(step + 1)} className={bMain}>Next<ArrowRight className="size-4" /></button> : <button onClick={submit} disabled={busy} className={bMain}>Confirm</button>}
       </div>
+      {peek && <DocPeek doc={{ label: "Booking details (not confirmed)", html: quoteHtml }} onClose={() => setPeek(false)} />}
+      {sendOpen && <SendSheet spec={quoteSpec} onClose={() => setSendOpen(false)} onSent={(m) => { setSendOpen(false); setSentNote(`Sent · ${m}`); }} />}
       {holdOpen && (
         <HoldSheet title={`Hold ${lines.length > 1 ? `${lines.length} rooms` : `Room ${room0}`}`} onClose={() => setHoldOpen(false)} onSave={saveHold} busy={busy} error={holdErr}
           saveLabel={hold.until ? `Hold until ${holdClock(hold.until)}` : "Hold room"}>

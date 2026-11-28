@@ -3,11 +3,14 @@
 // a manager reviews the differences and posts them — each difference becomes one adjustment in History.
 import clsx from "clsx";
 import { useState } from "react";
-import { ArrowLeft, ClipboardList, Eye, EyeOff, Plus } from "lucide-react";
+import { ArrowLeft, ClipboardList, Eye, EyeOff, Plus, Printer } from "lucide-react";
 import { CAN, fmtQty, q, tk, type Count } from "@/lib/inventory/store";
 import { btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { Err, QtyInput } from "./sheets";
 import { InventoryFrame, useInv } from "./frame";
+import { useProperty } from "../property";
+import { printHtml } from "../meals/print";
+import { countHtml } from "@/lib/bookings/docs-office";
 
 const card = "rounded-xl border border-hms-line bg-white";
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -57,6 +60,7 @@ function Counts() {
 
 function Session({ c, onBack }: { c: Count; onBack: () => void }) {
   const { inv, toast } = useInv();
+  const h = useProperty();
   const [blind, setBlind] = useState(true);
   const [err, setErr] = useState("");
   const items = new Map(inv.st.items.map((i) => [i.id, i]));
@@ -72,6 +76,7 @@ function Session({ c, onBack }: { c: Count; onBack: () => void }) {
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
         <button onClick={onBack} aria-label="Back to counts" className="grid size-9 place-items-center rounded-lg hover:bg-hms-hover"><ArrowLeft className="size-5" /></button>
         <div className="mr-auto"><h2 className="text-[17px] font-bold">{c.id} · {store}</h2><p className="text-[13px] text-hms-muted">{done} of {c.lines.length} counted{c.status !== "open" ? ` · net difference ${net >= 0 ? "+" : "−"}${tk(Math.abs(net))}` : ""}</p></div>
+        <button onClick={() => printHtml(countHtml(h, inv.st, c, c.status === "open" ? "blank" : "result"))} className={clsx(btnLine, "h-10")}><Printer className="size-4" aria-hidden />{c.status === "open" ? "Print count sheet" : "Print result"}</button>
         {c.status === "open" && <button onClick={() => setBlind((b) => !b)} aria-pressed={!blind} className={clsx(btnLine, "h-10")}>{blind ? <Eye className="size-4" /> : <EyeOff className="size-4" />}{blind ? "Show system qty" : "Hide system qty"}</button>}
         {c.status === "open" && <button onClick={() => { if (c.lines.some((l) => l.counted === null)) { setErr("Count every item first (enter 0 if there is none)"); return; } inv.submitCount(c.id); toast(`${c.id} sent for review`); }} className={clsx(CAN.postCount(inv.role) ? btnLine : btnPrimary, "h-10")}>Finish counting</button>}
         {c.status !== "posted" && CAN.postCount(inv.role) && <button onClick={post} className={clsx(btnPrimary, "h-10")}>Post differences</button>}

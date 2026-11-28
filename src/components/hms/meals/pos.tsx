@@ -194,12 +194,12 @@ function Pos({ r, startOrder }: { r: Restaurant; startOrder: string | null }) {
                 <div className="flex justify-between rounded-lg bg-[#fff1ef] px-3 py-2 text-[16px] font-bold"><dt>{running ? "Bill so far" : "Total"}</dt><dd className="tabular-nums">{tk(b.total)}</dd></div>
               </dl>
               {(lines.length > 0 || !running) && <button onClick={send} className={clsx(btnPrimary, "h-11 w-full")}>{running ? `Send ${count || ""} added item${count === 1 ? "" : "s"} to kitchen` : st.settings.posApproval ? "Send for approval" : "Send to kitchen"}</button>}
-              {running && !lines.length && <div className="grid grid-cols-2 gap-2"><button onClick={() => printHtml(billHtml(running, r.h.name, where(running)))} className={clsx(btnLine, "h-11")}><Printer className="size-4" aria-hidden />Print bill</button><button onClick={() => setPay(running.id)} className={clsx(btnPrimary, "h-11")}>Bill &amp; pay</button></div>}
+              {running && !lines.length && <div className="grid grid-cols-2 gap-2"><button onClick={() => printHtml(billHtml(r.h, running, where(running)))} className={clsx(btnLine, "h-11")}><Printer className="size-4" aria-hidden />Print bill</button><button onClick={() => setPay(running.id)} className={clsx(btnPrimary, "h-11")}>Bill &amp; pay</button></div>}
               {doneOrder && (
                 <div role="status" className="hms-up rounded-xl border border-[#cfe7da] bg-[#eef8f2] p-3 text-[14px] text-[#165f37]">
                   <p className="flex items-center gap-2 font-semibold"><CircleCheck className="size-4" aria-hidden />{doneOrder.no} {doneOrder.status === "approval" ? "waits for approval" : "is in the kitchen"}</p>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button onClick={() => printHtml(kotHtml(doneOrder, where(doneOrder), done!.round))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>
+                    <button onClick={() => printHtml(kotHtml(r.h, doneOrder, where(doneOrder), done!.round))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>
                     {doneOrder.service === "dinein" ? <button onClick={() => { setDone(null); setRun(null); setView("tables"); }} className={clsx(btnLine, "h-9 px-3")}>Back to tables</button> : <button onClick={() => setPay(doneOrder.id)} className={clsx(btnLine, "h-9 px-3")}>Take payment</button>}
                   </div>
                 </div>

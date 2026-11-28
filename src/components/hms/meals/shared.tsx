@@ -13,7 +13,8 @@ import { ageOf, useMeals } from "@/lib/meals/store";
 import { useCashboxData } from "../cashbox/pages";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
 import { useOutlet } from "./frame";
-import { billHtml, kotHtml, printHtml } from "./print";
+import { billHtml, kotHtml, printHtml, roomSlipHtml } from "./print";
+import { restaurantBillA4Html } from "@/lib/bookings/docs";
 
 export function useToast() { const [t, setT] = useState(""); const show = (m: string) => { setT(m); setTimeout(() => setT((x) => (x === m ? "" : x)), 2800); }; return [t, show] as const; }
 
@@ -79,8 +80,10 @@ export function OrderSheet({ r, id, onClose, onDone, onPay }: { r: Restaurant; i
           <ul className="divide-y divide-hms-line rounded-xl border border-hms-line">{o.lines.map((l, i) => <li key={i} className="flex justify-between gap-3 px-3 py-2.5 text-[14px]"><span><b className="tabular-nums">{l.qty}×</b> {l.name}{(l.round ?? 1) > 1 && <span className="ml-1.5 rounded bg-[#eef0f3] px-1.5 text-[11.5px] font-semibold text-hms-muted">added</span>}{l.note && <span className="block text-[12.5px] text-[#a4500f]">{l.note}</span>}</span><span className="tabular-nums">{tk(l.price * l.qty)}</span></li>)}</ul>
           <div className="flex flex-wrap gap-2">
             {o.pay === "unpaid" && !["cancelled", "declined", "approval"].includes(o.status) && <Link href={`/hms/meals/pos?order=${o.id}`} className={clsx(btnLine, "h-9 px-3")}><Plus className="size-4" aria-hidden />Add items</Link>}
-            <button onClick={() => printHtml(billHtml(o, r.h.name, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print bill</button>
-            {!["cancelled", "declined", "served"].includes(o.status) && <button onClick={() => printHtml(kotHtml(o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>}
+            <button onClick={() => printHtml(billHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print bill</button>
+            {o.pay === "room" && <button onClick={() => printHtml(roomSlipHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print room slip</button>}
+            {!["cancelled", "declined"].includes(o.status) && <button onClick={() => printHtml(restaurantBillA4Html(r.h, { orders: [o], customer: { name: o.guest?.trim() || "Company customer" }, placeName: r.placeName }))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />A4 bill (company)</button>}
+            {!["cancelled", "declined", "served"].includes(o.status) && <button onClick={() => printHtml(kotHtml(r.h, o, r.placeName(o)))} className={clsx(btnLine, "h-9 px-3")}><Printer className="size-4" aria-hidden />Print KOT</button>}
           </div>
           <dl className="space-y-1 text-[14px]">
             <div className="flex justify-between"><dt className="text-hms-muted">Subtotal</dt><dd className="tabular-nums">{tk(b.sub)}</dd></div>
