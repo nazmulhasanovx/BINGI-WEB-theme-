@@ -26,7 +26,7 @@ export function useRestaurant() {
   const roomCodes = useMemo(() => rooms.units.filter((u) => u.status === "published").map((u) => u.code), [rooms.units]);
   const m = useMeals(h, inHouse, roomCodes);
   const [outlet] = useOutlet(m.outlets);
-  const placeName = (o: Order) => o.service === "room" ? `Room ${o.room ?? "—"}` : o.place ? m.st.places.find((p) => p.id === o.place)?.name ?? o.place : o.service === "takeaway" ? "Takeaway" : SERVICE_LABEL[o.service];
+  const placeName = (o: Order) => o.service === "room" ? `Room ${o.room ?? "—"}` : o.place ? `${m.st.places.find((p) => p.id === o.place)?.name ?? o.place}${o.seats?.length ? ` · ${o.seats.join(", ")}` : ""}` : o.service === "takeaway" ? "Takeaway" : SERVICE_LABEL[o.service];
   return { h, m, refs, inHouse, outlet, placeName };
 }
 export type Restaurant = ReturnType<typeof useRestaurant>;

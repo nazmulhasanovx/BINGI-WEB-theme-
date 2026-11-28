@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { BedDouble, Camera, ImagePlus, Pencil, Plus, QrCode, Search, Trash2, UtensilsCrossed } from "lucide-react";
-import { tk, type Category, type Item, type Place } from "@/lib/meals/seed";
+import { PLACE_KIND, isSeated, seatCodesOf, sharesSeats, tk, type Category, type Item, type Place, type PlaceKind } from "@/lib/meals/seed";
 import { uid } from "@/lib/meals/store";
 import { PhotoButton } from "../photo";
 import { Sheet, btnLine, btnPrimary, input, lbl } from "../guests/ui";
@@ -138,34 +138,36 @@ function ItemSheet({ r, it, onClose, onDone }: { r: Restaurant; it?: Item; onClo
 }
 
 // =================== Tables & QR ===================
-const KIND_LABEL: Record<Place["kind"], string> = { table: "Table", room: "Room QR", general: "General QR" };
+const KIND_LABEL: Record<PlaceKind, string> = Object.fromEntries(Object.entries(PLACE_KIND).map(([k, v]) => [k, v.label])) as Record<PlaceKind, string>;
+type Group = "seated" | "room" | "general";
+const groupOf = (k: PlaceKind): Group => (k === "room" ? "room" : k === "general" ? "general" : "seated");
 export function TablesPage() {
   const r = useRestaurant();
   const [toast, show] = useToast();
-  const [k, setK] = useState<"all" | Place["kind"]>("all");
+  const [k, setK] = useState<"all" | Group>("all");
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<Place | "new" | null>(null);
   const [qr, setQr] = useState<Place | null>(null);
   if (!r.m.ready) return <MealsFrame tab="tables"><p role="status" className="p-8 text-[14px] text-hms-muted">Loading…</p></MealsFrame>;
   const ps = r.m.st.places;
-  const n = (x: Place["kind"]) => ps.filter((p) => p.kind === x).length;
-  const list = ps.filter((p) => (k === "all" || p.kind === k) && (!q || `${p.name} ${p.note ?? ""}`.toLowerCase().includes(q.toLowerCase())));
+  const n = (x: Group) => ps.filter((p) => groupOf(p.kind) === x).length;
+  const list = ps.filter((p) => (k === "all" || groupOf(p.kind) === k) && (!q || `${p.name} ${p.note ?? ""}`.toLowerCase().includes(q.toLowerCase())));
   return (
     <MealsFrame tab="tables" toast={toast} outlets={r.m.outlets}>
       <div className="grid grid-cols-3 gap-3">
-        {([["table", "Tables", "Dining tables", UtensilsCrossed], ["room", "Room QR", "In-room menus", BedDouble], ["general", "General QR", "Pool, lobby, events", QrCode]] as const).map(([id, l, s, I]) => (
+        {([["seated", "Tables & seats", "Public, VIP, bar, event", UtensilsCrossed], ["room", "Room QR", "In-room menus", BedDouble], ["general", "Other spots", "Pool, lobby, garden", QrCode]] as const).map(([id, l, s, I]) => (
           <button key={id} onClick={() => setK(id)} className={clsx(card, "flex items-center gap-3 p-4 text-left hover:border-[#858c97]", k === id && "border-hms-ink")}><span className="grid size-10 place-items-center rounded-xl bg-[#f4f6f8] text-hms-muted"><I className="size-5" aria-hidden /></span><span><b className="block text-[22px] leading-none tabular-nums">{n(id)}</b><span className="text-[13px] font-semibold">{l}</span><span className="hidden text-[12.5px] text-hms-muted sm:block">{s}</span></span></button>
         ))}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        <div role="tablist" aria-label="Location type" className="flex flex-wrap gap-1.5">{([["all", `All (${ps.length})`], ["table", `Tables (${n("table")})`], ["room", `Room QR (${n("room")})`], ["general", `General QR (${n("general")})`]] as const).map(([v, l]) => <button key={v} role="tab" aria-selected={k === v} onClick={() => setK(v)} className={clsx("h-9 rounded-full border px-3.5 text-[13.5px] font-semibold", k === v ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{l}</button>)}</div>
+        <div role="tablist" aria-label="Location type" className="flex flex-wrap gap-1.5">{([["all", `All (${ps.length})`], ["seated", `Tables & seats (${n("seated")})`], ["room", `Room QR (${n("room")})`], ["general", `Other spots (${n("general")})`]] as const).map(([v, l]) => <button key={v} role="tab" aria-selected={k === v} onClick={() => setK(v)} className={clsx("h-9 rounded-full border px-3.5 text-[13.5px] font-semibold", k === v ? "border-hms-ink bg-hms-ink text-white" : "border-hms-line bg-white hover:bg-hms-hover")}>{l}</button>)}</div>
         <label className="ml-auto flex h-10 min-w-[200px] items-center gap-2 rounded-lg border border-hms-line bg-white px-3"><Search className="size-4 text-hms-muted" aria-hidden /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tables, rooms" aria-label="Search locations" className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none" /></label>
         <button onClick={() => setEdit("new")} className={clsx(btnPrimary, "h-10")}><Plus className="size-4" aria-hidden />Add location</button>
       </div>
       <section className={clsx(card, "mt-4 overflow-hidden")} aria-label="Locations">
         {list.length ? <ul className="divide-y divide-hms-line">{list.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <div className="min-w-[150px] flex-1"><b className="block text-[15px]">{p.name}</b><span className="text-[12.5px] text-hms-muted">{KIND_LABEL[p.kind]}{p.seats ? ` · ${p.seats} seats` : ""}{p.note ? ` · ${p.note}` : ""}</span></div>
+            <div className="min-w-[150px] flex-1"><b className="block text-[15px]">{p.name}</b><span className="text-[12.5px] text-hms-muted">{KIND_LABEL[p.kind]}{isSeated(p) && seatCodesOf(p).length ? ` · ${seatCodesOf(p).length} seats (${seatCodesOf(p)[0]}–${seatCodesOf(p).at(-1)})${sharesSeats(p) ? " · shared" : " · whole table"}` : ""}{p.note ? ` · ${p.note}` : ""}</span></div>
             <span className="flex w-[150px] items-center gap-2 text-[13px]"><Switch on={p.visible} onChange={() => r.m.savePlace({ ...p, visible: !p.visible })} label={`${p.name} menu visible`} />{p.visible ? "Menu visible" : "Menu hidden"}</span>
             <span className="flex w-[170px] items-center gap-2 text-[13px]"><Switch on={p.accepting} onChange={() => { r.m.savePlace({ ...p, accepting: !p.accepting }); show(`${p.name}: ${p.accepting ? "not taking orders" : "taking orders"}`); }} label={`${p.name} accepting orders`} />{p.accepting ? "Taking orders" : "Not taking orders"}</span>
             <span className="flex gap-2"><button onClick={() => setQr(p)} className={clsx(btnLine, "h-9 px-3")}><QrCode className="size-4" aria-hidden />QR</button><button onClick={() => setEdit(p)} aria-label={`Edit ${p.name}`} className="grid size-9 place-items-center rounded-lg border border-hms-line hover:bg-hms-hover"><Pencil className="size-4" /></button></span>
@@ -178,24 +180,50 @@ export function TablesPage() {
   );
 }
 function PlaceSheet({ r, p, onClose, onDone }: { r: Restaurant; p?: Place; onClose: () => void; onDone: (m: string) => void }) {
-  const [f, setF] = useState<Place>(p ?? { id: uid("p"), name: "", kind: "table", seats: 4, visible: true, accepting: true });
+  const [f, setF] = useState<Place>(p ?? { id: uid("p"), name: "", kind: "table", seats: 4, shared: true, visible: true, accepting: true });
+  const [codes, setCodes] = useState((p?.seatCodes ?? []).join(", "));
   const [tried, setTried] = useState(false);
   const dup = r.m.st.places.some((x) => x.id !== f.id && x.name.toLowerCase() === f.name.trim().toLowerCase());
-  const bad = !f.name.trim() || dup;
+  const seated = isSeated(f);
+  const custom = codes.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean);
+  const dupCode = custom.length !== new Set(custom).size;
+  const badSeats = seated && (!(f.seats ?? 0) || (custom.length > 0 && custom.length !== f.seats) || dupCode);
+  const bad = !f.name.trim() || dup || badSeats;
+  const shown = seated ? seatCodesOf({ ...f, seatCodes: custom.length === f.seats ? custom : undefined }) : [];
+  const save = () => {
+    setTried(true); if (bad) return;
+    const out: Place = { ...f, name: f.name.trim(), seats: seated ? f.seats : undefined, seatCodes: seated && custom.length ? custom : undefined, shared: f.kind === "private" ? false : f.kind === "bar" ? true : f.shared };
+    r.m.savePlace(out); onDone(p ? `${out.name} saved` : `${out.name} added`);
+  };
   return (
-    <Sheet title={p ? `Edit ${p.name}` : "Add location"} sub="A table, a room or a general QR spot" onClose={onClose}
-      footer={<><button onClick={onClose} className={clsx(btnLine, "flex-1")}>Cancel</button><button onClick={() => { setTried(true); if (bad) return; r.m.savePlace({ ...f, name: f.name.trim() }); onDone(p ? `${f.name.trim()} saved` : `${f.name.trim()} added`); }} className={clsx(btnPrimary, "flex-[1.4]")}>Save</button></>}>
+    <Sheet title={p ? `Edit ${p.name}` : "Add table or QR"} sub="Each table, room or spot gets its own QR" onClose={onClose}
+      footer={<><button onClick={onClose} className={clsx(btnLine, "flex-1")}>Cancel</button><button onClick={save} className={clsx(btnPrimary, "flex-[1.4]")}>Save</button></>}>
       <div className="space-y-4">
-        <div><p className={lbl}>Type</p><div role="radiogroup" aria-label="Location type" className="grid grid-cols-3 gap-2">{(Object.keys(KIND_LABEL) as Place["kind"][]).map((x) => <button key={x} type="button" role="radio" aria-checked={f.kind === x} onClick={() => setF({ ...f, kind: x })} className={clsx("h-11 rounded-lg border text-[13.5px] font-semibold", f.kind === x ? "border-hms-ink shadow-[inset_0_0_0_1px] shadow-hms-ink" : "border-hms-line")}>{KIND_LABEL[x]}</button>)}</div></div>
-        <div><label htmlFor="pl-n" className={lbl}>Name</label><input id="pl-n" autoFocus value={f.name} onChange={(x) => setF({ ...f, name: x.target.value })} placeholder={f.kind === "table" ? "e.g. T9" : f.kind === "room" ? "e.g. Room 305" : "e.g. Lobby"} className={input} />{tried && (dup ? <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">This name is already used</p> : !f.name.trim() && <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">Enter a name</p>)}</div>
-        {f.kind === "table" && <div><label htmlFor="pl-s" className={lbl}>Seats</label><input id="pl-s" inputMode="numeric" value={f.seats ?? ""} onChange={(x) => setF({ ...f, seats: Number(x.target.value.replace(/\D/g, "")) || undefined })} className={input} /></div>}
+        <div><p className={lbl}>Type</p>
+          <div role="radiogroup" aria-label="Type" className="grid grid-cols-2 gap-2">{(Object.keys(PLACE_KIND) as PlaceKind[]).map((x) => (
+            <button key={x} type="button" role="radio" aria-checked={f.kind === x} onClick={() => setF({ ...f, kind: x, seats: PLACE_KIND[x].seated ? f.seats ?? (x === "bar" ? 6 : 4) : undefined, shared: x !== "private" })}
+              className={clsx("rounded-xl border p-2.5 text-left", f.kind === x ? "border-hms-ink shadow-[inset_0_0_0_1px] shadow-hms-ink" : "border-hms-line hover:border-[#858c97]")}>
+              <b className="block text-[13.5px]">{PLACE_KIND[x].label}</b><span className="text-[12px] leading-snug text-hms-muted">{PLACE_KIND[x].hint}</span>
+            </button>))}</div>
+        </div>
+        <div><label htmlFor="pl-n" className={lbl}>Name</label><input id="pl-n" autoFocus value={f.name} onChange={(x) => setF({ ...f, name: x.target.value })} placeholder={f.kind === "room" ? "e.g. Room 305" : f.kind === "general" ? "e.g. Pool side" : f.kind === "bar" ? "e.g. Bar" : f.kind === "event" ? "e.g. Banquet hall" : "e.g. T9"} className={input} />{tried && (dup ? <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">This name is already used</p> : !f.name.trim() && <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">Enter a name</p>)}</div>
+        {seated && <div className="rounded-xl bg-[#f7f8fa] p-3">
+          <div className="grid grid-cols-[110px_1fr] gap-3">
+            <div><label htmlFor="pl-s" className={lbl}>Seats</label><input id="pl-s" inputMode="numeric" value={f.seats ?? ""} onChange={(x) => setF({ ...f, seats: Math.min(40, Number(x.target.value.replace(/\D/g, "")) || 0) || undefined })} className={input} /></div>
+            <div><label htmlFor="pl-c" className={lbl}>Seat codes <span className="font-normal text-hms-muted">optional</span></label><input id="pl-c" value={codes} onChange={(x) => setCodes(x.target.value)} placeholder={`${Array.from({ length: Math.min(f.seats ?? 4, 4) }, (_, i) => `${i + 1}S`).join(", ")}…`} className={input} /></div>
+          </div>
+          {tried && badSeats && <p className="mt-1 text-[13px] font-medium text-[#c81e1e]">{!(f.seats ?? 0) ? "Enter the number of seats" : dupCode ? "Each seat code must be different" : `Give ${f.seats} codes, or leave codes empty for ${f.seats ? `1S…${f.seats}S` : "1S, 2S…"}`}</p>}
+          <div className="mt-2 flex flex-wrap gap-1">{shown.map((c) => <span key={c} className="grid h-7 min-w-9 place-items-center rounded-md border border-[#86cfa3] bg-white px-1.5 text-[12px] font-bold text-[#16693a]">{c}</span>)}</div>
+          {(f.kind === "table" || f.kind === "event") && <label className="mt-3 flex items-start gap-2.5 text-[13.5px]"><input type="checkbox" checked={f.shared !== false} onChange={(x) => setF({ ...f, shared: x.target.checked })} className="mt-0.5 size-4 accent-[#b11c29]" /><span><b>Share the table</b><span className="block text-[12.5px] text-hms-muted">An order takes only the seats it uses; other guests can order on the free seats. Off = one order takes the whole table.</span></span></label>}
+          {f.kind === "private" && <p className="mt-2 text-[12.5px] text-hms-muted">A private table is taken whole by one order.</p>}
+        </div>}
         <div><label htmlFor="pl-note" className={lbl}>Note <span className="font-normal text-hms-muted">optional</span></label><input id="pl-note" value={f.note ?? ""} onChange={(x) => setF({ ...f, note: x.target.value || undefined })} placeholder="e.g. Beach side" className={input} /></div>
       </div>
     </Sheet>
   );
 }
 function QrSheet({ r, p, onClose }: { r: Restaurant; p: Place; onClose: () => void }) {
-  const url = `https://${r.h.slug}.bingi.app/menu?${p.kind === "room" ? "room" : p.kind === "table" ? "table" : "spot"}=${encodeURIComponent(p.name.replace(/^Room /, ""))}`;
+  const url = `https://${r.h.slug}.bingi.app/menu?${PLACE_KIND[p.kind].qr}=${encodeURIComponent(p.name.replace(/^Room /, ""))}&type=${p.kind}`;
   const [svg, setSvg] = useState("");
   useEffect(() => { QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#0f1720", light: "#ffffff" } }).then(setSvg).catch(() => setSvg("")); }, [url]);
   return (
@@ -206,7 +234,7 @@ function QrSheet({ r, p, onClose }: { r: Restaurant; p: Place; onClose: () => vo
         <div role="img" aria-label={`QR code for ${p.name}`} className="mx-auto mt-3 size-[200px] [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: svg }} />
         <p className="mt-3 break-all text-[12px] text-hms-muted">{url}</p>
       </div>
-      <p className="mt-4 text-[13px] text-hms-muted">{p.accepting ? "Guests can see the menu and order." : "Not taking orders now — guests only see the menu."} The link is a prototype address; printing and QR styling are in the live HMS.</p>
+      <p className="mt-4 text-[13px] text-hms-muted">{isSeated(p) && sharesSeats(p) ? `Guests pick their seat (${seatCodesOf(p).slice(0, 3).join(", ")}…) when they order, so only those seats are blocked. ` : ""}{p.accepting ? "Guests can see the menu and order." : "Not taking orders now — guests only see the menu."} The link is a prototype address; printing and QR styling are in the live HMS.</p>
     </Sheet>
   );
 }
